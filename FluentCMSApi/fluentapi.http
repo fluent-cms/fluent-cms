@@ -1,0 +1,6 @@
+@fluentapi_HostAddress = http://localhost:5210
+
+GET {{fluentapi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

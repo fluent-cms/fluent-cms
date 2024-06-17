@@ -1,0 +1,6 @@
+﻿services:
+  fluentapi:
+    image: fluentapi
+    build:
+      context: .
+      dockerfile: fluentapi/Dockerfile
