@@ -47,7 +47,7 @@ public class SchemaDto
         Type = item.Type;
         Settings = JsonSerializer.Deserialize<Settings>(item.Settings);
     }
-    public Schema ToEntity()
+    public Schema ToModel()
     {
         var item = new Schema();
         Attach(item);

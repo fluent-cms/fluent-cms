@@ -1,4 +1,6 @@
-namespace FluentCMS.Utils;
+using SqlKata;
+
+namespace FluentCMS.Utils.Dao;
 
 public record ColumnDefinition
 {
@@ -14,4 +16,6 @@ public interface IDao
 {
     Task<string> GetPrimaryKeyColumn(string tableName);
     Task<ColumnDefinition[]> GetColumnDefinitions(string tableName);
+    Task<dynamic[]> Get(Query query);
+    Task<int> Count(Query query);
 }

@@ -1,9 +1,18 @@
 using FluentCMS.Services;
 using FluentCMS.Data;
-using FluentCMS.Utils;
+using FluentCMS.Utils.Dao;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAllOrigins",
+        policy  =>
+        {
+            policy.WithOrigins("http://127.0.0.1:5173", "http://localhost:5173");
+        });
+});
 
 // Add services to the container.
 builder.Services.AddRazorPages();
@@ -14,6 +23,7 @@ builder.Services.AddRouting(options =>
 builder.Services.AddControllers();
 
 builder.Services.AddScoped<ISchemaService, SchemaService>();
+builder.Services.AddScoped<IEntityService, EntityService >();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -23,9 +33,10 @@ var conn = builder.Configuration.GetConnectionString("PgConnection");
 if (conn is not null)
 {
     builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(conn));
-    builder.Services.AddScoped<IDao>(p => new PgDao(conn));
+    builder.Services.AddSingleton<IDao>(p => new PgDao(conn));
 
 }
+
 
 var app = builder.Build();
 
@@ -42,6 +53,7 @@ app.UseStaticFiles();
 
 app.UseHttpsRedirection();
 
+app.UseCors("AllowAllOrigins");
 app.UseAuthorization();
 
 app.MapControllers();

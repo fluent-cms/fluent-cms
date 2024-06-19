@@ -1,7 +1,7 @@
 namespace FluentCMS.Utils.Naming;
 using System.Globalization;
 
-public class Naming
+public static class Naming
 {
     public static string SnakeToTitle(string snakeStr)
     {

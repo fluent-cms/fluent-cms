@@ -1,6 +1,5 @@
-using FluentCMS.Utils;
+using FluentCMS.Utils.Dao;
 using FluentCMS.Utils.Naming;
-using Npgsql.Replication.PgOutput.Messages;
 
 namespace FluentCMS.Models.Queries;
 

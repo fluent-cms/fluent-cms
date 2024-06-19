@@ -12,7 +12,7 @@ public class SchemasController(ISchemaService schemaService):ControllerBase
     {
         return Ok(await schemaService.GetAll());
     }
-    // POST: api/products
+    
     [HttpPost]
     public async Task<ActionResult<Schema>> Post([FromBody] SchemaDto dto)
     {
@@ -27,11 +27,12 @@ public class SchemasController(ISchemaService schemaService):ControllerBase
         return Ok(columns);
     }
     
-    [HttpGet("{id}")]
-    public async Task<ActionResult<SchemaDisplayDto>> Get(int id)
-    {
-        return Ok(await schemaService.GetById(id));
-    }
+     [HttpGet("{name}")]
+     public async Task<ActionResult<SchemaDisplayDto>> Get(string name)
+     {
+         return Ok(await schemaService.GetByIdOrName(name));
+     }
+   
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
