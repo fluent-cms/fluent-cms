@@ -1,0 +1,113 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Fluent CMS Schema Builder -- editing</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="./json-editor-dist/jsoneditor.js"></script>
+    <link rel="stylesheet" href="./json-editor-dist/bootstrap-icons.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="./json-editor-dist/bootstrap.css">
+    <link rel="stylesheet" href="json-editor-dist/jsoneditor.css">
+    <script src="repo.js?version=3"></script>
+</head>
+<body>
+<div class="header">
+    <h1><a href="list.html"> Schema Editor</a></h1>
+    <button id='submit'>Submit</button>
+    <button id='restore'>Restore to Default</button>
+    <button id='enable_disable'>Disable/Enable Form</button>
+    <button id='define'>Get Table Definition</button>
+    <span id='valid_indicator'></span>
+</div>
+
+<div id='editor_holder' class="content"></div>
+
+<script>
+    const searchParams = new URLSearchParams(window.location.search);
+    const schema_name = searchParams.get("schema");
+    const id = searchParams.get("id");
+    const editor= loadEditor()
+
+    loadValue(editor)
+    setListeners(editor)
+
+    async function loadDefine(editor){
+        const item = await define(id)
+        editor.setValue(item)
+    }
+
+    async function loadValue(editor){
+        if (id){
+            const item = await one(id)
+            editor.setValue(item)
+        }else {
+            editor.setValue(null)
+        }
+    }
+
+    function loadEditor() {
+        var editor = new JSONEditor(document.getElementById('editor_holder'), {
+            ajax: true,
+            schema: {
+                "title": schema_name,
+                "$ref": schema_name + ".json?ts=" + new Date().toISOString(),
+            },
+            no_additional_properties: true,
+            required_by_default: true,
+            collapsed: true,
+            theme: "bootstrap3",
+            object_layout:"grid",
+            disable_properties: true,
+            disable_edit_json: true,
+            disable_array_delete_last_row: true,
+            iconlib:"bootstrap",
+        });
+
+
+        editor.on('change', function () {
+            var errors = editor.validate();
+            var indicator = document.getElementById('valid_indicator');
+            if (errors.length) {
+                indicator.style.color = 'red';
+                indicator.textContent = "not valid";
+            }
+            else {
+                indicator.style.color = 'green';
+                indicator.textContent = "valid";
+            }
+        });
+        return editor
+    }
+
+    async function setListeners(editor) {
+        document.getElementById('submit').addEventListener('click', function () {
+            const val = editor.getValue()
+            val.type = schema_name
+            if (id){
+                val.id = +id
+            }
+            save(val)
+        });
+
+        document.getElementById('restore').addEventListener('click', function () {
+            loadValue(editor)
+        });
+
+        document.getElementById('define').addEventListener('click', function () {
+            loadDefine(editor)
+        });
+
+        document.getElementById('enable_disable').addEventListener('click', function () {
+            if (!editor.isEnabled()) {
+                editor.enable();
+            } else {
+                editor.disable();
+            }
+        });
+    }
+
+
+</script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+.header {
+    padding: 6px;
+    background: #bababa;
+    width: 100%;
+    position:sticky;
+    top:0;
+    z-index: 1000;
+    margin-bottom: 10px;
+}
+#editor_holder{
+    padding:10px;
+}
+.form-control {
+    height: 25px;
+     padding: 3px 4px;
+}
+
+.btn {
+     padding: 1px;
+}
+.je-object__container .je-object__title {
+    display: unset;
+}
+.json-editor-btn-collapse {
+    margin: 0 10px 6px 0 !important;
+}
+.table {
+    margin-bottom: 10px;
+}
+.btn.btn-default {
+    border-radius: 0;
+}
+.btn.btn-default.json-editor-btntype-add, .btn.btn-default.json-editor-btntype-deleteall {
+    padding-right: 6px;
+}
+.btn.btn-default.json-editor-btntype-deletelast{
+    display: none;
+}
+.table>thead:first-child>tr:first-child>th:first-child {
+    width: 150px;
+}
+.form-group {
+    margin-bottom: 4px;
+}
+.well {
+    margin-bottom: 5px;
+}
+.well.well-sm {
+    padding-bottom: 5px !important;
+}
+.well.well-sm>div>div>.row{
+    margin-bottom: unset;
+}
+.h3>button{
+    margin-top: 10px !important;
+    margin-bottom: 12px !important;
+}
+td>.h3.je-object__title>button, .btn-group.je-object__controls{
+    display: none;
+}
+td>div>div>.table>thead>tr>th {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;;
+}
+
+td>.form-group>.form-control {
+    min-width: 60px;
+}
+td .h3 {
+    font-size: 14px;
+    font-weight: 700;
+}
+td .h3>button{
+    display: none;
+}
+.table>tbody>tr>td {
+    padding: 6px;
+}
+.je-object__container table>thead>tr>th {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+}
+.col-md-12.col-md-6 {
+    width: 100%;
+}
+label {
+    margin-bottom: 0;
+}

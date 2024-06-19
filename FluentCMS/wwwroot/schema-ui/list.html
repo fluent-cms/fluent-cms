@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FluentCMS Schema Builder</title>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        td pre {
+            white-space: pre-wrap;
+            margin: 0;
+            padding: 5px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+<script src="./repo.js?version=abc"></script>
+<a href="./edit.html?schema=menu">Add Menu</a>
+<a href="./edit.html?schema=entity">Add Entity</a>
+<script>
+    function getQueryParam(name) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(name);
+    }
+
+    function setCookie(name, value, days) {
+        const expires = new Date();
+        expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+        document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+    }
+
+    const tokenParam = getQueryParam('token');
+    if (tokenParam) {
+        setCookie('bc_social_token', tokenParam, 1);
+        alert('succeed set cookie to cookie, now redirect to list.html')
+        window.location.href = "list.html"
+    }
+
+    async function renderTable() {
+        const elementId = 'data-table'
+        try {
+            const data = await list()
+            const tableBody = document.getElementById(elementId);
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.id}</td>
+                    <td><a href="edit.html?schema=${item.type}&id=${item.id}">${item.name}</a></td>
+                    <td>${item.type}</td>
+                    <td><button id="${item.id}" data-name="${item.name}" onclick="deleteSchema(this)">del</button></td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }catch {
+        }
+    }
+    async function deleteSchema(e){
+        if (confirm("do you want to delete schema : " +  e.getAttribute('data-name'))){
+            await del(e.id)
+            window.location.reload()
+        }
+    }
+    renderTable()
+</script>
+<table id="data-table">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Value</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody id="table-body">
+    </tbody>
+</table>
+</body>
+</html>

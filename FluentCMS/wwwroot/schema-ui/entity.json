@@ -1,0 +1,80 @@
+{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "settings": {
+      "type": "object",
+      "properties": {
+        "entity": {
+          "type": "object",
+          "properties": {
+            "tableName": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "dataKey": {
+              "type": "string"
+            },
+            "defaultPageSize": {
+              "type": "number"
+            },
+            "columns": {
+              "type": "array",
+              "format": "table",
+              "id": "fields",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "string"
+                  },
+                  "header": {
+                    "type": "string"
+                  },
+                  "inList": {
+                    "type": "boolean"
+                  },
+                  "inDetail": {
+                    "type": "boolean"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "text",
+                      "textarea",
+                      "number",
+                      "datetime",
+                      "image",
+                      "gallery",
+                      "file",
+                      "link",
+                      "editor",
+                      "dropdown",
+                      "lookup",
+                      "subgrid",
+                      "sublist",
+                      "multiselect",
+                      "ms",
+                      "json"
+                    ]
+                  },
+                  "options": {
+                    "type": "array",
+                    "format": "table",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
