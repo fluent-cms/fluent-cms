@@ -6,6 +6,7 @@ import {useLazyStateHandlers} from "./useLazyStateHandlers";
 import {createColumn} from "../components/dataTable/columns/createColumn";
 import {getListColumns, } from "../utils/columnUtil";
 import {Button} from "primereact/button";
+import {getFullAssetsURL} from "../configs";
 
 export function DataListPage(){
     //todo: load lazyState from URL, set lazyState to URL
@@ -20,7 +21,7 @@ export function DataListPage(){
         <h2>{schema.title} list</h2>
         <Link to={"new"}><Button>Create New {schema.title}</Button></Link>
         <div className="card">
-        {schema && <LazyDataTable {...{columns ,dataKey ,data, eventHandlers, lazyState, createColumn}}/>}
+        {schema && <LazyDataTable {...{columns ,dataKey ,data, eventHandlers, lazyState, createColumn, getFullURL: getFullAssetsURL}}/>}
         </div>
     </>
 }

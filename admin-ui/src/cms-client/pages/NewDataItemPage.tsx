@@ -4,7 +4,7 @@ import {ItemForm} from "../components/itemForms/ItemForm";
 import {getLinkToEntity, getWriteColumns} from "../utils/columnUtil";
 import {addItem} from "../services/entity";
 import {Button} from "primereact/button";
-import {fileUploadURL } from "../configs";
+import {fileUploadURL, getFullAssetsURL} from "../configs";
 import {userRequestStatus} from "../components/itemForms/userFormStatusUI";
 import {createInput} from "../components/itemForms/inputs/createInput";
 
@@ -29,7 +29,7 @@ export function NewDataItemPage() {
 
     return <>
         <Status/>
-        <ItemForm {...{data, id, onSubmit, columns, formId,uploadUrl, createInput}}/>
+        <ItemForm {...{data, id, onSubmit, columns, formId,uploadUrl, createInput, getFullURL: getFullAssetsURL}}/>
         <Button label={'Save ' + schema.title} type="submit" form={formId}/>
     </>
 }

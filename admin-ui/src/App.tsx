@@ -5,7 +5,7 @@ import 'primeflex/primeflex.css'; // flex
 import './App.css';
 import {TopMenuBar} from "./cms-client/components/layout/TopMenuBar";
 import React from "react";
-import {setAPIUrlPrefix} from "./cms-client/configs";
+import {setAPIUrlPrefix, setAssetsBaseURL} from "./cms-client/configs";
 import {configs} from "./config";
 import {EntityRouter} from "./cms-client/EntityRouter";
 import {Route, Routes} from "react-router-dom";
@@ -13,7 +13,8 @@ import {EditorRouter} from "./code-editor/EditorRouter";
 import {setVersionAPI} from "./code-editor/configs";
 
 setAPIUrlPrefix(configs.apiURL)
-setVersionAPI(configs.logsAPIURL)
+setVersionAPI(configs.versionAPIURL)
+setAssetsBaseURL(configs.assetURL);
 
 function App() {
     const start = <img alt="logo" src="/fluent-cms.png" height="40" className="mr-2"></img>;

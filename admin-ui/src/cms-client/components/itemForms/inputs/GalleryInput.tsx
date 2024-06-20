@@ -34,11 +34,13 @@ export function GalleryInput(props: {
     control: any
     id: any
     uploadUrl: any
+    getFullURL : (arg:string) =>string
+
 }) {
     return <InputPanel  {...props} component={(field: any) => {
         const {data, column} = props
         const fullURL = data[column.field].toString().split(',')
-        const items = fullURL.map((x:any) =>({itemImageSrc:x, thumbnailImageSrc:x}))
+        const items = fullURL.map((x:any) =>({itemImageSrc:props.getFullURL(x), thumbnailImageSrc:props.getFullURL(x)}))
         return <>
             <InputText type={'hidden'} id={field.name} value={field.value} className={' w-full'}
                        onChange={(e) => field.onChange(e.target.value)}/>
@@ -48,7 +50,7 @@ export function GalleryInput(props: {
                       thumbnail={thumbnailTemplate} value={items}/>
             <FileUpload multiple mode={"basic"} auto url={field.value} onUpload={(e) => {
                 field.onChange(e.xhr.responseText)
-            }} name={'file'}/>
+            }} name={'files'}/>
         </>
     }}/>
 }

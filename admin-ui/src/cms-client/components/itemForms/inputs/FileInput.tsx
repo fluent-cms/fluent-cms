@@ -13,18 +13,20 @@ export function FileInput(props: {
     uploadUrl: any
     previewImage:boolean
     download:boolean
+    getFullURL : (arg:string) =>string
+
+
 }) {
     return <InputPanel  {...props} component={(field: any) => {
         const {uploadUrl} = props
-        const fullURL = field.value
         return <>
             <InputText id={field.name} value={field.value} className={' w-full'}
                        onChange={(e) => field.onChange(e.target.value)}/>
-            { fullURL && props.previewImage &&  <img src={fullURL} alt={''} height={150}/>}
-            { fullURL && props.download && <a href={fullURL}><h4>Download</h4></a> }
+            { field.value && props.previewImage &&  <img src={props.getFullURL(field.value)} alt={''} height={150}/>}
+            { field.value && props.download && <a href={props.getFullURL(field.value)}><h4>Download</h4></a> }
             <FileUpload mode={"basic"} auto url={uploadUrl} onUpload={(e) => {
                 field.onChange(e.xhr.responseText)
-            }} name={'file'}/>
+            }} name={'files'}/>
         </>
     }}/>
 }

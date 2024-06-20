@@ -1,6 +1,7 @@
 using FluentCMS.Services;
 using FluentCMS.Data;
 using FluentCMS.Utils.Dao;
+using FluentCMS.Utils.File;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,7 +22,7 @@ builder.Services.AddRouting(options =>
     options.LowercaseUrls = true;
 }); 
 builder.Services.AddControllers();
-
+builder.Services.AddSingleton<FileUtl, FileUtl>(p => new FileUtl("wwwroot/files"));
 builder.Services.AddScoped<ISchemaService, SchemaService>();
 builder.Services.AddScoped<IEntityService, EntityService >();
 

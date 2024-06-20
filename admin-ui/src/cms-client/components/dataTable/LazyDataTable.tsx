@@ -1,12 +1,13 @@
 import {DataTable} from "primereact/datatable";
 
-export function LazyDataTable({columns, data, dataKey, lazyState, eventHandlers, createColumn}: {
+export function LazyDataTable({columns, data, dataKey, lazyState, eventHandlers, createColumn, getFullURL}: {
     data: { items: any[], totalRecords: number }
     dataKey: any
     lazyState: any
     eventHandlers: any
     createColumn: any
     columns: any[]
+    getFullURL : (arg:string) =>string
 }) {
     const {items, totalRecords} = data ?? {}
     return columns && data && <DataTable
@@ -24,6 +25,6 @@ export function LazyDataTable({columns, data, dataKey, lazyState, eventHandlers,
         sortOrder={lazyState.sortOrder}
         {...eventHandlers}
     >
-        {columns.map((column: any, i: number) => createColumn({column, dataKey}))}
+        {columns.map((column: any, i: number) => createColumn({column, dataKey,getFullURL}))}
     </DataTable>
 }

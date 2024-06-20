@@ -1,28 +1,15 @@
+using FluentCMS.Utils.File;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FluentCMS.Controllers;
 [ApiController]
 [Route("api/[controller]")]
-public class FilesController:ControllerBase
+public class FilesController(FileUtl fileUtl):ControllerBase
 {
     [HttpPost]
-    public async Task<ActionResult> Post(List<IFormFile> files)
+    public async Task<ActionResult<string>> Post(List<IFormFile> files)
     {
-        var size = files.Sum(f => f.Length);
-        List<string> paths = new();
-
-        foreach (var formFile in files)
-        {
-            if (formFile.Length == 0)
-            {
-                continue;
-            }
-
-            var filePath = Path.GetTempFileName();
-            await using var stream = System.IO.File.Create(filePath);
-            await formFile.CopyToAsync(stream);
-            paths.Add(filePath);
-        }
-        return Ok(new { count = files.Count, size, paths });
+        var paths = await fileUtl.Save(files.ToArray());
+        return Ok(string.Join(",", paths));
     } 
 }

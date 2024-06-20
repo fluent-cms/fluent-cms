@@ -14,11 +14,12 @@ import {createInput} from "../components/itemForms/inputs/createInput";
 import {useSubSchema} from "./useSubSchema";
 import {useLazyStateHandlers} from "./useLazyStateHandlers";
 
-export function Sublist({column, schemaName, data, schema}: {
+export function Sublist({column, schemaName, data, schema, getFullURL}: {
     schemaName: any
     data: any,
     column: { field: string, header: string, subTable: any },
     schema: any
+    getFullURL : (arg:string) =>string
 }) {
     const uploadUrl=fileUploadURL()
     console.log({uploadUrl})
@@ -69,7 +70,7 @@ export function Sublist({column, schemaName, data, schema}: {
             handleHide={handleHide}
             formId={formId}
             header={'Create ' + column.header}>
-            <ItemForm  {...{data,columns:formColumns, onSubmit, formId, createInput,uploadUrl }} />
+            <ItemForm  {...{data,columns:formColumns, onSubmit, formId, createInput,uploadUrl, getFullURL }} />
         </FormDialog>
     </div>
 }

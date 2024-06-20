@@ -1,7 +1,7 @@
 import {useForm} from "react-hook-form";
 import {createInput} from "./inputs/createInput";
 
-export function ItemForm({columns, data, id, onSubmit, formId, uploadUrl}: {
+export function ItemForm({columns, data, id, onSubmit, formId, uploadUrl, getFullURL}: {
     columns: any[],
     data: any,
     id?: any
@@ -9,6 +9,8 @@ export function ItemForm({columns, data, id, onSubmit, formId, uploadUrl}: {
     formId: any
     uploadUrl:any
     createInput: any
+    getFullURL : (arg:string) =>string
+
 }) {
     const {
         register,
@@ -19,7 +21,7 @@ export function ItemForm({columns, data, id, onSubmit, formId, uploadUrl}: {
     return columns && <form onSubmit={handleSubmit(onSubmit)} id={formId}>
         <div className="formgrid grid">
             {
-                columns.map((column: any) => createInput({data, column, register, control, id, uploadUrl}))
+                columns.map((column: any) => createInput({data, column, register, control, id, uploadUrl,getFullURL}))
             }
         </div>
     </form>
