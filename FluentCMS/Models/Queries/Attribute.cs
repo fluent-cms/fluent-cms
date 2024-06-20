@@ -20,5 +20,6 @@ public class Attribute
     public string Header { get; set; } = "";
     public bool InList { get; set; } = false;
     public bool InDetail { get; set; } = false;
+    public bool IsDefault { get; set; } = false;
     public string Type { get; set; } = "";
 }

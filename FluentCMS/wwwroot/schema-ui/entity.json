@@ -41,6 +41,9 @@
                   "inDetail": {
                     "type": "boolean"
                   },
+                  "isDefault": {
+                    "type": "boolean"
+                  },
                   "type": {
                     "type": "string",
                     "enum": [
