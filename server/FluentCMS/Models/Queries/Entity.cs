@@ -22,8 +22,33 @@ public class Entity
     {
         return new Query(TableName).Where("deleted", false);
     }
+
+    public Query? One(string key)
+    {
+         //todo: need to judge pk data type
+         return !int.TryParse(key, out int id) ? null:
+         Basic().Where(DataKey, id).Select(Columns.Filter(x=>x.InDetail).Select(c=>c.Field));
+    }
     public Query All()
     {
-        return Basic().Select(Columns.Select(c=>c.Field));
+        return Basic().Select(Columns.Filter(x=>x.InList).Select(c=>c.Field));
+    }
+
+    public Query Insert(Record item)
+    {
+        return new Query(TableName).AsInsert(item, true);
+    }
+
+    public Query? Update(Record item)
+    {
+        return item.TryGetValue(DataKey, out object val)
+            ? new Query(TableName).Where(DataKey, val).AsUpdate(item.Keys, item.Values)
+            : null;
+    }
+
+    public Query? Delete(Record item)
+    {
+        return item.TryGetValue(DataKey, out object key)?
+         new Query(TableName).Where(DataKey, key).AsDelete():null;
     }
 }

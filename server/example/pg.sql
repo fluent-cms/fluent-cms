@@ -59,7 +59,7 @@ EXECUTE FUNCTION update_updated_at_column();
 CREATE TABLE posts (
                        id SERIAL PRIMARY KEY,
                        title VARCHAR(255) NOT NULL,
-                       content TEXT NOT NULL,
+                       content TEXT  NULL,
                        category_id INT,
                        thumbnail_image VARCHAR(255),
                        featured_image VARCHAR(255),

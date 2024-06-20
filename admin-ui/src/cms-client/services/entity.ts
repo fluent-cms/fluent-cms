@@ -21,7 +21,7 @@ export async function updateItem(schemaName:any,item:any){
 }
 
 export async function addItem(schemaName:any, item:any){
-    return catchResponse(()=>axios.post(fullAPIURI(`/entities/${schemaName}/create`),item))
+    return catchResponse(()=>axios.post(fullAPIURI(`/entities/${schemaName}/insert`),item))
 }
 
 export async function deleteItem(schemaName:any, item:any){

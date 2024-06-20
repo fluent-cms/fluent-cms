@@ -1,3 +1,5 @@
+using FluentCMS.Models.Queries;
+
 namespace FluentCMS.Services;
 
 public struct EntityList
@@ -11,4 +13,8 @@ public struct EntityList
 public interface IEntityService
 {
     Task<EntityList?> GetAll(string entityName);
+    Task<int?> Insert(string entityName, Record item);
+    Task<int?> Update(string entityName, Record item);
+    Task<int?> Delete(string entityName, Record item);
+    Task<object?> GetOne(string entityName, string id);
 }

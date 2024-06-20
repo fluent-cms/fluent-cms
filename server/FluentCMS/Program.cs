@@ -11,7 +11,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAllOrigins",
         policy  =>
         {
-            policy.WithOrigins("http://127.0.0.1:5173", "http://localhost:5173");
+            policy.WithOrigins("http://127.0.0.1:5173", "http://localhost:5173").
+                AllowAnyHeader().AllowCredentials();
         });
 });
 
@@ -34,7 +35,7 @@ var conn = builder.Configuration.GetConnectionString("PgConnection");
 if (conn is not null)
 {
     builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(conn));
-    builder.Services.AddSingleton<IDao>(p => new PgDao(conn));
+    builder.Services.AddSingleton<IDao>(p => new PgDao(conn,builder.Environment.IsDevelopment()));
 
 }
 

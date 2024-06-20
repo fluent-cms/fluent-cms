@@ -17,5 +17,7 @@ public interface IDao
     Task<string> GetPrimaryKeyColumn(string tableName);
     Task<ColumnDefinition[]> GetColumnDefinitions(string tableName);
     Task<dynamic[]> Get(Query query);
+    Task<object?> GetOne(Query? query);
     Task<int> Count(Query query);
+    Task<int?> Exec(Query? query);
 }
