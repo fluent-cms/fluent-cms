@@ -10,13 +10,11 @@ CREATE TABLE authors (
                          id SERIAL PRIMARY KEY,
                          name VARCHAR(100) NOT NULL,
                          bio TEXT,
-                         thumbnail_image_id INT,
-                         featured_image_id INT,
+                         thumbnail_image VARCHAR(255),
+                         featured_image VARCHAR(255),
                          deleted BOOLEAN DEFAULT FALSE,
                          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                         FOREIGN KEY (thumbnail_image_id) REFERENCES images(id),
-                         FOREIGN KEY (featured_image_id) REFERENCES images(id)
+                         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TRIGGER update_authors_updated_at
@@ -29,14 +27,12 @@ CREATE TABLE categories (
                             name VARCHAR(100) NOT NULL,
                             description TEXT,
                             parent_category_id INT,
-                            thumbnail_image_id INT,
-                            featured_image_id INT,
+                            thumbnail_image VARCHAR(255),
+                            featured_image VARCHAR(255),
                             deleted BOOLEAN DEFAULT FALSE,
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                            FOREIGN KEY (parent_category_id) REFERENCES categories(id),
-                            FOREIGN KEY (thumbnail_image_id) REFERENCES images(id),
-                            FOREIGN KEY (featured_image_id) REFERENCES images(id)
+                            FOREIGN KEY (parent_category_id) REFERENCES categories(id)
 );
 
 CREATE TRIGGER update_categories_updated_at
@@ -48,13 +44,11 @@ CREATE TABLE tags (
                       id SERIAL PRIMARY KEY,
                       name VARCHAR(100) NOT NULL,
                       description TEXT,
-                      thumbnail_image_id INT,
-                      featured_image_id INT,
+                      thumbnail_image VARCHAR(255),
+                      featured_image VARCHAR(255),
                       deleted BOOLEAN DEFAULT FALSE,
                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                      FOREIGN KEY (thumbnail_image_id) REFERENCES images(id),
-                      FOREIGN KEY (featured_image_id) REFERENCES images(id)
+                      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TRIGGER update_tags_updated_at
@@ -67,14 +61,12 @@ CREATE TABLE posts (
                        title VARCHAR(255) NOT NULL,
                        content TEXT NOT NULL,
                        category_id INT,
-                       thumbnail_image_id INT,
-                       featured_image_id INT,
+                       thumbnail_image VARCHAR(255),
+                       featured_image VARCHAR(255),
                        deleted BOOLEAN DEFAULT FALSE,
                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                       FOREIGN KEY (category_id) REFERENCES categories(id),
-                       FOREIGN KEY (thumbnail_image_id) REFERENCES images(id),
-                       FOREIGN KEY (featured_image_id) REFERENCES images(id)
+                       FOREIGN KEY (category_id) REFERENCES categories(id)
 );
 
 CREATE TRIGGER update_posts_updated_at
@@ -83,31 +75,33 @@ CREATE TRIGGER update_posts_updated_at
 EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TABLE post_tags (
+                           id SERIAL PRIMARY KEY,
                            post_id INT,
                            tag_id INT,
-                           PRIMARY KEY (post_id, tag_id),
+                           deleted BOOLEAN DEFAULT FALSE,
+                           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                            FOREIGN KEY (post_id) REFERENCES posts(id),
                            FOREIGN KEY (tag_id) REFERENCES tags(id)
 );
 
+CREATE TRIGGER update_post_tags_updated_at
+    BEFORE UPDATE ON post_tags
+    FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
 CREATE TABLE post_authors (
+                              id SERIAL PRIMARY KEY,
                               post_id INT,
                               author_id INT,
-                              PRIMARY KEY (post_id, author_id),
+                              deleted BOOLEAN DEFAULT FALSE,
+                              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                              updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                               FOREIGN KEY (post_id) REFERENCES posts(id),
                               FOREIGN KEY (author_id) REFERENCES authors(id)
 );
 
-CREATE TABLE images (
-                        id SERIAL PRIMARY KEY,
-                        url VARCHAR(255) NOT NULL,
-                        alt_text VARCHAR(255),
-                        deleted BOOLEAN DEFAULT FALSE,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TRIGGER update_images_updated_at
-    BEFORE UPDATE ON images
+CREATE TRIGGER update_post_authors_updated_at
+    BEFORE UPDATE ON post_authors
     FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();

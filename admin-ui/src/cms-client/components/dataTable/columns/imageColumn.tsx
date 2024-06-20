@@ -5,7 +5,6 @@ import {Avatar} from "primereact/avatar";
 export function imageColumn({column, dataKey}:{
     dataKey:any
     column: {field:any, header:any, linkToEntity:string}
-    assetsBaseURL: any
 }){
     const bodyTemplate = (item:any) => {
         const fullURL = item[column.field]

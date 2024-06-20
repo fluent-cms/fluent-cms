@@ -9,7 +9,6 @@ export function LazyDataTable({columns, data, dataKey, lazyState, eventHandlers,
     columns: any[]
 }) {
     const {items, totalRecords} = data ?? {}
-    console.log("9999999",{items, totalRecords, columns})
     return columns && data && <DataTable
         sortMode="multiple"
         dataKey={dataKey}
