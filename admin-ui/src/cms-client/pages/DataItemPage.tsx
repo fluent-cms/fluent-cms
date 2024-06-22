@@ -8,8 +8,7 @@ import {Sublist} from "../containers/Sublist";
 import {Button} from "primereact/button";
 import {Subgrid} from "../containers/Subgrid";
 import {userRequestStatus} from "../components/itemForms/userFormStatusUI";
-import {fileUploadURL} from "../configs";
-import {createInput} from "../components/itemForms/inputs/createInput";
+import {fileUploadURL, getFullAssetsURL} from "../configs";
 
 export function DataItemPage() {
     const uploadUrl = fileUploadURL()
@@ -26,13 +25,13 @@ export function DataItemPage() {
 
 
     const onSubmit = async (formData: any) => {
-        formData[schema.dataKey] = id
+        formData[schema.primaryKey] = id
         checkError((await updateItem(schemaName,formData)), 'Save Succeed')
     }
 
     const onDelete = async () => {
         confirm('Do you want to delete this item?',async () => {
-            data[schema.dataKey] = id
+            data[schema.primaryKey] = id
             const res  =await deleteItem(schemaName,data)
             checkError(res, 'Delete Succeed')
             if (!res.err){
@@ -44,13 +43,13 @@ export function DataItemPage() {
 
     return schema && <>
         <Status/>
-        <ItemForm {...{data, id, onSubmit, columns,formId,uploadUrl,  createInput}} />
+        <ItemForm {...{data, id, onSubmit, columns,formId,uploadUrl,  getFullURL:getFullAssetsURL}} />
         <Button type={'submit'} label={"Save " + schema.title} icon="pi pi-check" form={formId}/>
         {' '}
         <Button type={'button'} label={"Delete " + schema.title} severity="danger" onClick={onDelete}/>
         {
             subPages.map((column: any) => {
-                const props = {schemaName, schema, data, column}
+                const props = {schemaName, schema, data, column,  getFullURL:getFullAssetsURL}
                 return <div key={column.field}>
                     <Divider/>
                     { column.type === 'subgrid' && <Subgrid key={column.field} {...props}/> }

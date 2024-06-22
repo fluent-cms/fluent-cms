@@ -1,10 +1,10 @@
 
 export function getWriteColumns(schema:any) {
-    return schema?.columns?.filter((column: any) => !!column.inDetail && !column.isDefault) ?? []
+    return schema?.attributes?.filter((column: any) => !!column.inDetail && !column.isDefault) ?? []
 }
 
 export function getSubPageColumns(schema:any) {
-    return schema?.columns?.filter((column: any) => column.type === 'subgrid' || column.type === 'sublist') ?? []
+    return schema?.attributes?.filter((column: any) => column.type === 'subgrid' || column.type === 'sublist') ?? []
 }
 
 export function getLinkToEntity(targetSchemaName: string, currentSchemaName :string){
@@ -19,7 +19,7 @@ export function getLinkToEntity(targetSchemaName: string, currentSchemaName :str
 
 export function getListColumns(schema:any, targetSchemaName:any, currentSchemaName :any) {
     const link = getLinkToEntity(targetSchemaName, currentSchemaName)
-    const cols = schema?.columns?.filter((column: any) => !!column.inList ) ?? []
+    const cols = schema?.attributes?.filter((column: any) => !!column.inList ) ?? []
     cols.forEach((col:any) =>{
         col.linkToEntity = link
     })

@@ -1,6 +1,23 @@
 import {Column} from "primereact/column";
 
-export function textColumn({column}:{column: {field:any, header:any}}){
-    return <Column key={column.field} field={column.field} header={column.header} sortable filter></Column>
+export function textColumn({primaryKey, column, titleAttribute}:{
+    primaryKey: string,
+    titleAttribute: string;
+    column:  {type :string, field:string, header:any, linkToEntity:string,lookupEntity:any}
+}){
+    const bodyTemplate = (item:any) => {
+        let val = item[column.field]
+        var dataField = column.field+"_data";
+        if (column.type === "lookup" && item[dataField]){
+            val = item[dataField][column.lookupEntity.titleAttribute]
+        }
+
+        if (column.field == titleAttribute){
+            return <a href={`${column.linkToEntity}/${item[primaryKey]}`} >{val}</a>;
+        }else {
+            return <>{val}</>
+        }
+    };
+    return <Column key={column.field} field={column.field} header={column.header} sortable filter body={bodyTemplate}></Column>
 }
 

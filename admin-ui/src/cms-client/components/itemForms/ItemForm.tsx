@@ -8,7 +8,6 @@ export function ItemForm({columns, data, id, onSubmit, formId, uploadUrl, getFul
     onSubmit: any
     formId: any
     uploadUrl:any
-    createInput: any
     getFullURL : (arg:string) =>string
 
 }) {

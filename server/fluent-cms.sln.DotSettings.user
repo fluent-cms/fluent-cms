@@ -3,5 +3,16 @@
   &lt;TestAncestor&gt;
     &lt;TestId&gt;NUnit3x::631D2397-17DC-4B19-96AF-D35AF291793D::net8.0::Test.Tests.TestSerialize&lt;/TestId&gt;
     &lt;TestId&gt;NUnit3x::631D2397-17DC-4B19-96AF-D35AF291793D::net8.0::Test.Tests.TestDeserialize&lt;/TestId&gt;
+    &lt;TestId&gt;NUnit3x::631D2397-17DC-4B19-96AF-D35AF291793D::net8.0::Test.Tests.TestInt&lt;/TestId&gt;
+    &lt;TestId&gt;NUnit3x::631D2397-17DC-4B19-96AF-D35AF291793D::net8.0::Test.Tests.TestPGDaoGet&lt;/TestId&gt;
+    &lt;TestId&gt;NUnit3x::631D2397-17DC-4B19-96AF-D35AF291793D::net8.0::Test.Tests.TestObjectEq&lt;/TestId&gt;
+  &lt;/TestAncestor&gt;
+&lt;/SessionState&gt;</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=fdcff861_002Db3b4_002D4581_002D922a_002D1f4828d6b885/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="TestPGDaoGet" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+  &lt;TestAncestor&gt;
+    &lt;TestId&gt;NUnit3x::631D2397-17DC-4B19-96AF-D35AF291793D::net8.0::Test.Tests.TestPGDaoGet&lt;/TestId&gt;
+    &lt;TestId&gt;NUnit3x::631D2397-17DC-4B19-96AF-D35AF291793D::net8.0::Test.Tests.TestDeserialize&lt;/TestId&gt;
+    &lt;TestId&gt;NUnit3x::631D2397-17DC-4B19-96AF-D35AF291793D::net8.0::Test.Tests.TestInt&lt;/TestId&gt;
+    &lt;TestId&gt;NUnit3x::631D2397-17DC-4B19-96AF-D35AF291793D::net8.0::Test.Tests.TestObjectEq&lt;/TestId&gt;
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

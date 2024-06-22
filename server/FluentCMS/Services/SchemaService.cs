@@ -32,7 +32,7 @@ public class SchemaService(AppDbContext context, IDao dao) : ISchemaService
             return null;
         }
 
-        entity.DataKey = await dao.GetPrimaryKeyColumn(entity.TableName);
+        entity.PrimaryKey = await dao.GetPrimaryKeyColumn(entity.TableName);
         entity.SetAttributes(await dao.GetColumnDefinitions(entity.TableName));
         return dto;
     }
@@ -43,8 +43,12 @@ public class SchemaService(AppDbContext context, IDao dao) : ISchemaService
          return schemas.Select(x => new SchemaDisplayDto(x));
     }
     
-    public async Task<Entity?> GetEntityByName(string name)
+    public async Task<Entity?> GetEntityByName(string? name)
     {
+        if (name is null)
+        {
+            return null;
+        }
         var item = await context.Schemas.Where(x => x.Name == name).FirstOrDefaultAsync();
         if (item is null)
         {
@@ -67,7 +71,27 @@ public class SchemaService(AppDbContext context, IDao dao) : ISchemaService
         {
             item = await context.Schemas.Where(x => x.Name == name).FirstOrDefaultAsync();
         }
-        return item is null ? null: new SchemaDisplayDto(item);
+
+        if (item is null)
+        {
+            return null;
+        }
+        var dto =  new SchemaDisplayDto(item);
+        //for lookups, attach lookup entity to make frontend's life easier
+        if (dto.Settings?.Entity is not null)
+        {
+            foreach (var attribute in dto.Settings.Entity.Lookups())
+            {
+                var entityName = attribute.GetLookupEntityName();
+                if (entityName is null)
+                {
+                    continue;
+                }
+
+                attribute.LookupEntity = await GetEntityByName(entityName);
+            }
+        }
+        return dto;
     }
 
     public async Task<SchemaDto?> Save(SchemaDto dto)

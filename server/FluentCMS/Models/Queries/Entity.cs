@@ -1,37 +1,85 @@
 using FluentCMS.Utils.Dao;
 using SqlKata;
-using SqlKata.Execution;
 
 namespace FluentCMS.Models.Queries;
+using Record = IDictionary<string,object>;
 
 public class Entity
 {
     public Entity(){}
     public void SetAttributes(ColumnDefinition[] cols )
     {
-        Columns = cols.Select(x => new Attribute(x)).ToArray();
+        Attributes = cols.Select(x => new Attribute(x)).ToArray();
     }
     public string TableName { get; set; } = "";
     public string Title { get; set; } = "";
-    public string DataKey { get; set; } = ""; 
+    public string PrimaryKey { get; set; } = "";
+    public string TitleAttribute { get; set; } = "";
+    
     public int DefaultPageSize { get; set; } = 20;
-    public Attribute[] Columns { get; set; } = [];
-
-
-    private Query Basic()
+    //must be public to expose to json parser
+    public Attribute[] Attributes { get; set; } = [];
+    public Attribute[] ListLookups()
     {
-        return new Query(TableName).Where("deleted", false);
+        return Attributes.Where(x => x.InList && x.Type == DisplayType.lookup).ToArray();
+    }
+    public Attribute[] Lookups()
+    {
+        return Attributes.Where(x=>x.Type == DisplayType.lookup).ToArray();
     }
 
+    public Attribute[] DetailLookups()
+    {
+        return Attributes.Where(x => x.InDetail && x.Type == DisplayType.lookup).ToArray();
+    }
+    public Attribute[] AttributesForLookup()
+    {
+        return Attributes.Where(x => x.Field == PrimaryKey || x.Field == TitleAttribute).ToArray();
+    }
+
+    public Attribute[] ListAttributes()
+    {
+        return Attributes.Where(x => x.InList).ToArray();
+    }
+
+    public Attribute[] DetailAttributes()
+    {
+        return Attributes.Where(x => x.InDetail).ToArray();
+    }
+
+    public Func<string,object>? GetDetailFieldParser(string field)
+    {
+        var attr = Attributes.FirstOrDefault(x => x.Field == field && x.InDetail);
+        if (attr is null)
+        {
+            return null;
+        }
+        return attr.CastToDatabaseType;
+    }
+
+    public Attribute KeyAttribute()
+    {
+        return Attributes.First(x => x.Field == PrimaryKey);
+    }
+
+    public object[] Ids(Record[] items)
+    {
+        return items.Select((x => x[PrimaryKey])).ToArray();
+    }
     public Query? One(string key)
     {
-         //todo: need to judge pk data type
-         return !int.TryParse(key, out int id) ? null:
-         Basic().Where(DataKey, id).Select(Columns.Filter(x=>x.InDetail).Select(c=>c.Field));
+        var id = KeyAttribute().CastToDatabaseType(key);
+        return Basic().Where(PrimaryKey, id).Select(Attributes.Filter(x=>x.InDetail).Select(c=>c.Field));
     }
-    public Query All()
+    public Query List()
     {
-        return Basic().Select(Columns.Filter(x=>x.InList).Select(c=>c.Field));
+        var lstFields = ListAttributes().Select(x=>x.Field);
+        return Basic().Select(lstFields.ToArray());
+    }
+    public Query Many(object[]ids, Attribute[] attributes)
+    {
+        var lstFields = attributes.Select(x => x.Field);
+        return Basic().Select(lstFields.ToArray()).WhereIn(PrimaryKey,ids);
     }
 
     public Query Insert(Record item)
@@ -41,14 +89,19 @@ public class Entity
 
     public Query? Update(Record item)
     {
-        return item.TryGetValue(DataKey, out object val)
-            ? new Query(TableName).Where(DataKey, val).AsUpdate(item.Keys, item.Values)
+        return item.TryGetValue(PrimaryKey, out object val)
+            ? new Query(TableName).Where(PrimaryKey, val).AsUpdate(item.Keys, item.Values)
             : null;
     }
 
     public Query? Delete(Record item)
     {
-        return item.TryGetValue(DataKey, out object key)?
-         new Query(TableName).Where(DataKey, key).AsDelete():null;
+        return item.TryGetValue(PrimaryKey, out object key)?
+         new Query(TableName).Where(PrimaryKey, key).AsDelete():null;
+    }
+    
+    private Query Basic()
+    {
+        return new Query(TableName).Where("deleted", false);
     }
 }

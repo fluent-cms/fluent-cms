@@ -1,12 +1,12 @@
 import {DataTable} from "primereact/datatable";
 import {Column} from "primereact/column";
-import {useState} from "react";
+import {createColumn} from "./columns/createColumn";
 
-export function SelectDataTable({dataKey, columns, data, createColumn, selectedItems, setSelectedItems, lazyState, eventHandlers}: {
-    dataKey: any
+export function SelectDataTable({primaryKey, titleAttribute, columns, data, selectedItems, setSelectedItems, lazyState, eventHandlers}: {
+    primaryKey: string
+    titleAttribute: string
     columns: any[]
     data: { items: any[], totalRecords: number }
-    createColumn: any
     selectedItems: any
     setSelectedItems: any
     lazyState: any
@@ -16,7 +16,7 @@ export function SelectDataTable({dataKey, columns, data, createColumn, selectedI
     return columns && data && <DataTable
         selection={selectedItems}
         onSelectionChange={(e) => setSelectedItems(e.value)}
-        dataKey={dataKey}
+        dataKey={primaryKey}
         value={items}
         paginator
         totalRecords={totalRecords}
@@ -30,6 +30,6 @@ export function SelectDataTable({dataKey, columns, data, createColumn, selectedI
         {...eventHandlers}
     >
         <Column selectionMode="multiple" headerStyle={{width: '3rem'}}></Column>
-        {columns.map((column: any, i: number) => createColumn({column, dataKey}))}
+        {columns.map((column: any, i: number) => createColumn({column, primaryKey, titleAttribute }))}
     </DataTable>
 }

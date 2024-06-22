@@ -6,7 +6,6 @@ import {addItem} from "../services/entity";
 import {Button} from "primereact/button";
 import {fileUploadURL, getFullAssetsURL} from "../configs";
 import {userRequestStatus} from "../components/itemForms/userFormStatusUI";
-import {createInput} from "../components/itemForms/inputs/createInput";
 
 export function NewDataItemPage() {
     const uploadUrl = fileUploadURL()
@@ -29,7 +28,7 @@ export function NewDataItemPage() {
 
     return <>
         <Status/>
-        <ItemForm {...{data, id, onSubmit, columns, formId,uploadUrl, createInput, getFullURL: getFullAssetsURL}}/>
+        <ItemForm {...{data, id, onSubmit, columns, formId,uploadUrl,  getFullURL: getFullAssetsURL}}/>
         <Button label={'Save ' + schema.title} type="submit" form={formId}/>
     </>
 }

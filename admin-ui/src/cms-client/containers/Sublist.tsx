@@ -1,16 +1,12 @@
 import {deleteSubPageItems, saveSubPageItems, useSubPageData} from "../services/entity";
-import {createColumn} from "../components/dataTable/columns/createColumn";
 import {Button} from "primereact/button";
 import {FormDialog} from "../components/dialogs/FormDialog";
 import {useFormDialogState} from "../components/dialogs/useFormDialogState";
 import {SelectDataTable} from "../components/dataTable/SelectDataTable";
-import {useSchema} from "../services/schema";
-import {useState} from "react";
-import {getListColumns, getWriteColumns} from "../utils/columnUtil";
+
 import {ItemForm} from "../components/itemForms/ItemForm";
 import {fileUploadURL} from "../configs";
 import {userRequestStatus} from "../components/itemForms/userFormStatusUI";
-import {createInput} from "../components/itemForms/inputs/createInput";
 import {useSubSchema} from "./useSubSchema";
 import {useLazyStateHandlers} from "./useLazyStateHandlers";
 
@@ -22,7 +18,6 @@ export function Sublist({column, schemaName, data, schema, getFullURL}: {
     getFullURL : (arg:string) =>string
 }) {
     const uploadUrl=fileUploadURL()
-    console.log({uploadUrl})
     const {visible, handleShow, handleHide} = useFormDialogState()
     const {id,listColumns,formColumns,formId,targetSchema, existingItems, setExistingItems} =
         useSubSchema(data, schema, schemaName,column)
@@ -45,8 +40,6 @@ export function Sublist({column, schemaName, data, schema, getFullURL}: {
             }
         })
     }
-
-
     return <div className={'card col-12'}>
         <label id={column.field} className="font-bold">
             {column.header}
@@ -57,8 +50,8 @@ export function Sublist({column, schemaName, data, schema, getFullURL}: {
         <Button type={'button'} label={"Delete " } severity="danger" onClick={onDelete} outlined size="small" />
         <SelectDataTable
             data={subgridData}
-            createColumn={createColumn}
-            dataKey={targetSchema.dataKey}
+            primaryKey={targetSchema.primaryKey}
+            titleAttribute={targetSchema.titleAttribute}
             columns={listColumns}
             selectedItems={existingItems}
             setSelectedItems={setExistingItems}
@@ -70,7 +63,7 @@ export function Sublist({column, schemaName, data, schema, getFullURL}: {
             handleHide={handleHide}
             formId={formId}
             header={'Create ' + column.header}>
-            <ItemForm  {...{data,columns:formColumns, onSubmit, formId, createInput,uploadUrl, getFullURL }} />
+            <ItemForm  {...{data,columns:formColumns, onSubmit, formId,uploadUrl, getFullURL }} />
         </FormDialog>
     </div>
 }

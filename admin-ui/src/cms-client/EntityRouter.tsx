@@ -1,5 +1,5 @@
 import {Route, Routes,} from "react-router-dom";
-import {DataListPage} from "./containers/DataListPage";
+import {DataListPage} from "./pages/DataListPage";
 import {DataItemPage} from "./pages/DataItemPage";
 import {NewDataItemPage} from "./pages/NewDataItemPage";
 

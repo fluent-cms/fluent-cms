@@ -6,12 +6,15 @@ import {TextAreaInput} from "./TextAreaInput";
 import {DatetimeInput} from "./DatetimeInput";
 import {MultiSelectInput} from "./MultiSelectInput";
 import {GalleryInput} from "./GalleryInput";
+import {LookupDownInput} from "./LookupInput";
 
 export function createInput(props :any) {
     const {type, field} = props.column
     switch (type) {
         case 'dropdown':
             return <DropDownInput className={'field col-12 md:col-4'} key={field}{...props}/>
+        case 'lookup':
+            return <LookupDownInput className={'field col-12 md:col-4'} key={field}{...props}/>
         case 'editor':
             return <EditorInput className={'field col-12'} key={field} {...props}/>
         case 'image':

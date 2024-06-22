@@ -1,3 +1,5 @@
+using System.Dynamic;
+using FluentCMS.Models.Queries;
 using LanguageExt;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -6,6 +8,7 @@ using SqlKata.Execution;
 using Query = SqlKata.Query;
 
 namespace FluentCMS.Utils.Dao;
+using Record = IDictionary<string,object>;
 
 public class PgDao(string connectionString, bool debug):IDao
 {
@@ -13,19 +16,37 @@ public class PgDao(string connectionString, bool debug):IDao
 
     public async Task<int?> Exec(Query? query)
     {
-        Log(query);
-        return query is null ? null:await ExecuteKateQuery(async db => await db.ExecuteAsync(query));
+        if (query is null)
+        {
+            return null;
+        }
+        return await ExecuteKateQuery(async db =>
+        {
+            
+            var res =await db.ExecuteScalarAsync<int>(query); 
+            
+            Log(query,res);
+            return res;
+        });
     }
 
-    public async Task<object?> GetOne(Query? query)
+    public async Task<Record?> One(Query? query)
     {
         Log(query);
         return query is null ? null : await ExecuteKateQuery(async db => await db.FirstOrDefaultAsync(query));
     }
-    public async Task<dynamic[]> Get(Query query)
+    public async Task<Record[]?> Many(Query? query)
     {
+        if (query is null)
+        {
+            return null;
+        }
         Log(query);
-        return await ExecuteKateQuery(async db => (await db.GetAsync(query)).ToArray());
+        return await ExecuteKateQuery(async db =>
+        {
+            var items = await db.GetAsync(query);
+            return items.Select((x => (Record)x)).ToArray();
+        });
     }
 
     public async Task<int> Count(Query query)
@@ -66,12 +87,20 @@ public class PgDao(string connectionString, bool debug):IDao
                 var column = new ColumnDefinition
                 {
                     ColumnName = reader.GetString(0),
-                    DataType = reader.GetString(1),
                     MaxLength = reader.IsDBNull(2) ? "N/A" : reader.GetValue(2).ToString(),
                     IsNullable = reader.GetString(3),
                     DefaultValue = reader.IsDBNull(4) ? "N/A" : reader.GetValue(4).ToString()
                 };
-
+                var t = reader.GetString(1);
+                switch (t)
+                {
+                    case "integer":
+                        column.DataType = DatabaseType.Int;
+                        break;
+                    default:
+                        column.DataType = DatabaseType.Text;
+                        break;
+                }
                 columnDefinitions.Add(column);
             }
             return columnDefinitions.ToArray();
@@ -100,12 +129,17 @@ public class PgDao(string connectionString, bool debug):IDao
         return await queryFunc(db);
     }
 
-    private void Log(Query? query)
+    private void Log(Query? query, params object[] results)
     {
         if (!debug || query is null)
         {
             return;
         }
         Console.WriteLine(_compiler.Compile(query));
+        if (results.Length > 0)
+        {
+            Console.WriteLine("Results:");
+            Console.WriteLine(string.Join(",", results));
+        }
     }
 }

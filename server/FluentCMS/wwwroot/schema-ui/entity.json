@@ -16,13 +16,16 @@
             "title": {
               "type": "string"
             },
-            "dataKey": {
+            "primaryKey": {
+              "type": "string"
+            },
+            "titleAttribute": {
               "type": "string"
             },
             "defaultPageSize": {
               "type": "number"
             },
-            "columns": {
+            "attributes": {
               "type": "array",
               "format": "table",
               "id": "fields",
@@ -44,6 +47,28 @@
                   "isDefault": {
                     "type": "boolean"
                   },
+                  "dataType":{
+                    "type": "string",
+                    "enum":[  
+                      "Int",
+                      "BigInt",
+                      "SmallInt",
+                      "TinyInt",
+                      
+                      "Decimal",
+                      "Float",
+                      
+                      "Date",
+                      "Time",
+                      "Datetime",
+                      
+                      "Text",
+                      "Binary",
+                      "Json",
+                      
+                      "NA"
+                    ]
+                  },
                   "type": {
                     "type": "string",
                     "enum": [
@@ -51,17 +76,16 @@
                       "textarea",
                       "number",
                       "datetime",
+                      "date",
                       "image",
                       "gallery",
                       "file",
-                      "link",
                       "editor",
                       "dropdown",
                       "lookup",
                       "subgrid",
                       "sublist",
                       "multiselect",
-                      "ms",
                       "json"
                     ]
                   },
