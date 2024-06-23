@@ -4,9 +4,9 @@ import {ItemForm} from "../components/itemForms/ItemForm";
 import {deleteItem, updateItem, useItemData} from "../services/entity";
 import {Divider} from "primereact/divider";
 import {getLinkToEntity, getSubPageColumns, getWriteColumns} from "../utils/columnUtil";
-import {Sublist} from "../containers/Sublist";
+import {Subtable} from "../containers/Subtable";
 import {Button} from "primereact/button";
-import {Subgrid} from "../containers/Subgrid";
+import {Crosstable} from "../containers/Crosstable";
 import {userRequestStatus} from "../components/itemForms/userFormStatusUI";
 import {fileUploadURL, getFullAssetsURL} from "../configs";
 
@@ -49,11 +49,12 @@ export function DataItemPage() {
         <Button type={'button'} label={"Delete " + schema.title} severity="danger" onClick={onDelete}/>
         {
             subPages.map((column: any) => {
+                console.log({column})
                 const props = {schemaName, schema, data, column,  getFullURL:getFullAssetsURL}
                 return <div key={column.field}>
                     <Divider/>
-                    { column.type === 'subgrid' && <Subgrid key={column.field} {...props}/> }
-                    { column.type === 'sublist' && <Sublist key={column.field} {...props}/> }
+                    { column.type === 'crosstable' && <Crosstable key={column.field} {...props}/> }
+                    { column.type === 'subtable' && <Subtable key={column.field} {...props}/> }
                 </div>
             })
         }

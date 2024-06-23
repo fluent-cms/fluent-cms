@@ -5,18 +5,22 @@ public enum DisplayType
 {
     text,
     textarea,
+    editor,
+    
     number,
+    
     datetime,
     date,
+    
     image,
     gallery,
     file,
-    link,
-    editor,
+    json,
+    
     dropdown,
     lookup,
-    subgrid,
-    sublist,
     multiselect,
-    json
+    
+    crosstable,
+    subtable,
 }

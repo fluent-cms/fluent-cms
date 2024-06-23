@@ -4,7 +4,7 @@ export function getWriteColumns(schema:any) {
 }
 
 export function getSubPageColumns(schema:any) {
-    return schema?.attributes?.filter((column: any) => column.type === 'subgrid' || column.type === 'sublist') ?? []
+    return schema?.attributes?.filter((column: any) => column.type === 'crosstable' || column.type === 'subtable') ?? []
 }
 
 export function getLinkToEntity(targetSchemaName: string, currentSchemaName :string){

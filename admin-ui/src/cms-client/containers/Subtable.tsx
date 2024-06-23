@@ -10,7 +10,7 @@ import {userRequestStatus} from "../components/itemForms/userFormStatusUI";
 import {useSubSchema} from "./useSubSchema";
 import {useLazyStateHandlers} from "./useLazyStateHandlers";
 
-export function Sublist({column, schemaName, data, schema, getFullURL}: {
+export function Subtable({column, schemaName, data, schema, getFullURL}: {
     schemaName: any
     data: any,
     column: { field: string, header: string, subTable: any },

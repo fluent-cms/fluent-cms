@@ -20,12 +20,12 @@ public class PgDao(string connectionString, bool debug):IDao
         {
             return null;
         }
+        Log(query);
         return await ExecuteKateQuery(async db =>
         {
             
             var res =await db.ExecuteScalarAsync<int>(query); 
             
-            Log(query,res);
             return res;
         });
     }
@@ -129,17 +129,14 @@ public class PgDao(string connectionString, bool debug):IDao
         return await queryFunc(db);
     }
 
-    private void Log(Query? query, params object[] results)
+    private void Log(Query? query)
     {
         if (!debug || query is null)
         {
             return;
         }
-        Console.WriteLine(_compiler.Compile(query));
-        if (results.Length > 0)
-        {
-            Console.WriteLine("Results:");
-            Console.WriteLine(string.Join(",", results));
-        }
+
+        var res = _compiler.Compile(query);
+        Console.WriteLine(res);
     }
 }

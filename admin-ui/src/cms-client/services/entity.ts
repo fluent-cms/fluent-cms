@@ -7,7 +7,6 @@ import {catchResponse, fetcher, swrConfig} from "./util";
 
 export function useListData(schemaName: string | undefined, lazyState: any) {
     const {data} = useSWR(fullAPIURI(`/entities/${schemaName}?${lazyStateUtil.encode(lazyState)}`), fetcher,swrConfig)
-    console.log({data})
     return data
 }
 

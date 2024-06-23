@@ -22,7 +22,11 @@ public class Attribute
     
     public string[]?Options { get; set; }
 
-    public Entity? LookupEntity { get; set; }
+    [JsonIgnore]
+    public Entity Parent { get; set; } = null!;
+    // not input in json designer, 
+    public Crosstable? Crosstable { get; set; } 
+    public Entity? Lookup { get; set; }
     public Attribute()
     {
     }
@@ -37,6 +41,15 @@ public class Attribute
         DataType = col.DataType;
     }
 
+    public string FullName()
+    {
+        return Parent.TableName + "." + Field;
+    }
+    public string? GetCrossJoinEntityName()
+    {
+        return Options?.FirstOrDefault();
+    }
+ 
     public string? GetLookupEntityName()
     {
         return Options?.FirstOrDefault();

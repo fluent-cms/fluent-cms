@@ -8,53 +8,28 @@ namespace FluentCMS.Services;
 using Record = IDictionary<string,object>;
 
 
-public class EntityService(IDao dao, ISchemaService schemaService):IEntityService
+public class EntityService(IDao dao, ISchemaService schemaService) : IEntityService
 {
-    private async Task LoadLookup(Attribute lookupAttribute, Record[] items, Func<Entity, Attribute[]> getFields)
-    {
-        var lookupEntity = await schemaService.GetEntityByName(lookupAttribute.GetLookupEntityName());
-        if (lookupEntity is null)
-        {
-            return;
-        }
-        
-        var ids = lookupAttribute.GetValues(items);
-        if (ids.Length == 0)
-        {
-            return;
-        }
-        var lookupRecords = await dao.Many(lookupEntity.Many(ids, getFields(lookupEntity)));
-        if (lookupRecords is null)
-        {
-            return;
-        }
-        
-        foreach (var lookupRecord in lookupRecords)
-        {
-            var lookupId = lookupRecord[lookupEntity.PrimaryKey];
-            foreach (var item in items.Where(local => local[lookupAttribute.Field] is not null && local[lookupAttribute.Field].Equals(lookupId)))
-            {
-                item[lookupAttribute.Field + "_data"] = lookupRecord;
-            }
-        }
-    }
-    
-    public async Task<object?> One(string entityName, string id)
+
+
+    public async Task<Record?> One(string entityName, string id)
     {
         var entity = await schemaService.GetEntityByName(entityName);
         if (entity is null)
         {
             return null;
         }
-        var record =await dao.One(entity.One(id));
+
+        var record = await dao.One(entity.One(id));
         if (record is null)
         {
             return null;
         }
 
-        foreach (var detailLookupsAttribute in entity.DetailLookups())
+        foreach (var detailLookupsAttribute in entity.GetAttributes(DisplayType.lookup, Entity.InListOrDetail.InDetail))
         {
-            await LoadLookup(detailLookupsAttribute, [record], lookupEntity => lookupEntity.ListAttributes());
+            await LoadLookup(detailLookupsAttribute, [record],
+                lookupEntity => lookupEntity.GetAttributes(null, Entity.InListOrDetail.InDetail));
         }
 
         return record;
@@ -67,16 +42,18 @@ public class EntityService(IDao dao, ISchemaService schemaService):IEntityServic
         {
             return null;
         }
+
         var records = await dao.Many(entity.List());
         if (records is null)
         {
             return null;
         }
 
-        foreach (var listLookupsAttribute in entity.ListLookups())
+        foreach (var listLookupsAttribute in entity.GetAttributes(DisplayType.lookup, Entity.InListOrDetail.InList))
         {
             await LoadLookup(listLookupsAttribute, records, lookupEntity => lookupEntity.AttributesForLookup());
         }
+
         return new EntityList
         {
             Items = records,
@@ -89,16 +66,16 @@ public class EntityService(IDao dao, ISchemaService schemaService):IEntityServic
         var entity = await schemaService.GetEntityByName(entityName);
         if (entity is null) return null;
 
-        var record =  RecordParser.Parse(ele, entity.GetDetailFieldParser);
-        return  await dao.Exec(entity.Insert(record));
+        var record = RecordParser.Parse(ele, entity.GetDatabaseTypeCaster);
+        return await dao.Exec(entity.Insert(record));
     }
 
     public async Task<int?> Update(string entityName, JsonElement ele)
     {
         var entity = await schemaService.GetEntityByName(entityName);
         if (entity is null) return null;
-        
-        var record =  RecordParser.Parse(ele, entity.GetDetailFieldParser);
+
+        var record = RecordParser.Parse(ele, entity.GetDatabaseTypeCaster);
         return await dao.Exec(entity.Update(record));
     }
 
@@ -106,10 +83,124 @@ public class EntityService(IDao dao, ISchemaService schemaService):IEntityServic
     {
         var entity = await schemaService.GetEntityByName(entityName);
         if (entity is null) return null;
-        
-        var record =  RecordParser.Parse(ele, entity.GetDetailFieldParser);
+
+        var record = RecordParser.Parse(ele, entity.GetDatabaseTypeCaster);
         return await dao.Exec(entity.Delete(record));
     }
 
-    
+    private async Task LoadCrossJoinTable(Attribute attribute, Record[] items, Func<Entity, Attribute[]> getFields)
+    {
+        var ids = attribute.GetValues(items);
+        if (ids.Length == 0)
+        {
+            return;
+        }
+
+        var cross = attribute.Crosstable;
+        if (cross is null)
+        {
+            return;
+        }
+
+        var query = cross.Many(getFields(cross.TargetEntity), ids, true);
+        var lookupRecords = await dao.Many(query);
+        if (lookupRecords is null)
+        {
+            return;
+        }
+
+        foreach (var lookupRecord in lookupRecords)
+        {
+            var lookupId = lookupRecord[cross.FromAttribute.Field];
+            foreach (var item in items.Where(local => local[attribute.Parent.PrimaryKey].Equals(lookupId)))
+            {
+                item[attribute.Field] = lookupRecord;
+            }
+        }
+    }
+
+    private async Task LoadLookup(Attribute lookupAttribute, Record[] items, Func<Entity, Attribute[]> getFields)
+    {
+        var lookupEntity = await schemaService.GetEntityByName(lookupAttribute.GetLookupEntityName());
+        if (lookupEntity is null)
+        {
+            return;
+        }
+
+        var ids = lookupAttribute.GetValues(items);
+        if (ids.Length == 0)
+        {
+            return;
+        }
+
+        var lookupRecords = await dao.Many(lookupEntity.Many(ids, getFields(lookupEntity)));
+        if (lookupRecords is null)
+        {
+            return;
+        }
+
+        foreach (var lookupRecord in lookupRecords)
+        {
+            var lookupId = lookupRecord[lookupEntity.PrimaryKey];
+            foreach (var item in items.Where(local =>
+                         local[lookupAttribute.Field] is not null && local[lookupAttribute.Field].Equals(lookupId)))
+            {
+                item[lookupAttribute.Field + "_data"] = lookupRecord;
+            }
+        }
+    }
+
+    private async Task<Attribute?> FindAttribute(string entityName, string attributeName)
+    {
+        var entity = await schemaService.GetEntityByName(entityName);
+        if (entity is null)
+        {
+            return null;
+        }
+
+        return entity.Attributes.FirstOrDefault(x => x.Field == attributeName);
+    }
+
+    public async Task<int?> CrosstableDelete(string entityName, string strId, string attributeName, JsonElement[] elements)
+    {
+        var attribute = await FindAttribute(entityName, attributeName);
+        if (attribute is null || attribute.Crosstable is null)
+        {
+            return null;
+        }
+
+        var items = elements.Select(ele =>
+            RecordParser.Parse(ele, attribute.Crosstable.TargetEntity.GetDatabaseTypeCaster));
+        return await dao.Exec(attribute.Crosstable.Delete(strId, items.ToArray()));
+    }
+
+    public async Task<int?> CrosstableSave(string entityName, string strId, string attributeName, JsonElement[] elements)
+    {
+        var attribute = await FindAttribute(entityName, attributeName);
+        if (attribute is null || attribute.Crosstable is null)
+        {
+            return null;
+        }
+
+        var items = elements.Select(ele =>
+            RecordParser.Parse(ele, attribute.Crosstable.TargetEntity.GetDatabaseTypeCaster));
+        return await dao.Exec(attribute.Crosstable.Insert(strId,items.ToArray() ));
+        }
+
+    public async Task<EntityList?> CrosstableList(string entityName, string strId, string attributeName, bool exclude)
+    {
+        var attribute =await FindAttribute(entityName, attributeName);
+        if (attribute is null || attribute.Crosstable is null)
+        {
+            return null;
+        }
+        
+        var selectAttributes = attribute.Crosstable.TargetEntity.GetAttributes(null, Entity.InListOrDetail.InList);
+        var query = attribute.Crosstable.Many(selectAttributes, attribute.CastToDatabaseType(strId), exclude);
+        return new EntityList
+        {
+            Items = await dao.Many(query),
+            TotalRecords = await dao.Count(query)
+        };
+    }
 }

@@ -1,5 +1,4 @@
 import {deleteSubPageItems, saveSubPageItems, useSubPageData} from "../services/entity";
-import {createColumn} from "../components/dataTable/columns/createColumn";
 import {Button} from "primereact/button";
 import {useFormDialogState} from "../components/dialogs/useFormDialogState";
 import {SelectDataTable} from "../components/dataTable/SelectDataTable";
@@ -8,11 +7,11 @@ import {userRequestStatus} from "../components/itemForms/userFormStatusUI";
 import {useSubSchema} from "./useSubSchema";
 import {useLazyStateHandlers} from "./useLazyStateHandlers";
 
-export function Subgrid({column, schemaName, data, schema}: {
-    schemaName: any
+export function Crosstable({column, data, schema, getFullURL}: {
     data: any,
-    column: { field: string, header: string, subTable: any },
+    column: { field: string, header: string, crosstable: any },
     schema: any
+    getFullURL : (arg:string) =>string
 }) {
     const {visible, handleShow, handleHide} = useFormDialogState()
     const {
@@ -23,12 +22,12 @@ export function Subgrid({column, schemaName, data, schema}: {
         setExistingItems,
         toAddItems,
         setToAddItems
-    } = useSubSchema(data, schema, schemaName, column)
+    } = useSubSchema(data, schema, column)
     const {lazyState ,eventHandlers}= useLazyStateHandlers(10)
-    const {data: subgridData, mutate: subgridMutate} = useSubPageData(schemaName, id, column.field, false, lazyState)
+    const {data: subgridData, mutate: subgridMutate} = useSubPageData(schema.entityName, id, column.field, false, lazyState)
 
     const {lazyState :excludedLazyState,eventHandlers:excludedEventHandlers}= useLazyStateHandlers(10)
-    const {data: excludedSubgridData, mutate: execMutate} = useSubPageData(schemaName, id, column.field, true,excludedLazyState)
+    const {data: excludedSubgridData, mutate: execMutate} = useSubPageData(schema.entityName, id, column.field, true,excludedLazyState)
     const {checkError, Status, confirm} = userRequestStatus(column.field)
 
     const mutateDate = () => {
@@ -38,20 +37,21 @@ export function Subgrid({column, schemaName, data, schema}: {
     }
 
     const handleSave = async () => {
-        await saveSubPageItems(schemaName, id, column.field, toAddItems)
+        await saveSubPageItems(schema.entityName, id, column.field, toAddItems)
         handleHide()
         mutateDate()
     }
 
     const onDelete = async () => {
         confirm('Do you want to delete these item?', async () => {
-            const res = await deleteSubPageItems(schemaName, id, column.field, existingItems)
+            const res = await deleteSubPageItems(schema.entityName, id, column.field, existingItems)
             checkError(res, 'Delete Succeed')
             if (!res.err) {
                 mutateDate()
             }
         })
     }
+    console.log({excludedSubgridData,listColumns})
 
     return <div className={'card col-12'}>
         <label id={column.field} className="font-bold">
@@ -63,13 +63,14 @@ export function Subgrid({column, schemaName, data, schema}: {
         <Button type={'button'} label={"Delete "} severity="danger" onClick={onDelete} outlined size="small"/>
         <SelectDataTable
             data={subgridData}
-            createColumn={createColumn}
             columns={listColumns}
-            dataKey={targetSchema.dataKey}
+            primaryKey={targetSchema.primaryKey}
+            titleAttribute={targetSchema.titleAttribute}
             selectedItems={existingItems}
             setSelectedItems={setExistingItems}
             lazyState={lazyState}
             eventHandlers={eventHandlers}
+            getFullURL={getFullURL}
         />
         <ListDialog
             visible={visible}
@@ -77,10 +78,11 @@ export function Subgrid({column, schemaName, data, schema}: {
             handleSave={handleSave}
             header={'Select ' + column.header}>
             <SelectDataTable
+                getFullURL={getFullURL}
                 data={excludedSubgridData}
-                createColumn={createColumn}
                 columns={listColumns}
-                dataKey={targetSchema.dataKey}
+                primaryKey={targetSchema.dataKey}
+                titleAttribute={targetSchema.titleAttribute}
                 selectedItems={toAddItems}
                 setSelectedItems={setToAddItems}
                 lazyState={excludedLazyState}

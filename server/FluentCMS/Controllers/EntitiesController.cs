@@ -44,4 +44,27 @@ public class EntitiesController(IEntityService entityService) : ControllerBase
         var id = await entityService.Delete(entityName, item);
         return id is null ? NotFound() : Ok(id);
     }
+    
+    [HttpPost("{entityName}/{id}/{attributeName}/delete")]
+    public async Task<ActionResult<int>> CrosstableDelete(string entityName, string id, string attributeName, [FromBody] JsonElement[] items)
+    {
+        var ret = await entityService.CrosstableDelete(entityName, id, attributeName, items);
+        return ret is null ? NotFound() : Ok(ret);
+    }
+    
+
+    [HttpPost("{entityName}/{id}/{attributeName}/save")]
+    public async Task<ActionResult<int>> CrosstableSave(string entityName, string id, string attributeName, [FromBody] JsonElement[] items)
+    {
+        var ret = await entityService.CrosstableSave(entityName, id, attributeName, items);
+        return ret is null ? NotFound() : Ok(ret);
+    }
+
+    [HttpGet("{entityName}/{id}/{attributeName}")]
+    public async Task<ActionResult<object>> CrosstableList(string entityName, string id, string attributeName, [FromQuery] bool exclude)
+    {
+        var items = await entityService.CrosstableList(entityName, id, attributeName, exclude);
+        return items is null? NotFound() : Ok(items);
+    }
+
 }

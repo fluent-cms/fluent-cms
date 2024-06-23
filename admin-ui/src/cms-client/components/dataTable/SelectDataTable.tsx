@@ -2,7 +2,7 @@ import {DataTable} from "primereact/datatable";
 import {Column} from "primereact/column";
 import {createColumn} from "./columns/createColumn";
 
-export function SelectDataTable({primaryKey, titleAttribute, columns, data, selectedItems, setSelectedItems, lazyState, eventHandlers}: {
+export function SelectDataTable({primaryKey, titleAttribute, columns, data, selectedItems, setSelectedItems, lazyState, eventHandlers,getFullURL}: {
     primaryKey: string
     titleAttribute: string
     columns: any[]
@@ -11,6 +11,7 @@ export function SelectDataTable({primaryKey, titleAttribute, columns, data, sele
     setSelectedItems: any
     lazyState: any
     eventHandlers: any
+    getFullURL : (arg:string) => string,
 }) {
     const {items, totalRecords} = data ?? {}
     return columns && data && <DataTable
@@ -30,6 +31,6 @@ export function SelectDataTable({primaryKey, titleAttribute, columns, data, sele
         {...eventHandlers}
     >
         <Column selectionMode="multiple" headerStyle={{width: '3rem'}}></Column>
-        {columns.map((column: any, i: number) => createColumn({column, primaryKey, titleAttribute }))}
+        {columns.map((column: any, i: number) => createColumn({column, primaryKey, titleAttribute,getFullURL }))}
     </DataTable>
 }

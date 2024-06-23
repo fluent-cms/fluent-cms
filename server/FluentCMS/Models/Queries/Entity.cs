@@ -11,6 +11,8 @@ public class Entity
     {
         Attributes = cols.Select(x => new Attribute(x)).ToArray();
     }
+
+    public string EntityName { get; set; } = "";
     public string TableName { get; set; } = "";
     public string Title { get; set; } = "";
     public string PrimaryKey { get; set; } = "";
@@ -19,35 +21,29 @@ public class Entity
     public int DefaultPageSize { get; set; } = 20;
     //must be public to expose to json parser
     public Attribute[] Attributes { get; set; } = [];
-    public Attribute[] ListLookups()
-    {
-        return Attributes.Where(x => x.InList && x.Type == DisplayType.lookup).ToArray();
-    }
-    public Attribute[] Lookups()
-    {
-        return Attributes.Where(x=>x.Type == DisplayType.lookup).ToArray();
-    }
 
-    public Attribute[] DetailLookups()
-    {
-        return Attributes.Where(x => x.InDetail && x.Type == DisplayType.lookup).ToArray();
-    }
     public Attribute[] AttributesForLookup()
     {
         return Attributes.Where(x => x.Field == PrimaryKey || x.Field == TitleAttribute).ToArray();
     }
 
-    public Attribute[] ListAttributes()
+    public enum InListOrDetail
     {
-        return Attributes.Where(x => x.InList).ToArray();
+        InList,
+        InDetail,
+    }
+    public Attribute[] GetAttributes(DisplayType? type, InListOrDetail? listOrDetail)
+    {
+        IEnumerable<Attribute> ret = Attributes.Where(x =>
+            type is not null ? x.Type == type : x.Type != DisplayType.crosstable && x.Type != DisplayType.subtable);
+        if (listOrDetail is not null)
+        {
+            ret = ret.Where(x => listOrDetail == InListOrDetail.InList ? x.InList : x.InDetail);
+        }
+        return ret.ToArray();
     }
 
-    public Attribute[] DetailAttributes()
-    {
-        return Attributes.Where(x => x.InDetail).ToArray();
-    }
-
-    public Func<string,object>? GetDetailFieldParser(string field)
+    public Func<string,object>? GetDatabaseTypeCaster(string field)
     {
         var attr = Attributes.FirstOrDefault(x => x.Field == field && x.InDetail);
         if (attr is null)
@@ -69,11 +65,12 @@ public class Entity
     public Query? One(string key)
     {
         var id = KeyAttribute().CastToDatabaseType(key);
-        return Basic().Where(PrimaryKey, id).Select(Attributes.Filter(x=>x.InDetail).Select(c=>c.Field));
+        var fields = GetAttributes(null, InListOrDetail.InDetail).Select(x=>x.Field);
+        return Basic().Where(PrimaryKey, id).Select(fields);
     }
     public Query List()
     {
-        var lstFields = ListAttributes().Select(x=>x.Field);
+        var lstFields = GetAttributes(null, InListOrDetail.InList).Select(x=>x.Field);
         return Basic().Select(lstFields.ToArray());
     }
     public Query Many(object[]ids, Attribute[] attributes)
@@ -81,7 +78,8 @@ public class Entity
         var lstFields = attributes.Select(x => x.Field);
         return Basic().Select(lstFields.ToArray()).WhereIn(PrimaryKey,ids);
     }
-
+  
+   
     public Query Insert(Record item)
     {
         return new Query(TableName).AsInsert(item, true);
@@ -96,12 +94,13 @@ public class Entity
 
     public Query? Delete(Record item)
     {
-        return item.TryGetValue(PrimaryKey, out object key)?
-         new Query(TableName).Where(PrimaryKey, key).AsDelete():null;
+        return item.TryGetValue(PrimaryKey, out object key)
+            ? new Query(TableName).Where(PrimaryKey, key).AsUpdate(["deleted"], [true])
+            : null;
     }
     
-    private Query Basic()
+    public Query Basic()
     {
-        return new Query(TableName).Where("deleted", false);
+        return new Query(TableName).Where(TableName + ".deleted", false);
     }
 }

@@ -74,19 +74,24 @@
                     "enum": [
                       "text",
                       "textarea",
+                      "editor",
+                      
                       "number",
+                      
                       "datetime",
                       "date",
+                      
                       "image",
                       "gallery",
                       "file",
-                      "editor",
+                      "json",
+                      
                       "dropdown",
                       "lookup",
-                      "subgrid",
-                      "sublist",
                       "multiselect",
-                      "json"
+                      
+                      "crosstable",
+                      "subtable"
                     ]
                   },
                   "options": {
