@@ -1,3 +1,4 @@
+using FluentCMS.Models.Queries;
 using FluentCMS.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,9 +8,9 @@ namespace FluentCMS.Controllers;
 public class ViewsController(IViewService viewService): ControllerBase
 {
     [HttpGet("{viewName}/{query}")]
-    public async Task<ActionResult<IEnumerable<object>>> Get(string viewName)
+    public async Task<ActionResult<IEnumerable<object>>> Get(string viewName, Pagination? pagination)
     {
-        var items = await viewService.List(viewName);
+        var items = await viewService.List(viewName, pagination);
         return items is null ? NotFound() : Ok(items);
     }
     

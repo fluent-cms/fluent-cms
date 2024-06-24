@@ -10,11 +10,12 @@ namespace FluentCMS.Controllers;
 public class EntitiesController(IEntityService entityService) : ControllerBase
 {
     [HttpGet("{entityName}")]
-    public async Task<ActionResult<IEnumerable<object>>> Get(string entityName, Pagination? pagination)
+    public async Task<ActionResult<IEnumerable<object>>> Get(string entityName,[FromQuery] Pagination? pagination)
     {
-
-        
-        var items = await entityService.List(entityName);
+        var qs = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
+        var sorts = new Sorts(qs);
+        var filters = new Filters(qs); 
+        var items = await entityService.List(entityName, pagination, sorts, filters);
         return items is null ? NotFound() : Ok(items);
     }
 

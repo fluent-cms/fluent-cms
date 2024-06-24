@@ -1,4 +1,5 @@
 using System.Text.Json;
+using FluentCMS.Models.Queries;
 
 namespace FluentCMS.Services;
 using Record = IDictionary<string,object>;
@@ -7,7 +8,7 @@ using Record = IDictionary<string,object>;
 
 public interface IEntityService
 {
-    Task<RecordList?> List(string entityName);
+    Task<RecordList?> List(string entityName,Pagination? pagination, Sorts? sorts,Filters? filters);
     Task<int?> Insert(string entityName, JsonElement item);
     Task<int?> Update(string entityName, JsonElement item);
     Task<int?> Delete(string entityName, JsonElement item);

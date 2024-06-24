@@ -37,7 +37,7 @@ public class Crosstable
           var (a, b) = (TargetEntity.KeyAttribute().FullName(), TargetAttribute.FullName());
           var qry = TargetEntity.Basic()
               .LeftJoin(CrossEntity.TableName, j=>j.On(a,b)
-                  .Where(FromAttribute.FullName(),id).Where(CrossEntity.TableName + ".deleted", false))
+                  .Where(FromAttribute.FullName(),id).Where(CrossEntity.Fullname("deleted"), false))
               .Select(lstFields);
           return qry;
      }   

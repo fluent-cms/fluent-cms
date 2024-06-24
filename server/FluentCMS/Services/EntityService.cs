@@ -31,7 +31,7 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
         return record;
     }
 
-    public async Task<RecordList?> List(string entityName)
+    public async Task<RecordList?> List(string entityName, Pagination? pagination, Sorts? sorts, Filters? filters)
     {
         var entity = await schemaService.GetEntityByName(entityName);
         if (entity is null)
@@ -39,7 +39,7 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
             return null;
         }
 
-        var query = entity.List(null, null, entity.GetAttributes(null, Entity.InListOrDetail.InList));
+        var query = entity.List(pagination, sorts,filters, entity.GetAttributes(null, Entity.InListOrDetail.InList));
         var records = await dao.Many(query);
         if (records is null)
         {

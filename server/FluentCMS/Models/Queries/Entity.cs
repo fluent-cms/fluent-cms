@@ -32,6 +32,11 @@ public class Entity
         InList,
         InDetail,
     }
+
+    public string Fullname(string fieldName)
+    {
+        return TableName + "." + fieldName;
+    }
     public Attribute[] GetAttributes(DisplayType? type, InListOrDetail? listOrDetail)
     {
         IEnumerable<Attribute> ret = Attributes.Where(x =>
@@ -63,13 +68,15 @@ public class Entity
         var id = KeyAttribute().CastToDatabaseType(key);
         return Basic().Where(PrimaryKey, id).Select(attributes.Select(x=>x.FullName()));
     }
-    public Query? List(Sorts? sorts,  Filters? filters, Attribute[]? attributes)
+    public Query? List(Pagination? pagination, Sorts? sorts,  Filters? filters, Attribute[]? attributes)
     {
         if (attributes is null)
         {
             return null;
         }
         var query = Basic().Select(attributes.Select(x=>x.FullName()));
+        sorts?.Apply(this, query);
+        filters?.Apply(this, query);
         return query;
     }
     public Query Many(object[]ids, Attribute[] attributes)
