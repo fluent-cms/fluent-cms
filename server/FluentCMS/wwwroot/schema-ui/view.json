@@ -13,16 +13,19 @@
         "view": {
           "type": "object",
           "properties": {
-            "Entity": {
+            "pageSize":{
+              "type":"integer"
+            },
+            "entityName": {
               "type": "string"
             },
-            "Sorts": {
+            "sorts": {
               "$ref": "sorts.json"
             },
-            "Filters": {
+            "filters": {
               "$ref": "filters.json"
             },
-            "Attributes": {
+            "attributeNames": {
               "type": "array",
               "format": "table",
               "items": {

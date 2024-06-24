@@ -16,16 +16,16 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
             return null;
         }
 
-        var record = await dao.One(entity.One(id, entity.GetAttributes(null, Entity.InListOrDetail.InDetail)));
+        var record = await dao.One(entity.One(id, entity.GetAttributes(null, Entity.InListOrDetail.InDetail, null)));
         if (record is null)
         {
             return null;
         }
 
-        foreach (var detailLookupsAttribute in entity.GetAttributes(DisplayType.lookup, Entity.InListOrDetail.InDetail))
+        foreach (var detailLookupsAttribute in entity.GetAttributes(DisplayType.lookup, Entity.InListOrDetail.InDetail,null))
         {
-            await LoadLookup(detailLookupsAttribute, [record],
-                lookupEntity => lookupEntity.GetAttributes(null, Entity.InListOrDetail.InDetail));
+            await AttachLookup(detailLookupsAttribute, [record],
+                lookupEntity => lookupEntity.GetAttributes(null, Entity.InListOrDetail.InDetail,null));
         }
 
         return record;
@@ -39,16 +39,21 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
             return null;
         }
 
-        var query = entity.List(pagination, sorts,filters, entity.GetAttributes(null, Entity.InListOrDetail.InList));
+        pagination ??= new Pagination
+        {
+            Rows = entity.DefaultPageSize
+        };
+        
+        var query = entity.List(pagination, sorts,filters, entity.GetAttributes(null, Entity.InListOrDetail.InList, null));
         var records = await dao.Many(query);
         if (records is null)
         {
             return null;
         }
 
-        foreach (var listLookupsAttribute in entity.GetAttributes(DisplayType.lookup, Entity.InListOrDetail.InList))
+        foreach (var listLookupsAttribute in entity.GetAttributes(DisplayType.lookup, Entity.InListOrDetail.InList, null))
         {
-            await LoadLookup(listLookupsAttribute, records, lookupEntity => lookupEntity.AttributesForLookup());
+            await AttachLookup(listLookupsAttribute, records, lookupEntity => lookupEntity.AttributesForLookup());
         }
 
         return new RecordList
@@ -63,7 +68,7 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
         var entity = await schemaService.GetEntityByName(entityName);
         if (entity is null) return null;
 
-        var record = RecordParser.Parse(ele, entity.GetDatabaseTypeCaster);
+        var record = RecordParser.Parse(ele, entity);
         return await dao.Exec(entity.Insert(record));
     }
 
@@ -72,7 +77,7 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
         var entity = await schemaService.GetEntityByName(entityName);
         if (entity is null) return null;
 
-        var record = RecordParser.Parse(ele, entity.GetDatabaseTypeCaster);
+        var record = RecordParser.Parse(ele, entity);
         return await dao.Exec(entity.Update(record));
     }
 
@@ -81,14 +86,58 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
         var entity = await schemaService.GetEntityByName(entityName);
         if (entity is null) return null;
 
-        var record = RecordParser.Parse(ele, entity.GetDatabaseTypeCaster);
+        var record = RecordParser.Parse(ele, entity);
         return await dao.Exec(entity.Delete(record));
     }
 
-    private async Task LoadCrossJoinTable(Attribute attribute, IDictionary<string,object>[] items, Func<Entity, Attribute[]> getFields)
+   
+
+    public async Task<int?> CrosstableDelete(string entityName, string strId, string attributeName, JsonElement[] elements)
     {
-        var ids = attribute.GetValues(items);
-        if (ids.Length == 0)
+        var attribute = await FindAttribute(entityName, attributeName);
+        if (attribute is null || attribute.Crosstable is null)
+        {
+            return null;
+        }
+
+        var items = elements.Select(ele =>
+            RecordParser.Parse(ele, attribute.Crosstable.TargetEntity));
+        return await dao.Exec(attribute.Crosstable.Delete(strId, items.ToArray()));
+    }
+
+    public async Task<int?> CrosstableSave(string entityName, string strId, string attributeName, JsonElement[] elements)
+    {
+        var attribute = await FindAttribute(entityName, attributeName);
+        if (attribute is null || attribute.Crosstable is null)
+        {
+            return null;
+        }
+
+        var items = elements.Select(ele =>
+            RecordParser.Parse(ele, attribute.Crosstable.TargetEntity));
+        return await dao.Exec(attribute.Crosstable.Insert(strId,items.ToArray() ));
+        }
+
+    public async Task<RecordList?> CrosstableList(string entityName, string strId, string attributeName, bool exclude)
+    {
+        var attribute =await FindAttribute(entityName, attributeName);
+        if (attribute is null || attribute.Crosstable is null)
+        {
+            return null;
+        }
+        
+        var selectAttributes = attribute.Crosstable.TargetEntity.GetAttributes(null, Entity.InListOrDetail.InList, null);
+        var query = attribute.Crosstable.Many(selectAttributes,exclude, attribute.CastToDatabaseType(strId));
+        return new RecordList
+        {
+            Items = await dao.Many(query),
+            TotalRecords = await dao.Count(query)
+        };
+    }
+    public async Task AttachCrosstable(Attribute attribute, IDictionary<string,object>[] items, Func<Entity, Attribute[]> getFields)
+    {
+        var ids = attribute.Parent?.PrimaryKeyAttribute().GetValues(items);
+        if (ids is null || ids.Length == 0)
         {
             return;
         }
@@ -99,24 +148,24 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
             return;
         }
 
-        var query = cross.Many(getFields(cross.TargetEntity), ids, true);
-        var lookupRecords = await dao.Many(query);
-        if (lookupRecords is null)
+        var query = cross.Many(getFields(cross.TargetEntity), ids);
+        var targetRecords = await dao.Many(query);
+        if (targetRecords is null)
         {
             return;
         }
 
-        foreach (var lookupRecord in lookupRecords)
+        var group = targetRecords.GroupBy(x => x[cross.FromAttribute.Field], x=>x);
+        foreach (var grouping in group)
         {
-            var lookupId = lookupRecord[cross.FromAttribute.Field];
-            foreach (var item in items.Where(local => local[attribute.Parent.PrimaryKey].Equals(lookupId)))
+            var filteredItems = items.Where(local => local[attribute.Parent?.PrimaryKey ?? ""].Equals(grouping.Key));
+            foreach (var item in filteredItems)
             {
-                item[attribute.Field] = lookupRecord;
+                item[attribute.Field] = grouping.ToArray();
             }
         }
     }
-
-    private async Task LoadLookup(Attribute lookupAttribute, IDictionary<string,object>[] items, Func<Entity, Attribute[]> getFields)
+    public async Task AttachLookup(Attribute lookupAttribute, IDictionary<string,object>[] items, Func<Entity, Attribute[]> getFields)
     {
         var lookupEntity = await schemaService.GetEntityByName(lookupAttribute.GetLookupEntityName());
         if (lookupEntity is null)
@@ -155,49 +204,7 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
             return null;
         }
 
-        return entity.Attributes.FirstOrDefault(x => x.Field == attributeName);
+        return entity.FindOneAttribute(attributeName);
     }
 
-    public async Task<int?> CrosstableDelete(string entityName, string strId, string attributeName, JsonElement[] elements)
-    {
-        var attribute = await FindAttribute(entityName, attributeName);
-        if (attribute is null || attribute.Crosstable is null)
-        {
-            return null;
-        }
-
-        var items = elements.Select(ele =>
-            RecordParser.Parse(ele, attribute.Crosstable.TargetEntity.GetDatabaseTypeCaster));
-        return await dao.Exec(attribute.Crosstable.Delete(strId, items.ToArray()));
-    }
-
-    public async Task<int?> CrosstableSave(string entityName, string strId, string attributeName, JsonElement[] elements)
-    {
-        var attribute = await FindAttribute(entityName, attributeName);
-        if (attribute is null || attribute.Crosstable is null)
-        {
-            return null;
-        }
-
-        var items = elements.Select(ele =>
-            RecordParser.Parse(ele, attribute.Crosstable.TargetEntity.GetDatabaseTypeCaster));
-        return await dao.Exec(attribute.Crosstable.Insert(strId,items.ToArray() ));
-        }
-
-    public async Task<RecordList?> CrosstableList(string entityName, string strId, string attributeName, bool exclude)
-    {
-        var attribute =await FindAttribute(entityName, attributeName);
-        if (attribute is null || attribute.Crosstable is null)
-        {
-            return null;
-        }
-        
-        var selectAttributes = attribute.Crosstable.TargetEntity.GetAttributes(null, Entity.InListOrDetail.InList);
-        var query = attribute.Crosstable.Many(selectAttributes, attribute.CastToDatabaseType(strId), exclude);
-        return new RecordList
-        {
-            Items = await dao.Many(query),
-            TotalRecords = await dao.Count(query)
-        };
-    }
 }

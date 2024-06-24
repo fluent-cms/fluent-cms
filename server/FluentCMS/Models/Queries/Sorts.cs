@@ -15,7 +15,7 @@ namespace  FluentCMS.Models.Queries
     public class Sort
     {
         public string FieldName { get; set; } = "";
-        [JsonIgnore]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public SortOrder Order { get; set; }
     }
 
@@ -45,46 +45,9 @@ namespace  FluentCMS.Models.Queries
                 }
             }
         }
-        public IDictionary<string, object>? ParseCursor(string cursor)
-        {
-            if (string.IsNullOrEmpty(cursor))
-            {
-                return null;
-            }
+       
 
-            byte[] bs;
-            try
-            {
-                bs = Base64UrlEncoder.Decode(cursor);
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-
-            return JsonSerializer.Deserialize<Dictionary<string, object>>(bs);
-
-        }
-
-        public string? GenerateCursor(List<Dictionary<string, object>>? items)
-        {
-            if (items is null || items.Count == 0)
-            {
-                return null;
-            }
-
-            var lastItem = items.Last();
-            var item = new Dictionary<string, object>();
-            foreach (var field in this.Select(x=>x.FieldName))
-            {
-                if (lastItem.ContainsKey(field))
-                {
-                    item[field] = lastItem[field];
-                }
-            }
-
-            return JsonSerializer.Serialize(item);
-        }
+       
 
         public void Apply(Entity entity, Query? query)
         {

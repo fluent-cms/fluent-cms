@@ -33,7 +33,7 @@ public class SchemaService(AppDbContext context, IDao dao) : ISchemaService
         {
             return null;
         }
-        entity.SetAttributes(await dao.GetColumnDefinitions(entity.TableName));
+        entity.LoadDefine(await dao.GetColumnDefinitions(entity.TableName));
         return dto;
     }
 
@@ -60,7 +60,7 @@ public class SchemaService(AppDbContext context, IDao dao) : ISchemaService
         }
 
        
-        foreach (var attribute in entity.GetAttributes(DisplayType.lookup, null))
+        foreach (var attribute in entity.GetAttributes(DisplayType.lookup, null, null))
         {
             var lookupEntityName = attribute.GetLookupEntityName();
             if (lookupEntityName is null)
@@ -70,7 +70,7 @@ public class SchemaService(AppDbContext context, IDao dao) : ISchemaService
             attribute.Lookup = await _GetEntityByName(lookupEntityName, false);
         }
 
-        foreach (var attribute in entity.GetAttributes(DisplayType.crosstable, null))
+        foreach (var attribute in entity.GetAttributes(DisplayType.crosstable, null,null))
         {
             var crossEntity = await _GetEntityByName(attribute.GetCrossJoinEntityName(),false);
             if (crossEntity is null)
@@ -78,7 +78,7 @@ public class SchemaService(AppDbContext context, IDao dao) : ISchemaService
                 continue;
             }
 
-            var lookups = crossEntity.GetAttributes(DisplayType.lookup, null);
+            var lookups = crossEntity.GetAttributes(DisplayType.lookup, null,null);
             var fromAttribute = lookups.FirstOrDefault(x => x.GetLookupEntityName() == entity.EntityName);
             var targetAttribute = lookups.FirstOrDefault(x => x.GetLookupEntityName() != entity.EntityName);
 

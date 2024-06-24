@@ -6,11 +6,7 @@ using Record = IDictionary<string,object>;
 
 public class Entity
 {
-    public Entity(){}
-    public void SetAttributes(ColumnDefinition[] cols )
-    {
-        Attributes = cols.Select(x => new Attribute(x)).ToArray();
-    }
+    
 
     public string EntityName { get; set; } = "";
     public string TableName { get; set; } = "";
@@ -21,7 +17,13 @@ public class Entity
     public int DefaultPageSize { get; set; } = 20;
     //must be public to expose to json parser
     public Attribute[] Attributes { get; set; } = [];
-
+    
+    public Entity(){}
+    public void LoadDefine(ColumnDefinition[] cols )
+    {
+        Attributes = cols.Select(x => new Attribute(x)).ToArray();
+    }
+    
     public Attribute[] AttributesForLookup()
     {
         return Attributes.Where(x => x.Field == PrimaryKey || x.Field == TitleAttribute).ToArray();
@@ -37,7 +39,8 @@ public class Entity
     {
         return TableName + "." + fieldName;
     }
-    public Attribute[] GetAttributes(DisplayType? type, InListOrDetail? listOrDetail)
+
+    public Attribute[] GetAttributes(DisplayType? type, InListOrDetail? listOrDetail, string[]? attributes)
     {
         IEnumerable<Attribute> ret = Attributes.Where(x =>
             type is not null ? x.Type == type : x.Type != DisplayType.crosstable && x.Type != DisplayType.subtable);
@@ -45,27 +48,26 @@ public class Entity
         {
             ret = ret.Where(x => listOrDetail == InListOrDetail.InList ? x.InList : x.InDetail);
         }
+        if (attributes?.Length > 0)
+        {
+            ret = ret.Where(x => attributes.Contains(x.Field));
+        }
         return ret.ToArray();
     }
 
-    public Func<string,object>? GetDatabaseTypeCaster(string field)
-    {
-        var attr = Attributes.FirstOrDefault(x => x.Field == field && x.InDetail);
-        if (attr is null)
-        {
-            return null;
-        }
-        return attr.CastToDatabaseType;
-    }
-
-    public Attribute KeyAttribute()
+    public Attribute PrimaryKeyAttribute()
     {
         return Attributes.First(x => x.Field == PrimaryKey);
+    }
+    
+    public Attribute? FindOneAttribute(string name)
+    {
+        return Attributes.FirstOrDefault(x => x.Field == name);
     }
 
     public Query? One(string key, Attribute[]attributes)
     {
-        var id = KeyAttribute().CastToDatabaseType(key);
+        var id = PrimaryKeyAttribute().CastToDatabaseType(key);
         return Basic().Where(PrimaryKey, id).Select(attributes.Select(x=>x.FullName()));
     }
     public Query? List(Pagination? pagination, Sorts? sorts,  Filters? filters, Attribute[]? attributes)
@@ -75,6 +77,7 @@ public class Entity
             return null;
         }
         var query = Basic().Select(attributes.Select(x=>x.FullName()));
+        pagination?.Apply(this, query, sorts);
         sorts?.Apply(this, query);
         filters?.Apply(this, query);
         return query;
@@ -92,14 +95,14 @@ public class Entity
 
     public Query? Update(Record item)
     {
-        return item.TryGetValue(PrimaryKey, out object val)
+        return item.TryGetValue(PrimaryKey, out var val)
             ? new Query(TableName).Where(PrimaryKey, val).AsUpdate(item.Keys, item.Values)
             : null;
     }
 
     public Query? Delete(Record item)
     {
-        return item.TryGetValue(PrimaryKey, out object key)
+        return item.TryGetValue(PrimaryKey, out var key)
             ? new Query(TableName).Where(PrimaryKey, key).AsUpdate(["deleted"], [true])
             : null;
     }

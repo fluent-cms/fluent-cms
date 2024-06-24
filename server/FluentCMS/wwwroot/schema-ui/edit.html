@@ -29,21 +29,9 @@
     const id = searchParams.get("id");
     const editor= loadEditor()
 
-    loadValue(editor)
     setListeners(editor)
-
     async function loadDefine(editor){
-        const item = await define(id)
-        editor.setValue(item)
-    }
-
-    async function loadValue(editor){
-        if (id){
-            const item = await one(id)
-            editor.setValue(item)
-        }else {
-            editor.setValue(null)
-        }
+        define(id).then(item=> editor.setValue(item))
     }
 
     function loadEditor() {
@@ -51,7 +39,7 @@
             ajax: true,
             schema: {
                 "title": schema_name,
-                "$ref": schema_name + ".json?ts=" + new Date().toISOString(),
+                "$ref": schema_name + ".json"
             },
             no_additional_properties: true,
             required_by_default: true,
@@ -64,6 +52,13 @@
             iconlib:"bootstrap",
         });
 
+        editor.on('ready', function (){
+            if (id){
+                one(id).then(item=>editor.setValue(item))
+            }else {
+                editor.setValue(null)
+            }           
+        })
 
         editor.on('change', function () {
             var errors = editor.validate();

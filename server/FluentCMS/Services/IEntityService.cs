@@ -1,5 +1,6 @@
 using System.Text.Json;
 using FluentCMS.Models.Queries;
+using Attribute = FluentCMS.Models.Queries.Attribute;
 
 namespace FluentCMS.Services;
 using Record = IDictionary<string,object>;
@@ -16,4 +17,10 @@ public interface IEntityService
     Task<RecordList?> CrosstableList(string entityName, string strId, string field, bool exclude);
     Task<int?> CrosstableSave(string entityName, string strId, string field, JsonElement[] items);
     Task<int?> CrosstableDelete(string entityName, string strId, string attributeName, JsonElement[] elements);
+
+    Task AttachLookup(Attribute lookupAttribute, IDictionary<string, object>[] items,
+        Func<Entity, Attribute[]> getFields);
+
+    Task AttachCrosstable(Attribute crossTableAttribute, IDictionary<string, object>[] items,
+        Func<Entity, Attribute[]> getFields);
 }

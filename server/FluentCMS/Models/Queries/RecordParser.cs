@@ -7,15 +7,15 @@ using Record = IDictionary<string,object>;
 
 public static class RecordParser 
 {
-    public static Record Parse (JsonElement jsonElement, Func<string,Func<string,object>?>getStringCaster)
+    public static Record Parse (JsonElement jsonElement, Entity entity)
     {
         Dictionary<string, object> ret = new();
         foreach (JsonProperty property in jsonElement.EnumerateObject())
         {
-            var caster = getStringCaster(property.Name);
-            if (caster != null)
+            var field = entity.FindOneAttribute(property.Name);
+            if (field != null)
             {
-                ret[property.Name] = ConvertJsonElement(property.Value, caster);
+                ret[property.Name] = ConvertJsonElement(property.Value, field);
             }
         }
 
@@ -23,12 +23,12 @@ public static class RecordParser
     }
 
 
-    private static object ConvertJsonElement(JsonElement element, Func<string,object> stringCastFunc)
+    private static object ConvertJsonElement(JsonElement element, Attribute attribute)
     {
         switch (element.ValueKind)
         {
             case JsonValueKind.String:
-                return stringCastFunc(element.GetString()!);
+                return attribute.CastToDatabaseType(element.GetString()!);
             case JsonValueKind.Number:
                 if (element.TryGetInt32(out int intValue))
                     return intValue;

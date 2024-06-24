@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace FluentCMS.Utils.Base64Url
 {
     public static class Base64UrlEncoder
@@ -13,9 +15,9 @@ namespace FluentCMS.Utils.Base64Url
             return Convert.FromBase64String(input);
         }
 
-        public static string Encode(byte[] input)
+        public static string Encode(string input)
         {
-            var output = Convert.ToBase64String(input);
+            var output = Convert.ToBase64String(Encoding.Unicode.GetBytes(input));
             output = output.Replace('+', '-').Replace('/', '_').TrimEnd('=');
             return output;
         }

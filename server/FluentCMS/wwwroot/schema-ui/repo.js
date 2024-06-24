@@ -32,7 +32,6 @@ async function del(id){
 
 function removeEmptyProperties(obj) {
     for (let key in obj) {
-        console.log('handling ' + key)
         if (obj.hasOwnProperty(key)) {
             if (typeof obj[key] === 'object') {
                 removeEmptyProperties(obj[key]);

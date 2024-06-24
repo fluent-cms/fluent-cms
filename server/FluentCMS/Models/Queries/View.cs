@@ -4,10 +4,9 @@ namespace FluentCMS.Models.Queries;
 
 public class View
 {
-    public string[] AttributeNames { get; set; } // if not set default to entity list attribute
-    [JsonIgnore]
-    public Attribute[]? Attributes { get; set; }
+    public string[]? AttributeNames { get; set; } // if not set default to entity list attribute
     public string? EntityName { get; set; }
+    public int PageSize { get; set; }
 
     
     [JsonIgnore]
@@ -20,10 +19,5 @@ public class View
     {
         Sorts = new Sorts();
         Filters = new Filters();
-    }
-
-    public Attribute[] GetAttributes()
-    {
-        return Attributes ?? Entity?.GetAttributes(null, Entity.InListOrDetail.InList)??[];
     }
 }

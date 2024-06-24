@@ -26,6 +26,7 @@ builder.Services.AddControllers();
 builder.Services.AddSingleton<FileUtl, FileUtl>(p => new FileUtl("wwwroot/files"));
 builder.Services.AddScoped<ISchemaService, SchemaService>();
 builder.Services.AddScoped<IEntityService, EntityService >();
+builder.Services.AddScoped<IViewService, ViewService >();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

@@ -30,28 +30,43 @@ public class Crosstable
 
         return new Query(CrossEntity.TableName).AsInsert(cols, vals);
     }
-     private Query Base(Attribute[] selectAttributes, object id)
+     private Query Base(Attribute[] selectAttributes)
      {
           var lstFields = selectAttributes.Select(x => x.FullName()).ToList();
           lstFields.Add(FromAttribute.FullName());
-          var (a, b) = (TargetEntity.KeyAttribute().FullName(), TargetAttribute.FullName());
-          var qry = TargetEntity.Basic()
-              .LeftJoin(CrossEntity.TableName, j=>j.On(a,b)
-                  .Where(FromAttribute.FullName(),id).Where(CrossEntity.Fullname("deleted"), false))
-              .Select(lstFields);
+          var qry = TargetEntity.Basic().Select(lstFields);
           return qry;
-     }   
-    public Query Many(Attribute[] selectAttributes, object id, bool exclude)
-    {
-        var baseQuery = Base(selectAttributes, id);
-        if (exclude)
-        {
-            baseQuery.WhereNull(FromAttribute.FullName());
-        }
-        else
-        {
-            baseQuery.WhereNotNull(FromAttribute.FullName());
-        }
-        return baseQuery;
-    }
+     }
+
+     public Query Many(Attribute[] selectAttributes, bool exclude, object id)
+     {
+         var baseQuery = Base(selectAttributes);
+         var (a, b) = (TargetEntity.PrimaryKeyAttribute().FullName(), TargetAttribute.FullName());
+         if (exclude)
+         {
+             baseQuery.LeftJoin(CrossEntity.TableName,
+                 j => j.On(a, b)
+                     .Where(FromAttribute.FullName(), id)
+                     .Where(CrossEntity.Fullname("deleted"), false)
+             ).WhereNull(FromAttribute.FullName());
+         }
+         else
+         {
+             baseQuery.Join(CrossEntity.TableName, a, b)
+                 .Where(FromAttribute.FullName(), id)
+                 .Where(CrossEntity.Fullname("deleted"), false);
+         }
+
+         return baseQuery;
+     }
+
+     public Query Many(Attribute[] selectAttributes, object[] ids)
+     {
+         var baseQuery = Base(selectAttributes);
+         var (a, b) = (TargetEntity.PrimaryKeyAttribute().FullName(), TargetAttribute.FullName());
+         baseQuery.Join(CrossEntity.TableName, a, b)
+             .WhereIn(FromAttribute.FullName(), ids)
+             .Where(CrossEntity.Fullname("deleted"), false);
+         return baseQuery;
+     }
 }

@@ -1,15 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Sort",
   "type": "object",
   "properties": {
-    "Field": {
+    "fieldName": {
       "type": "string"
     },
-    "Order": {
+    "order": {
       "type": "string",
-      "enum": ["asc", "desc"]
+      "enum": ["Asc", "Desc"]
     }
-  },
-  "required": ["Field", "Order"]
+  }
 }
