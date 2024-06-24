@@ -15,5 +15,6 @@ export { metadata } from 'next-sanity/studio/metadata'
 export { viewport } from 'next-sanity/studio/viewport'
 
 export default function StudioPage() {
-  return <Studio />
+  // return <Studio />
+  return <>Hello</>
 }

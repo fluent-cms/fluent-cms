@@ -32,14 +32,13 @@ export default function Navbar(props) {
       href: "/archive"
     },
     {
-      label: "Pro Version",
-      href: "https://stablo-pro.web3templates.com/",
+      label: "Source Code",
+      href: "https://github.com/jschen2024/fluent-cms",
       external: true,
-      badge: "new"
     },
     {
-      label: "Download",
-      href: "https://web3templates.com/templates/stablo-minimal-blog-website-template",
+      label: "Linkedin",
+      href: "https://www.linkedin.com/in/jason-jingshun-chen-05b90a29",
       external: true
     }
   ];
@@ -86,7 +85,7 @@ export default function Navbar(props) {
                       />
                     ) : (
                       <span className="block text-center">
-                        Stablo
+                        Fluent CMS
                       </span>
                     )}
                   </Link>

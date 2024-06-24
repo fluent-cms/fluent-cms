@@ -12,14 +12,14 @@ async function sharedMetaData(params) {
     title: {
       default:
         settings?.title ||
-        "Stablo - Blog Template for Next.js & Sanity CMS",
-      template: "%s | Stablo"
+        "Fluent CMS - Blog Template for Next.js",
+      template: "%s | Fluent CMS",
     },
     description:
       settings?.description ||
-      "Stablo - popular open-source next.js and sanity blog template",
-    keywords: ["Next.js", "Sanity", "Tailwind CSS"],
-    authors: [{ name: "Surjith" }],
+      "Fluent CMS - popular open-source next.js and blog template",
+    keywords: ["Next.js", "Fluent CMS", "Tailwind CSS"],
+    authors: [{ name: "jschen" }],
     canonical: settings?.url,
     openGraph: {
       images: [
@@ -33,7 +33,7 @@ async function sharedMetaData(params) {
       ]
     },
     twitter: {
-      title: settings?.title || "Stablo Template",
+      title: settings?.title || "FluentCMS Template",
       card: "summary_large_image"
     },
     robots: {

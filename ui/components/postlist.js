@@ -42,7 +42,7 @@ export default function PostList({
                 : "aspect-square"
             )}
             href={`/post/${pathPrefix ? `${pathPrefix}/` : ""}${
-              post.slug.current
+              post.slug
             }`}>
             {imageProps ? (
               <Image
@@ -85,7 +85,7 @@ export default function PostList({
               )}>
               <Link
                 href={`/post/${pathPrefix ? `${pathPrefix}/` : ""}${
-                  post.slug.current
+                  post.slug
                 }`}>
                 <span
                   className="bg-gradient-to-r from-green-200 to-green-100 bg-[length:0px_10px] bg-left-bottom
@@ -139,7 +139,7 @@ export default function PostList({
                 className="truncate text-sm"
                 dateTime={post?.publishedAt || post._createdAt}>
                 {format(
-                  parseISO(post?.publishedAt || post._createdAt),
+                  parseISO(post?.published_at || post.created_at),
                   "MMMM dd, yyyy"
                 )}
               </time>
