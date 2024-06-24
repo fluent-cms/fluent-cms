@@ -58,27 +58,25 @@ public class Entity
         return Attributes.First(x => x.Field == PrimaryKey);
     }
 
-    public object[] Ids(Record[] items)
-    {
-        return items.Select((x => x[PrimaryKey])).ToArray();
-    }
-    public Query? One(string key)
+    public Query? One(string key, Attribute[]attributes)
     {
         var id = KeyAttribute().CastToDatabaseType(key);
-        var fields = GetAttributes(null, InListOrDetail.InDetail).Select(x=>x.Field);
-        return Basic().Where(PrimaryKey, id).Select(fields);
+        return Basic().Where(PrimaryKey, id).Select(attributes.Select(x=>x.FullName()));
     }
-    public Query List()
+    public Query? List(Sorts? sorts,  Filters? filters, Attribute[]? attributes)
     {
-        var lstFields = GetAttributes(null, InListOrDetail.InList).Select(x=>x.Field);
-        return Basic().Select(lstFields.ToArray());
+        if (attributes is null)
+        {
+            return null;
+        }
+        var query = Basic().Select(attributes.Select(x=>x.FullName()));
+        return query;
     }
     public Query Many(object[]ids, Attribute[] attributes)
     {
         var lstFields = attributes.Select(x => x.Field);
         return Basic().Select(lstFields.ToArray()).WhereIn(PrimaryKey,ids);
     }
-  
    
     public Query Insert(Record item)
     {

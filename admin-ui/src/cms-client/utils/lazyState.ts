@@ -7,7 +7,7 @@ export const lazyStateUtil = {
         }
         return qs.stringify(
             sanitizeLazyState(s),
-            {encodeValuesOnly: true, skipNulls: true}
+            {encodeValuesOnly: true, skipNulls: true, arrayFormat:'repeat'}
         );
     }
 }
@@ -16,8 +16,8 @@ function sanitizeLazyState(payload:any){
     const state = {
         first: payload.first,
         rows: payload.rows,
-        filters: sanitizeFilter({...payload.filters}),
-        multiSortMeta: payload.multiSortMeta,
+        f: sanitizeFilter({...payload.filters}),
+        s: payload.multiSortMeta,
     }
     deleteEmptyProperties(state)
     return state

@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
-using FluentCMS.Models;
+using System.Text.Json.Serialization;
 
 namespace FluentCMS.Models;
 
@@ -11,9 +11,10 @@ public class Schema:ModelBase
     [Column(TypeName = "VARCHAR")]
     [StringLength(250)]
     public string Name { get; set; } = "";
-    [Column(TypeName = "VARCHAR")]
-    [StringLength(250)]
-    public string Type { get; set; } = "";
+    
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    [StringLength(10)]
+    public string Type { get; set; }
     
     public string Settings { get; set; } = "";
 }
@@ -24,11 +25,15 @@ public class SchemaDisplayDto : SchemaDto
     public DateTime UpdatedAt { get; set; }
 
     public SchemaDisplayDto(){}
-    public SchemaDisplayDto(Schema item):base(item)
+    public SchemaDisplayDto(Schema? item):base(item)
     {
-        Id = item.Id;
-        CreatedAt = item.CreatedAt;
-        UpdatedAt = item.UpdatedAt;
+        if (item is not null)
+        {
+
+            Id = item.Id;
+            CreatedAt = item.CreatedAt;
+            UpdatedAt = item.UpdatedAt;
+        }
     }
 }
 
@@ -41,11 +46,19 @@ public class SchemaDto
     public Settings? Settings { get; set; }
     public SchemaDto(){}
 
-    public SchemaDto(Schema item)
+    public bool IsEmpty()
     {
-        Name = item.Name;
-        Type = item.Type;
-        Settings = JsonSerializer.Deserialize<Settings>(item.Settings);
+        return string.IsNullOrEmpty(Name);
+    }
+    public SchemaDto(Schema? item)
+    {
+        if (item is not null)
+        {
+
+            Name = item.Name;
+            Type = item.Type;
+            Settings = JsonSerializer.Deserialize<Settings>(item.Settings);
+        }
     }
     public Schema ToModel()
     {

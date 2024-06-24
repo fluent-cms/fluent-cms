@@ -5,14 +5,10 @@ using LanguageExt;
 using Attribute = FluentCMS.Models.Queries.Attribute;
 
 namespace FluentCMS.Services;
-using Record = IDictionary<string,object>;
-
 
 public class EntityService(IDao dao, ISchemaService schemaService) : IEntityService
 {
-
-
-    public async Task<Record?> One(string entityName, string id)
+    public async Task<IDictionary<string,object>?> One(string entityName, string id)
     {
         var entity = await schemaService.GetEntityByName(entityName);
         if (entity is null)
@@ -20,7 +16,7 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
             return null;
         }
 
-        var record = await dao.One(entity.One(id));
+        var record = await dao.One(entity.One(id, entity.GetAttributes(null, Entity.InListOrDetail.InDetail)));
         if (record is null)
         {
             return null;
@@ -35,7 +31,7 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
         return record;
     }
 
-    public async Task<EntityList?> List(string entityName)
+    public async Task<RecordList?> List(string entityName)
     {
         var entity = await schemaService.GetEntityByName(entityName);
         if (entity is null)
@@ -43,7 +39,8 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
             return null;
         }
 
-        var records = await dao.Many(entity.List());
+        var query = entity.List(null, null, entity.GetAttributes(null, Entity.InListOrDetail.InList));
+        var records = await dao.Many(query);
         if (records is null)
         {
             return null;
@@ -54,10 +51,10 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
             await LoadLookup(listLookupsAttribute, records, lookupEntity => lookupEntity.AttributesForLookup());
         }
 
-        return new EntityList
+        return new RecordList
         {
             Items = records,
-            TotalRecords = await dao.Count(entity.List())
+            TotalRecords = await dao.Count(query)
         };
     }
 
@@ -88,7 +85,7 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
         return await dao.Exec(entity.Delete(record));
     }
 
-    private async Task LoadCrossJoinTable(Attribute attribute, Record[] items, Func<Entity, Attribute[]> getFields)
+    private async Task LoadCrossJoinTable(Attribute attribute, IDictionary<string,object>[] items, Func<Entity, Attribute[]> getFields)
     {
         var ids = attribute.GetValues(items);
         if (ids.Length == 0)
@@ -119,7 +116,7 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
         }
     }
 
-    private async Task LoadLookup(Attribute lookupAttribute, Record[] items, Func<Entity, Attribute[]> getFields)
+    private async Task LoadLookup(Attribute lookupAttribute, IDictionary<string,object>[] items, Func<Entity, Attribute[]> getFields)
     {
         var lookupEntity = await schemaService.GetEntityByName(lookupAttribute.GetLookupEntityName());
         if (lookupEntity is null)
@@ -187,7 +184,7 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
         return await dao.Exec(attribute.Crosstable.Insert(strId,items.ToArray() ));
         }
 
-    public async Task<EntityList?> CrosstableList(string entityName, string strId, string attributeName, bool exclude)
+    public async Task<RecordList?> CrosstableList(string entityName, string strId, string attributeName, bool exclude)
     {
         var attribute =await FindAttribute(entityName, attributeName);
         if (attribute is null || attribute.Crosstable is null)
@@ -197,7 +194,7 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
         
         var selectAttributes = attribute.Crosstable.TargetEntity.GetAttributes(null, Entity.InListOrDetail.InList);
         var query = attribute.Crosstable.Many(selectAttributes, attribute.CastToDatabaseType(strId), exclude);
-        return new EntityList
+        return new RecordList
         {
             Items = await dao.Many(query),
             TotalRecords = await dao.Count(query)

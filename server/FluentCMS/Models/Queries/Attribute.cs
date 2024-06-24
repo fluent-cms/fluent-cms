@@ -23,7 +23,7 @@ public class Attribute
     public string[]?Options { get; set; }
 
     [JsonIgnore]
-    public Entity Parent { get; set; } = null!;
+    public Entity? Parent { get; set; }
     // not input in json designer, 
     public Crosstable? Crosstable { get; set; } 
     public Entity? Lookup { get; set; }

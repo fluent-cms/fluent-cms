@@ -9,6 +9,7 @@ $$ LANGUAGE plpgsql;
 CREATE TABLE authors (
                          id SERIAL PRIMARY KEY,
                          name VARCHAR(100) NOT NULL,
+                         slug VARCHAR(100) NOT NULL,
                          bio TEXT,
                          thumbnail_image VARCHAR(255),
                          featured_image VARCHAR(255),
@@ -25,6 +26,7 @@ EXECUTE FUNCTION update_updated_at_column();
 CREATE TABLE categories (
                             id SERIAL PRIMARY KEY,
                             name VARCHAR(100) NOT NULL,
+                            slug VARCHAR(100) NOT NULL,
                             description TEXT,
                             parent_category_id INT,
                             thumbnail_image VARCHAR(255),
@@ -43,6 +45,7 @@ EXECUTE FUNCTION update_updated_at_column();
 CREATE TABLE tags (
                       id SERIAL PRIMARY KEY,
                       name VARCHAR(100) NOT NULL,
+                      slug VARCHAR(100) NOT NULL,
                       description TEXT,
                       thumbnail_image VARCHAR(255),
                       featured_image VARCHAR(255),
@@ -59,10 +62,12 @@ EXECUTE FUNCTION update_updated_at_column();
 CREATE TABLE posts (
                        id SERIAL PRIMARY KEY,
                        title VARCHAR(255) NOT NULL,
+                       slug VARCHAR(255) NOT NULL,
                        content TEXT  NULL,
                        category_id INT,
                        thumbnail_image VARCHAR(255),
                        featured_image VARCHAR(255),
+                       published_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                        deleted BOOLEAN DEFAULT FALSE,
                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

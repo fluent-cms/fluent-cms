@@ -1,38 +1,32 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Entity",
+  "title": "View",
   "type": "object",
   "properties": {
     "name": {
-      "type": "string"
+      "type": "string",
+      "default": ""
     },
     "settings": {
       "type": "object",
       "properties": {
-        "entity": {
+        "view": {
           "type": "object",
           "properties": {
-            "tableName": {
+            "Entity": {
               "type": "string"
             },
-            "title": {
-              "type": "string"
+            "Sorts": {
+              "$ref": "sorts.json"
             },
-            "primaryKey": {
-              "type": "string"
+            "Filters": {
+              "$ref": "filters.json"
             },
-            "titleAttribute": {
-              "type": "string"
-            },
-            "defaultPageSize": {
-              "type": "number"
-            },
-            "attributes": {
+            "Attributes": {
               "type": "array",
               "format": "table",
-              "id": "fields",
               "items": {
-                "$ref": "attribute.json"
+                "type": "string"
               }
             }
           }

@@ -10,10 +10,11 @@ using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-public class EntityTypes
+public static class  SchemaType
 {
-    public static string Entity = "entity";
-    public static string Menu = "menu";
+    public const string Menu = "menu";
+    public const string Entity = "entity";
+    public const string View = "view";
 }
 
 public class SchemaService(AppDbContext context, IDao dao) : ISchemaService
@@ -108,7 +109,21 @@ public class SchemaService(AppDbContext context, IDao dao) : ISchemaService
          var schemas = await context.Schemas.ToListAsync();
          return schemas.Select(x => new SchemaDisplayDto(x));
     }
-
+    public async Task<View?> GetViewByName(string? name)
+    {
+        var item = await context.Schemas.Where(x => x.Name == name && x.Type == SchemaType.View)
+            .FirstOrDefaultAsync();
+        var dto = new SchemaDto(item);
+        var view = dto.Settings?.View;
+        if (view is null)
+        {
+            return null;
+        }
+        
+        view.Entity =  await _GetEntityByName(view.EntityName, true);
+        return view;
+    }
+ 
     public async Task<Entity?> GetEntityByName(string? name)
     {
         return await _GetEntityByName(name, true);
@@ -116,18 +131,10 @@ public class SchemaService(AppDbContext context, IDao dao) : ISchemaService
     
     public async Task<Entity?> _GetEntityByName(string? name, bool loadRelated)
     {
-        if (name is null)
-        {
-            return null;
-        }
-        var item = await context.Schemas.Where(x => x.Name == name).FirstOrDefaultAsync();
-        if (item is null)
-        {
-            return null;
-        }
-
+        var item = await context.Schemas.Where(x => x.Name == name && x.Type == SchemaType.Entity)
+            .FirstOrDefaultAsync();
         var dto = new SchemaDto(item);
-        if (item.Type != EntityTypes.Entity)
+        if (dto.Type != SchemaType.Entity)
         {
             return null;
         }
@@ -150,16 +157,16 @@ public class SchemaService(AppDbContext context, IDao dao) : ISchemaService
         }
         else
         {
-            item = await context.Schemas.Where(x => x.Name == name).FirstOrDefaultAsync();
+            item = await context.Schemas.FirstOrDefaultAsync(x => x.Name == name);
         }
 
-        if (item is null)
-        {
-            return null;
-        }
         var dto =  new SchemaDisplayDto(item);
-        InitEntity(dto.Settings?.Entity, name);
-        await LoadRelated(dto.Settings?.Entity);
+        if (dto.Settings?.Entity is not null)
+        {
+            InitEntity(dto.Settings?.Entity, name);
+            await LoadRelated(dto.Settings?.Entity);
+        }
+
         return dto;
     }
 

@@ -7,6 +7,7 @@ public interface ISchemaService
 {
     Task<IEnumerable<SchemaDisplayDto>> GetAll();
     Task<Entity?> GetEntityByName(string? name);
+    Task<View?> GetViewByName(string? name);
     Task<SchemaDisplayDto?> GetByIdOrName(string name);
     Task<SchemaDisplayDto?> GetTableDefine(int id);
     Task<SchemaDto?> Save(SchemaDto schema);

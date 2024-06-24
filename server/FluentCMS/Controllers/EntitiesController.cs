@@ -1,18 +1,19 @@
 using System.Text.Json;
 using FluentCMS.Models.Queries;
 using FluentCMS.Services;
-using LanguageExt;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace FluentCMS.Controllers;
-
 [ApiController]
 [Route("api/[controller]")]
 public class EntitiesController(IEntityService entityService) : ControllerBase
 {
     [HttpGet("{entityName}")]
-    public async Task<ActionResult<IEnumerable<object>>> Get(string entityName)
+    public async Task<ActionResult<IEnumerable<object>>> Get(string entityName, Pagination? pagination)
     {
+
+        
         var items = await entityService.List(entityName);
         return items is null ? NotFound() : Ok(items);
     }

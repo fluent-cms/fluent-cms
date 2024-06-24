@@ -5,7 +5,7 @@ using System.Text.Json;
 
 using Record = IDictionary<string,object>;
 
-public class RecordParser 
+public static class RecordParser 
 {
     public static Record Parse (JsonElement jsonElement, Func<string,Func<string,object>?>getStringCaster)
     {
