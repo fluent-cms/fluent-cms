@@ -8,13 +8,7 @@ export default function Label(props) {
     purple: "text-purple-600",
     pink: "text-pink-600"
   };
-  const bgcolor = {
-    green: "bg-emerald-50",
-    blue: "bg-blue-50",
-    orange: "bg-orange-50",
-    purple: "bg-purple-50",
-    pink: "bg-pink-50"
-  };
+
   const margin = props.nomargin;
 
   if (props.pill) {
@@ -33,7 +27,7 @@ export default function Label(props) {
       className={cx(
         "inline-block text-xs font-medium tracking-wider uppercase ",
         !margin && " mt-5",
-        color[props.color] || color[pink]
+        color[props.color] || color.pink
       )}>
       {props.children}
     </span>

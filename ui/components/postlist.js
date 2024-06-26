@@ -3,7 +3,7 @@ import Link from "next/link";
 import { cx } from "@/utils/all";
 import { parseISO, format } from "date-fns";
 import { PhotoIcon } from "@heroicons/react/24/outline";
-import TagLabel from "@/components/blog/category";
+import TagLabel from "@/components/blog/tag";
 import { fullFilePath } from "@/services/config";
 
 export default function PostList({
@@ -103,7 +103,7 @@ export default function PostList({
 
             <div className="mt-3 flex items-center space-x-3 text-gray-500 dark:text-gray-400">
               {post.authors?.map((author) => (
-                <Link href={`/author/${author.slug}`}>
+                <Link key={author.id} href={`/author/${author.slug}`}>
                   <div className="flex items-center gap-3">
                     <div className="relative h-5 w-5 flex-shrink-0">
                       {author?.thumbnail_image && (

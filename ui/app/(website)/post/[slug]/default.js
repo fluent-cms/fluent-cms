@@ -4,7 +4,7 @@ import Container from "@/components/container";
 import { notFound } from "next/navigation";
 import { parseISO, format } from "date-fns";
 
-import TagLabel from "@/components/blog/category";
+import TagLabel from "@/components/blog/tag";
 import AuthorCard from "@/components/blog/authorCard";
 import { fullFilePath } from "@/services/config";
 

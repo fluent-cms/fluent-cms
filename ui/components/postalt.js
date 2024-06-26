@@ -4,7 +4,6 @@ import { cx } from "@/utils/all";
 import { urlForImage } from "@/lib/sanity/image";
 import { parseISO, format } from "date-fns";
 import { PhotoIcon } from "@heroicons/react/24/outline";
-import CategoryLabel from "@/components/blog/category";
 
 export default function PostAlt({
   post,
@@ -14,9 +13,6 @@ export default function PostAlt({
 }) {
   const imageProps = post?.mainImage
     ? urlForImage(post.mainImage)
-    : null;
-  const AuthorimageProps = post?.author?.image
-    ? urlForImage(post.author.image)
     : null;
   return (
     <>
