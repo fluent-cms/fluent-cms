@@ -1,0 +1,25 @@
+@startuml C4_Elements
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(end_user, "End User", "Browse content")
+Person(editor, "Editor", "Manage content")
+Person(developer, "Develop", "Define content entity")
+
+Container(schema_builder, "Schema Builder", "jQuery")
+Container(admin_ui, "Admin UI", "react")
+Container(front_ui, "Frontend UI", "next.js")
+Container(backend_server, "Backend Server", "aps.net core")
+
+ContainerDb(db, "Database", "Postgres", "schema and content")
+
+
+Rel(end_user, front_ui, "browse", "Http")
+Rel(developer, schema_builder, "browse", "Http")
+Rel(editor, admin_ui, "browse", "Http")
+
+Rel(admin_ui, backend_server, "request", "rest")
+Rel(front_ui, backend_server, "browse", "rest")
+Rel(schema_builder, backend_server, "browse", "rest")
+
+Rel(backend_server, db, "access", "ef/sqlkata")
+@enduml
