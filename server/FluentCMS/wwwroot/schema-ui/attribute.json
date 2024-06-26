@@ -65,7 +65,6 @@
     },
     "options": {
       "type": "array",
-      "format": "table",
       "items": {
         "type": "string"
       }

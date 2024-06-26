@@ -64,20 +64,29 @@ public class Entity
     {
         return Attributes.FirstOrDefault(x => x.Field == name);
     }
-
-    public Query? One(string key, Attribute[]attributes)
+    public Query One(Filters? filters, Attribute[]attributes)
+    {
+        var query = Basic().Select(attributes.Select(x=>x.FullName()));
+        filters?.Apply(this, query);
+        return query;
+    }
+    
+    public Query? ById(string key, Attribute[]attributes)
     {
         var id = PrimaryKeyAttribute().CastToDatabaseType(key);
-        return Basic().Where(PrimaryKey, id).Select(attributes.Select(x=>x.FullName()));
+        return Basic().Where(PrimaryKey, id)
+            .Select(attributes.Select(x=>x.FullName()));
     }
-    public Query? List(Pagination? pagination, Sorts? sorts,  Filters? filters, Attribute[]? attributes)
+    
+    public Query? List(Filters? filters,Sorts? sorts, Pagination? pagination,Cursor? cursor,  Attribute[]? attributes)
     {
         if (attributes is null)
         {
             return null;
         }
         var query = Basic().Select(attributes.Select(x=>x.FullName()));
-        pagination?.Apply(this, query, sorts);
+        pagination?.Apply (query);
+        cursor?.Apply (this,query,sorts);
         sorts?.Apply(this, query);
         filters?.Apply(this, query);
         return query;

@@ -1,12 +1,11 @@
 import Container from "@/components/container";
 import ThemeSwitch from "@/components/themeSwitch";
-import Image from "next/image";
 
-export default function Footer(props) {
+export default function Footer() {
   return (
     <Container className="mt-10 border-t border-gray-100 dark:border-gray-800">
       <div className="text-center text-sm">
-        Copyright © {new Date().getFullYear()} {props?.copyright}. All
+        Copyright © {new Date().getFullYear()} Fluent CMS. All
         rights reserved.
       </div>
       <div className="mt-1 flex justify-center gap-1 text-center text-sm text-gray-500 dark:text-gray-600">

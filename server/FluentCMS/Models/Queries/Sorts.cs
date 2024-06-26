@@ -4,7 +4,7 @@ using FluentCMS.Utils.Base64Url;
 using Microsoft.Extensions.Primitives;
 using SqlKata;
 
-namespace  FluentCMS.Models.Queries
+namespace FluentCMS.Models.Queries
 {
     public enum SortOrder
     {
@@ -15,6 +15,7 @@ namespace  FluentCMS.Models.Queries
     public class Sort
     {
         public string FieldName { get; set; } = "";
+
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public SortOrder Order { get; set; }
     }
@@ -23,17 +24,20 @@ namespace  FluentCMS.Models.Queries
     {
         const string SortFields = "s[field]";
         const string SortOrders = "s[order]";
-        public Sorts(){}
 
-        public Sorts(Dictionary<string, StringValues> qs)
+        public Sorts()
         {
-            if (qs.ContainsKey(SortFields) && qs.ContainsKey(SortOrders))
+        }
+
+        public Sorts(Dictionary<string, StringValues> queryStringDictionary)
+        {
+            if (queryStringDictionary.ContainsKey(SortFields) && queryStringDictionary.ContainsKey(SortOrders))
             {
-                var fields =  qs[SortFields];
-                var orders = qs[SortOrders];
+                var fields = queryStringDictionary[SortFields];
+                var orders = queryStringDictionary[SortOrders];
                 if (fields.Count == orders.Count)
                 {
-                    for(var i = 0; i<  fields.Count; i ++)
+                    for (var i = 0; i < fields.Count; i++)
                     {
                         var sort = new Sort
                         {
@@ -45,16 +49,13 @@ namespace  FluentCMS.Models.Queries
                 }
             }
         }
-       
-
-       
-
         public void Apply(Entity entity, Query? query)
         {
             if (query is null)
             {
                 return;
             }
+
             foreach (var sort in this)
             {
                 if (sort.Order == SortOrder.Desc)

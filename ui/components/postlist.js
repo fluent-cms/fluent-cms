@@ -1,26 +1,19 @@
 import Image from "next/image";
 import Link from "next/link";
 import { cx } from "@/utils/all";
-import { urlForImage } from "@/lib/sanity/image";
 import { parseISO, format } from "date-fns";
 import { PhotoIcon } from "@heroicons/react/24/outline";
-import CategoryLabel from "@/components/blog/category";
+import TagLabel from "@/components/blog/category";
+import { fullFilePath } from "@/services/config";
 
 export default function PostList({
   post,
   aspect,
   minimal,
   pathPrefix,
-  preloadImage,
   fontSize,
   fontWeight
 }) {
-  const imageProps = post?.mainImage
-    ? urlForImage(post.mainImage)
-    : null;
-  const AuthorimageProps = post?.author?.image
-    ? urlForImage(post.author.image)
-    : null;
   return (
     <>
       <div
@@ -38,21 +31,16 @@ export default function PostList({
               aspect === "landscape"
                 ? "aspect-video"
                 : aspect === "custom"
-                ? "aspect-[5/4]"
-                : "aspect-square"
+                  ? "aspect-[5/4]"
+                  : "aspect-square"
             )}
             href={`/post/${pathPrefix ? `${pathPrefix}/` : ""}${
               post.slug
             }`}>
-            {imageProps ? (
+            {post.thumbnail_image ? (
               <Image
-                src={imageProps.src}
-                {...(post.mainImage.blurDataURL && {
-                  placeholder: "blur",
-                  blurDataURL: post.mainImage.blurDataURL
-                })}
-                alt={post.mainImage.alt || "Thumbnail"}
-                priority={preloadImage ? true : false}
+                src={fullFilePath(post.thumbnail_image)}
+                alt={"Thumbnail"}
                 className="object-cover transition-all"
                 fill
                 sizes="(max-width: 768px) 30vw, 33vw"
@@ -67,7 +55,7 @@ export default function PostList({
 
         <div className={cx(minimal && "flex items-center")}>
           <div>
-            <CategoryLabel
+            <TagLabel
               categories={post.categories}
               nomargin={minimal}
             />
@@ -76,8 +64,8 @@ export default function PostList({
                 fontSize === "large"
                   ? "text-2xl"
                   : minimal
-                  ? "text-3xl"
-                  : "text-lg",
+                    ? "text-3xl"
+                    : "text-lg",
                 fontWeight === "normal"
                   ? "line-clamp-2 font-medium  tracking-normal text-black"
                   : "font-semibold leading-snug tracking-tight",
@@ -106,7 +94,7 @@ export default function PostList({
                   <Link
                     href={`/post/${
                       pathPrefix ? `${pathPrefix}/` : ""
-                    }${post.slug.current}`}>
+                    }${post.slug}`}>
                     {post.excerpt}
                   </Link>
                 </p>
@@ -114,24 +102,24 @@ export default function PostList({
             </div>
 
             <div className="mt-3 flex items-center space-x-3 text-gray-500 dark:text-gray-400">
-              <Link href={`/author/${post?.author?.slug?.current}`}>
-                <div className="flex items-center gap-3">
-                  <div className="relative h-5 w-5 flex-shrink-0">
-                    {post?.author?.image && (
-                      <Image
-                        src={AuthorimageProps.src}
-                        alt={post?.author?.name}
-                        className="rounded-full object-cover"
-                        fill
-                        sizes="20px"
-                      />
-                    )}
+              {post.authors?.map((author) => (
+                <Link href={`/author/${author.slug}`}>
+                  <div className="flex items-center gap-3">
+                    <div className="relative h-5 w-5 flex-shrink-0">
+                      {author?.thumbnail_image && (
+                        <Image
+                          src={fullFilePath(author.thumbnail_image)}
+                          alt={author.name}
+                          className="rounded-full object-cover"
+                          fill
+                          sizes="20px"
+                        />
+                      )}
+                    </div>
+                    <span className="truncate text-sm"> {author.name} </span>
                   </div>
-                  <span className="truncate text-sm">
-                    {post?.author?.name}
-                  </span>
-                </div>
-              </Link>
+                </Link>
+              ))}
               <span className="text-xs text-gray-300 dark:text-gray-600">
                 &bull;
               </span>

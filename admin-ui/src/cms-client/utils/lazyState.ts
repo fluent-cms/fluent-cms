@@ -14,8 +14,8 @@ export const lazyStateUtil = {
 
 function sanitizeLazyState(payload:any){
     const state = {
-        first: payload.first,
-        rows: payload.rows,
+        offset: payload.first,
+        limit: payload.rows,
         f: sanitizeFilter({...payload.filters}),
         s: payload.multiSortMeta,
     }

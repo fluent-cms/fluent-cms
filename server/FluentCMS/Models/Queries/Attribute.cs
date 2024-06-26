@@ -61,6 +61,9 @@ public class Attribute
         {
             case DatabaseType.Int :
                return int.Parse(str);
+            case DatabaseType.Date:
+            case DatabaseType.Datetime:
+                return DateTime.Parse(str);
         }
         return str;
     }

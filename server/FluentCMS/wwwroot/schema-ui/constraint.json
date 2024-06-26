@@ -1,13 +1,11 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Constraint",
   "type": "object",
   "properties": {
-    "Match": {
+    "match": {
       "type": "string",
       "default": ""
     },
-    "Value": {
+    "value": {
       "type": "string",
       "default": ""
     }

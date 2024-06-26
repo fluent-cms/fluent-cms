@@ -4,9 +4,6 @@ using SqlKata;
 namespace FluentCMS.Models.Queries;
 using System.Collections.Generic;
 
-
-
-
 public class Filter
 {
     const string Pre = "f[";
@@ -86,20 +83,55 @@ public class Filter
 
 public class Filters : List<Filter>
 {
-
+    private const string QuerystringPrefix = "querystring.";
+    private const string TokenPrefix = "token.";
     public Filters(){}
-
-    public Filters(Dictionary<string, StringValues> qs)
+    public Filters(Dictionary<string, StringValues> queryStringDictionary)
     {
-        foreach (var pair in qs)
+        foreach (var pair in queryStringDictionary)
         {
-            if (Filter.Parse(qs, pair.Key, pair.Value, out var filter))
+            if (Filter.Parse(queryStringDictionary, pair.Key, pair.Value, out var filter))
             {
                 Add(filter);
             }
         }
     }
+    
+    public void Resolve(Entity entity,Dictionary<string,StringValues>? querystringDictionary, Dictionary<string, object>? tokenDictionary)
+    {
+        foreach (var filter in this)
+        {
+            var field = entity.FindOneAttribute(filter.FieldName);
+            if (field is null)
+            {
+                throw new Exception($"Fail to resolve filter: no field ${filter.FieldName} in ${entity.EntityName}");
 
+            }
+            foreach (var filterConstraint in filter.Constraints)
+            {
+                var val = filterConstraint.Value;
+                if (val.StartsWith(QuerystringPrefix))
+                {
+                    var key = val.Substring(QuerystringPrefix.Length);
+                    if (querystringDictionary is null)
+                    {
+                        throw new Exception($"Fail to resolve filter: no key ${key} in querystring");
+                    }
+                    filterConstraint.ResolvedValues =
+                        querystringDictionary[key].Select(x => field.CastToDatabaseType(x)).ToArray();
+                    
+                }
+                else if (val.StartsWith(TokenPrefix))
+                {
+                    //todo
+                }
+                else
+                {
+                    filterConstraint.ResolvedValues = [field.CastToDatabaseType(filterConstraint.Value)];
+                }
+            }
+        }
+    }
     public void Apply(Entity entity, Query? query)
     {
         if (query is null)

@@ -32,6 +32,7 @@
       <Folder Include="Migrations\" />
       <Folder Include="Migrations\pg\" />
       <Folder Include="wwwroot\assets\" />
+      <Folder Include="wwwroot\files\2024-06\" />
     </ItemGroup>
 
 </Project>

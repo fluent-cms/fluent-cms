@@ -1,8 +1,13 @@
 using FluentCMS.Models.Queries;
+using Microsoft.Extensions.Primitives;
 
 namespace FluentCMS.Services;
 
 public interface IViewService
 {
-    Task<RecordList?> List(string viewName, Pagination? pagination);
+    Task<ViewResult?> List(string viewName, Cursor cursor,
+        Dictionary<string, StringValues> querystringDictionary);
+
+    Task<IDictionary<string, object>?> One(string viewName, Dictionary<string, StringValues> querystringDictionary);
+    Task<IDictionary<string, object>[]?> Many(string viewName, Dictionary<string, StringValues> querystringDictionary);
 }

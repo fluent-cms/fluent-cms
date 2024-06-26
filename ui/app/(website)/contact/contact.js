@@ -23,8 +23,7 @@ export default function Contact({ settings }) {
   });
   const [isSuccess, setIsSuccess] = useState(false);
   const [message, setMessage] = useState(false);
-  // Please update the Access Key in the Sanity CMS - Site Congig Page
-  const apiKey = settings?.w3ckey || "YOUR_ACCESS_KEY_HERE";
+  const apiKey = "YOUR_ACCESS_KEY_HERE";
 
   const { submit: onSubmit } = useWeb3Forms({
     access_key: apiKey,
@@ -55,7 +54,7 @@ export default function Contact({ settings }) {
       <div className="grid my-10 md:grid-cols-2">
         <div className="my-10">
           <h2 className="text-2xl font-semibold dark:text-white">
-            Contact Stablo
+            Contact Fluent CMS
           </h2>
           <p className="max-w-sm mt-5">
             Have something to say? We are here to help. Fill up the
@@ -65,13 +64,13 @@ export default function Contact({ settings }) {
           <div className="mt-5">
             <div className="flex items-center mt-2 space-x-2 text-dark-600 dark:text-gray-400">
               <MapPinIcon className="w-4 h-4" />
-              <span>1734 Sanfransico, CA 93063</span>
+              <span>https://github.com/jschen2024/fluent-cms</span>
             </div>
             {settings?.email && (
               <div className="flex items-center mt-2 space-x-2 text-dark-600 dark:text-gray-400">
                 <EnvelopeIcon className="w-4 h-4" />
-                <a href={`mailto:${settings.email}`}>
-                  {settings.email}
+                <a href={`mailto:jaikechen@gmail.com}`}>
+                  jaikechen@gmail.com
                 </a>
               </div>
             )}
