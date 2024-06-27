@@ -7,8 +7,8 @@ As a developer, my normal workflow is:
 3. Create UI page for user to manage data.
 ORMs, UI Frameworks can reduce the work, but still programmers are doing repetitive works.
 
-When the first time I saw people using Wordpress Template build websites, I am amazed how a no-programmer, with on 
-Knowledge of database at all, can build websites. After learn it database schema, I am amazed by Wordpress team's ideas
+When the first time I saw people using Wordpress Template build websites, I am amazed how a no-programmer, 
+with on Knowledge of database at all, can build websites. After learn it database schema, I am amazed by Wordpress team's ideas
 1. In Wordpress, every content-related entity is put in post, no matter, post, blog, product, event. Entity are 
 differentiated by a discriminator post_type.
 2. If you have a attribute not in Wordpress's Post table, you put attribute name, attribute value ask key-value pair 
@@ -26,8 +26,13 @@ But the overall developing experience with Strapi is not good.
 1. it's hard to extend strapi's feature, without strong type(strapi is written in node.js), it's very hard to extend a strapi API.
 2. strapi's performance is also not good, again, strapi team is also tread performance for flexibility.
 
-So I think why not build a CMS myself, using the language and framework I am comfortable with. It's not difficult with 
-right tools and focus. 
+So I thought, why not build a CMS myself using the language and framework I'm comfortable with? 
+It's not difficult with the right tools and focus. 
+Fluent CMS is not intended to be as feature-rich as WordPress or Strapi. 
+Instead, it will follow a modern microservice architecture, focusing solely on content management. 
+Other features like e-commerce, user engagement, and user authentication will be handled by other microservices.
+
+
 ## System overview
 ![img.png](doc/images/overview.png)
 
