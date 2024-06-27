@@ -32,12 +32,16 @@ builder.Services.AddScoped<IViewService, ViewService >();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var conn = builder.Configuration.GetConnectionString("PgConnection");
-if (conn is not null)
+var pgConnectionString = builder.Configuration.GetConnectionString("PgConnection") ??
+                         Environment.GetEnvironmentVariable("PgConnection");
+if (pgConnectionString is not null)
 {
-    builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(conn));
-    builder.Services.AddSingleton<IDao>(p => new PgDao(conn,builder.Environment.IsDevelopment()));
-
+    builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(pgConnectionString));
+    builder.Services.AddSingleton<IDao>(p => new PgDao(pgConnectionString,builder.Environment.IsDevelopment()));
+}
+else
+{
+    throw new Exception("didn't find PgConnection settings");
 }
 
 
@@ -53,12 +57,14 @@ if (app.Environment.IsDevelopment())
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-
 app.UseHttpsRedirection();
 
 app.UseCors("AllowAllOrigins");
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapFallbackToFile("index.html");
+//app.MapFallbackToPage("/");
 
 app.Run();
+
