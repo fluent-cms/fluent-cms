@@ -5,7 +5,7 @@ const nextConfig = {
   images: {
     formats: ["image/avif", "image/webp"],
     dangerouslyAllowSVG: true,
-    remotePatterns: [{ hostname: "localhost" }]
+    remotePatterns: [{ hostname: "**" }]
   },
   typescript: {
     // Set this to false if you want production builds to abort if there's type errors

@@ -66,6 +66,20 @@ Both entity framework and sqlkata can abstract query from specific Database dial
 another layer, currently fluent-cms support postgres sql, it can easily support SQL Server and MySQL in the future. 
 
 ## Play With it using Docker
+Suppose you have installed docker and docker compose
+1. clone the repository
+```shell
+git clone https://github.com/fluent-cms/fluent-cms
+```
+2. bring up services
+```shell
+cd docker-play
+docker-compose up
+```
+3. now you can play with the app
+- manage content http://localhost:8080  
+- demo frontend http://localhost:3000
+- the schema editor http://localhost:8080/schema-ui/list.html
 
 ## Development
 
