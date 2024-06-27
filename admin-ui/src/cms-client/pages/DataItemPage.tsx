@@ -4,7 +4,6 @@ import {ItemForm} from "../components/itemForms/ItemForm";
 import {deleteItem, updateItem, useItemData} from "../services/entity";
 import {Divider} from "primereact/divider";
 import {getLinkToEntity, getSubPageColumns, getWriteColumns} from "../utils/columnUtil";
-import {Subtable} from "../containers/Subtable";
 import {Button} from "primereact/button";
 import {Crosstable} from "../containers/Crosstable";
 import {userRequestStatus} from "../components/itemForms/userFormStatusUI";
@@ -54,7 +53,6 @@ export function DataItemPage() {
                 return <div key={column.field}>
                     <Divider/>
                     { column.type === 'crosstable' && <Crosstable key={column.field} {...props}/> }
-                    { column.type === 'subtable' && <Subtable key={column.field} {...props}/> }
                 </div>
             })
         }
