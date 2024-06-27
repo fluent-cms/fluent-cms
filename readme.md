@@ -73,7 +73,7 @@ git clone https://github.com/fluent-cms/fluent-cms
 ```
 2. bring up services
 ```shell
-cd docker-play
+cd fluent-cms-docker
 docker-compose up
 ```
 3. now you can play with the app
