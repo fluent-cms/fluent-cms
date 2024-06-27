@@ -1,4 +1,14 @@
 ﻿services:
+  ui:
+    build:
+      context: ../ui 
+      dockerfile: ../ui/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development   
+      - NEXT_PUBLIC_API_PATH=http://fluent-cms:8080/api
+      - NEXT_PUBLIC_FILE_PATH=http://fluent-cms:8080/files
   fluent-cms:
     image: fluent-cms
     build:
