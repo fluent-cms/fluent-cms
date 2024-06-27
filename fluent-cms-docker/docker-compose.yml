@@ -20,6 +20,8 @@ services:
       dockerfile: FluentCMS/Dockerfile
     environment:
       - PgConnection=Host=fluent-cms-db;Port=5432;Database=fluent-cms;Username=postgres;Password=mysecretpassword
+    volumes:
+      - ./files:/app/wwwroot/files
     ports:
       - "8080:8080"
   fluent-cms-db:
