@@ -48,7 +48,6 @@ export function DataItemPage() {
         <Button type={'button'} label={"Delete " + schema.title} severity="danger" onClick={onDelete}/>
         {
             subPages.map((column: any) => {
-                console.log({column})
                 const props = {schemaName, schema, data, column,  getFullURL:getFullAssetsURL}
                 return <div key={column.field}>
                     <Divider/>

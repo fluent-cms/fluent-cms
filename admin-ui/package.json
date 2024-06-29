@@ -10,9 +10,9 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.6.0",
-    "@ory/client": "^1.4.2",
     "@types/qs": "^6.9.9",
     "axios": "^1.6.0",
+    "js-cookie": "^3.0.5",
     "primeflex": "^3.3.1",
     "primeicons": "^6.0.1",
     "primereact": "10.1.0",
@@ -23,9 +23,11 @@
     "react-hook-form": "^7.47.0",
     "react-monaco-editor": "^0.55.0",
     "react-router-dom": "^6.17.0",
-    "swr": "^2.2.4"
+    "swr": "^2.2.4",
+    "crypto-js": "^4.2.0"
   },
   "devDependencies": {
+    "@types/crypto-js": "^4.2.2",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "@vitejs/plugin-react": "latest",

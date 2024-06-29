@@ -2,9 +2,11 @@ using FluentCMS.Services;
 using FluentCMS.Data;
 using FluentCMS.Utils.Dao;
 using FluentCMS.Utils.File;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
 
 builder.Services.AddCors(options =>
 {
@@ -28,6 +30,7 @@ builder.Services.AddScoped<ISchemaService, SchemaService>();
 builder.Services.AddScoped<IEntityService, EntityService >();
 builder.Services.AddScoped<IViewService, ViewService >();
 
+builder.Services.AddIdentityApiEndpoints<IdentityUser>().AddEntityFrameworkStores<AppDbContext>();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -44,7 +47,6 @@ else
     throw new Exception("didn't find PgConnection settings");
 }
 
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -54,17 +56,17 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseDefaultFiles();
-app.UseStaticFiles();
-
 app.UseHttpsRedirection();
 
 app.UseCors("AllowAllOrigins");
 app.UseAuthorization();
 
-app.MapControllers();
-app.MapFallbackToFile("index.html");
-//app.MapFallbackToPage("/");
+app.MapControllers().RequireAuthorization();
+var group = app.MapGroup("/api");
+group.MapIdentityApi<IdentityUser>();
 
+app.UseDefaultFiles();
+app.UseStaticFiles();
+app.MapFallbackToFile("index.html");
 app.Run();
 
