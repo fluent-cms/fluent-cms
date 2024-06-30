@@ -1,0 +1,27 @@
+﻿
+services:
+  fluent-cms-demo-ui-sqlite:
+    container_name: fluent-cms-demo-ui-sqlite
+    image: fluent-cms-demo-ui-sqlite
+    build:
+      context: ../ui
+      dockerfile: ../ui/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_PATH=http://fluent-cms-server-sqlite:8080/api
+      - NEXT_PUBLIC_FILE_PATH=http://fluent-cms-server-sqlite:8080/files
+  fluent-cms-server-sqlite:
+    container_name: fluent-cms-server-sqlite
+    image: fluent-cms-server-sqlite
+    build:
+      context: ../server/
+      dockerfile: FluentCMS/Dockerfile
+    environment:
+      - Sqlite=Data Source=cms.db
+    volumes:
+      - ./files:/app/wwwroot/files
+      - ./cms.db:/app/cms.db
+    ports:
+      - "8080:8080"

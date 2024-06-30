@@ -6,6 +6,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+
 InjectDb();
 InjectServices();
 AddCors();
@@ -21,7 +25,6 @@ builder.Services.AddIdentityApiEndpoints<IdentityUser>().AddEntityFrameworkStore
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
 
 var app = builder.Build();
 
@@ -44,11 +47,19 @@ group.MapIdentityApi<IdentityUser>();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.MapFallbackToFile("index.html");
+
 app.Run();
 
 string? GetConnectionString(string key)
 {
-    return builder.Configuration.GetConnectionString(key) ?? Environment.GetEnvironmentVariable(key);
+    var ret = builder.Configuration.GetConnectionString(key) ?? Environment.GetEnvironmentVariable(key);
+    if (ret is not null)
+    {
+        Console.WriteLine("***********************************");
+        Console.WriteLine($"Current Connection string is {ret}");
+        Console.WriteLine("***********************************");
+    }
+    return ret;
 }
 
 void InjectDb()
@@ -72,7 +83,7 @@ void InjectDb()
     }
 
 
-    throw new Exception("didn't find PgConnection settings");
+    throw new Exception("didn't find any connection settings");
 }
 
 void AddCors()

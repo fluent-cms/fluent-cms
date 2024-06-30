@@ -73,13 +73,13 @@ git clone https://github.com/fluent-cms/fluent-cms
 ```
 2. bring up services
 ```shell
-cd fluent-cms-docker
+cd fluent-cms-sqlite-docker
 docker-compose up
 ```
 3. now you can play with the app
-- manage content http://localhost:8080  
+- manage content http://localhost:8080  use username admin@cms.com/Admin1! 
+
 - demo frontend http://localhost:3000
-- the schema editor http://localhost:8080/schema-ui/list.html
 
 ## Development
 

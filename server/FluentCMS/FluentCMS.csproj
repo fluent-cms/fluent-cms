@@ -28,12 +28,17 @@
         <Link>.dockerignore</Link>
       </Content>
     </ItemGroup>
-
     <ItemGroup>
+      <Folder Include="App_Data\" />
       <Folder Include="Migrations\" />
       <Folder Include="Migrations\postgreSQL\" />
       <Folder Include="wwwroot\assets\" />
       <Folder Include="wwwroot\files\2024-06\" />
+    </ItemGroup>
+    <ItemGroup>
+      <None Update="cms.db">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>

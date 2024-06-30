@@ -11,5 +11,5 @@ public class SqliteContext : AppDbContext
     }
     //for migration
     protected override void OnConfiguring(DbContextOptionsBuilder options)
-        => options.UseSqlite("Data Source=./cms.db");
+        => options.UseSqlite("Data Source=cms.db");
 }

@@ -1,10 +1,11 @@
 using FluentCMS.Models.Queries;
 using FluentCMS.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 
 namespace FluentCMS.Controllers;
-
+[AllowAnonymous]
 [ApiController]
 [Route("api/[controller]")]
 public class ViewsController(IViewService viewService) : ControllerBase
