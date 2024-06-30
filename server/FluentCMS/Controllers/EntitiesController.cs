@@ -10,7 +10,7 @@ namespace FluentCMS.Controllers;
 public class EntitiesController(IEntityService entityService) : ControllerBase
 {
     [HttpGet("{entityName}")]
-    public async Task<ActionResult<IEnumerable<object>>> Get(string entityName,[FromQuery] Pagination? pagination)
+    public async Task<ActionResult<ListResult>> Get(string entityName,[FromQuery] Pagination? pagination)
     {
         var qs = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
         var sorts = new Sorts(qs);
@@ -20,7 +20,7 @@ public class EntitiesController(IEntityService entityService) : ControllerBase
     }
 
     [HttpGet("{entityName}/{id}")]
-    public async Task<ActionResult<object>> Get(string entityName, string id)
+    public async Task<ActionResult<Record>> Get(string entityName, string id)
     {
         var items = await entityService.One(entityName, id);
         return items is null ? NotFound() : Ok(items);

@@ -10,7 +10,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace FluentCMS.Migrations.pg
 {
-    [DbContext(typeof(PgContext))]
+    [DbContext(typeof(PostgreSQLContext))]
     partial class PgContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)

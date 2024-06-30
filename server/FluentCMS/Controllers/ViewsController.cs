@@ -19,7 +19,7 @@ public class ViewsController(IViewService viewService) : ControllerBase
     }
 
     [HttpGet("{viewName}/one")]
-    public async Task<ActionResult<IDictionary<string, object>>> GetOne(string viewName,
+    public async Task<ActionResult<Record>> GetOne(string viewName,
         [FromQuery] Pagination? pagination)
     {
         var item = await viewService.One(viewName, QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value));

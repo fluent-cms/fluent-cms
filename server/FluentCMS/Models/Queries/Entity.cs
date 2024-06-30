@@ -2,7 +2,6 @@ using FluentCMS.Utils.Dao;
 using SqlKata;
 
 namespace FluentCMS.Models.Queries;
-using Record = IDictionary<string,object>;
 
 public class Entity
 {
@@ -93,6 +92,10 @@ public class Entity
     }
     public Query Many(object[]ids, Attribute[] attributes)
     {
+        if (ids.Length == 0)
+        {
+            throw new Exception("ids is empty");
+        }
         var lstFields = attributes.Select(x => x.Field);
         return Basic().Select(lstFields.ToArray()).WhereIn(PrimaryKey,ids);
     }

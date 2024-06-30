@@ -7,7 +7,7 @@ namespace FluentCMS.Services;
 
 public class EntityService(IDao dao, ISchemaService schemaService) : IEntityService
 {
-    public async Task<IDictionary<string,object>?> One(string entityName, string id)
+    public async Task<Record?> One(string entityName, string id)
     {
         var entity = await schemaService.GetEntityByName(entityName);
         if (entity is null)
@@ -134,7 +134,7 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
             TotalRecords = await dao.Count(query)
         };
     }
-    public async Task AttachCrosstable(Attribute attribute, IDictionary<string,object>[] items, Func<Entity, Attribute[]> getFields)
+    public async Task AttachCrosstable(Attribute attribute, Record[] items, Func<Entity, Attribute[]> getFields)
     {
         var ids = attribute.Parent?.PrimaryKeyAttribute().GetValues(items);
         if (ids is null || ids.Length == 0)
@@ -143,10 +143,7 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
         }
 
         var cross = attribute.Crosstable;
-        if (cross is null)
-        {
-            return;
-        }
+        ArgumentNullException.ThrowIfNull(cross);
 
         var query = cross.Many(getFields(cross.TargetEntity), ids);
         var targetRecords = await dao.Many(query);
@@ -165,26 +162,13 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
             }
         }
     }
-    public async Task AttachLookup(Attribute lookupAttribute, IDictionary<string,object>[] items, Func<Entity, Attribute[]> getFields)
+    public async Task AttachLookup(Attribute lookupAttribute, Record[] items, Func<Entity, Attribute[]> getFields)
     {
         var lookupEntity = await schemaService.GetEntityByName(lookupAttribute.GetLookupEntityName());
-        if (lookupEntity is null)
-        {
-            return;
-        }
-
+        ArgumentNullException.ThrowIfNull(lookupEntity);
         var ids = lookupAttribute.GetValues(items);
-        if (ids.Length == 0)
-        {
-            return;
-        }
-
         var lookupRecords = await dao.Many(lookupEntity.Many(ids, getFields(lookupEntity)));
-        if (lookupRecords is null)
-        {
-            return;
-        }
-
+        ArgumentNullException.ThrowIfNull(lookupRecords);
         foreach (var lookupRecord in lookupRecords)
         {
             var lookupId = lookupRecord[lookupEntity.PrimaryKey];

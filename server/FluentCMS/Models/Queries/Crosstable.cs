@@ -1,7 +1,6 @@
 using SqlKata;
 
 namespace FluentCMS.Models.Queries;
-using Record = IDictionary<string,object>;
 
 public class Crosstable
 {

@@ -4,7 +4,6 @@ using FluentCMS.Utils.Dao;
 using FluentCMS.Utils.Naming;
 
 namespace FluentCMS.Models.Queries;
-using Record = IDictionary<string,object>;
 
 public class Attribute
 {
@@ -18,9 +17,9 @@ public class Attribute
     public bool InDetail { get; set; } = false;
     public bool IsDefault { get; set; } = false;
     [JsonConverter(typeof(JsonStringEnumConverter))]
-    public DisplayType Type { get; set; } 
-    
-    public string[]?Options { get; set; }
+    public DisplayType Type { get; set; }
+
+    public string[] Options { get; set; } = [];
 
     [JsonIgnore]
     public Entity? Parent { get; set; }
@@ -43,29 +42,29 @@ public class Attribute
 
     public string FullName()
     {
+        ArgumentNullException.ThrowIfNull(Parent);
         return Parent.TableName + "." + Field;
     }
     public string? GetCrossJoinEntityName()
     {
-        return Options?.FirstOrDefault();
+        return Options.First();
     }
  
-    public string? GetLookupEntityName()
+    public string GetLookupEntityName()
     {
-        return Options?.FirstOrDefault();
+        var ret = Options.FirstOrDefault();
+        ArgumentNullException.ThrowIfNull(ret);
+        return ret;
     }
     
     public object CastToDatabaseType(string str)
     {
-        switch (DataType)
+        return DataType switch
         {
-            case DatabaseType.Int :
-               return int.Parse(str);
-            case DatabaseType.Date:
-            case DatabaseType.Datetime:
-                return DateTime.Parse(str);
-        }
-        return str;
+            DatabaseType.Int => int.Parse(str),
+            DatabaseType.Date => DateTime.Parse(str),
+            _ => str,
+        };
     }
 
     public object[] GetValues(Record[] records)

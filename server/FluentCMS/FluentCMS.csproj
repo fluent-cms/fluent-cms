@@ -16,6 +16,7 @@
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
           <PrivateAssets>all</PrivateAssets>
         </PackageReference>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.6" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
         <PackageReference Include="SqlKata" Version="2.4.0" />
         <PackageReference Include="SqlKata.Execution" Version="2.4.0" />
@@ -30,7 +31,7 @@
 
     <ItemGroup>
       <Folder Include="Migrations\" />
-      <Folder Include="Migrations\pg\" />
+      <Folder Include="Migrations\postgreSQL\" />
       <Folder Include="wwwroot\assets\" />
       <Folder Include="wwwroot\files\2024-06\" />
     </ItemGroup>

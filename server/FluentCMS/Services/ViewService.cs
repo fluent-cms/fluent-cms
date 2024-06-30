@@ -1,9 +1,9 @@
 using FluentCMS.Models.Queries;
 using FluentCMS.Utils.Dao;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Primitives;
 
 namespace FluentCMS.Services;
+
 
 public class ViewService(IDao dao, ISchemaService schemaService, IEntityService entityService) : IViewService
 {
@@ -80,8 +80,7 @@ public class ViewService(IDao dao, ISchemaService schemaService, IEntityService 
     }
 
 
-    public async Task<IDictionary<string, object>[]?> Many(string viewName,
-        Dictionary<string, StringValues> querystringDictionary)
+    public async Task<Record[]?> Many(string viewName, Dictionary<string, StringValues> querystringDictionary)
     {
         var (ok,view, entity) = await ResolvedView(viewName, querystringDictionary);
         if (!ok)
@@ -104,8 +103,7 @@ public class ViewService(IDao dao, ISchemaService schemaService, IEntityService 
         return items;
     }
 
-    public async Task<IDictionary<string, object>?> One(string viewName,
-        Dictionary<string, StringValues> querystringDictionary)
+    public async Task<IDictionary<string, object>?> One(string viewName, Dictionary<string, StringValues> querystringDictionary)
     {
         var (ok, view, entity) = await ResolvedView(viewName, querystringDictionary);
         if (!ok)
@@ -126,8 +124,7 @@ public class ViewService(IDao dao, ISchemaService schemaService, IEntityService 
         return item;
     }
     
-    private async Task AttachRelatedEntity(Entity entity, View view, Entity.InListOrDetail? scope,
-        IDictionary<string, object>[] items)
+    private async Task AttachRelatedEntity(Entity entity, View view, Entity.InListOrDetail? scope, Record[] items)
     {
         foreach (var attribute in entity.GetAttributes(DisplayType.lookup, scope, view.AttributeNames))
         {

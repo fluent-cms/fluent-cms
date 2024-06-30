@@ -3,9 +3,6 @@ using FluentCMS.Models.Queries;
 using Attribute = FluentCMS.Models.Queries.Attribute;
 
 namespace FluentCMS.Services;
-using Record = IDictionary<string,object>;
-
-
 
 public interface IEntityService
 {
@@ -18,9 +15,7 @@ public interface IEntityService
     Task<int?> CrosstableSave(string entityName, string strId, string field, JsonElement[] items);
     Task<int?> CrosstableDelete(string entityName, string strId, string attributeName, JsonElement[] elements);
 
-    Task AttachLookup(Attribute lookupAttribute, IDictionary<string, object>[] items,
-        Func<Entity, Attribute[]> getFields);
+    Task AttachLookup(Attribute lookupAttribute, Record[] items, Func<Entity, Attribute[]> getFields);
 
-    Task AttachCrosstable(Attribute crossTableAttribute, IDictionary<string, object>[] items,
-        Func<Entity, Attribute[]> getFields);
+    Task AttachCrosstable(Attribute crossTableAttribute, Record[] items, Func<Entity, Attribute[]> getFields);
 }

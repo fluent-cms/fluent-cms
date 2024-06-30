@@ -39,7 +39,7 @@ public class Tests
     public async Task TestPgDaoGet()
     {
         string connectionString = "Host=localhost;Username=postgres;Password=mysecretpassword;Database=fluent-cms";
-        var dao = new PgDao(connectionString, true);
+        var dao = new postgreSQLDao(connectionString, true);
         var items = await dao.Many(new Query("posts").Select("id","title"));
         Assert.Pass();
     }

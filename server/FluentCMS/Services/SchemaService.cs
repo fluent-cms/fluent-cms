@@ -109,7 +109,7 @@ public class SchemaService(AppDbContext context, IDao dao) : ISchemaService
          var schemas = await context.Schemas.ToListAsync();
          return schemas.Select(x => new SchemaDisplayDto(x));
     }
-    public async Task<View?> GetViewByName(string? name)
+    public async Task<View?> GetViewByName(string name)
     {
         var item = await context.Schemas.Where(x => x.Name == name && x.Type == SchemaType.View)
             .FirstOrDefaultAsync();
@@ -124,12 +124,12 @@ public class SchemaService(AppDbContext context, IDao dao) : ISchemaService
         return view;
     }
  
-    public async Task<Entity?> GetEntityByName(string? name)
+    public async Task<Entity?> GetEntityByName(string name)
     {
         return await _GetEntityByName(name, true);
     }
     
-    public async Task<Entity?> _GetEntityByName(string? name, bool loadRelated)
+    private async Task<Entity?> _GetEntityByName(string name, bool loadRelated)
     {
         var item = await context.Schemas.Where(x => x.Name == name && x.Type == SchemaType.Entity)
             .FirstOrDefaultAsync();
@@ -166,7 +166,6 @@ public class SchemaService(AppDbContext context, IDao dao) : ISchemaService
             InitEntity(dto.Settings?.Entity, name);
             await LoadRelated(dto.Settings?.Entity);
         }
-
         return dto;
     }
 

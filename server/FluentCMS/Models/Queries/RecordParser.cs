@@ -3,8 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 
-using Record = IDictionary<string,object>;
-
 public static class RecordParser 
 {
     public static Record Parse (JsonElement jsonElement, Entity entity)

@@ -4,9 +4,8 @@ using SqlKata.Execution;
 using Query = SqlKata.Query;
 
 namespace FluentCMS.Utils.Dao;
-using Record = IDictionary<string,object>;
 
-public class PgDao(string connectionString, bool debug):IDao
+public class postgreSQLDao(string connectionString, bool debug):IDao
 {
     Compiler _compiler = new PostgresCompiler();
 

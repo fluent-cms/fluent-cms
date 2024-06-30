@@ -63,6 +63,8 @@ CREATE TABLE posts (
                        id SERIAL PRIMARY KEY,
                        title VARCHAR(255) NOT NULL,
                        slug VARCHAR(255) NOT NULL,
+                       reading_time varchar(20) not null ,
+                       excerpt VARCHAR(1000) NOT NULL ,
                        content TEXT  NULL,
                        category_id INT,
                        thumbnail_image VARCHAR(255),

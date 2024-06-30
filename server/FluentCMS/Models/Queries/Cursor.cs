@@ -10,7 +10,7 @@ public class Cursor
     public string Last { get; set; } = "";
     public int Limit { get; set; }
 
-    public static bool GenerateCursor(IDictionary<string, object>[]? items, Sorts? sorts, out string first,
+    public static bool GenerateCursor(Record[]? items, Sorts? sorts, out string first,
         out string last)
     {
         first = "";
@@ -25,7 +25,7 @@ public class Cursor
         return true;
     }
 
-    private static string GenerateCursor(IDictionary<string, object> item, Sorts sorts)
+    private static string GenerateCursor(Record item, Sorts sorts)
     {
         var dict = new Dictionary<string, object>();
         foreach (var field in sorts.Select(x => x.FieldName))
