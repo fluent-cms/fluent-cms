@@ -3,6 +3,7 @@ import { urlForImage } from "@/lib/sanity/image";
 import { parseISO, format } from "date-fns";
 import { cx } from "@/utils/all";
 import Link from "next/link";
+import { fullFilePath } from "@/services/config";
 
 export default function Featured({ post, pathPrefix }) {
   const imageProps = post?.mainImage
@@ -26,16 +27,14 @@ export default function Featured({ post, pathPrefix }) {
             href={`/post/${pathPrefix ? `${pathPrefix}/` : ""}${
               post.slug.current
             }`}>
-            <Image
-              src={imageProps.src}
+            <img
+              src={fullFilePath(imageProps.src)}
               {...(post.mainImage.blurDataURL && {
                 placeholder: "blur",
                 blurDataURL: post.mainImage.blurDataURL
               })}
               alt={post.mainImage?.alt || "Thumbnail"}
-              priority
-              fill
-              sizes="100vw"
+              style={{ width: '100%', maxWidth: '100%', height: 'auto' }}
               className="object-cover"
             />
           </Link>

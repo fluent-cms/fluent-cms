@@ -8,11 +8,11 @@ export default function AuthorCard({ author }) {
       <div className="flex flex-wrap items-start sm:flex-nowrap sm:space-x-6">
         <div className="relative mt-1 h-24 w-24 flex-shrink-0 ">
             <Link href={`/author/${author.slug}`}>
-              <Image
+              <img
                 src={fullFilePath(author.thumbnail_image)}
                 alt={author.name}
                 className="rounded-full object-cover"
-                fill
+                style={{ width: '100%', maxWidth: '100%', height: 'auto' }}
                 sizes="96px"
               />
             </Link>

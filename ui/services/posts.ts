@@ -3,7 +3,6 @@ import { fetcher, fullApiPath } from "@/services/config";
 export async function allPosts(params) {
   const query = params ? new URLSearchParams(params).toString():'';
   let path = fullApiPath(`/views/latest-posts?` + query);
-  console.log({path})
   return await fetcher(path);
 }
 

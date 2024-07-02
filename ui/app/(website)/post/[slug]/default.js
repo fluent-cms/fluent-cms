@@ -35,11 +35,11 @@ export default function Post(props) {
                 <>
                   <div key={author.id} className="relative h-10 w-10 flex-shrink-0">
                     <Link href={`/author/${author.slug}`}>
-                      <Image
+                      <img
                         src={fullFilePath(author.thumbnail_image)}
                         alt={author.name}
                         className="rounded-full object-cover"
-                        fill
+                        style={{ width: '100%', maxWidth: '100%', height: 'auto' }}
                         sizes="40px"
                       />
                     </Link>
@@ -70,13 +70,14 @@ export default function Post(props) {
       </Container>
 
       <div className="relative z-0 mx-auto aspect-video max-w-screen-lg overflow-hidden lg:rounded-lg">
-          <Image
+          <img
             src={fullFilePath(post.featured_image)}
             alt={"Thumbnail"}
             loading="eager"
-            fill
             sizes="100vw"
             className="object-cover"
+            style={{ width: '100%', maxWidth: '100%', height: 'auto' }}
+
           />
       </div>
 
