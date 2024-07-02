@@ -1,72 +1,47 @@
 # Fluent CMS
-
-## Why another CMS
-As a developer, my normal workflow is:
-1. Create tables and define relationships in databases.
-2. Create APIs can create, read, update, delete data.
-3. Create UI page for user to manage data.
-
-ORMs, UI Frameworks can reduce the work, but still programmers are doing repetitive works.
-
-When the first time I saw people using Wordpress Template build websites, I am amazed how a no-programmer, 
-with no Knowledge of database at all, can build websites. 
-After learn Wordpress database schema, I am amazed by Wordpress dev team's ideas
-1. In WordPress, all content-related entities, such as posts, blogs, products, and events, are stored in the "posts" table. 
-These entities are distinguished by the "post_type" discriminator.
-2. If you have an attribute not in Wordpress's "posts" table, you put attribute name, attribute value ask key-value pair 
-to "post_meta".
-
-By this approach, wordpress maximized it's flexibility, but Wordpress has it's limitations:
-1. The unique design of the WordPress database schema makes it challenging to utilize the data outside of the WordPress environment.
-2. For a single page request, WordPress needs to access the database multiple times, prioritizing flexibility over performance.
-3. it's hard to add feature to Wordpress, you have to be familiar with Wordpress Hook and Plug-in to extend Wordpress.
-
-Some CMSs don't follow Wordpress's database fixed schema pattern, those CMS can change database schema, one of the is Strapi's(https://strapi.io/). 
-I like Strapi's idea of put schema's definition to a .json file, so we can easily add new entities and extend entities.
-But the overall developing experience with Strapi is not good.
-1. it's hard to extend strapi's feature, without strong type(strapi is written in node.js), it's very hard to extend a strapi API.
-2. strapi's performance is also not good, again, strapi team is also prioritize flexibility.
-
-So I thought, why not build a CMS myself using the language and framework I'm comfortable with? 
-It's not difficult with the right tools and focus. 
-Fluent CMS is not intended to be as feature-rich as WordPress or Strapi. 
-Instead, it will follow a modern microservice architecture, focusing solely on content management. 
-Other features like e-commerce, user engagement, and user authentication will be handled by other microservices.
-
-
 ## System overview
 ![img.png](doc/images/overview.png)
+- Frontend Portal Live demo: https://fluent-cms-ui.azurewebsites.net/
+- Admin UI live demo: https://fluent-cms-admin.azurewebsites.net/
+  - user name: admin
+  - password: Admin1!
+- Schema Editor: https://fluent-cms-admin.azurewebsites.net/schema-ui/list.html
 
-### Frontend UI
-For demo purpose, I build a frontend presentation App based on stablo's next.js template. Thanks for stablo's nice and clean template.
-- next.js
-- stablo https://github.com/web3templates/stablo
+## Why another CMS
+The typical workflow for web development involves:
 
-![frontend_ui/homepage](doc/images/frontend_ui/homepage.png)
 
-![frontend_ui/post-page](doc/images/frontend_ui/postpage.png)
+The normal workflow for web development is:
+1. Backend Developers creating tables and defining relationships in databases.
+2. Backend Developers creating APIs to perform CRUD (Create, Read, Update, Delete) operations on data.
+3. Frontend Developers creating web pages that call these APIs.
 
-### Admin UI
-- react
-- prime react https://primereact.org/
-- swr https://swr.vercel.app/
+Although ORMs and UI frameworks can reduce some of this work, developers often find themselves repeating the same tasks. 
+As projects progress, adding or removing fields in tables necessitates changes to both the frontend and backend code, 
+which in turn requires redeploying both applications.
 
-![admin_ui/post_list](doc/images/admin_ui/postlist_page.png)
+Fluent CMS addresses this issue by not hardcoding the backend and frontend to specific entities. 
+Instead, they read the schema definition to generate APIs. 
+This means that changing an entity attribute only requires updating the schema definition in the schema builder.
 
-![admin_ui/post_edit](doc/images/admin_ui/post-edit-page.png)
-### Schema Editor
-- json-editor https://github.com/json-editor/json-editor
-![schema-editor](doc/images/schema_editor/schema-edit-page.png)
-### Server
-- asp.net core
-- entity framework core
-- sqlkata, it using dapper ORM behind the scene(https://sqlkata.com/)
+For example, in the provided food/cooking blog demo, the product manager wants to add a "reading_time" attribute to the post entity.   
+![img_1.png](img_1.png)
 
-Both entity framework and sqlkata can abstract query from specific Database dialect, so I extract database access to 
-another layer, currently fluent-cms support postgres sql, it can easily support SQL Server and MySQL in the future. 
+To meet this requirement, developers do not need to change any code. The workflow is as follows:
+
+Add a "reading_time" field to the "posts" table.
+In the schema builder, add the "reading_time" attribute.    
+![img.png](img.png)
+
+The new field will appear in the admin portal:    
+![img_2.png](img_2.png)
+
+And the attribute will be added to the REST API JSON payload:    
+![img_3.png](img_3.png)
 
 ## Play With it using Docker
-Suppose you have installed docker and docker compose
+Assuming you have Docker and Docker Compose installed, follow these steps:
+
 1. clone the repository
 ```shell
 git clone https://github.com/fluent-cms/fluent-cms
@@ -76,11 +51,17 @@ git clone https://github.com/fluent-cms/fluent-cms
 cd fluent-cms-sqlite-docker
 docker-compose up
 ```
-3. now you can play with the app
-- manage content http://localhost:8080  use username admin@cms.com/Admin1! 
-
-- demo frontend http://localhost:3000
+3. You can now explore the app:
+-   Manage content at http://localhost:8080 using username admin@cms.com and password Admin1!
+-   View the demo frontend at http://localhost:3000
 
 ## Development
 
+### Server
+- asp.net core
+- entity framework core
+- sqlkata, it using dapper ORM behind the scene(https://sqlkata.com/)
+
+Both entity framework and sqlkata can abstract query from specific Database dialect, so I extract database access to
+another layer, currently fluent-cms support postgres sql, it can easily support SQL Server and MySQL in the future. 
 
