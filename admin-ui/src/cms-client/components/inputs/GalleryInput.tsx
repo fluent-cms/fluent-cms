@@ -21,11 +21,6 @@ const responsiveOptions = [
 const itemTemplate = (item:any) => {
     return <img src={item.itemImageSrc} style={{ width: '100%' }} />
 }
-
-const thumbnailTemplate = (item:any) => {
-    return <img src={item.thumbnailImageSrc} alt={item.alt} />
-}
-
 export function GalleryInput(props: {
     data: any,
     column: { field: string, header: string },
@@ -34,21 +29,24 @@ export function GalleryInput(props: {
     control: any
     id: any
     uploadUrl: any
-    getFullURL : (arg:string) =>string
+    getFileFullURL : (arg:string) =>string
 
 }) {
     return <InputPanel  {...props} component={(field: any) => {
-        const {data, column} = props
-        const fullURL = data[column.field].toString().split(',')
-        const items = fullURL.map((x:any) =>({itemImageSrc:props.getFullURL(x), thumbnailImageSrc:props.getFullURL(x)}))
+        const urls = field.value?.split(',')??[]
+        const items = urls.map((x:any) =>({
+            itemImageSrc:props.getFileFullURL(x), thumbnailImageSrc:props.getFileFullURL(x)
+        }));
         return <>
             <InputText type={'hidden'} id={field.name} value={field.value} className={' w-full'}
                        onChange={(e) => field.onChange(e.target.value)}/>
 
-            <Galleria responsiveOptions={responsiveOptions} numVisible={5}
+            <Galleria showIndicators responsiveOptions={responsiveOptions} numVisible={5}
                       item={itemTemplate}
-                      thumbnail={thumbnailTemplate} value={items}/>
-            <FileUpload multiple mode={"basic"} auto url={field.value} onUpload={(e) => {
+                      showThumbnails={false}
+                      value={items}/>
+            <FileUpload withCredentials multiple mode={"basic"} auto url={props.uploadUrl}
+                        onUpload={(e) => {
                 field.onChange(e.xhr.responseText)
             }} name={'files'}/>
         </>

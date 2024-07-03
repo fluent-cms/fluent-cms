@@ -1,4 +1,4 @@
-import {LookupInput} from "../components/itemForms/LookupInput";
+import {LookupInput} from "../components/inputs/LookupInput";
 import {useListData} from "../services/entity";
 
 export function LookupContainer(props:any){

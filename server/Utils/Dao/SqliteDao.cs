@@ -49,6 +49,10 @@ public sealed class SqliteDao(string connectionString, bool debug) : IDao
    
    public async Task AddColumns(string tableName, ColumnDefinition[] columnDefinitions)
    {
+      if (columnDefinitions.Length == 0)
+      {
+         return;
+      }
       var sqlStrs = _util.GenerateAddColumnSql(tableName, columnDefinitions);
       await using var connection = new SqliteConnection(connectionString);
       await connection.OpenAsync();
@@ -63,13 +67,14 @@ public sealed class SqliteDao(string connectionString, bool debug) : IDao
    public async Task<ColumnDefinition[]> GetColumnDefinitions(string tableName)
    {
       var sql = $"PRAGMA table_info({tableName})";
+      /*cid name tuype notnull dflt_value, pk */
       return await _util.ExecuteQuery(sql, async command =>
       {
          await using var reader = await command.ExecuteReaderAsync();
          var columnDefinitions = new List<ColumnDefinition>();
          while (await reader.ReadAsync())
          {
-            columnDefinitions.Add(_util.CreateColumnDefinition(reader.GetString(0), reader.GetString(1)));
+            columnDefinitions.Add(_util.CreateColumnDefinition(reader.GetString(1), reader.GetString(2)));
          }
 
          return columnDefinitions.ToArray();

@@ -19,10 +19,10 @@
     "dataType":{
       "type": "string",
       "enum":[
+        "String",
+        "Text",
         "Int",
         "Datetime",
-        "Text",
-        "String",
         "NA"
       ]
     },
@@ -41,14 +41,12 @@
         "image",
         "gallery",
         "file",
-        "json",
 
         "dropdown",
         "lookup",
         "multiselect",
 
-        "crosstable",
-        "subtable"
+        "crosstable"
       ]
     },
     "options": {

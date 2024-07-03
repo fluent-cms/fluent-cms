@@ -4,7 +4,6 @@ async function save(data){
     try{
         data = removeEmptyProperties(data)
         await axios.post(apiPrefix + "/schemas", removeEmptyProperties(data))
-        alert('saved')
     }catch (err){
         console.error('POST request error:', err);
     }
@@ -15,7 +14,6 @@ async function list(){
     return res.data
 }
 async function saveDefine(data){
-    alert('save define')
     const res= await  axios.post(apiPrefix + `/schemas/define`, removeEmptyProperties(data))
     return res.data
 }

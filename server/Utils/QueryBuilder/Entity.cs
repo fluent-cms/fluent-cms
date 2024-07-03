@@ -48,7 +48,7 @@ public class Entity
         {
             list.Add(new Attribute
             {
-                Field = "created_at", Header = "Crated At",InList = true, InDetail = true, IsDefault = true, DataType = DatabaseType.Datetime
+                Field = "created_at", Header = "Created At",InList = true, InDetail = true, IsDefault = true, DataType = DatabaseType.Datetime
             });
         }
 

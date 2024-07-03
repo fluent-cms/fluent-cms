@@ -24,7 +24,7 @@ export function FileInput(props: {
                        onChange={(e) => field.onChange(e.target.value)}/>
             { field.value && props.previewImage &&  <img src={props.getFileFullURL(field.value)} alt={''} height={150}/>}
             { field.value && props.download && <a href={props.getFileFullURL(field.value)}><h4>Download</h4></a> }
-            <FileUpload mode={"basic"} auto url={uploadUrl} onUpload={(e) => {
+            <FileUpload withCredentials mode={"basic"} auto url={uploadUrl} onUpload={(e) => {
                 field.onChange(e.xhr.responseText)
             }} name={'files'}/>
         </>

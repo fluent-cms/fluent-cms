@@ -80,7 +80,7 @@
             return val
         }
         document.getElementById('submit').addEventListener('click', function () {
-            save(getJson());
+            save(getJson()).then(()=>alert('saved schema'));
         });
 
         document.getElementById('define').addEventListener('click', function () {
@@ -88,7 +88,11 @@
         });
 
         document.getElementById('saveDefine').addEventListener('click', function () {
-            saveDefine(getJson()).then(item=>editor.setValue(item));
+            saveDefine(getJson()).then(item=>{
+                alert('updated database!')
+                editor.setValue(item);
+                
+            });
         });
 
     }
