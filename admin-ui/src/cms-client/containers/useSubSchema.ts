@@ -1,5 +1,5 @@
 import {useSchema} from "../services/schema";
-import {getListColumns, getWriteColumns} from "../utils/columnUtil";
+import {getListColumns, getWriteColumns} from "../services/columnUtil";
 import {useState} from "react";
 
 export function useSubSchema(data :any,

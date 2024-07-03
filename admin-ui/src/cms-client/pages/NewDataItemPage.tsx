@@ -1,11 +1,11 @@
 import { useParams} from "react-router-dom";
 import {useSchema} from "../services/schema";
-import {ItemForm} from "../components/itemForms/ItemForm";
-import {getLinkToEntity, getWriteColumns} from "../utils/columnUtil";
+import {ItemForm} from "../containers/ItemForm";
+import {getLinkToEntity, getWriteColumns} from "../services/columnUtil";
 import {addItem} from "../services/entity";
 import {Button} from "primereact/button";
 import {fileUploadURL, getFullAssetsURL} from "../configs";
-import {userRequestStatus} from "../components/itemForms/userFormStatusUI";
+import {useRequestStatus} from "../containers/useFormStatusUI";
 
 export function NewDataItemPage() {
     const uploadUrl = fileUploadURL()
@@ -15,7 +15,7 @@ export function NewDataItemPage() {
     const schema = useSchema(schemaName)
     const data = {}
     const columns = getWriteColumns(schema)
-    const {checkError, Status} = userRequestStatus(schemaName)
+    const {checkError, Status} = useRequestStatus(schemaName)
 
     const onSubmit = async (formData: any) => {
         const res = await addItem(schemaName, formData)

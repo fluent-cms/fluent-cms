@@ -1,12 +1,12 @@
 import {useParams} from "react-router-dom";
 import {useSchema} from "../services/schema";
-import {ItemForm} from "../components/itemForms/ItemForm";
+import {ItemForm} from "../containers/ItemForm";
 import {deleteItem, updateItem, useItemData} from "../services/entity";
 import {Divider} from "primereact/divider";
-import {getLinkToEntity, getSubPageColumns, getWriteColumns} from "../utils/columnUtil";
+import {getLinkToEntity, getSubPageColumns, getWriteColumns} from "../services/columnUtil";
 import {Button} from "primereact/button";
 import {Crosstable} from "../containers/Crosstable";
-import {userRequestStatus} from "../components/itemForms/userFormStatusUI";
+import {useRequestStatus} from "../containers/useFormStatusUI";
 import {fileUploadURL, getFullAssetsURL} from "../configs";
 
 export function DataItemPage() {
@@ -20,7 +20,7 @@ export function DataItemPage() {
     const subPages = getSubPageColumns(schema)
     const formId = "editForm" + schemaName
 
-    const {checkError, Status, confirm} = userRequestStatus(schemaName)
+    const {checkError, Status, confirm} = useRequestStatus(schemaName)
 
 
     const onSubmit = async (formData: any) => {
@@ -42,7 +42,7 @@ export function DataItemPage() {
 
     return schema && <>
         <Status/>
-        <ItemForm {...{data, id, onSubmit, columns,formId,uploadUrl,  getFullURL:getFullAssetsURL}} />
+        <ItemForm {...{data, id, onSubmit, columns,formId,uploadUrl,  getFileFullURL:getFullAssetsURL}} />
         <Button type={'submit'} label={"Save " + schema.title} icon="pi pi-check" form={formId}/>
         {' '}
         <Button type={'button'} label={"Delete " + schema.title} severity="danger" onClick={onDelete}/>

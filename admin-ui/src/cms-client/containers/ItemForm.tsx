@@ -1,14 +1,14 @@
 import {useForm} from "react-hook-form";
-import {createInput} from "./inputs/createInput";
+import {createInput} from "./createInput";
 
-export function ItemForm({columns, data, id, onSubmit, formId, uploadUrl, getFullURL}: {
+export function ItemForm({columns, data, id, onSubmit, formId, uploadUrl, getFileFullURL}: {
     columns: any[],
     data: any,
     id?: any
     onSubmit: any
     formId: any
     uploadUrl:any
-    getFullURL : (arg:string) =>string
+    getFileFullURL : (arg:string) =>string
 
 }) {
     const {
@@ -20,7 +20,7 @@ export function ItemForm({columns, data, id, onSubmit, formId, uploadUrl, getFul
     return columns && <form onSubmit={handleSubmit(onSubmit)} id={formId}>
         <div className="formgrid grid">
             {
-                columns.map((column: any) => createInput({data, column, register, control, id, uploadUrl,getFullURL}))
+                columns.map((column: any) => createInput({data, column, register, control, id, uploadUrl,getFileFullURL}))
             }
         </div>
     </form>

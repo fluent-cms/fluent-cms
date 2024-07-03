@@ -4,7 +4,7 @@ import {LazyDataTable} from "../components/dataTable/LazyDataTable";
 import {useListData} from "../services/entity";
 import {useLazyStateHandlers} from "../containers/useLazyStateHandlers";
 import {createColumn} from "../components/dataTable/columns/createColumn";
-import {getListColumns, } from "../utils/columnUtil";
+import {getListColumns, } from "../services/columnUtil";
 import {Button} from "primereact/button";
 import {getFullAssetsURL} from "../configs";
 

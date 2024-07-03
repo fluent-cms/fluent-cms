@@ -3,7 +3,7 @@ import {Message} from "primereact/message";
 import {Toast} from "primereact/toast";
 import {confirmDialog, ConfirmDialog} from "primereact/confirmdialog";
 
-export function userRequestStatus(id:any){
+export function useRequestStatus(id:any){
     const toastRef = useRef<any>(null);
     const [error, setError] = useState()
     return {

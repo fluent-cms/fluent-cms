@@ -1,12 +1,13 @@
-import {TextInput} from "./TextInput";
-import {DropDownInput} from "./DropDownInput";
-import {EditorInput} from "./EditorInput";
-import {FileInput} from "./FileInput";
-import {TextAreaInput} from "./TextAreaInput";
-import {DatetimeInput} from "./DatetimeInput";
-import {MultiSelectInput} from "./MultiSelectInput";
-import {GalleryInput} from "./GalleryInput";
-import {LookupDownInput} from "./LookupInput";
+import {TextInput} from "../components/itemForms/TextInput";
+import {DropDownInput} from "../components/itemForms/DropDownInput";
+import {EditorInput} from "../components/itemForms/EditorInput";
+import {FileInput} from "../components/itemForms/FileInput";
+import {TextAreaInput} from "../components/itemForms/TextAreaInput";
+import {DatetimeInput} from "../components/itemForms/DatetimeInput";
+import {MultiSelectInput} from "../components/itemForms/MultiSelectInput";
+import {GalleryInput} from "../components/itemForms/GalleryInput";
+import {LookupInput} from "../components/itemForms/LookupInput";
+import {LookupContainer} from "./LookupContainer";
 
 export function createInput(props :any) {
     const {type, field} = props.column
@@ -14,7 +15,7 @@ export function createInput(props :any) {
         case 'dropdown':
             return <DropDownInput className={'field col-12 md:col-4'} key={field}{...props}/>
         case 'lookup':
-            return <LookupDownInput className={'field col-12 md:col-4'} key={field}{...props}/>
+            return <LookupContainer className={'field col-12 md:col-4'} key={field}{...props}/>
         case 'editor':
             return <EditorInput className={'field col-12'} key={field} {...props}/>
         case 'image':

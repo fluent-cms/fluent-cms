@@ -3,7 +3,7 @@ import {Button} from "primereact/button";
 import {useFormDialogState} from "../components/dialogs/useFormDialogState";
 import {SelectDataTable} from "../components/dataTable/SelectDataTable";
 import {ListDialog} from "../components/dialogs/ListDialog";
-import {userRequestStatus} from "../components/itemForms/userFormStatusUI";
+import {useRequestStatus} from "./useFormStatusUI";
 import {useSubSchema} from "./useSubSchema";
 import {useLazyStateHandlers} from "./useLazyStateHandlers";
 
@@ -28,7 +28,7 @@ export function Crosstable({column, data, schema, getFullURL}: {
 
     const {lazyState :excludedLazyState,eventHandlers:excludedEventHandlers}= useLazyStateHandlers(10)
     const {data: excludedSubgridData, mutate: execMutate} = useSubPageData(schema.entityName, id, column.field, true,excludedLazyState)
-    const {checkError, Status, confirm} = userRequestStatus(column.field)
+    const {checkError, Status, confirm} = useRequestStatus(column.field)
 
     const mutateDate = () => {
         subgridMutate()

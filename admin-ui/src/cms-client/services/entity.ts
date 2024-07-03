@@ -1,6 +1,6 @@
 import useSWR, {useSWRConfig} from "swr";
 import {fullAPIURI} from "../configs";
-import {lazyStateUtil} from "../utils/lazyState";
+import {lazyStateUtil} from "./lazyState";
 import axios from "axios";
 import {catchResponse, fetcher, swrConfig} from "./util";
 
