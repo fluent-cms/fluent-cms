@@ -1,6 +1,6 @@
-using FluentCMS.Models.Queries;
-using FluentCMS.Utils.Dao;
+using Utils.Dao;
 using Microsoft.Extensions.Primitives;
+using Utils.QueryBuilder;
 
 namespace FluentCMS.Services;
 

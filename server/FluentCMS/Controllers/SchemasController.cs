@@ -19,20 +19,25 @@ public class SchemasController(ISchemaService schemaService):ControllerBase
         var item = await schemaService.Save(dto);
         return item is null ? NotFound(): Ok(item);
     }
-
+    [HttpPost("define")]
+    public async Task<ActionResult<SchemaDisplayDto>> SaveTableDefine( [FromBody] SchemaDto dto)
+    {
+        var item = await schemaService.SaveTableDefine(dto);
+        return Ok(item);
+    }
     [HttpGet("{id}/define")]
     public async Task<ActionResult<SchemaDisplayDto>> GetTableDefine(int id)
     {
-        var columns = await schemaService.GetTableDefine(id);
-        return Ok(columns);
+        var item = await schemaService.GetTableDefine(id);
+        return Ok(item);
     }
-    
-     [HttpGet("{name}")]
-     public async Task<ActionResult<SchemaDisplayDto>> Get(string name)
-     {
-         return Ok(await schemaService.GetByIdOrName(name));
-     }
-   
+
+    [HttpGet("{name}")]
+    public async Task<ActionResult<SchemaDisplayDto>> Get(string name)
+    {
+        return Ok(await schemaService.GetByIdOrName(name));
+    }
+
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)

@@ -9,6 +9,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="FluentMigrator.Runner.Postgres" Version="5.2.0" />
+        <PackageReference Include="FluentMigrator.Runner.Sqlite" Version="5.2.0" />
         <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.6" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.6" />
         <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="8.0.6" />
@@ -32,6 +34,7 @@
       <Folder Include="App_Data\" />
       <Folder Include="Migrations\" />
       <Folder Include="Migrations\postgreSQL\" />
+      <Folder Include="Utils\" />
       <Folder Include="wwwroot\assets\" />
       <Folder Include="wwwroot\files\2024-06\" />
     </ItemGroup>
@@ -39,6 +42,9 @@
       <None Update="cms.db">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
+    </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\Utils\Utils.csproj" />
     </ItemGroup>
 
 </Project>

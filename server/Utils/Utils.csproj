@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
+      <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="8.0.6" />
+      <PackageReference Include="Npgsql" Version="8.0.3" />
+      <PackageReference Include="SqlKata" Version="2.4.0" />
+      <PackageReference Include="SqlKata.Execution" Version="2.4.0" />
+    </ItemGroup>
+
+</Project>

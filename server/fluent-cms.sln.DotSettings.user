@@ -1,18 +1,14 @@
 ﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=5e4cf186_002D2c9e_002D4610_002D84d0_002D78d2332152a4/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="TestSerialize" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=3e827c97_002D054b_002D4e51_002D94a6_002D0eb5a814e69d/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="GetDefinitionOfNotExistsTable" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
   &lt;TestAncestor&gt;
-    &lt;TestId&gt;NUnit3x::631D2397-17DC-4B19-96AF-D35AF291793D::net8.0::Test.Tests.TestSerialize&lt;/TestId&gt;
-    &lt;TestId&gt;NUnit3x::631D2397-17DC-4B19-96AF-D35AF291793D::net8.0::Test.Tests.TestDeserialize&lt;/TestId&gt;
-    &lt;TestId&gt;NUnit3x::631D2397-17DC-4B19-96AF-D35AF291793D::net8.0::Test.Tests.TestInt&lt;/TestId&gt;
-    &lt;TestId&gt;NUnit3x::631D2397-17DC-4B19-96AF-D35AF291793D::net8.0::Test.Tests.TestPGDaoGet&lt;/TestId&gt;
-    &lt;TestId&gt;NUnit3x::631D2397-17DC-4B19-96AF-D35AF291793D::net8.0::Test.Tests.TestObjectEq&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::6EDECA16-B67A-4EAA-A296-F21FBDC7561E::net8.0::Utils.Tests.DaoTests.SqliteDaoTests.GetDefinitionOfNotExistsTable&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::6EDECA16-B67A-4EAA-A296-F21FBDC7561E::net8.0::Utils.Tests.DaoTests.SqliteDaoTests.CreateTable&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::6EDECA16-B67A-4EAA-A296-F21FBDC7561E::net8.0::Utils.Tests.DaoTests.SqliteDaoTests.AddColumns&lt;/TestId&gt;
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=fdcff861_002Db3b4_002D4581_002D922a_002D1f4828d6b885/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="TestPGDaoGet" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=caa3313e_002D3bd2_002D4d62_002D9060_002Def12c9689a7e/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="All tests from &amp;lt;Test&amp;gt;" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
   &lt;TestAncestor&gt;
-    &lt;TestId&gt;NUnit3x::631D2397-17DC-4B19-96AF-D35AF291793D::net8.0::Test.Tests.TestPGDaoGet&lt;/TestId&gt;
-    &lt;TestId&gt;NUnit3x::631D2397-17DC-4B19-96AF-D35AF291793D::net8.0::Test.Tests.TestDeserialize&lt;/TestId&gt;
-    &lt;TestId&gt;NUnit3x::631D2397-17DC-4B19-96AF-D35AF291793D::net8.0::Test.Tests.TestInt&lt;/TestId&gt;
-    &lt;TestId&gt;NUnit3x::631D2397-17DC-4B19-96AF-D35AF291793D::net8.0::Test.Tests.TestObjectEq&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::6EDECA16-B67A-4EAA-A296-F21FBDC7561E::net8.0::Utils.Tests.NamingTests.NamingTest.ShouldToTitle&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::6EDECA16-B67A-4EAA-A296-F21FBDC7561E::net8.0::Utils.Tests.DaoTests.SqliteDaoTests.GetDefinitionOfNotExistsTable&lt;/TestId&gt;
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

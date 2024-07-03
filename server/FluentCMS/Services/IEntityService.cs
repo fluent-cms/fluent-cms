@@ -1,6 +1,6 @@
 using System.Text.Json;
-using FluentCMS.Models.Queries;
-using Attribute = FluentCMS.Models.Queries.Attribute;
+using Utils.QueryBuilder;
+using Attribute = Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.Services;
 

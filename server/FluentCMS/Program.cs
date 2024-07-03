@@ -1,7 +1,7 @@
 using FluentCMS.Services;
 using FluentCMS.Data;
-using FluentCMS.Utils.Dao;
-using FluentCMS.Utils.File;
+using Utils.Dao;
+using Utils.File;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -78,7 +78,7 @@ void InjectDb()
     {
         builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
         builder.Services.AddSingleton<IDao>(p =>
-            new postgreSQLDao(connectionString, builder.Environment.IsDevelopment()));
+            new PostgreSQLDao(connectionString, builder.Environment.IsDevelopment()));
         return;
     }
 

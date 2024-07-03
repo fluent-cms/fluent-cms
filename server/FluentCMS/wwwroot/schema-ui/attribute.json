@@ -20,21 +20,9 @@
       "type": "string",
       "enum":[
         "Int",
-        "BigInt",
-        "SmallInt",
-        "TinyInt",
-
-        "Decimal",
-        "Float",
-
-        "Date",
-        "Time",
         "Datetime",
-
         "Text",
-        "Binary",
-        "Json",
-
+        "String",
         "NA"
       ]
     },

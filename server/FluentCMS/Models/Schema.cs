@@ -57,7 +57,14 @@ public class SchemaDto
 
             Name = item.Name;
             Type = item.Type;
-            Settings = JsonSerializer.Deserialize<Settings>(item.Settings);
+            try
+            {
+                Settings = JsonSerializer.Deserialize<Settings>(item.Settings);
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"fail to deserialize {Name}, settings = {item.Settings}, err = {e.Message}");
+            }
         }
     }
     public Schema ToModel()

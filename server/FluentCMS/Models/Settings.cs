@@ -1,4 +1,5 @@
-using FluentCMS.Models.Queries;
+
+using Utils.QueryBuilder;
 
 namespace FluentCMS.Models;
 

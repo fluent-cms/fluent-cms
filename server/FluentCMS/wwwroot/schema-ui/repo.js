@@ -14,6 +14,11 @@ async function list(){
     const res= await  axios.get(apiPrefix + "/schemas")
     return res.data
 }
+async function saveDefine(data){
+    alert('save define')
+    const res= await  axios.post(apiPrefix + `/schemas/define`, removeEmptyProperties(data))
+    return res.data
+}
 
 async function define(id){
     const res= await  axios.get(apiPrefix + `/schemas/${id}/define`)

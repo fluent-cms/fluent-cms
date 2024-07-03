@@ -1,8 +1,7 @@
 using FluentCMS.Data;
 using FluentCMS.Models;
-using FluentCMS.Models.Queries;
-using FluentCMS.Utils.Dao;
-using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
+using Utils.Dao;
+using Utils.QueryBuilder;
 
 namespace FluentCMS.Services;
 
@@ -19,20 +18,40 @@ public static class  SchemaType
 
 public class SchemaService(AppDbContext context, IDao dao) : ISchemaService
 {
+    public async Task<SchemaDisplayDto?> SaveTableDefine(SchemaDto dto)
+    {
+        var entity = dto.Settings?.Entity;
+        ArgumentNullException.ThrowIfNull(entity);
+        var cols = await dao.GetColumnDefinitions(entity.TableName);
+        
+        if (cols.Length > 0)//if table exists, alter table add columns
+        {
+            await dao.AddColumns(entity.TableName, entity.GetAddedColumnDefinitions(cols));
+        }
+        else 
+        {
+            entity.PrimaryKey = "id";
+            entity.EnsureDefaultAttribute();
+            await dao.CreateTable(entity.TableName, entity.GetColumnDefinitions());
+            //no need to expose deleted field to frontend 
+            entity.RemoveDeleted();
+        }
+        await Save(dto);
+        
+        // load the auto generated fields
+        var item = await context.Schemas.FindAsync(dto.Id);
+        return new SchemaDisplayDto(item);
+    }
+
     public async Task<SchemaDisplayDto?> GetTableDefine(int id)
     {
         var schema = await context.Schemas.FindAsync(id);
-        if (schema is null)
-        {
-            return null;
-        }
-
+        ArgumentNullException.ThrowIfNull(schema);
+        
         var dto = new SchemaDisplayDto(schema);
         var entity = dto.Settings?.Entity;
-        if (entity is null)
-        {
-            return null;
-        }
+        ArgumentNullException.ThrowIfNull(entity);
+        
         entity.LoadDefine(await dao.GetColumnDefinitions(entity.TableName));
         return dto;
     }
@@ -54,25 +73,25 @@ public class SchemaService(AppDbContext context, IDao dao) : ISchemaService
 
     private async Task LoadRelated(Entity? entity)
     {
-        if (entity is null)
-        {
-            return;
-        }
-
-       
+        ArgumentNullException.ThrowIfNull(entity);
         foreach (var attribute in entity.GetAttributes(DisplayType.lookup, null, null))
         {
             var lookupEntityName = attribute.GetLookupEntityName();
-            if (lookupEntityName is null)
+            if (string.IsNullOrWhiteSpace(lookupEntityName))
             {
-                continue;
+                throw new Exception($"lookup entity name is not set for {entity.EntityName}");
             }
             attribute.Lookup = await _GetEntityByName(lookupEntityName, false);
         }
 
         foreach (var attribute in entity.GetAttributes(DisplayType.crosstable, null,null))
         {
-            var crossEntity = await _GetEntityByName(attribute.GetCrossJoinEntityName(),false);
+            var joinEntityName = attribute.GetCrossJoinEntityName();
+            if (string.IsNullOrWhiteSpace(joinEntityName))
+            {
+                throw new Exception($"Crosstable entity name is not set for {entity.EntityName}");
+            }
+            var crossEntity = await _GetEntityByName(joinEntityName,false);
             if (crossEntity is null)
             {
                 continue;
@@ -113,11 +132,13 @@ public class SchemaService(AppDbContext context, IDao dao) : ISchemaService
     {
         var item = await context.Schemas.Where(x => x.Name == name && x.Type == SchemaType.View)
             .FirstOrDefaultAsync();
+        ArgumentNullException.ThrowIfNull(item);
         var dto = new SchemaDto(item);
         var view = dto.Settings?.View;
-        if (view is null)
+        ArgumentNullException.ThrowIfNull(view);
+        if (string.IsNullOrWhiteSpace(view.EntityName))
         {
-            return null;
+            throw new Exception($"Entity Name not set for view {item.Name}");
         }
         
         view.Entity =  await _GetEntityByName(view.EntityName, true);
@@ -154,18 +175,18 @@ public class SchemaService(AppDbContext context, IDao dao) : ISchemaService
         if (isInteger)
         {
             item = await context.Schemas.FindAsync(id);
-        }
-        else
-        {
-            item = await context.Schemas.FirstOrDefaultAsync(x => x.Name == name);
+            return new SchemaDisplayDto(item);
         }
 
-        var dto =  new SchemaDisplayDto(item);
-        if (dto.Settings?.Entity is not null)
+        item = await context.Schemas.FirstOrDefaultAsync(x => x.Name == name);
+        var dto = new SchemaDisplayDto(item);
+        if (dto.Settings?.Entity is null)
         {
-            InitEntity(dto.Settings?.Entity, name);
-            await LoadRelated(dto.Settings?.Entity);
+            return dto;
         }
+
+        InitEntity(dto.Settings?.Entity, name);
+        await LoadRelated(dto.Settings?.Entity);
         return dto;
     }
 

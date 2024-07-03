@@ -14,10 +14,9 @@
 <body>
 <div class="header">
     <h1><a href="list.html"> Schema Editor</a></h1>
-    <button id='submit'>Submit</button>
-    <button id='restore'>Restore to Default</button>
-    <button id='enable_disable'>Disable/Enable Form</button>
-    <button id='define'>Get Table Definition</button>
+    <button id='submit'>Save Schema</button>
+    <button id='define'>Get Schema from Database</button>
+    <button id='saveDefine'>Update Database</button>
     <span id='valid_indicator'></span>
 </div>
 
@@ -30,12 +29,8 @@
     const editor= loadEditor()
 
     setListeners(editor)
-    async function loadDefine(editor){
-        define(id).then(item=> editor.setValue(item))
-    }
-
     function loadEditor() {
-        var editor = new JSONEditor(document.getElementById('editor_holder'), {
+        let editor = new JSONEditor(document.getElementById('editor_holder'), {
             ajax: true,
             schema: {
                 "title": schema_name,
@@ -61,8 +56,8 @@
         })
 
         editor.on('change', function () {
-            var errors = editor.validate();
-            var indicator = document.getElementById('valid_indicator');
+            let errors = editor.validate();
+            let indicator = document.getElementById('valid_indicator');
             if (errors.length) {
                 indicator.style.color = 'red';
                 indicator.textContent = "not valid";
@@ -76,33 +71,27 @@
     }
 
     async function setListeners(editor) {
-        document.getElementById('submit').addEventListener('click', function () {
+        function getJson(){
             const val = editor.getValue()
             val.type = schema_name
             if (id){
                 val.id = +id
-            }
-            save(val)
-        });
-
-        document.getElementById('restore').addEventListener('click', function () {
-            loadValue(editor)
+            } 
+            return val
+        }
+        document.getElementById('submit').addEventListener('click', function () {
+            save(getJson());
         });
 
         document.getElementById('define').addEventListener('click', function () {
-            loadDefine(editor)
+            define(id).then(item=> editor.setValue(item));
         });
 
-        document.getElementById('enable_disable').addEventListener('click', function () {
-            if (!editor.isEnabled()) {
-                editor.enable();
-            } else {
-                editor.disable();
-            }
+        document.getElementById('saveDefine').addEventListener('click', function () {
+            saveDefine(getJson()).then(item=>editor.setValue(item));
         });
+
     }
-
-
 </script>
 </body>
 </html>
