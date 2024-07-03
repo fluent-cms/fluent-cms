@@ -28,7 +28,7 @@ export function NewDataItemPage() {
 
     return <>
         <Status/>
-        <ItemForm {...{data, id, onSubmit, columns, formId,uploadUrl,  getFullURL: getFullAssetsURL}}/>
+        <ItemForm {...{data, id, onSubmit, columns, formId,uploadUrl,  getFileFullURL: getFullAssetsURL}}/>
         <Button label={'Save ' + schema.title} type="submit" form={formId}/>
     </>
 }

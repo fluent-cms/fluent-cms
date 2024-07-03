@@ -5,7 +5,19 @@
     <title>FluentCMS Schema Builder</title>
     <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .navbar {
+            margin-bottom: 20px;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+        }
         td pre {
             white-space: pre-wrap;
             margin: 0;
@@ -16,29 +28,34 @@
     </style>
 </head>
 <body>
-<script src="./repo.js?version=abc"></script>
-<a href="./edit.html?schema=menu">Add Menu</a>
-<a href="./edit.html?schema=entity">Add Entity</a>
-<a href="./edit.html?schema=view">Add View</a>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="/">
+        <img alt="logo" src="/fluent-cms.png" height="40" class="mr-2">
+    </a>
+    <div class="navbar-nav">
+        <a class="nav-item nav-link" href="./edit.html?schema=menu">Add Menu</a>
+        <a class="nav-item nav-link" href="./edit.html?schema=entity">Add Entity</a>
+        <a class="nav-item nav-link" href="./edit.html?schema=view">Add View</a>
+    </div>
+</nav>
+
+<div class="table-wrapper">
+    <table id="data-table" class="table table-bordered">
+        <thead class="thead-light">
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody id="table-body">
+        </tbody>
+    </table>
+</div>
+<script src="./repo.js"></script>
+
 <script>
-    function getQueryParam(name) {
-        const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get(name);
-    }
-
-    function setCookie(name, value, days) {
-        const expires = new Date();
-        expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
-        document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
-    }
-
-    const tokenParam = getQueryParam('token');
-    if (tokenParam) {
-        setCookie('bc_social_token', tokenParam, 1);
-        alert('succeed set cookie to cookie, now redirect to list.html')
-        window.location.href = "list.html"
-    }
-
     async function renderTable() {
         const elementId = 'data-table'
         try {
@@ -50,7 +67,7 @@
                     <td>${item.id}</td>
                     <td><a href="edit.html?schema=${item.type}&id=${item.id}">${item.name}</a></td>
                     <td>${item.type}</td>
-                    <td><button id="${item.id}" data-name="${item.name}" onclick="deleteSchema(this)">del</button></td>
+                    <td><button id="${item.id}" data-name="${item.name}" onclick="deleteSchema(this)">Delete</button></td>
                 `;
                 tableBody.appendChild(row);
             });
@@ -65,18 +82,6 @@
     }
     renderTable()
 </script>
-<table id="data-table">
-    <thead>
-    <tr>
-        <th>ID</th>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Value</th>
-        <th></th>
-    </tr>
-    </thead>
-    <tbody id="table-body">
-    </tbody>
-</table>
+
 </body>
 </html>

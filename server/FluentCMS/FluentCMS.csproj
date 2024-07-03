@@ -35,7 +35,6 @@
       <Folder Include="Migrations\" />
       <Folder Include="Migrations\postgreSQL\" />
       <Folder Include="Utils\" />
-      <Folder Include="wwwroot\assets\" />
       <Folder Include="wwwroot\files\2024-06\" />
     </ItemGroup>
     <ItemGroup>
