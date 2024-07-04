@@ -1,35 +1,60 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Entity",
   "type": "object",
+  "title": "Entity",
   "properties": {
     "name": {
-      "type": "string"
+      "type": "string",
+      "title": "Entity Name",
+      "minLength": 1 
     },
     "settings": {
       "type": "object",
+      "title": "Settings",
       "properties": {
         "entity": {
+          "title": "Entity",
           "type": "object",
           "properties": {
-            "tableName": {
-              "type": "string"
-            },
-            "title": {
-              "type": "string"
-            },
+           "tableName": {
+              "type": "string",
+              "title": "Table Name",
+             "minLength": 1,
+              "description": "Database table to store the entity"
+           },
             "primaryKey": {
-              "type": "string"
+              "type": "string",
+              "default": "id",
+              "title": "Primary Key",
+              "minLength": 1,
+              "description": "A field to identify the record"
             },
             "titleAttribute": {
-              "type": "string"
+              "minLength": 1,
+              "type": "string",
+              "title": "Title Attribute",
+              "description": "A string field used to describe records, such as name, title, and subject"
             },
             "defaultPageSize": {
-              "type": "number"
+              "type": "number",
+              "title": "Default Page Size",
+              "default": 20,
+              "description": "Default Page Size for pagination"
             },
+            
+            "title": {
+              "minLength": 1,
+              "type": "string",
+              "title": "Entity Title",
+              "description":"Shows in page header bar"
+            },
+
             "attributes": {
+              "title": "Attributes",
+              "description": "Attributes of entity, including database table fields and customized attribute",
               "type": "array",
               "format": "table",
+              "minItems": 1,
               "id": "fields",
               "items": {
                 "$ref": "attribute.json"

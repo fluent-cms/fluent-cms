@@ -4,8 +4,9 @@
   "type": "object",
   "properties": {
     "name": {
-      "type": "string",
-      "default": ""
+      "minLength": 1,
+      "title": "View Name",
+      "type": "string"
     },
     "settings": {
       "type": "object",
@@ -13,21 +14,30 @@
         "view": {
           "type": "object",
           "properties": {
-            "pageSize":{
-              "type":"integer"
-            },
             "entityName": {
-              "type": "string"
+              "minLength": 1,
+              "type": "string",
+              "title": "Entity Name",
+              "description": "The entity this view based on"
+            },
+            "pageSize":{
+              "title": "Page Size",
+              "type":"integer",
+              "description": "Page Size for pagination"
             },
             "sorts": {
+              "title": "Sorts",
               "$ref": "sorts.json"
             },
             "filters": {
+              "title": "Filters",
               "$ref": "filters.json"
             },
             "attributeNames": {
               "type": "array",
               "format": "table",
+              "title": "Attribute Names",
+              "description": "Attributes display in this view",
               "items": {
                 "type": "string"
               }

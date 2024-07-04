@@ -3,11 +3,14 @@
   "type": "object",
   "properties": {
     "fieldName": {
+      "minLength": 1,
+      "title":"Attribute Name",
       "type": "string"
     },
     "order": {
+      "title":"Order Direction",
       "type": "string",
       "enum": ["Asc", "Desc"]
     }
   }
-}
+} 

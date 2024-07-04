@@ -1,11 +1,48 @@
 # Fluent CMS
+## Demo / Quick Start
+- Admin Panel https://fluent-cms-admin.azurewebsites.net/
+  - Email: admin@cms.com
+  - Password: Admin1!  
+- Public Site : https://fluent-cms-ui.azurewebsites.net/
+
+For examples, you are developing a cooking blog and you need:
+1. An admin panel to manage blog content.
+2. REST APIs for mobile and web clients.
+
+With Fluent CMS, there's no need for coding—just some configuration.
+
+### Add entity
+1. Go to Admin Panel https://fluent-cms-admin.azurewebsites.net/,  use Email 'admin@cms.com', Password Admin1! to login.    
+![img_4.png](img_4.png)
+2. Go to Schema Builder by click the Menu Item  'Schema Builder'   
+![img_5.png](img_5.png)
+3. Go To Add Entity Page by click the Menu Item  'Add Entity'
+![img_8.png](img_8.png)
+4. In the Add Entity Page
+![img_10.png](img_10.png)
+input the following fields
+   - Entity name: blogs
+   - Table name: blogs
+   - Primary Key: id
+   - Title Attribute: title
+   - Default Page Size: 20
+   - Entity Title : Blogs
+5. Now add some attributes to entity
+![img_12.png](img_12.png)
+   - title
+   - published_time   {Database Type: Datetime, Display Type: DateTime}
+   - body {Database Type: Text, Display Type: Editor}
+Then click the update Database button to save
+6. Add Menu item for Admin Panel
+click 'Schema List', then edit the top-menu-bar, add a new item, {url: /entity/blogs, label:Blogs, icon: pi pi-check}
+![img_13.png](img_13.png)
+7. Now you can go to the Admin Panel to add post, Click the 'Fluent CMS' logo, go to Admin Panel
+You can see a new menu item 'Blogs was added', now you can manage content
+![img_14.png](img_14.png)
+
+
 ## System overview
 ![img.png](doc/images/overview.png)
-- Frontend Portal Live demo: https://fluent-cms-ui.azurewebsites.net/
-- Admin UI live demo: https://fluent-cms-admin.azurewebsites.net/
-  - user name: admin
-  - password: Admin1!
-- Schema Editor: https://fluent-cms-admin.azurewebsites.net/schema-ui/list.html
 
 ## Why another CMS
 The typical workflow for web development involves:

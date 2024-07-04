@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using FluentCMS.Services;
 using FluentCMS.Data;
 using Utils.Dao;
@@ -10,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
+
 InjectDb();
 InjectServices();
 AddCors();
@@ -20,7 +22,10 @@ builder.Services.AddRouting(options =>
 {
     options.LowercaseUrls = true;
 }); 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+});
 builder.Services.AddIdentityApiEndpoints<IdentityUser>().AddEntityFrameworkStores<AppDbContext>();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

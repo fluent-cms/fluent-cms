@@ -1,13 +1,18 @@
 {
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
+  "title": "Menu",
   "properties": {
     "name": {
+      "minLength": 1,
+      "title": "Menu Name",
       "type": "string"
     },
     "settings": {
       "type": "object",
       "properties": {
         "menus": {
+          "minItems": 1,
           "type": "array",
           "format": "table",
           "id": "menu",
@@ -15,12 +20,14 @@
             "type": "object",
             "properties": {
               "url": {
+                "minLength": 1,
                 "type": "string"
               },
               "icon": {
                 "type": "string"
               },
               "label": {
+                "minLength": 1,
                 "type": "string"
               },
               "isHref": {

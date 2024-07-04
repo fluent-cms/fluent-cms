@@ -3,7 +3,8 @@ axios.defaults.withCredentials = true
 async function save(data){
     try{
         data = removeEmptyProperties(data)
-        await axios.post(apiPrefix + "/schemas", removeEmptyProperties(data))
+        const res = await axios.post(apiPrefix + "/schemas", removeEmptyProperties(data))
+        return res.data
     }catch (err){
         console.error('POST request error:', err);
     }
