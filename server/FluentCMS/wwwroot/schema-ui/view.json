@@ -22,16 +22,19 @@
             },
             "pageSize":{
               "title": "Page Size",
+              "default": 10,
               "type":"integer",
               "description": "Page Size for pagination"
             },
             "sorts": {
+              "description": "Add one or many fields to sort by",
               "title": "Sorts",
               "$ref": "sorts.json"
             },
             "filters": {
               "title": "Filters",
-              "$ref": "filters.json"
+              "$ref": "filters.json",
+              "description": "Add filter conditions"
             },
             "attributeNames": {
               "type": "array",

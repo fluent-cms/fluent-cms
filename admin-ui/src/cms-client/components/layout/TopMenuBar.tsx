@@ -9,7 +9,7 @@ export function TopMenuBar({start, end}:{start:any, end:any}) {
     const items = useTopMenuBar()
     const links = items.map((x: any)=> x.isHref ? x :(
         {
-            icon: x.icon,
+            icon: 'pi ' + x.icon,
             label:x.label,
             command: ()=>{
                 navigate(x.url)

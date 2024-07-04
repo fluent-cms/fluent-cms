@@ -9,9 +9,12 @@
       "type": "string"
     },
     "settings": {
+      "title": "Settings",
       "type": "object",
       "properties": {
         "menus": {
+          "title": "Menu Items",
+          "description": "The Menu used in Admin Panel",
           "minItems": 1,
           "type": "array",
           "format": "table",
@@ -19,19 +22,57 @@
           "items": {
             "type": "object",
             "properties": {
-              "url": {
+              "name":{
                 "minLength": 1,
+                "title": "Menu Name",
                 "type": "string"
               },
-              "icon": {
+              "url": {
+                "title": "Link",
+                "minLength": 1,
                 "type": "string",
-                "default": "pi pi-check"
+                "description": "External url or Admin Panel Route"
+              },
+              "icon": {
+                "title": "Icon",
+                "description": "The little icon display before menu name ",
+                "type": "string",
+                "enum":[
+                  "pi-bolt",
+                  "pi-check",
+                  "pi-cloud",
+                  "pi-cloud-download",
+                  "pi-cloud-upload",
+                  "pi-cog",
+                  "pi-envelope",
+                  "pi-file-word",
+                  "pi-folder",
+                  "pi-hashtag",
+                  "pi-home",
+                  "pi-link",
+                  "pi-palette",
+                  "pi-pencil",
+                  "pi-plus",
+                  "pi-print",
+                  "pi-search",
+                  "pi-server",
+                  "pi-star",
+                  "pi-tags",
+                  "pi-times",
+                  "pi-user",
+                  "pi-users"
+                ]
+
               },
               "label": {
+                "title": "Label",
+                "description": "Manu Label",
                 "minLength": 1,
                 "type": "string"
               },
               "isHref": {
+                "title": "External Link",
+                "description": "Is External Link",
                 "type": "boolean"
               }
             }
