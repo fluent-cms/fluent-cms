@@ -61,21 +61,6 @@ Fluent CMS addresses this issue by not hardcoding the backend and frontend to sp
 Instead, they read the schema definition to generate APIs. 
 This means that changing an entity attribute only requires updating the schema definition in the schema builder.
 
-For example, in the provided food/cooking blog demo, the product manager wants to add a "reading_time" attribute to the post entity.   
-![img_1.png](img_1.png)
-
-To meet this requirement, developers do not need to change any code. The workflow is as follows:
-
-Add a "reading_time" field to the "posts" table.
-In the schema builder, add the "reading_time" attribute.    
-![img.png](img.png)
-
-The new field will appear in the admin portal:    
-![img_2.png](img_2.png)
-
-And the attribute will be added to the REST API JSON payload:    
-![img_3.png](img_3.png)
-
 ## Play With it using Docker
 Assuming you have Docker and Docker Compose installed, follow these steps:
 

@@ -24,7 +24,8 @@
                 "type": "string"
               },
               "icon": {
-                "type": "string"
+                "type": "string",
+                "default": "pi pi-check"
               },
               "label": {
                 "minLength": 1,
