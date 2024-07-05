@@ -6,19 +6,19 @@ Person(editor, "Editor", "Manage content")
 Person(developer, "Develop", "Define content entity")
 
 Container(schema_builder, "Schema Builder", "jQuery")
-Container(admin_ui, "Admin UI", "react")
-Container(front_ui, "Frontend UI", "next.js")
+Container(admin_panel, "Admin Panel", "react")
+Container(public_site, "Public Site", "next.js")
 Container(backend_server, "Backend Server", "aps.net core")
 
 ContainerDb(db, "Database", "Postgres", "schema and content")
 
 
-Rel(end_user, front_ui, "browse", "Http")
+Rel(end_user, public_site, "browse", "Http")
 Rel(developer, schema_builder, "browse", "Http")
-Rel(editor, admin_ui, "browse", "Http")
+Rel(editor, admin_panel, "browse", "Http")
 
-Rel(admin_ui, backend_server, "request", "rest")
-Rel(front_ui, backend_server, "browse", "rest")
+Rel(admin_panel, backend_server, "request", "rest")
+Rel(public_site, backend_server, "browse", "rest")
 Rel(schema_builder, backend_server, "browse", "rest")
 
 Rel(backend_server, db, "access", "ef/sqlkata")
