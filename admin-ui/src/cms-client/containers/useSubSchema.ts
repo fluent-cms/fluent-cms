@@ -8,7 +8,7 @@ export function useSubSchema(data :any,
 ){
     const id = (data ?? {})[schema?.primaryKey ?? '']
     const targetSchema = column.crosstable.targetEntity;
-    const listColumns = getListColumns(targetSchema,targetSchema.entityName, schema.enityName)
+    const listColumns = getListColumns(targetSchema,targetSchema.name, schema.name)
     const formColumns = getWriteColumns(targetSchema)
     const formId = "sublistForm" + targetSchema.name
     const [existingItems, setExistingItems] = useState(null)

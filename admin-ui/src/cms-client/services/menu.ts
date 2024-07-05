@@ -4,5 +4,5 @@ import {fetcher, swrConfig} from "./util";
 
 export function useTopMenuBar (){
     const { data} = useSWR(fullAPIURI('/schemas/top-menu-bar'), fetcher, swrConfig)
-    return data?.settings?.menus ?? []
+    return data?.settings?.menu?.menuItems ?? []
 }

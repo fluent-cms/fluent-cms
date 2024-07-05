@@ -24,10 +24,10 @@ export function Crosstable({column, data, schema, getFullURL}: {
         setToAddItems
     } = useSubSchema(data, schema, column)
     const {lazyState ,eventHandlers}= useLazyStateHandlers(10)
-    const {data: subgridData, mutate: subgridMutate} = useSubPageData(schema.entityName, id, column.field, false, lazyState)
+    const {data: subgridData, mutate: subgridMutate} = useSubPageData(schema.name, id, column.field, false, lazyState)
 
     const {lazyState :excludedLazyState,eventHandlers:excludedEventHandlers}= useLazyStateHandlers(10)
-    const {data: excludedSubgridData, mutate: execMutate} = useSubPageData(schema.entityName, id, column.field, true,excludedLazyState)
+    const {data: excludedSubgridData, mutate: execMutate} = useSubPageData(schema.name, id, column.field, true,excludedLazyState)
     const {checkError, Status, confirm} = useRequestStatus(column.field)
 
     const mutateDate = () => {
@@ -37,14 +37,14 @@ export function Crosstable({column, data, schema, getFullURL}: {
     }
 
     const handleSave = async () => {
-        await saveSubPageItems(schema.entityName, id, column.field, toAddItems)
+        await saveSubPageItems(schema.name, id, column.field, toAddItems)
         handleHide()
         mutateDate()
     }
 
     const onDelete = async () => {
         confirm('Do you want to delete these item?', async () => {
-            const res = await deleteSubPageItems(schema.entityName, id, column.field, existingItems)
+            const res = await deleteSubPageItems(schema.name, id, column.field, existingItems)
             checkError(res, 'Delete Succeed')
             if (!res.err) {
                 mutateDate()
