@@ -46,11 +46,15 @@ public class SqliteDaoUtil(string connectionString, bool isDebug)
         {
             "id" => "id INTEGER  primary key autoincrement",
             "deleted" => "deleted INTEGER   default 0",
-            "created_at" => "created_at TIMESTAMP default CURRENT_TIMESTAMP",
-            "updated_at" => "updated_at TIMESTAMP default CURRENT_TIMESTAMP",
+            "created_at" => "created_at integer default (datetime('now','localtime'))",
+            "updated_at" => "updated_at integer default (datetime('now','localtime'))",
             _ => $"{column.ColumnName} {GetSqlType(column)}"
         });
-        return $"CREATE TABLE {tableName} ({string.Join(", ", columnDefinitionStrs)})";
+        var ret= $"CREATE TABLE {tableName} ({string.Join(", ", columnDefinitionStrs)});";
+        ret += $@"CREATE TRIGGER update_{tableName}_updated_at BEFORE UPDATE ON {tableName} FOR EACH ROW
+            BEGIN UPDATE {tableName} SET updated_at = (datetime('now','localtime')) WHERE id = OLD.id; 
+            END;";
+        return ret;
     }
 
     private string GetSqlType(ColumnDefinition column)
@@ -59,8 +63,8 @@ public class SqliteDaoUtil(string connectionString, bool isDebug)
         {
             DatabaseType.Int => "INTEGER",
             DatabaseType.Text => "TEXT",
-            DatabaseType.Datetime => "DATETIME",
-            DatabaseType.String => "VARCHAR(255)",
+            DatabaseType.Datetime => "INTEGER",
+            DatabaseType.String => "TEXT",
             _ => throw new NotSupportedException($"Type {column.DataType} is not supported")
         };
     }

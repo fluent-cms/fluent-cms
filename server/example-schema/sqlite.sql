@@ -7,8 +7,8 @@ CREATE TABLE authors (
                          thumbnail_image TEXT,
                          featured_image TEXT,
                          deleted INTEGER DEFAULT 0, -- Using 0 as FALSE
-                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                         created_at INTEGER DEFAULT   (datetime('now', 'localtime')),
+                         updated_at INTEGER DEFAULT  (datetime('now', 'localtime'))
 );
 
 -- Trigger to update the updated_at column before row update in authors table
@@ -17,7 +17,7 @@ CREATE TRIGGER update_authors_updated_at
     FOR EACH ROW
 BEGIN
 UPDATE authors
-SET updated_at = CURRENT_TIMESTAMP
+SET updated_at =  (datetime('now', 'localtime'))
 WHERE id = OLD.id;
 END;
 
@@ -31,8 +31,8 @@ CREATE TABLE categories (
                             thumbnail_image TEXT,
                             featured_image TEXT,
                             deleted INTEGER DEFAULT 0, -- Using 0 as FALSE
-                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            created_at INTEGER DEFAULT   (datetime('now', 'localtime')),
+                            updated_at INTEGER DEFAULT   (datetime('now', 'localtime')),
                             FOREIGN KEY (parent_category_id) REFERENCES categories(id)
 );
 
@@ -42,7 +42,7 @@ CREATE TRIGGER update_categories_updated_at
     FOR EACH ROW
 BEGIN
 UPDATE categories
-SET updated_at = CURRENT_TIMESTAMP
+SET updated_at =  (datetime('now', 'localtime'))
 WHERE id = OLD.id;
 END;
 
@@ -55,8 +55,8 @@ CREATE TABLE tags (
                       thumbnail_image TEXT,
                       featured_image TEXT,
                       deleted INTEGER DEFAULT 0, -- Using 0 as FALSE
-                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                      created_at INTEGER DEFAULT  (datetime('now', 'localtime')),
+                      updated_at INTEGER DEFAULT  (datetime('now', 'localtime'))
 );
 
 -- Trigger to update the updated_at column before row update in tags table
@@ -65,7 +65,7 @@ CREATE TRIGGER update_tags_updated_at
     FOR EACH ROW
 BEGIN
 UPDATE tags
-SET updated_at = CURRENT_TIMESTAMP
+SET updated_at =  (datetime('now', 'localtime'))
 WHERE id = OLD.id;
 END;
 
@@ -80,10 +80,10 @@ CREATE TABLE posts (
                        category_id INTEGER,
                        thumbnail_image TEXT,
                        featured_image TEXT,
-                       published_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                       published_at TIMESTAMP DEFAULT  (datetime('now', 'localtime')),
                        deleted INTEGER DEFAULT 0, -- Using 0 as FALSE
-                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                       created_at INTEGER DEFAULT  (datetime('now', 'localtime')),
+                       updated_at INTEGER DEFAULT   (datetime('now', 'localtime')),
                        FOREIGN KEY (category_id) REFERENCES categories(id)
 );
 
@@ -93,7 +93,7 @@ CREATE TRIGGER update_posts_updated_at
     FOR EACH ROW
 BEGIN
 UPDATE posts
-SET updated_at = CURRENT_TIMESTAMP
+SET updated_at =  (datetime('now', 'localtime'))
 WHERE id = OLD.id;
 END;
 
@@ -103,8 +103,8 @@ CREATE TABLE post_tags (
                            post_id INTEGER,
                            tag_id INTEGER,
                            deleted INTEGER DEFAULT 0, -- Using 0 as FALSE
-                           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                           created_at INTEGER DEFAULT   (datetime('now', 'localtime')),
+                           updated_at INTEGER DEFAULT  (datetime('now', 'localtime')),
                            FOREIGN KEY (post_id) REFERENCES posts(id),
                            FOREIGN KEY (tag_id) REFERENCES tags(id)
 );
@@ -115,7 +115,7 @@ CREATE TRIGGER update_post_tags_updated_at
     FOR EACH ROW
 BEGIN
 UPDATE post_tags
-SET updated_at = CURRENT_TIMESTAMP
+SET updated_at =  (datetime('now', 'localtime'))
 WHERE id = OLD.id;
 END;
 
@@ -125,8 +125,8 @@ CREATE TABLE post_authors (
                               post_id INTEGER,
                               author_id INTEGER,
                               deleted INTEGER DEFAULT 0, -- Using 0 as FALSE
-                              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                              updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                              created_at INTEGER DEFAULT  (datetime('now', 'localtime')),
+                              updated_at INTEGER DEFAULT  (datetime('now', 'localtime')),
                               FOREIGN KEY (post_id) REFERENCES posts(id),
                               FOREIGN KEY (author_id) REFERENCES authors(id)
 );
@@ -137,6 +137,6 @@ CREATE TRIGGER update_post_authors_updated_at
     FOR EACH ROW
 BEGIN
 UPDATE post_authors
-SET updated_at = CURRENT_TIMESTAMP
+SET updated_at =  (datetime('now', 'localtime'))
 WHERE id = OLD.id;
 END;
