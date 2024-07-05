@@ -5,9 +5,7 @@ namespace Utils.QueryBuilder;
 
 public class Entity
 {
-    
-
-    public string EntityName { get; set; } = "";
+    public string Name { get; set; } = "";
     public string TableName { get; set; } = "";
     public string Title { get; set; } = "";
     public string PrimaryKey { get; set; } = "";

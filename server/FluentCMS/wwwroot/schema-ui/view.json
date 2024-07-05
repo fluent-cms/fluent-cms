@@ -1,52 +1,43 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "View",
   "type": "object",
+  "title": "View",
+  "format": "grid",
   "properties": {
     "name": {
       "minLength": 1,
       "title": "View Name",
       "type": "string"
     },
-    "settings": {
-      "type": "object",
-      "properties": {
-        "view": {
-          "type": "object",
-          "properties": {
-            "entityName": {
-              "minLength": 1,
-              "type": "string",
-              "title": "Entity Name",
-              "description": "The entity this view based on"
-            },
-            "pageSize":{
-              "title": "Page Size",
-              "default": 10,
-              "type":"integer",
-              "description": "Page Size for pagination"
-            },
-            "sorts": {
-              "description": "Add one or many fields to sort by",
-              "title": "Sorts",
-              "$ref": "sorts.json"
-            },
-            "filters": {
-              "title": "Filters",
-              "$ref": "filters.json",
-              "description": "Add filter conditions"
-            },
-            "attributeNames": {
-              "type": "array",
-              "format": "table",
-              "title": "Attribute Names",
-              "description": "Attributes display in this view",
-              "items": {
-                "type": "string"
-              }
-            }
-          }
-        }
+    "entityName": {
+      "minLength": 1,
+      "type": "string",
+      "title": "Entity Name",
+      "description": "The entity this view based on"
+    },
+    "pageSize":{
+      "title": "Page Size",
+      "default": 10,
+      "type":"integer",
+      "description": "Page Size for pagination"
+    },
+    "sorts": {
+      "description": "Add one or many fields to sort by",
+      "title": "Sorts",
+      "$ref": "sorts.json"
+    },
+    "filters": {
+      "title": "Filters",
+      "$ref": "filters.json",
+      "description": "Add filter conditions"
+    },
+    "attributeNames": {
+      "type": "array",
+      "format": "table",
+      "title": "Attribute Names",
+      "description": "Attributes display in this view",
+      "items": {
+        "type": "string"
       }
     }
   }

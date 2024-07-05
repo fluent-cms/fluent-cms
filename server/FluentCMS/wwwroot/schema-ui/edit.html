@@ -43,6 +43,10 @@
     const schema = searchParams.get("schema");
     const id = searchParams.get("id");
     const editor= loadEditor()
+    if (schema !== "entity"){
+        document.getElementById('define').hidden = true
+        document.getElementById('saveDefine').hidden = true
+    }
 
     setListeners(editor)
     function loadEditor() {

@@ -1,6 +1,12 @@
 namespace FluentCMS.Models;
 
-public class Menu
+public sealed class Menu
+{
+    public string Name { get; set; } = "";
+    public MenuItem[] MenuItems { get; set; } = [];
+}
+
+public sealed class MenuItem
 {
     public string Icon { get; set; } = "";
     public string Label { get; set; } = "";

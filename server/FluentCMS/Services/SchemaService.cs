@@ -18,7 +18,7 @@ public static class  SchemaType
 
 public class SchemaService(AppDbContext context, IDao dao) : ISchemaService
 {
-    public async Task<SchemaDisplayDto?> SaveTableDefine(SchemaDto dto)
+    public async Task<SchemaDto?> SaveTableDefine(SchemaDto dto)
     {
         var entity = dto.Settings?.Entity;
         ArgumentNullException.ThrowIfNull(entity);
@@ -36,11 +36,8 @@ public class SchemaService(AppDbContext context, IDao dao) : ISchemaService
             //no need to expose deleted field to frontend 
             entity.RemoveDeleted();
         }
-        await Save(dto);
-        
-        // load the auto generated fields
-        var item = await context.Schemas.FindAsync(dto.Id);
-        return new SchemaDisplayDto(item);
+        return await Save(dto);
+       
     }
 
     public async Task<SchemaDisplayDto?> GetTableDefine(int id)
@@ -56,19 +53,16 @@ public class SchemaService(AppDbContext context, IDao dao) : ISchemaService
         return dto;
     }
 
-    private void InitEntity(Entity? entity, string entityName)
+    private void InitEntity(Entity? entity)
     {
         if (entity is null)
         {
             return;
         }
-
-        entity.EntityName = entityName;
         foreach (var entityAttribute in entity.Attributes)
         {
             entityAttribute.Parent = entity;
         }
-
     }   
 
     private async Task LoadRelated(Entity? entity)
@@ -79,7 +73,7 @@ public class SchemaService(AppDbContext context, IDao dao) : ISchemaService
             var lookupEntityName = attribute.GetLookupEntityName();
             if (string.IsNullOrWhiteSpace(lookupEntityName))
             {
-                throw new Exception($"lookup entity name is not set for {entity.EntityName}");
+                throw new Exception($"lookup entity name is not set for {entity.Name}");
             }
             attribute.Lookup = await _GetEntityByName(lookupEntityName, false);
         }
@@ -89,7 +83,7 @@ public class SchemaService(AppDbContext context, IDao dao) : ISchemaService
             var joinEntityName = attribute.GetCrossJoinEntityName();
             if (string.IsNullOrWhiteSpace(joinEntityName))
             {
-                throw new Exception($"Crosstable entity name is not set for {entity.EntityName}");
+                throw new Exception($"Crosstable entity name is not set for {entity.Name}");
             }
             var crossEntity = await _GetEntityByName(joinEntityName,false);
             if (crossEntity is null)
@@ -98,8 +92,8 @@ public class SchemaService(AppDbContext context, IDao dao) : ISchemaService
             }
 
             var lookups = crossEntity.GetAttributes(DisplayType.lookup, null,null);
-            var fromAttribute = lookups.FirstOrDefault(x => x.GetLookupEntityName() == entity.EntityName);
-            var targetAttribute = lookups.FirstOrDefault(x => x.GetLookupEntityName() != entity.EntityName);
+            var fromAttribute = lookups.FirstOrDefault(x => x.GetLookupEntityName() == entity.Name);
+            var targetAttribute = lookups.FirstOrDefault(x => x.GetLookupEntityName() != entity.Name);
 
             if (fromAttribute == null || targetAttribute == null)
             {
@@ -160,7 +154,7 @@ public class SchemaService(AppDbContext context, IDao dao) : ISchemaService
             return null;
         }
 
-        InitEntity(dto.Settings?.Entity, name);
+        InitEntity(dto.Settings?.Entity );
         if (loadRelated)
         {
             await LoadRelated(dto.Settings?.Entity);
@@ -185,12 +179,12 @@ public class SchemaService(AppDbContext context, IDao dao) : ISchemaService
             return dto;
         }
 
-        InitEntity(dto.Settings?.Entity, name);
+        InitEntity(dto.Settings?.Entity);
         await LoadRelated(dto.Settings?.Entity);
         return dto;
     }
 
-    public async Task<SchemaDto?> Save(SchemaDto dto)
+    public async Task<SchemaDto> Save(SchemaDto dto)
     {
         if (dto.Id is null)
         {
@@ -203,10 +197,7 @@ public class SchemaService(AppDbContext context, IDao dao) : ISchemaService
         else
         {
             var item = context.Schemas.FirstOrDefault(i => i.Id == dto.Id);
-            if (item == null)
-            {
-                return null;
-            }
+            ArgumentNullException.ThrowIfNull(item);
             dto.Attach(item);
             await context.SaveChangesAsync();
             return dto;

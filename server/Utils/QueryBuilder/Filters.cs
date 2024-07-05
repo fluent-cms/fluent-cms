@@ -104,7 +104,7 @@ public class Filters : List<Filter>
             var field = entity.FindOneAttribute(filter.FieldName);
             if (field is null)
             {
-                throw new Exception($"Fail to resolve filter: no field ${filter.FieldName} in ${entity.EntityName}");
+                throw new Exception($"Fail to resolve filter: no field ${filter.FieldName} in ${entity.Name}");
 
             }
             foreach (var filterConstraint in filter.Constraints)

@@ -1,13 +1,25 @@
 const apiPrefix = "/api";
 axios.defaults.withCredentials = true
-async function save(data){
-    try{
-        data = removeEmptyProperties(data)
-        const res = await axios.post(apiPrefix + "/schemas", removeEmptyProperties(data))
-        return res.data
-    }catch (err){
+async function save(data) {
+    try {
+        const res = await axios.post(apiPrefix + "/schemas", encode(data))
+        return res.data;
+    } catch (err) {
         console.error('POST request error:', err);
     }
+}
+
+function encode(data){
+    data = removeEmptyProperties(data);
+    console.log({data})
+    return {
+        id : data.id,
+        name: data.name,
+        type: data.type,
+        settings: {
+            [data.type]: data,
+        },
+    } 
 }
 
 async function list(){
@@ -15,18 +27,21 @@ async function list(){
     return res.data
 }
 async function saveDefine(data){
-    const res= await  axios.post(apiPrefix + `/schemas/define`, removeEmptyProperties(data))
-    return res.data
+    
+    const res= await  axios.post(apiPrefix + `/schemas/define`, encode(data));
+    return res.data;
 }
 
 async function define(id){
     const res= await  axios.get(apiPrefix + `/schemas/${id}/define`)
-    return res.data
+    return res.data.settings
 }
 
 async function one(id){
     const res= await  axios.get(apiPrefix + `/schemas/${id}`)
-    return res.data
+    const data = res.data;
+    data.settings[data.type].name = data.name
+    return data.settings[data.type]
 }
 
 async function del(id){

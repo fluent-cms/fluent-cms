@@ -10,8 +10,7 @@ public interface ISchemaService
     Task<View?> GetViewByName(string name);
     Task<SchemaDisplayDto?> GetByIdOrName(string name);
     Task<SchemaDisplayDto?> GetTableDefine(int id);
-    Task<SchemaDisplayDto?> SaveTableDefine(SchemaDto schemaDto);
-    
-    Task<SchemaDto?> Save(SchemaDto schema);
+    Task<SchemaDto?> SaveTableDefine(SchemaDto schemaDto);
+    Task<SchemaDto> Save(SchemaDto schema);
     Task<bool> Delete(int id);
 }

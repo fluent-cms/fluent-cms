@@ -17,7 +17,7 @@ public class SchemasController(ISchemaService schemaService):ControllerBase
     public async Task<ActionResult<Schema>> Post([FromBody] SchemaDto dto)
     {
         var item = await schemaService.Save(dto);
-        return item is null ? NotFound(): Ok(item);
+        return  Ok(item);
     }
     [HttpPost("define")]
     public async Task<ActionResult<SchemaDisplayDto>> SaveTableDefine( [FromBody] SchemaDto dto)
