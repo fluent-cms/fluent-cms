@@ -13,7 +13,7 @@ public class SqliteKateProvider(string connectionString , bool isDebug):IKatePro
     {
         if (isDebug && query is not null)
         {
-            Console.WriteLine(query);
+            Console.WriteLine(_compiler.Compile(query));
         }
         await using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync();

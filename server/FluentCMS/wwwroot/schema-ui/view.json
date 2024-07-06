@@ -37,7 +37,8 @@
       "title": "Attribute Names",
       "description": "Attributes display in this view",
       "items": {
-        "type": "string"
+        "type": "string",
+        "title": "Attribute"
       }
     }
   }

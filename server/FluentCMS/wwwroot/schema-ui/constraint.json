@@ -4,7 +4,7 @@
   "properties": {
     "match": {
       "type": "string",
-      "title": "Math"
+      "title": "Match"
     },
     "value": {
       "type": "string",

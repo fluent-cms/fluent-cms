@@ -19,7 +19,7 @@ public class SqliteIddlExecutorTests
     {
         Batteries.Init();
         var dao = new SqliteDefinitionExecutor("Data Source=test.db", true);
-        await dao.AddColumns("posts1", new[]
+        await dao.AlterTableAddColumns("posts1", new[]
         {
             new ColumnDefinition { ColumnName = "excerpt", DataType = DataType.Text},
             new ColumnDefinition { ColumnName = "release_date", DataType = DataType.Datetime},

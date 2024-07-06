@@ -4,7 +4,7 @@ import React from "react";
 
 export function LookupInput(props: {
     data: any,
-    column: { field: string, header: string,lookup:any; options: any[]},
+    column: { field: string, header: string,lookup:any;},
     control: any
     className: any
     register: any,

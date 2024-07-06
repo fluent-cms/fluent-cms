@@ -44,5 +44,25 @@
     <ItemGroup>
       <ProjectReference Include="..\Utils\Utils.csproj" />
     </ItemGroup>
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="wwwroot\assets\index-562e3a14.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\index-5f237603.css" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\index-c1f0c2cc.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\index-c86a6f53.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\index-db05ccba.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\index-ff6a515c.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\Inter-italic.var-d1401419.woff2" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\Inter-roman.var-17fe38ab.woff2" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\primeicons-131bc3bf.ttf" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\primeicons-3824be50.woff2" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\primeicons-5e10f102.svg" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\primeicons-90a58d3a.woff" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\primeicons-ce852338.eot" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\quill-0ff3ed2d.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\quill-1bd4fccd.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\quill-4e804a08.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\quill-600b9110.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\quill-6a9ab64a.js" />
+    </ItemGroup>
 
 </Project>

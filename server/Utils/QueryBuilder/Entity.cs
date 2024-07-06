@@ -14,7 +14,14 @@ public class Entity
     public int DefaultPageSize { get; set; } = 20;
     //must be public to expose to json parser
     public Attribute[] Attributes { get; set; } = [];
-    
+
+    public void Init()
+    {
+        foreach (var attribute in Attributes)
+        {
+            attribute.Parent = this;
+        }
+    }
     public Entity(){}
     public void LoadDefine(ColumnDefinition[] cols )
     {

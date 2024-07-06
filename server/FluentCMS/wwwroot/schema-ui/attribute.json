@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
+  "title": "Attribute",
   "properties": {
     "field": {
       "minLength": 1,
@@ -70,11 +71,8 @@
     },
     "options": {
       "title": "Options",
-      "type": "array",
-      "format": "table",
-      "items": {
-        "type": "string"
-      }
+      "type": "string",
+      "minLength": 0
     }
   }
 }

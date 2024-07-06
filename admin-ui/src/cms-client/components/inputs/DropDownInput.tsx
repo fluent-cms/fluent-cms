@@ -4,7 +4,7 @@ import React from "react";
 
 export function DropDownInput(props: {
     data: any,
-    column: { field: string, header: string, options: string[] },
+    column: { field: string, header: string, options: string},
     control: any
     className: any
     register: any
@@ -14,7 +14,7 @@ export function DropDownInput(props: {
         <Dropdown
             id={field.name}
             value={field.value}
-            options={props.column.options}
+            options={props.column.options.split(',')}
             focusInputRef={field.ref}
             onChange={(e) => field.onChange(e.value)}
             className={'w-full'}

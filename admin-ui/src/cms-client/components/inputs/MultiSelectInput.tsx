@@ -5,7 +5,7 @@ import {MultiSelect} from "primereact/multiselect";
 export function MultiSelectInput(
     props: {
         data: any,
-        column: { field: string, header: string, options: string[] },
+        column: { field: string, header: string, options: string},
         register: any
         className: any
         control: any
@@ -19,7 +19,7 @@ export function MultiSelectInput(
                 const values = e.value.filter((x: any) => !!x)
                 return field.onChange(values.join(','))
             }}
-            options={column.options}
+            options={column.options.split(',')}
             display="chip"
             placeholder={"Select " + column.header} maxSelectedLabels={3} className="w-full"/>
     }}/>
