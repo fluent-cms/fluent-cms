@@ -1,6 +1,6 @@
 using System.Globalization;
 using System.Text.Json.Serialization;
-using Utils.Dao;
+using Utils.DataDefinitionExecutor;
 
 namespace Utils.QueryBuilder;
 
@@ -8,7 +8,7 @@ public class Attribute
 {
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
-    public DatabaseType DataType { get; set; }
+    public DataType DataType { get; set; }
 
     public string Field { get; set; } = "";
     
@@ -63,8 +63,8 @@ public class Attribute
     {
         return DataType switch
         {
-            DatabaseType.Int => int.Parse(str),
-            DatabaseType.Datetime => DateTime.Parse(str),
+            DataType.Int => int.Parse(str),
+            DataType.Datetime => DateTime.Parse(str),
             _ => str,
         };
     }

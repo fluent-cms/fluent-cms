@@ -1,4 +1,4 @@
-using Utils.Dao;
+using Utils.DataDefinitionExecutor;
 using SqlKata;
 
 namespace Utils.QueryBuilder;
@@ -35,7 +35,7 @@ public class Entity
         {
             list.Add(new Attribute
             {
-                Field = "id", Header = "id",InList = true, InDetail = true, IsDefault = true, DataType = DatabaseType.Int,
+                Field = "id", Header = "id",InList = true, InDetail = true, IsDefault = true, DataType = DataType.Int,
                 Type = DisplayType.text
             });
         }
@@ -46,7 +46,7 @@ public class Entity
         {
             list.Add(new Attribute
             {
-                Field = "created_at", Header = "Created At",InList = true, InDetail = true, IsDefault = true, DataType = DatabaseType.Datetime
+                Field = "created_at", Header = "Created At",InList = true, InDetail = true, IsDefault = true, DataType = DataType.Datetime
             });
         }
 
@@ -54,7 +54,7 @@ public class Entity
         {
             list.Add(new Attribute
             {
-                Field = "updated_at", Header = "Updated At", InList = true, InDetail = true, IsDefault = true, DataType = DatabaseType.Datetime
+                Field = "updated_at", Header = "Updated At", InList = true, InDetail = true, IsDefault = true, DataType = DataType.Datetime
             });
         }
 
@@ -62,7 +62,7 @@ public class Entity
         {
             list.Add(new Attribute
             {
-                Field = "deleted", InList = true, InDetail = true, IsDefault = true, DataType = DatabaseType.Int
+                Field = "deleted", InList = true, InDetail = true, IsDefault = true, DataType = DataType.Int
             });
         }
         Attributes = list.ToArray();

@@ -1,10 +1,11 @@
 using System.Text.Json.Serialization;
 using FluentCMS.Services;
 using FluentCMS.Data;
-using Utils.Dao;
+using Utils.DataDefinitionExecutor;
 using Utils.File;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Utils.KateQueryExecutor;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -69,21 +70,22 @@ string? GetConnectionString(string key)
 
 void InjectDb()
 {
+    var isDebug = builder.Environment.IsDevelopment();
     var connectionString = GetConnectionString("Sqlite");
     if (connectionString is not null)
     {
-         builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
-                builder.Services.AddSingleton<IDao>(p =>
-                    new SqliteDao(connectionString, builder.Environment.IsDevelopment()));
-                return;
+        builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
+        builder.Services.AddSingleton<IKateProvider>(p => new SqliteKateProvider(connectionString,isDebug));
+        builder.Services.AddSingleton<IDefinitionExecutor>(p => new SqliteDefinitionExecutor(connectionString, isDebug));
+        return;
     }
 
     connectionString = GetConnectionString("Postgres");
     if (connectionString is not null)
     {
         builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
-        builder.Services.AddSingleton<IDao>(p =>
-            new PostgreSQLDao(connectionString, builder.Environment.IsDevelopment()));
+        builder.Services.AddSingleton<IKateProvider>(p => new PostgresKateProvider(connectionString,isDebug));
+        builder.Services.AddSingleton<IDefinitionExecutor>(p => new PostgresDefinitionExecutor(connectionString, isDebug));
         return;
     }
 
@@ -107,6 +109,7 @@ void AddCors()
 void InjectServices()
 {
     builder.Services.AddSingleton<FileUtl, FileUtl>(p => new FileUtl("wwwroot/files"));
+    builder.Services.AddSingleton<KateQueryExecutor, KateQueryExecutor>();
     builder.Services.AddScoped<ISchemaService, SchemaService>();
     builder.Services.AddScoped<IEntityService, EntityService >();
     builder.Services.AddScoped<IViewService, ViewService >();

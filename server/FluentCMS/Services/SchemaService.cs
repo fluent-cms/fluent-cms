@@ -1,6 +1,6 @@
 using FluentCMS.Data;
 using FluentCMS.Models;
-using Utils.Dao;
+using Utils.DataDefinitionExecutor;
 using Utils.QueryBuilder;
 
 namespace FluentCMS.Services;
@@ -16,23 +16,23 @@ public static class  SchemaType
     public const string View = "view";
 }
 
-public class SchemaService(AppDbContext context, IDao dao) : ISchemaService
+public class SchemaService(AppDbContext context, IDefinitionExecutor definitionExecutor) : ISchemaService
 {
     public async Task<SchemaDto?> SaveTableDefine(SchemaDto dto)
     {
         var entity = dto.Settings?.Entity;
         ArgumentNullException.ThrowIfNull(entity);
-        var cols = await dao.GetColumnDefinitions(entity.TableName);
+        var cols = await definitionExecutor.GetColumnDefinitions(entity.TableName);
         
         if (cols.Length > 0)//if table exists, alter table add columns
         {
-            await dao.AddColumns(entity.TableName, entity.GetAddedColumnDefinitions(cols));
+            await definitionExecutor.AddColumns(entity.TableName, entity.GetAddedColumnDefinitions(cols));
         }
         else 
         {
             entity.PrimaryKey = "id";
             entity.EnsureDefaultAttribute();
-            await dao.CreateTable(entity.TableName, entity.GetColumnDefinitions());
+            await definitionExecutor.CreateTable(entity.TableName, entity.GetColumnDefinitions());
             //no need to expose deleted field to frontend 
             entity.RemoveDeleted();
         }
@@ -49,7 +49,7 @@ public class SchemaService(AppDbContext context, IDao dao) : ISchemaService
         var entity = dto.Settings?.Entity;
         ArgumentNullException.ThrowIfNull(entity);
         
-        entity.LoadDefine(await dao.GetColumnDefinitions(entity.TableName));
+        entity.LoadDefine(await definitionExecutor.GetColumnDefinitions(entity.TableName));
         return dto;
     }
 

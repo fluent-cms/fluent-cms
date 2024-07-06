@@ -1,11 +1,12 @@
-using Utils.Dao;
-using Microsoft.Extensions.Primitives;
+using Utils.KateQueryExecutor;
 using Utils.QueryBuilder;
+
+using Microsoft.Extensions.Primitives;
 
 namespace FluentCMS.Services;
 
 
-public class ViewService(IDao dao, ISchemaService schemaService, IEntityService entityService) : IViewService
+public class ViewService(KateQueryExecutor queryKateQueryExecutor, ISchemaService schemaService, IEntityService entityService) : IViewService
 {
     public async Task<ViewResult?> List(string viewName, Cursor cursor,
         Dictionary<string, StringValues> querystringDictionary)
@@ -28,7 +29,7 @@ public class ViewService(IDao dao, ISchemaService schemaService, IEntityService 
 
         var query = entity.List(  view.Filters,view.Sorts, null, cursor,
             entity.GetAttributes(null, scope, view.AttributeNames));
-        var items = await dao.Many(query);
+        var items = await queryKateQueryExecutor.Many(query);
         if (items is null)
         {
             return null;
@@ -93,7 +94,7 @@ public class ViewService(IDao dao, ISchemaService schemaService, IEntityService 
         
         var query = entity.List(  view.Filters,view.Sorts, new Pagination{Limit = view.PageSize}, null,
             entity.GetAttributes(null, scope, view.AttributeNames));
-        var items = await dao.Many(query);
+        var items = await queryKateQueryExecutor.Many(query);
         if (items is null)
         {
             return null;
@@ -115,7 +116,7 @@ public class ViewService(IDao dao, ISchemaService schemaService, IEntityService 
             : null;
 
         var query = entity.One(view.Filters, entity.GetAttributes(null, scope, view.AttributeNames));
-        var item = await dao.One(query);
+        var item = await queryKateQueryExecutor.One(query);
         if (item is null)
         {
             return null;

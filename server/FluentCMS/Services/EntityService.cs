@@ -1,11 +1,11 @@
 using System.Text.Json;
-using Utils.Dao;
+using Utils.KateQueryExecutor;
 using Utils.QueryBuilder;
 using Attribute = Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.Services;
 
-public class EntityService(IDao dao, ISchemaService schemaService) : IEntityService
+public class EntityService(KateQueryExecutor queryKateQueryExecutor, ISchemaService schemaService) : IEntityService
 {
     public async Task<Record?> One(string entityName, string id)
     {
@@ -15,7 +15,7 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
             return null;
         }
 
-        var record = await dao.One(entity.ById(id, entity.GetAttributes(null, Entity.InListOrDetail.InDetail, null)));
+        var record = await queryKateQueryExecutor.One(entity.ById(id, entity.GetAttributes(null, Entity.InListOrDetail.InDetail, null)));
         if (record is null)
         {
             return null;
@@ -45,7 +45,7 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
 
         var query = entity.List(filters, sorts, pagination, null,
             entity.GetAttributes(null, Entity.InListOrDetail.InList, null));
-        var records = await dao.Many(query);
+        var records = await queryKateQueryExecutor.Many(query);
         if (records is null)
         {
             return null;
@@ -59,7 +59,7 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
         return new ListResult
         {
             Items = records,
-            TotalRecords = await dao.Count(query)
+            TotalRecords = await queryKateQueryExecutor.Count(query)
         };
     }
     
@@ -69,7 +69,7 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
         if (entity is null) return null;
 
         var record = RecordParser.Parse(ele, entity);
-        return await dao.Exec(entity.Insert(record));
+        return await queryKateQueryExecutor.Exec(entity.Insert(record));
     }
 
     public async Task<int?> Update(string entityName, JsonElement ele)
@@ -78,7 +78,7 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
         if (entity is null) return null;
 
         var record = RecordParser.Parse(ele, entity);
-        return await dao.Exec(entity.Update(record));
+        return await queryKateQueryExecutor.Exec(entity.Update(record));
     }
 
     public async Task<int?> Delete(string entityName, JsonElement ele)
@@ -87,7 +87,7 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
         if (entity is null) return null;
 
         var record = RecordParser.Parse(ele, entity);
-        return await dao.Exec(entity.Delete(record));
+        return await queryKateQueryExecutor.Exec(entity.Delete(record));
     }
 
    
@@ -102,7 +102,7 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
 
         var items = elements.Select(ele =>
             RecordParser.Parse(ele, attribute.Crosstable.TargetEntity));
-        return await dao.Exec(attribute.Crosstable.Delete(strId, items.ToArray()));
+        return await queryKateQueryExecutor.Exec(attribute.Crosstable.Delete(strId, items.ToArray()));
     }
 
     public async Task<int?> CrosstableSave(string entityName, string strId, string attributeName, JsonElement[] elements)
@@ -115,7 +115,7 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
 
         var items = elements.Select(ele =>
             RecordParser.Parse(ele, attribute.Crosstable.TargetEntity));
-        return await dao.Exec(attribute.Crosstable.Insert(strId,items.ToArray() ));
+        return await queryKateQueryExecutor.Exec(attribute.Crosstable.Insert(strId,items.ToArray() ));
         }
 
     public async Task<ListResult?> CrosstableList(string entityName, string strId, string attributeName, bool exclude)
@@ -130,8 +130,8 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
         var query = attribute.Crosstable.Many(selectAttributes,exclude, attribute.Crosstable.FromAttribute.CastToDatabaseType(strId));
         return new ListResult
         {
-            Items = await dao.Many(query),
-            TotalRecords = await dao.Count(query)
+            Items = await queryKateQueryExecutor.Many(query),
+            TotalRecords = await queryKateQueryExecutor.Count(query)
         };
     }
     public async Task AttachCrosstable(Attribute attribute, Record[] items, Func<Entity, Attribute[]> getFields)
@@ -146,7 +146,7 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
         ArgumentNullException.ThrowIfNull(cross);
 
         var query = cross.Many(getFields(cross.TargetEntity), ids);
-        var targetRecords = await dao.Many(query);
+        var targetRecords = await queryKateQueryExecutor.Many(query);
         if (targetRecords is null)
         {
             return;
@@ -167,7 +167,7 @@ public class EntityService(IDao dao, ISchemaService schemaService) : IEntityServ
         var lookupEntity = await schemaService.GetEntityByName(lookupAttribute.GetLookupEntityName());
         ArgumentNullException.ThrowIfNull(lookupEntity);
         var ids = lookupAttribute.GetValues(items);
-        var lookupRecords = await dao.Many(lookupEntity.Many(ids, getFields(lookupEntity)));
+        var lookupRecords = await queryKateQueryExecutor.Many(lookupEntity.Many(ids, getFields(lookupEntity)));
         ArgumentNullException.ThrowIfNull(lookupRecords);
         foreach (var lookupRecord in lookupRecords)
         {

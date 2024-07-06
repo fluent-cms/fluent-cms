@@ -1,15 +1,8 @@
-using SqlKata;
+namespace Utils.DataDefinitionExecutor;
 
-namespace Utils.Dao;
-
-
-public interface IDao
+public interface IDefinitionExecutor
 {
     Task CreateTable(string tableName, ColumnDefinition[] columnDefinitions);
     Task AddColumns(string tableName, ColumnDefinition[] columnDefinitions);
     Task<ColumnDefinition[]> GetColumnDefinitions(string tableName);
-    Task<Record[]?> Many(Query? query);
-    Task<Record?> One(Query? query);
-    Task<int> Count(Query? query);
-    Task<int?> Exec(Query? query);
 }
