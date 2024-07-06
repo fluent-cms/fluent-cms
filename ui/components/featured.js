@@ -27,14 +27,14 @@ export default function Featured({ post, pathPrefix }) {
             href={`/post/${pathPrefix ? `${pathPrefix}/` : ""}${
               post.slug.current
             }`}>
-            <img
+            <Image
+              fill
               src={fullFilePath(imageProps.src)}
               {...(post.mainImage.blurDataURL && {
                 placeholder: "blur",
                 blurDataURL: post.mainImage.blurDataURL
               })}
               alt={post.mainImage?.alt || "Thumbnail"}
-              style={{ width: '100%', maxWidth: '100%', height: 'auto' }}
               className="object-cover"
             />
           </Link>

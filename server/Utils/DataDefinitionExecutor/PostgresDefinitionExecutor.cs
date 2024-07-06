@@ -10,7 +10,7 @@ public class PostgresDefinitionExecutor(string connectionString, bool debug):IDe
         var columnDefinitionStrs = columnDefinitions.Select(column => column.ColumnName.ToLower() switch
         {
             "id" => "id SERIAL PRIMARY KEY",
-            "deleted" => "BOOLEAN DEFAULT FALSE",
+            "deleted" => "deleted BOOLEAN DEFAULT FALSE",
             "created_at" => "created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
             "updated_at" => "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
             _ => $"{column.ColumnName} {DataTypeToString(column.DataType)}"
@@ -22,7 +22,11 @@ public class PostgresDefinitionExecutor(string connectionString, bool debug):IDe
                 BEFORE UPDATE ON {tableName} 
                 FOR EACH ROW
             EXECUTE FUNCTION update_updated_at_column();";
-     
+
+        if (debug)
+        {
+            Console.WriteLine(sql);
+        }
         await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync());
     }
    
@@ -64,8 +68,8 @@ public class PostgresDefinitionExecutor(string connectionString, bool debug):IDe
         {
             DataType.Int => "INTEGER",
             DataType.Text => "TEXT",
-            DataType.Datetime => "INTEGER",
-            DataType.String => "TEXT",
+            DataType.Datetime => "TIMESTAMP",
+            DataType.String => "varchar(255)",
             _ => throw new NotSupportedException($"Type {dataType} is not supported")
         };
     }
@@ -77,9 +81,8 @@ public class PostgresDefinitionExecutor(string connectionString, bool debug):IDe
         {
             "integer" => DataType.Int,
             "text" => DataType.Text,
-            "datetime" => DataType.Text,
-            _ when s.StartsWith("varchar") => DataType.String,
-            _ => DataType.Text
+            "timestamp" => DataType.Datetime,
+            _ => DataType.String
         };
     }
     

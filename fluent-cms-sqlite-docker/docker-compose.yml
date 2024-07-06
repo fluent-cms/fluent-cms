@@ -1,5 +1,4 @@
-﻿
-services:
+﻿services:
   fluent-cms-demo-ui-sqlite:
     container_name: fluent-cms-demo-ui-sqlite
     image: fluent-cms-demo-ui-sqlite
@@ -22,6 +21,6 @@ services:
       - Sqlite=Data Source=cms.db
     volumes:
       - ./files:/app/wwwroot/files
-      - ./cms.db:/app/cms.db
+      - ../server/FluentCMS/cms.db:/app/cms.db
     ports:
       - "8080:8080"

@@ -33,7 +33,7 @@
     <ItemGroup>
       <Folder Include="App_Data\" />
       <Folder Include="Migrations\" />
-      <Folder Include="Migrations\postgreSQL\" />
+      <Folder Include="Migrations\postgres\" />
       <Folder Include="wwwroot\files\2024-06\" />
     </ItemGroup>
     <ItemGroup>

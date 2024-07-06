@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace FluentCMS.Migrations.pg
 {
-    [DbContext(typeof(PostgreSQLContext))]
+    [DbContext(typeof(PostgresContext))]
     [Migration("20240618230208_first")]
     partial class first
     {

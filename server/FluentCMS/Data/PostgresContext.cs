@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FluentCMS.Data;
 
-public class PostgreSQLContext : AppDbContext
+public class PostgresContext : AppDbContext
 {
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

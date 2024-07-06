@@ -74,9 +74,6 @@ public sealed class SqliteDefinitionExecutor(string connectionString, bool debug
         return s switch
         {
             "integer" => DataType.Int,
-            "text" => DataType.Text,
-            "datetime" => DataType.Text,
-            _ when s.StartsWith("varchar") => DataType.String,
             _ => DataType.Text
         };
     }

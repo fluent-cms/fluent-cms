@@ -38,11 +38,11 @@ export default function PostList({
               post.slug
             }`}>
             {post.thumbnail_image ? (
-              <img
+              <Image
+                fill
                 src={fullFilePath(post.thumbnail_image)}
                 alt={"Thumbnail"}
                 className="object-cover transition-all"
-                style={{ width: '100%', maxWidth: '100%', height: 'auto' }}
                 sizes="(max-width: 768px) 30vw, 33vw"
               />
             ) : (
@@ -107,11 +107,11 @@ export default function PostList({
                   <div className="flex items-center gap-3">
                     <div className="relative h-5 w-5 flex-shrink-0">
                       {author?.thumbnail_image && (
-                        <img
+                        <Image
+                          fill
                           src={fullFilePath(author.thumbnail_image)}
                           alt={author.name}
                           className="rounded-full object-cover"
-                          style={{ width: '100%', maxWidth: '100%', height: 'auto' }}
                           sizes="20px"
                         />
                       )}

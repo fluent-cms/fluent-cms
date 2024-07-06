@@ -1,17 +1,5 @@
 ﻿
 services:
-  fluent-cms-demo-ui-postgres:
-    container_name: fluent-cms-demo-ui
-    image: fluent-cms-demo-ui
-    build:
-      context: ../ui
-      dockerfile: ../ui/Dockerfile
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=development
-      - NEXT_PUBLIC_API_PATH=http://fluent-cms-server:8080/api
-      - NEXT_PUBLIC_FILE_PATH=http://fluent-cms-server:8080/files
   fluent-cms-server-postgres:
     container_name: fluent-cms-server-postgres
     image: fluent-cms-server-postgres
@@ -19,7 +7,7 @@ services:
       context: ../server/
       dockerfile: FluentCMS/Dockerfile
     environment:
-      - Postgres=Host=fluent-cms-db;Port=5432;Database=fluent-cms;Username=postgres;Password=mysecretpassword
+      - Postgres=Host=fluent-cms-db-postgres;Port=5432;Database=fluent-cms;Username=postgres;Password=mysecretpassword
     volumes:
       - ./files:/app/wwwroot/files
     ports:
