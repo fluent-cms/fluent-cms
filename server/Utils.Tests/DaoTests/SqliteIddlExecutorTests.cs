@@ -1,25 +1,31 @@
+using Microsoft.Extensions.Logging;
+using Moq;
 using SQLitePCL;
 using Utils.DataDefinitionExecutor;
 
 namespace Utils.Tests.DaoTests;
 
-public class SqliteIddlExecutorTests
+public class SqliteDefinitionExecutorTests
 {
+    private readonly Mock<ILogger<SqliteDefinitionExecutor>> _mockLogger;
+    private readonly SqliteDefinitionExecutor _executor;
+
+    public SqliteDefinitionExecutorTests()
+    {
+        Batteries.Init();
+        _mockLogger = new Mock<ILogger<SqliteDefinitionExecutor>>();
+        _executor = new SqliteDefinitionExecutor("Data Source=test.db",_mockLogger.Object);
+    }
     [Fact]
     public async Task GetDefinitionOfNotExistsTable()
     {
-
-        Batteries.Init();
-        var dao = new SqliteDefinitionExecutor("Data Source=test.db", true);
-        var ret = await dao.GetColumnDefinitions($@"table{DateTime.Now.TimeOfDay.Milliseconds}");
+        var ret = await _executor.GetColumnDefinitions($@"table{DateTime.Now.TimeOfDay.Milliseconds}");
         Assert.True(ret != null && ret.Length == 0);
     }
     [Fact]
     public async Task AddColumns()
     {
-        Batteries.Init();
-        var dao = new SqliteDefinitionExecutor("Data Source=test.db", true);
-        await dao.AlterTableAddColumns("posts1", new[]
+        await _executor.AlterTableAddColumns("posts1", new[]
         {
             new ColumnDefinition { ColumnName = "excerpt", DataType = DataType.Text},
             new ColumnDefinition { ColumnName = "release_date", DataType = DataType.Datetime},
@@ -28,9 +34,7 @@ public class SqliteIddlExecutorTests
     [Fact]
     public async Task CreateTable()
     {
-        Batteries.Init();
-        var dao = new SqliteDefinitionExecutor("Data Source=test.db", true);
-        await dao.CreateTable("posts1", new[]
+        await _executor.CreateTable("posts1", new[]
         {
             new ColumnDefinition { ColumnName = "id"},
             new ColumnDefinition { ColumnName = "created_at"},

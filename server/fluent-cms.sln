@@ -10,8 +10,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utils", "Utils\Utils.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utils.Tests", "Utils.Tests\Utils.Tests.csproj", "{6EDECA16-B67A-4EAA-A296-F21FBDC7561E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentCMS.Tests", "FluentCMS.Tests\FluentCMS.Tests.csproj", "{B5742F36-D9B1-4BB7-85F6-001A4225B9E3}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlogEfExample", "BlogEfExample\BlogEfExample.csproj", "{38458E78-BC9D-46EE-8532-A04E8BDB3DF4}"
 EndProject
 Global
@@ -32,10 +30,6 @@ Global
 		{6EDECA16-B67A-4EAA-A296-F21FBDC7561E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6EDECA16-B67A-4EAA-A296-F21FBDC7561E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6EDECA16-B67A-4EAA-A296-F21FBDC7561E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B5742F36-D9B1-4BB7-85F6-001A4225B9E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B5742F36-D9B1-4BB7-85F6-001A4225B9E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B5742F36-D9B1-4BB7-85F6-001A4225B9E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B5742F36-D9B1-4BB7-85F6-001A4225B9E3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{38458E78-BC9D-46EE-8532-A04E8BDB3DF4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{38458E78-BC9D-46EE-8532-A04E8BDB3DF4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{38458E78-BC9D-46EE-8532-A04E8BDB3DF4}.Release|Any CPU.ActiveCfg = Release|Any CPU
