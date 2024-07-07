@@ -1,9 +1,10 @@
 using System.Data;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging;
 
 namespace Utils.DataDefinitionExecutor;
 
-public sealed class SqliteDefinitionExecutor(string connectionString, bool debug) : IDefinitionExecutor
+public sealed class SqliteDefinitionExecutor(string connectionString, ILogger<SqliteDefinitionExecutor> logger) : IDefinitionExecutor
 {
    public async Task CreateTable(string tableName, ColumnDefinition[] columnDefinitions)
    {
@@ -81,6 +82,7 @@ public sealed class SqliteDefinitionExecutor(string connectionString, bool debug
     private async Task<T> ExecuteQuery<T>(string sql, Func<SqliteCommand, Task<T>> executeFunc,
         params (string, object)[] parameters)
     {
+        logger.LogInformation(sql);
         await using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync();
         await using var command = new SqliteCommand(sql, connection);

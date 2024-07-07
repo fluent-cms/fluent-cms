@@ -1,9 +1,10 @@
 using System.Data;
+using Microsoft.Extensions.Logging;
 using Npgsql;
 
 namespace Utils.DataDefinitionExecutor;
 
-public class PostgresDefinitionExecutor(string connectionString, bool debug):IDefinitionExecutor
+public class PostgresDefinitionExecutor(string connectionString, ILogger<PostgresDefinitionExecutor> logger):IDefinitionExecutor
 {
     public async Task CreateTable(string tableName, ColumnDefinition[] columnDefinitions)
     {
@@ -23,10 +24,6 @@ public class PostgresDefinitionExecutor(string connectionString, bool debug):IDe
                 FOR EACH ROW
             EXECUTE FUNCTION update_updated_at_column();";
 
-        if (debug)
-        {
-            Console.WriteLine(sql);
-        }
         await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync());
     }
    
@@ -89,6 +86,7 @@ public class PostgresDefinitionExecutor(string connectionString, bool debug):IDe
     //use callback  instead of return QueryFactory to ensure proper disposing connection
     private async Task<T> ExecuteQuery<T>(string sql, Func<NpgsqlCommand, Task<T>> executeFunc, params (string, object)[] parameters)
     {
+        logger.LogInformation(sql);
         await using var connection = new NpgsqlConnection(connectionString);
         await connection.OpenAsync();
         await using var command = new NpgsqlCommand(sql, connection);

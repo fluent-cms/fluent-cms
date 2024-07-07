@@ -1,0 +1,6 @@
+@PostEfExample_HostAddress = http://localhost:5184
+
+GET {{PostEfExample_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

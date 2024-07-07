@@ -166,6 +166,15 @@ public class Entity
         filters?.Apply(this, query);
         return query;
     }
+
+    public Query? Count(Filters? filters)
+    {
+        var query = Basic();
+        filters?.Apply(this, query);
+        return query;
+    }
+
+
     public Query Many(object[]ids, Attribute[] attributes)
     {
         if (ids.Length == 0)

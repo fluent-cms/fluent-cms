@@ -45,6 +45,7 @@ public class EntityService(KateQueryExecutor queryKateQueryExecutor, ISchemaServ
 
         var query = entity.List(filters, sorts, pagination, null,
             entity.GetAttributes(null, Entity.InListOrDetail.InList, null));
+        
         var records = await queryKateQueryExecutor.Many(query);
         if (records is null)
         {
@@ -59,7 +60,7 @@ public class EntityService(KateQueryExecutor queryKateQueryExecutor, ISchemaServ
         return new ListResult
         {
             Items = records,
-            TotalRecords = await queryKateQueryExecutor.Count(query)
+            TotalRecords = await queryKateQueryExecutor.Count(entity.Count(filters))
         };
     }
     

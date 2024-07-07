@@ -81,6 +81,9 @@ CREATE TRIGGER update_posts_updated_at
     FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
+create index posts_deleted_published_at_index
+    on posts (deleted asc, published_at desc);
+
 CREATE TABLE post_tags (
                            id SERIAL PRIMARY KEY,
                            post_id INT,
@@ -112,3 +115,6 @@ CREATE TRIGGER update_post_authors_updated_at
     BEFORE UPDATE ON post_authors
     FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
+
+create index post_authors_deleted_post_id_index
+    on post_authors (deleted asc, post_id desc);

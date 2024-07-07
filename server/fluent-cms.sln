@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utils.Tests", "Utils.Tests\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentCMS.Tests", "FluentCMS.Tests\FluentCMS.Tests.csproj", "{B5742F36-D9B1-4BB7-85F6-001A4225B9E3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlogEfExample", "BlogEfExample\BlogEfExample.csproj", "{38458E78-BC9D-46EE-8532-A04E8BDB3DF4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -34,6 +36,10 @@ Global
 		{B5742F36-D9B1-4BB7-85F6-001A4225B9E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B5742F36-D9B1-4BB7-85F6-001A4225B9E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B5742F36-D9B1-4BB7-85F6-001A4225B9E3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{38458E78-BC9D-46EE-8532-A04E8BDB3DF4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38458E78-BC9D-46EE-8532-A04E8BDB3DF4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38458E78-BC9D-46EE-8532-A04E8BDB3DF4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38458E78-BC9D-46EE-8532-A04E8BDB3DF4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{997F3305-20F9-4C50-A724-BAE2972857C9} = {10BF50D7-F514-4193-8ADE-59A23EB194BE}

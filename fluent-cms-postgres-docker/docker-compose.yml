@@ -1,5 +1,15 @@
 ﻿
 services:
+  blogs-ef-example-postgres:
+    container_name: blogs-ef-example-postgres
+    image: blogs-ef-example-postgres
+    build:
+      context: ../server/
+      dockerfile: BlogEfExample/Dockerfile
+    environment:
+      - Postgres=Host=fluent-cms-db-postgres;Port=5432;Database=fluent-cms;Username=postgres;Password=mysecretpassword
+    ports:
+      - "9080:8080"
   fluent-cms-server-postgres:
     container_name: fluent-cms-server-postgres
     image: fluent-cms-server-postgres

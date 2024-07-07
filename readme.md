@@ -1,4 +1,10 @@
 # Fluent CMS
+## Why another CMS
+- **Performance:** Fluent CMS is 50 times faster than Strapi,as detailed in the [performance-test-fluent-cms-vs-strapi.md](doc%2Fperformance-test-fluent-cms-vs-strapi.md)
+It is even 15 times faster than manually writing APIs using ASP.NET/Entity Framework,as detailed in [performance-test-fluent-cms-vs-entity-framework.md](doc%2Fperformance-test-fluent-cms-vs-entity-framework.md)
+- **Lightweight:** Thanks to modern tools like Entity Framework, SqlKata, PrimeReact, and JasonEditor, the codebase of Fluent CMS is small, clean, and elegant.
+- **Powerful:** With its schema-driven architecture, Fluent CMS saves developers from repetitive work, streamlining the development process.
+
 ## Demo / Quick Start
 - Admin Panel https://fluent-cms-admin.azurewebsites.net/
   - Email: `admin@cms.com`
@@ -80,20 +86,6 @@ Follow the follow steps to define a public API
 ## System overview
 ![img.png](doc/overview.png)
 
-## Why another CMS
-The typical workflow for web development involves:
-The normal workflow for web development is:
-1. Backend Developers creating tables and defining relationships in databases.
-2. Backend Developers creating APIs to perform CRUD (Create, Read, Update, Delete) operations on data.
-3. Frontend Developers creating web pages that call these APIs.
-
-Although ORMs and UI frameworks can reduce some of this work, developers often find themselves repeating the same tasks. 
-As projects progress, adding or removing fields in tables necessitates changes to both the frontend and backend code, 
-which in turn requires redeploying both applications.
-
-Fluent CMS addresses this issue by not hard coding the backend and frontend to specific entities. 
-Instead, they read the schema definition to generate APIs. 
-This means that changing an entity attribute only requires updating the schema definition in the schema builder.
 
 ### Play With Fluent CMS Using Docker
 
@@ -115,6 +107,21 @@ Assuming you have Docker and Docker Compose installed, follow these steps:
     - View the demo frontend at [http://localhost:3000](http://localhost:3000)
 
 ## Development
+
+The typical workflow for web development involves:
+The normal workflow for web development is:
+1. Backend Developers creating tables and defining relationships in databases.
+2. Backend Developers creating APIs to perform CRUD (Create, Read, Update, Delete) operations on data.
+3. Frontend Developers creating web pages that call these APIs.
+
+Although ORMs and UI frameworks can reduce some of this work, developers often find themselves repeating the same tasks.
+As projects progress, adding or removing fields in tables necessitates changes to both the frontend and backend code,
+which in turn requires redeploying both applications.
+
+Fluent CMS addresses this issue by not hard coding the backend and frontend to specific entities.
+Instead, they read the schema definition to generate APIs.
+This means that changing an entity attribute only requires updating the schema definition in the schema builder.
+
 ### Server
 - asp.net core
 - entity framework core
