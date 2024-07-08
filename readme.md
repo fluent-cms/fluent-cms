@@ -46,7 +46,7 @@ By the end of this tutorials, you have:
 2. REST APIs for mobile and web clients.    
 [quick-start-guid.md](doc%2Fquick-start-guid.md)
 ## Development
-![overview.png](diagrams%2Foverview.png)
+![overview.png](doc%2Fdiagrams%2Foverview.png)
 - Web Server: [FluentCMS](..%2Fserver%2FFluentCMS)
 - Admin Panel Client: [admin-ui](..%2Fadmin-ui)
 - Schema Builder: [schema-ui](..%2Fserver%2FFluentCMS%2Fwwwroot%2Fschema-ui)
