@@ -1,0 +1,46 @@
+@startuml
+'#!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Sequence.puml
+!include ../../../C4-PlantUML/C4_Sequence.puml
+title /api/entities/[entityName]? [pagination] [filter] [sort]
+Component(entityController, "Entity Controller", "entity CRUD", "")
+
+Component(entityService, "Entity Service", "entity CRUD", "")
+Component(schemaService, "Schema Service", "schema CRUD", "")
+
+Container_Boundary(QueryBuilder,"Query Builder")
+  Component(entity, "Entity", "", "")
+  Component(filters, "Filter", "", "")
+  Component(sorts, "Sorts", "", "")
+  Component(pagination, "Pagination", "", "")
+Boundary_End()
+
+Component(kateQueryExecutor, "Executor", "execute query", "")
+ContainerDb(db, "Database", "", "schema and content")
+
+Rel(entityController, pagination, "new (urlQueryParameter)")
+Rel(pagination, entityController, "pagination")
+Rel(entityController, filters, "new (urlQueryParameter)")
+Rel(filters, entityController, "filters")
+Rel(entityController, sorts, "new (urlQueryParameter)")
+Rel(filters, entityController, "sorts")
+
+Rel(entityController, entityService, "List(pagination, filters, sorts)")
+
+Rel(entityService, schemaService, "GetEntityByName(entityName)")
+Rel(schemaService, entityService, "return entity")
+
+Rel(entityService, entity, "List(pagination, filters, sorts)")
+Rel(entity, pagination, "apply pagination")
+Rel(entity, filters, "apply filters")
+Rel(entity, sorts, "apply sorts")
+Rel(entity, entityService, "return KateQuery")
+
+Rel(entityService, kateQueryExecutor, "Many(kateQuery)")
+Rel(kateQueryExecutor, db, "read")
+Rel(kateQueryExecutor, entityService, "items")
+
+Rel(entityService, entity, "Count(filters)")
+Rel(kateQueryExecutor, db, "read")
+Rel(kateQueryExecutor, entityService, "totalCount")
+Rel(entityService, entityController, "{items, totalCount}")
+@enduml

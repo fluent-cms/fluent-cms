@@ -1,14 +1,15 @@
 @startuml C4_Elements
-!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!include ../../../C4-PlantUML/C4_Container.puml
+title System Overview
 
 Person(end_user, "End User", "Browse content")
 Person(editor, "Editor", "Manage content")
-Person(developer, "Develop", "Define content entity")
+Person(developer, "Developer", "Define Schema")
 
-Container(schema_builder, "Schema Builder", "jQuery")
-Container(admin_panel, "Admin Panel", "react")
-Container(public_site, "Public Site", "next.js")
-Container(backend_server, "Backend Server", "aps.net core")
+System(schema_builder, "Schema Builder", "jQuery")
+System(admin_panel, "Admin Panel", "react")
+System(public_site, "Public Site", "next.js")
+System(backend_server, "Backend Server", "aps.net core")
 
 ContainerDb(db, "Database", "Postgres", "schema and content")
 

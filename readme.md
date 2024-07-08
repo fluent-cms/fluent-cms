@@ -45,15 +45,10 @@ By the end of this tutorials, you have:
 1. An admin panel to manage blog content.
 2. REST APIs for mobile and web clients.    
 [quick-start-guid.md](doc%2Fquick-start-guid.md)
-## System overview
-![img.png](doc/diagrams/overview.png)    
-
-
-## Server
-- asp.net core
-- entity framework core
-- sqlkata, it using dapper ORM behind the scene(https://sqlkata.com/)
-
-Both entity framework and sqlkata can abstract query from specific Database dialect, so I extract database access to
-another layer, currently fluent-cms support postgres sql, it can easily support SQL Server and MySQL in the future. 
-
+## Development
+![overview.png](diagrams%2Foverview.png)
+- Web Server: [FluentCMS](..%2Fserver%2FFluentCMS)
+- Admin Panel Client: [admin-ui](..%2Fadmin-ui)
+- Schema Builder: [schema-ui](..%2Fserver%2FFluentCMS%2Fwwwroot%2Fschema-ui)
+- Demo Publish Site: [ui](..%2Fui)
+- detailed in [Development.md](doc%2FDevelopment.md)

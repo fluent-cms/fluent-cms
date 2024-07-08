@@ -1,0 +1,38 @@
+@startuml C4_Elements
+'!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+!include ../../../C4-PlantUML/C4_Component.puml
+
+title Component diagram for API Server
+
+Container(schema_builder, "Schema Builder", "jQuery")
+Container(admin_panel, "Admin Panel", "react")
+Container(public_site, "Public Site", "next.js")
+
+Container_Boundary(controllers, "Controllers") {
+   Component(schemaController, "Schema Controller", "", "Schema CURD")
+   Component(entityController, "Entity Controller", "", "Entity CURD")
+   Component(viewController, "View Controller", "", "APIs for public sites")
+}
+
+Container_Boundary(services, "Services") {
+   Component(schemaService, "Schema Service", "", "Schema CURD")
+   Component(entityService, "Entity Service", "", "Entity CURD")
+   Component(viewService, "View Services", "", "APIs for public sites")
+}
+
+ContainerDb(db, "Database", "", "schema and content")
+
+
+Rel(schema_builder, schemaController,"uses","http/json")
+Rel(admin_panel, schemaController,"uses","http/json")
+Rel(admin_panel, entityController,"uses","http/json")
+Rel(public_site, viewController,"uses","http/json")
+
+Rel(schemaController, schemaService,"uses","")
+Rel(entityController, entityService,"uses","")
+Rel(viewController, viewService,"users","")
+
+Rel(schemaService, db, "Read/Write","Entity Framework")
+Rel(entityService, db, "Read/Write","SqlKate")
+Rel(viewService, db, "Read/Write","SqlKate")
+@enduml
