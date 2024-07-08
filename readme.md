@@ -125,7 +125,7 @@ Assuming you have Docker and Docker Compose installed, follow these steps:
     info: Microsoft.Hosting.Lifetime[14]
     Now listening on: http://localhost:5210 
    ```
-   - use browser access http://localhost:5210
+   - use browser access http://localhost:5210, with username `admin@cms.com`, password `Admin1!` to login
 ## System overview
 ![img.png](doc/overview.png)
 The typical workflow for web development involves:
