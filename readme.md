@@ -5,12 +5,39 @@ It is even 15 times faster than manually writing APIs using ASP.NET/Entity Frame
 - **Lightweight:** Thanks to modern tools like Entity Framework, SqlKata, PrimeReact, and JasonEditor, the codebase of Fluent CMS is small, clean, and elegant.
 - **Powerful:** With its schema-driven architecture, Fluent CMS saves developers from repetitive work, streamlining the development process.
 
-## Demo / Quick Start
-- Admin Panel https://fluent-cms-admin.azurewebsites.net/
-  - Email: `admin@cms.com`
-  - Password: `Admin1!`  
-- Public Site : https://fluent-cms-ui.azurewebsites.net/
-
+## Play with Fluent CMS
+1. Live Demo  
+   - Admin Panel https://fluent-cms-admin.azurewebsites.net/
+      - Email: `admin@cms.com`
+      - Password: `Admin1!`  
+   - Public Site : https://fluent-cms-ui.azurewebsites.net/
+2. Docker
+Assuming you have Docker and Docker Compose installed, follow these steps:
+   1. **Clone the Repository**
+      ```shell
+      git clone https://github.com/fluent-cms/fluent-cms
+      ```
+   2. **Bring Up Services**
+      ```shell
+      cd fluent-cms-sqlite-docker
+      docker-compose up
+      ```
+   3. **Explore the App**
+       - Admin Panel: http://localhost:8080, use username `admin@cms.com` and password `Admin1!` to login.
+       - Demo Public Site: http://localhost:3000  
+3. Source code
+   1. **Clone the Repository**
+      ```shell
+      git clone https://github.com/fluent-cms/fluent-cms
+      ```
+   2. **Start Admin Panel**
+      ```shell
+      cd fluent-cms/server/FluentCMS
+      dotnet resotore
+      dotnet run
+      ```
+       - Admin Panel: http://localhost:5210, use username `admin@cms.com`, password `Admin1!` to login.   
+## Quick Start
 For examples, you are developing a cooking blog and you need:
 1. An admin panel to manage blog content.
 2. REST APIs for mobile and web clients.
@@ -84,50 +111,9 @@ Follow the follow steps to define a public API
 - Access https://fluent-cms-admin.azurewebsites.net/api/views/latest-blogs from browser
 ![img_1.png](doc/screenshots/public_api.png)
 
-
-### Play it Using Docker
-
-Assuming you have Docker and Docker Compose installed, follow these steps:
-
-1. **Clone the Repository**
-   ```shell
-   git clone https://github.com/fluent-cms/fluent-cms
-   ```
-
-2. **Bring Up Services**
-   ```shell
-   cd fluent-cms-sqlite-docker
-   docker-compose up
-   ```
-
-3. **Explore the App**
-    - Manage content at [http://localhost:8080](http://localhost:8080) using username `admin@cms.com` and password `Admin1!`
-    - View the demo frontend at [http://localhost:3000](http://localhost:3000)
-
-## Play it With Source code
-1. **Clone the Repository**
-   ```shell
-   git clone https://github.com/fluent-cms/fluent-cms
-   ```
-2. **Start Admin Panel**
-   ```shell
-   cd server/FluentCMS
-   dotnet resotore
-   dotnet run
-   ```
-   - if the above succeed, you will see
-   ```shell
-   % dotnet run
-    Building...
-    ***********************************
-    Current Connection string is Data Source=cms.db
-    ***********************************
-    info: Microsoft.Hosting.Lifetime[14]
-    Now listening on: http://localhost:5210 
-   ```
-   - use browser access http://localhost:5210, with username `admin@cms.com`, password `Admin1!` to login
 ## System overview
-![img.png](doc/overview.png)
+![img.png](doc/overview.png)    
+
 The typical workflow for web development involves:
 The normal workflow for web development is:
 1. Backend Developers creating tables and defining relationships in databases.
