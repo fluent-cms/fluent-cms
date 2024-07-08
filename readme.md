@@ -83,11 +83,9 @@ Follow the follow steps to define a public API
 3. Test the public API
 - Access https://fluent-cms-admin.azurewebsites.net/api/views/latest-blogs from browser
 ![img_1.png](doc/screenshots/public_api.png)
-## System overview
-![img.png](doc/overview.png)
 
 
-### Play With Fluent CMS Using Docker
+### Play it Using Docker
 
 Assuming you have Docker and Docker Compose installed, follow these steps:
 
@@ -106,8 +104,30 @@ Assuming you have Docker and Docker Compose installed, follow these steps:
     - Manage content at [http://localhost:8080](http://localhost:8080) using username `admin@cms.com` and password `Admin1!`
     - View the demo frontend at [http://localhost:3000](http://localhost:3000)
 
-## Development
-
+## Play it With Source code
+1. **Clone the Repository**
+   ```shell
+   git clone https://github.com/fluent-cms/fluent-cms
+   ```
+2. **Start Admin Panel**
+   ```shell
+   cd server/FluentCMS
+   dotnet resotore
+   dotnet run
+   ```
+   - if the above succeed, you will see
+   ```shell
+   % dotnet run
+    Building...
+    ***********************************
+    Current Connection string is Data Source=cms.db
+    ***********************************
+    info: Microsoft.Hosting.Lifetime[14]
+    Now listening on: http://localhost:5210 
+   ```
+   - use browser access http://localhost:5210
+## System overview
+![img.png](doc/overview.png)
 The typical workflow for web development involves:
 The normal workflow for web development is:
 1. Backend Developers creating tables and defining relationships in databases.
@@ -122,7 +142,7 @@ Fluent CMS addresses this issue by not hard coding the backend and frontend to s
 Instead, they read the schema definition to generate APIs.
 This means that changing an entity attribute only requires updating the schema definition in the schema builder.
 
-### Server
+## Server
 - asp.net core
 - entity framework core
 - sqlkata, it using dapper ORM behind the scene(https://sqlkata.com/)
