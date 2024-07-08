@@ -44,7 +44,7 @@ For this tutorial, I will walk you though how to build cooking blog website from
 By the end of this tutorials, you have:
 1. An admin panel to manage blog content.
 2. REST APIs for mobile and web clients.    
-[quick-start-guid.md](doc%2Fquick-start-guid.md)
+3. Detailed in [quick-start-guid.md](doc%2Fquick-start-guid.md)
 ## Development
 ![overview.png](doc%2Fdiagrams%2Foverview.png)
 - Web Server: [FluentCMS](..%2Fserver%2FFluentCMS)
