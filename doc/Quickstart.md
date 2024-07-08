@@ -10,13 +10,13 @@ With Fluent CMS, there's no need for coding—just some configuration.
 1. Login to Admin Panel
     - Go to Admin Panel https://fluent-cms-admin.azurewebsites.net/,
     - use Email `admin@cms.com`, Password `Admin1!`         
-      ![img.png](doc/screenshots/admin_panel_login.png)
+      ![img.png](screenshots/admin_panel_login.png)
 2. Navigate to Schema Builder
     - click the Menu Item  `Schema Builder`         
-      ![img.png](doc/screenshots/admin_panel_home.png)
+      ![img.png](screenshots/admin_panel_home.png)
 3. Access the Add Entity Page by
     - click the Menu Item  `Add Entity`      
-      ![img_8.png](doc/screenshots/schema_builder_home.png)
+      ![img_8.png](screenshots/schema_builder_home.png)
 4. Fill in the Entity Detail
     - On the Add Entity Page
         - Entity name: `blogs`
@@ -25,7 +25,7 @@ With Fluent CMS, there's no need for coding—just some configuration.
         - Title Attribute: `title`
         - Default Page Size: `20`
         - Entity Title : `Blogs`                
-          ![img.png](doc/screenshots/schema_builder_entity.png)
+          ![img.png](screenshots/schema_builder_entity.png)
 5. Add attributes to the entity
     - The system will add 3 system fields `id`, `created_at`, `updated_at` automatically.
     - Add The following attributes:
@@ -33,18 +33,18 @@ With Fluent CMS, there's no need for coding—just some configuration.
         - `published_time`   {Database Type: `Datetime`, Display Type: `dateTime`}
         - `body` {Database Type: `Text`, Display Type: `Editor`}
     - Click the `Update Database` button to save schema and create a table in database.  
-      ![img.png](doc/screenshots/schema_builder_attributes.png)
+      ![img.png](screenshots/schema_builder_attributes.png)
 6. Add Menu item for Admin Panel's Top Menu Bar
     - Click `Schema List`,
     - Edit the top-menu-bar, add a new item,
         - Link: `/entity/blogs`
         - Label: `Blogs`      
-          ![img.png](doc/screenshots/schema_builder_top-menu-bar.png)
+          ![img.png](screenshots/schema_builder_top-menu-bar.png)
 7. Manage Content in Admin Panel
     - Click the `Fluent CMS` logo, go to Admin Panel
     - You can see a new menu item `Blogs` is added,
     - now you can manage content   
-      ![img_14.png](doc/screenshots/admin_panel_entity_list.png "Entity List Page")
+      ![img_14.png](screenshots/admin_panel_entity_list.png "Entity List Page")
 ## Add Relationship
 
 ## Add Public API
@@ -63,14 +63,14 @@ Follow the follow steps to define a public API
         - View Name : `lastest-blog`
         - Entity Name : `blogs`
         - Page Size : 10
-          ![img.png](doc/screenshots/schema_builder_view_detail.png)
+          ![img.png](screenshots/schema_builder_view_detail.png)
 2. Fill Sort Detail
     - Click `+ row` button
     - Input the Sort Detail
         - Attribute Name : `published_at`
         - Order Direction: `Desc`
     - Click `Save Schema` button
-      ![img_2.png](doc/screenshots/schema_builder_view_sorts.png)
+      ![img_2.png](screenshots/schema_builder_view_sorts.png)
 3. Test the public API
 - Access https://fluent-cms-admin.azurewebsites.net/api/views/latest-blogs from browser
-  ![img_1.png](doc/screenshots/public_api.png)
+  ![img_1.png](screenshots/public_api.png)
