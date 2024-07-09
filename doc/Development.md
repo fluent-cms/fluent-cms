@@ -1,3 +1,5 @@
+## **Core Concepts** 
+Please have a look at some Core Concepts - [Concepts.md](doc%2FConcepts.md)
 
 ## System Overviews
 ![overview.png](diagrams%2Foverview.png)
@@ -136,3 +138,118 @@ The UML diagram describes the interaction between various components for handlin
     - [IDefinitionExecutor.cs](..%2Fserver%2FUtils%2FDataDefinitionExecutor%2FIDefinitionExecutor.cs)
     - [IKateProvider.cs](..%2Fserver%2FUtils%2FKateQueryExecutor%2FIKateProvider.cs)
   - Upcoming Support: Plans to add support for MS SQL Server and MySQL/MariaDB.
+
+## Admin-Panel-UI
+- Startup project:  [admin-ui](..%2Fadmin-ui)
+- Tools
+  - React
+  - **PrimeReact** UI Library https://primereact.org/
+  - **SWR** Data Fetching/State Management  https://swr.vercel.app/
+
+### Main Components
+1. **Main Application (`app`)**: The central application accessed by the Editor.
+2. **Data List Page (`dataListPage`)**: Displays a list of entities.
+3. **Data Item Page (`dataItemPage`)**: Displays details of a single entity item.
+4. **Lookup Container (`lookupContainer`)**: Renders lookup attributes of entities. 
+5. **Crosstable (`crosstable`)**: Renders Crosstable attributes of entities.
+
+### Interactions
+### General Workflow
+1. **Editor Interaction**:
+  - The Editor interacts with the Main Application via a web browser.
+  - The Editor clicks on a menu item to view a list of entities.
+
+2. **Main Application**:
+  - Sends a request to `schemaController` to fetch the top menu bar schemas.
+  - Receives menu items from `schemaController`.
+
+#### Data List Page
+1. **View Entity List**:
+  - The Editor clicks on a menu item for an entity list.
+  - `app` requests the entity schema from `schemaController`.
+  - `schemaController` returns the entity schema to `dataListPage`.
+  - `dataListPage` requests entities from `entityController`.
+  - `entityController` returns items and total records to `dataListPage`.
+  - The Editor can sort, filter, and paginate through the entity list.
+  - `dataListPage` makes appropriate requests to `entityController` based on sort, filter, and pagination criteria.
+  - `entityController` returns the filtered, sorted, and paginated list to `dataListPage`.
+
+#### Data Item Page
+1. **View Entity Item**:
+  - The Editor clicks on an item in the `dataListPage`.
+  - `dataListPage` navigates to `dataItemPage` with the entity ID.
+  - `dataItemPage` requests the item details from `entityController`.
+  - `entityController` returns the item details to `dataItemPage`.
+
+2. **Render Lookup Attributes**:
+  - For each lookup attribute of the entity:
+    - `dataItemPage` renders the `lookupContainer`.
+    - `lookupContainer` requests lookup entity data from `entityController`.
+    - `entityController` returns lookup entity items to `lookupContainer`.
+    - `lookupContainer` renders the lookup data.
+
+3. **Render Crosstable Attributes**:
+  - For each crosstable attribute of the entity:
+    - `dataItemPage` renders the `crosstable`.
+    - `crosstable` requests crosstable data from `entityController`.
+    - `entityController` returns lookup entity items to `lookupContainer`.
+    - `crosstable` renders the crosstable data.
+
+## Schema-Builder-UI
+- Code: [schema-ui](..%2Fserver%2FFluentCMS%2Fwwwroot%2Fschema-ui)
+- Tools
+    - jsoneditor: https://github.com/json-editor/json-editor 
+
+
+#### Schema Types
+
+1. **Entity**: Represents a Fluent CMS entity.
+2. **View**: Represents a Fluent CMS value.
+3. **Menu**: Represents the menus the Admin Panel, for example `top-menu-bar`.
+
+#### Sequence Diagram
+
+The following sequence diagram outlines the interaction flow between the developer, client, and the web server components.
+![schema-builder-sequence.png](diagrams%2Fschema-builder-sequence.png)
+
+### Components
+
+1. **Schema Builder (Client)**
+    - **List.html**: Displays the list of schemas.
+    - **Edit.html**: Interface for editing a specific schema.
+
+2. **Web Server (API Server)**
+    - **Static File**: JSON files that store schema types.
+    - **Schema Controller**: Handles schema CRUD (Create, Read, Update, Delete) operations.
+
+### Interactions
+
+1. **Developer Interaction**
+    - The developer interacts with the `List.html` through the browser.
+    - The developer clicks on a schema to edit it.
+
+2. **List.html Interaction**
+    - Fetches schema data from the `Schema Controller`.
+    - Displays the list of schemas.
+    - On schema selection, redirects to `Edit.html` with schema ID and type parameters.
+
+3. **Edit.html Interaction**
+    - Loads the corresponding schema JSON file based on the schema type.
+    - Fetches specific schema details from the `Schema Controller` using the schema ID.
+    - Renders the schema editor interface.
+   
+### Sequence of Operations
+
+1. **Display Schema List**
+    - The developer accesses `List.html` via a browser.
+    - `List.html` requests schema data from the `Schema Controller`.
+    - The `Schema Controller` returns the list of schemas.
+    - `List.html` displays the schemas.
+
+2. **Edit a Schema**
+    - The developer clicks on a schema in `List.html`.
+    - `List.html` redirects to `Edit.html` with the schema ID and type as URL parameters.
+    - `Edit.html` loads the corresponding schema type JSON file from `Static File`.
+    - `Edit.html` requests schema details from the `Schema Controller`.
+    - The `Schema Controller` returns the schema details.
+    - `Edit.html` renders the schema editor interface with the loaded schema details.

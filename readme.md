@@ -45,12 +45,19 @@ By the end of this tutorials, you have:
 1. An admin panel to manage blog content.
 2. REST APIs for mobile and web clients.    
 3. Detailed in [Quickstart.md](doc%2FQuickstart.md) 
+## Core Concepts
+   - Understanding Entity, Attributes, View is crucial for using and customizing Fluent CMS.     
+   - Detailed in [Concepts.md](doc%2FConcepts.md)
 ## Development
 ![overview.png](doc%2Fdiagrams%2Foverview.png)
 - Web Server: 
   - Code [FluentCMS](..%2Fserver%2FFluentCMS)
-  - Doc [Server](doc%2FDevelopment.md##Server)
-- Admin Panel Client: [admin-ui](..%2Fadmin-ui)
-- Schema Builder: [schema-ui](..%2Fserver%2FFluentCMS%2Fwwwroot%2Fschema-ui)
-- Demo Publish Site: [ui](..%2Fui)
-- detailed in [Development.md](doc%2FDevelopment.md)
+  - Doc [Server](doc%2FDevelopment.md##Server##Schema-Builder-UI )
+- Admin Panel Client:
+  - Code [admin-ui](..%2Fadmin-ui)
+  - Doc [Server](doc%2FDevelopment.md##Admin-Panel-UI)
+- Schema Builder: 
+  - Code [schema-ui](..%2Fserver%2FFluentCMS%2Fwwwroot%2Fschema-ui)
+  - Doc [Server](doc%2FDevelopment.md##Server##)
+- Demo Publish Site:
+  - Code [ui](..%2Fui)

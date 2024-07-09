@@ -1,0 +1,51 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Sequence.puml
+'!include ../../../C4-PlantUML/C4_Sequence.puml
+title Admin Panel
+
+Person(editor, Editor, "Manage content")
+
+Container_Boundary(client,"Admin Client", "dd", "")
+Component(app, "Main", "", "")
+Component(dataListPage, "DataListPage", "", "")
+Component(dataItemPage, "DataItemPage", "", "")
+Component(lookupContainer, "LookupContainer", "", "")
+Component(crosstable, "CrossTable", "", "")
+Boundary_End()
+
+Container_Boundary(apiServer,"API Server")
+Component(schemaController, "Schema Controller", "schema CRUD", "")
+Component(entityController, "Entity Controller", "entity CRUD", "")
+Boundary_End()
+
+Rel(editor, app,"browser","")
+Rel(app, schemaController, "/api/schemas/top-menu-bar","")
+Rel(schemaController, app, "menuItems","")
+
+Rel(editor, app,"click menu item for entity list","")
+Rel(app, dataListPage,"/entities/[entityName]","")
+Rel(dataListPage, schemaController, "/api/entities/[entityName]","")
+Rel(schemaController, dataListPage, "entity schema","")
+Rel(dataListPage, entityController, "/api/entities/[entityName]","")
+Rel(entityController, dataListPage, "{items, totalRecords}","")
+Rel(editor, dataListPage, "sort,filter,pagination","")
+Rel(dataListPage, entityController, "/api/entities/[entityName]?[sort][filter][pagination]","")
+Rel(entityController, dataListPage, "{items, totalRecords}","")
+
+Rel(editor, dataListPage, "click an Item","")
+Rel(dataListPage, dataItemPage, "/entities/[entityName][id]","")
+Rel(dataItemPage, entityController, "/entities/[entityName][id]","")
+Rel(entityController,dataItemPage, "item of entity","")
+loop entity's lookup Attributes
+    Rel(dataItemPage, lookupContainer,"render","")
+    Rel(lookupContainer, entityController,"/api/entities/[lookupEntity]","")
+    Rel(entityController, lookupContainer,"items of lookupEntity","")
+    Rel(lookupContainer, lookupContainer, "render","")
+end
+loop entity's Crosstable Attributes
+    Rel(dataItemPage, crosstable,"render","")
+    Rel(crosstable, entityController,"/api/entities/[entity]/[id][attributeName]","")
+    Rel(entityController, lookupContainer,"items of lookupEntity","")
+    Rel(crosstable, crosstable, "render","")
+end
+@enduml

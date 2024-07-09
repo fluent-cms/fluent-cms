@@ -7,7 +7,7 @@
       "minLength": 1,
       "type": "string",
       "title":"Field",
-      "description": "Field/Attribute name"
+      "description": "Field Name"
     },
     "header": {
       "minLength": 1,
