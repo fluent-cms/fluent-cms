@@ -1,10 +1,9 @@
 ## Performance Test : Fluent CMS  vs. An Asp.net core/entity framework core example 
 
 With the question, since entity framework is so convenient, was it worth it to use CMS at all.   
-Fluent CMS' public APIs are using SqlData/Dapper instead of Entity Framework.
+Fluent CMS' performance-critical APIs are using SqlData/Dapper instead of Entity Framework.
 
-To compare performance, I developed a small application called BlogEfExample. [BlogEfExample](..%2F..%2Fserver%2FBlogEfExample) 
-This application contrasts the performance of Fluent CMS Public API with an API built using ASP.NET Core and Entity Framework.
+To compare performance, I developed a small application called BlogEfExample using Entity Framework. [BlogEfExample](..%2F..%2Fserver%2FBlogEfExample) 
 
 ### 1. **Environment Setup**
 - **Infrastructure**:
