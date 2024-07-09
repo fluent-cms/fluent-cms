@@ -1,9 +1,9 @@
 # Fluent CMS
 ## Why another CMS
 - **Performance:** Fluent CMS demonstrates exceptional performance, being 50 times faster than Strapi as detailed in the,
-as detailed in the [performance-test-fluent-cms-vs-strapi.md](doc%2Fperformance-test-fluent-cms-vs-strapi.md)
-Additionally, it outperforms manually written APIs using ASP.NET/Entity Framework by a factor of 15, 
-as detailed in [performance-test-fluent-cms-vs-entity-framework.md](doc%2Fperformance-test-fluent-cms-vs-entity-framework.md)
+as detailed in the [performance-test-fluent-cms-vs-strapi.md](doc%2Fpeformance-tests%2Fperformance-test-fluent-cms-vs-strapi.md)
+Additionally, it 15 time faster than manually written APIs using ASP.NET/Entity Framework, 
+as detailed in [performance-test-fluent-cms-vs-entity-framework.md](doc%2Fpeformance-tests%2Fperformance-test-fluent-cms-vs-entity-framework.md)
 - **Powerful:**  Leveraging its schema-driven architecture, Fluent CMS performs CRUD operations based on schema definitions 
 rather than hard-coded specifics for each entity. This approach reduces repetitive tasks for developers, streamlining the development process.
 - **Lightweight:** The codebase of Fluent CMS remains small, clean, and elegant, thanks to the use of modern tools like Entity Framework, SqlKata, PrimeReact, and JasonEditor.
@@ -52,12 +52,12 @@ By the end of this tutorials, you have:
 ![overview.png](doc%2Fdiagrams%2Foverview.png)
 - Web Server: 
   - Code [FluentCMS](..%2Fserver%2FFluentCMS)
-  - Doc [Server](doc%2FDevelopment.md##Server##Schema-Builder-UI )
+  - Doc [Server](doc%2FDevelopment.md##Server#Server )
 - Admin Panel Client:
   - Code [admin-ui](..%2Fadmin-ui)
-  - Doc [Server](doc%2FDevelopment.md##Admin-Panel-UI)
+  - Doc [Server](doc%2FDevelopment.md#Admin-Panel-UI)
 - Schema Builder: 
   - Code [schema-ui](..%2Fserver%2FFluentCMS%2Fwwwroot%2Fschema-ui)
-  - Doc [Server](doc%2FDevelopment.md##Server##)
+  - Doc [Server](doc%2FDevelopment.md#Schema-Builder-UI)
 - Demo Publish Site:
   - Code [ui](..%2Fui)
