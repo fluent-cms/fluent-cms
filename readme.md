@@ -35,7 +35,7 @@ rather than hard-coded specifics for each entity. This approach reduces repetiti
    2. **Start Admin Panel**
       ```shell
       cd fluent-cms/server/FluentCMS
-      dotnet resotore
+      dotnet restore
       dotnet run
       ```
        - Admin Panel: http://localhost:5210, use username `admin@cms.com`, password `Admin1!` to login.   
@@ -52,12 +52,12 @@ By the end of this tutorials, you have:
 ![overview.png](doc%2Fdiagrams%2Foverview.png)
 - Web Server: 
   - Code [FluentCMS](..%2Fserver%2FFluentCMS)
-  - Doc [Server](doc%2FDevelopment.md##Server#Server )
+  - Doc [Server](doc%2FDevelopment.md#Server )
 - Admin Panel Client:
   - Code [admin-ui](..%2Fadmin-ui)
-  - Doc [Server](doc%2FDevelopment.md#Admin-Panel-UI)
+  - Doc [Admin-Panel-UI](doc%2FDevelopment.md#Admin-Panel-UI)
 - Schema Builder: 
   - Code [schema-ui](..%2Fserver%2FFluentCMS%2Fwwwroot%2Fschema-ui)
-  - Doc [Server](doc%2FDevelopment.md#Schema-Builder-UI)
+  - Doc [Schema-Builder-UI](doc%2FDevelopment.md#Schema-Builder-UI)
 - Demo Publish Site:
   - Code [ui](..%2Fui)
