@@ -54,11 +54,9 @@ The diagram illustrates the API server related the following components:
 
 
 ### Query Builder 
-The Query Builder pattern offers several advantages, which can be illustrated using the given UML diagram of the `/api/entities/[entityName]? [pagination] [filter] [sort]` endpoint. Here's a detailed explanation:
+#### Overview
 
-#### UML Diagram Overview
-
-The UML diagram describes the interaction between various components for handling an entity-based query with pagination, filtering, and sorting:
+The UML diagram describes the interaction between various components for handling an entity-based query with pagination, filtering, and sorting of the `/api/entities/[entityName]? [pagination] [filter] [sort]` endpoint:
 ![api-query-sequence.png](diagrams%2Fapi-query-sequence.png)
 1. **Entity Controller**: Handles incoming API requests.
 2. **Entity Service**: Manages the business logic for entities.
@@ -66,26 +64,6 @@ The UML diagram describes the interaction between various components for handlin
 4. **Query Builder**: Composed of `Entity`, `Filters`, `Sorts`, and `Pagination`.
 5. **Executor**: Executes the query against the database.
 6. **Database**: Stores the schema and content.
-
-#### Advantages of Query Builder
-
-1. **Abstraction and Reusability**:
-  - The `Query Builder` abstracts the complexities of query creation. Components like `Filters`, `Sorts`, and `Pagination` can be reused across different parts of the application, promoting DRY (Don't Repeat Yourself) principles.
-
-2. **Dynamic Query Generation**:
-  - With the `Query Builder`, queries are dynamically generated based on the schema definitions provided by the `Schema Service`. This allows for flexible and adaptable query creation without hardcoding.
-
-3. **Simplified API Design**:
-  - The endpoint `/api/entities/[entityName]? [pagination] [filter] [sort]` becomes more versatile. Users can retrieve data with varying conditions by simply adjusting URL parameters.
-
-4. **Separation of Concerns**:
-  - The architecture separates concerns effectively. The `Entity Controller` handles HTTP requests, `Entity Service` manages business logic, and the `Query Builder` constructs queries. This separation enhances maintainability and scalability.
-
-5. **Performance Optimization**:
-  - Pagination and filtering reduce the amount of data processed and transferred, improving performance. The `Query Builder` ensures that only the necessary data is retrieved from the database.
-
-6. **Maintainability and Extensibility**:
-  - Adding new filters, sorts, or pagination logic can be done by extending the respective components without altering the core functionality. This modularity simplifies maintenance and future enhancements.
 
 #### Detailed Interaction Flow
 
@@ -138,6 +116,7 @@ The UML diagram describes the interaction between various components for handlin
 5. **Crosstable (`crosstable`)**: Renders Crosstable attributes of entities.
 
 ### Interactions
+![admin-panel-sequence.png](diagrams%2Fadmin-panel-sequence.png)
 ### General Workflow
 1. **Editor Interaction**:
   - The Editor interacts with the Main Application via a web browser.
