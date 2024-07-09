@@ -24,7 +24,7 @@ Rel(schemaController, app, "menuItems","")
 
 Rel(editor, app,"click menu item for entity list","")
 Rel(app, dataListPage,"/entities/[entityName]","")
-Rel(dataListPage, schemaController, "/api/entities/[entityName]","")
+Rel(dataListPage, schemaController, "/api/schemas/[entityName]","")
 Rel(schemaController, dataListPage, "entity schema","")
 Rel(dataListPage, entityController, "/api/entities/[entityName]","")
 Rel(entityController, dataListPage, "{items, totalRecords}","")
