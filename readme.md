@@ -47,7 +47,9 @@ By the end of this tutorials, you have:
 3. Detailed in [Quickstart.md](doc%2FQuickstart.md) 
 ## Development
 ![overview.png](doc%2Fdiagrams%2Foverview.png)
-- Web Server: [FluentCMS](..%2Fserver%2FFluentCMS)
+- Web Server: 
+  - Code [FluentCMS](..%2Fserver%2FFluentCMS)
+  - Doc [Server](doc%2FDevelopment.md##Server)
 - Admin Panel Client: [admin-ui](..%2Fadmin-ui)
 - Schema Builder: [schema-ui](..%2Fserver%2FFluentCMS%2Fwwwroot%2Fschema-ui)
 - Demo Publish Site: [ui](..%2Fui)
