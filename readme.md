@@ -1,12 +1,12 @@
 # Fluent CMS
 ## Why another CMS
-- **Performance:** Fluent CMS demonstrates exceptional performance, being 50 times faster than Strapi as detailed in the,
-as detailed in the [performance-test-fluent-cms-vs-strapi.md](doc%2Fpeformance-tests%2Fperformance-test-fluent-cms-vs-strapi.md)
+- **Performance:** Fluent CMS demonstrates exceptional performance, being 50 times faster than Strapi as detailed in the
+[performance-test-fluent-cms-vs-strapi.md](doc%2Fpeformance-tests%2Fperformance-test-fluent-cms-vs-strapi.md).
 Additionally, it 15 time faster than manually written APIs using ASP.NET/Entity Framework, 
 as detailed in [performance-test-fluent-cms-vs-entity-framework.md](doc%2Fpeformance-tests%2Fperformance-test-fluent-cms-vs-entity-framework.md)
 - **Powerful:**  Leveraging its schema-driven architecture, Fluent CMS performs CRUD operations based on schema definitions 
 rather than hard-coded specifics for each entity. This approach reduces repetitive tasks for developers, streamlining the development process.
-- **Lightweight:** The codebase of Fluent CMS remains small, clean, and elegant, thanks to the use of modern tools like Entity Framework, SqlKata, PrimeReact, and JasonEditor.
+- **Lightweight:** The codebase of Fluent CMS remains small, clean, and elegant, thanks to the use of modern tools like Entity Framework, SqlKata, SWR, PrimeReact, and JasonEditor.
 
 ## Play with Fluent CMS
 1. Live Demo  
@@ -40,13 +40,13 @@ rather than hard-coded specifics for each entity. This approach reduces repetiti
       ```
        - Admin Panel: http://localhost:5210, use username `admin@cms.com`, password `Admin1!` to login.   
 ## Quick Start
-For this tutorial, I will walk you though how to build cooking blog website from scratch.
+For this tutorial, I will walk you though how to build cooking blog website backend APIs from scratch.
 By the end of this tutorials, you have:
 1. An admin panel to manage blog content.
 2. REST APIs for mobile and web clients.    
-3. Detailed in [Quickstart.md](doc%2FQuickstart.md) 
+With Fluent CMS, there's no need for coding—just some configuration, detailed in [Quickstart.md](doc%2FQuickstart.md) 
 ## Core Concepts
-   - Understanding Entity, Attributes, View is crucial for using and customizing Fluent CMS.     
+   - Understanding concepts like Entity, Attributes, View is crucial for using and customizing Fluent CMS.     
    - Detailed in [Concepts.md](doc%2FConcepts.md)
 ## Development
 ![overview.png](doc%2Fdiagrams%2Foverview.png)

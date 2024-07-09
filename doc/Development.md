@@ -14,11 +14,11 @@ Please have a look at some Core Concepts - [Concepts.md](doc%2FConcepts.md)
   - Entity framework core
   - SqlKata(https://sqlkata.com/), it using Dapper(https://www.learndapper.com/) behind the scene.
 
-The design of the API Server offers several advantages, primarily revolving around modularity, scalability, maintainability, and separation of concerns. 
+The design of the API Server has several considerations, primarily revolving around modularity, scalability, maintainability, and separation of concerns. 
 
 ### Controllers and Services 
 ![api-controller-service.png](diagrams%2Fapi-controller-service.png)  
-The diagram illustrates the architecture of an API server with the following components:
+The diagram illustrates the API server related the following components:
 
 1. **External Clients**:
   - `Schema Builder`: jQuery-based interface for schema management.
@@ -37,22 +37,6 @@ The diagram illustrates the architecture of an API server with the following com
 
 4. **Database**:
   - Uses Database for storing schema and content.
-
-### Purpose of This Design
-
-1. **Modularity**:
-  - Each component (Schema Builder, Admin Panel, Public Site) operates independently, allowing for focused development and easier debugging.
-  - Controllers and services are separated, ensuring that changes in one area do not directly affect others.
-
-2. **Maintainability**:
-  - Changes in one module (e.g., adding a new feature to the Admin Panel) do not necessitate changes in others (e.g., the Public Site).
-  - Well-defined interfaces between components (e.g., HTTP/JSON) make it easier to update and extend the system.
-
-3. **Reusability**:
-  - The same services can be used by different controllers, promoting code reuse. For instance, both the Admin Panel and Schema Builder use the `Schema Controller`.
-
-4. **Database Interaction**:
-  - The use of ORM (Entity Framework for `Schema Service`) and direct SQL libraries (SqlKate for `Entity Service` and `View Service`) provides flexibility in database interaction methods, optimizing for both simplicity and performance.
 
 ### Detailed Interaction Flow
 

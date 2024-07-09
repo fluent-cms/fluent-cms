@@ -12,16 +12,9 @@ Entities have attributes that define their properties or characteristics. These 
 2. **Lookup Attributes**: Represent many-to-one relationships, where an entity references a single instance of another entity.
 3. **Crosstable Attributes**: Represent many-to-many relationships, where an entity references multiple instances of another entity.
 
-### Relationships
-
-Entities can have different types of relationships with other entities, implemented using lookup and crosstable attributes:
-
-1. **Many-to-One (Lookup)**: An entity has a many-to-one relationship with another entity. For example, a `Post` belongs to a `Category`, and a `Category` can have many `Posts`. This is implemented using a lookup attribute.
-2. **Many-to-Many (Crosstable)**: An entity has a many-to-many relationship with another entity. For example, a `Post` can have multiple `Authors`, and an `Author` can write multiple `Posts`. This is implemented using a crosstable attribute.
-
 ### Entities and Database Tables
-Direct Mapping: Often, each entity maps directly to a single database table. For example, a User entity might correspond directly to a Users table in the database.
-Shared Tables: In some cases, multiple entities might be stored in a single table. This is achieved using a discriminator column to distinguish between different entities.
+- Direct Mapping: Often, each entity maps directly to a single database table. For example, a User entity might correspond directly to a Users table in the database.
+- Shared Tables: In some cases, multiple entities might be stored in a single table. This is achieved using a discriminator column to distinguish between different entities.
 ## Attributes in Fluent CMS
 
 ### Overview
@@ -171,13 +164,12 @@ The view references the `Posts` entity.
 
 #### Public API Endpoint
 
-The view corresponds to an API endpoint, such as `/api/posts`.
+The view corresponds to an API endpoint, such as `/api/views/latest-posts`.
 
 #### Limited Query Parameters
 
 The API endpoint accepts limited query parameters to ensure efficient processing and security. For example:
-- `?before=<timestamp>`: to get posts published before a specific time.
-- `?author=<author_id>`: to filter posts by a specific author.
+- `?slug=<slug>`: to get posts equals certain slug.
 
 #### Predefined Order
 
@@ -185,14 +177,6 @@ The view orders posts by their `publish_time`, considering the table index on th
 ```sql
 SELECT * FROM posts ORDER BY publish_time DESC
 ```
-
-#### Predefined Filters
-
-The view uses predefined filters, which can accept parameters from the URL query string:
-```sql
-SELECT * FROM posts WHERE publish_time < ? AND author_id = ?
-```
-These filters hide the complexity of the underlying fields and operators.
 
 #### Efficient Data Retrieval
 
@@ -205,7 +189,7 @@ This method ensures efficient data retrieval, especially for large datasets.
 ## Filters/Constraint in Fluent CMS
 ### Constraints
 
-Constraints represent specific conditions or rules applied to query data. Here’s how they translate to SQL:
+Constraints represent specific conditions or rules applied to query data.
 
 ```json
 {
@@ -219,7 +203,7 @@ Constraints represent specific conditions or rules applied to query data. Here�
 
 ### Filters
 
-Filters combine multiple constraints and specify attributes (fields) to filter data. Here’s how they translate to SQL:
+Filters combine multiple constraints and specify attributes (fields) to filter data.
 
 ```json
 {
@@ -262,4 +246,4 @@ This SQL fragment filters rows where the `age` column satisfies both conditions 
 ### Usage Contexts
 
 - **Public API**: Constraints and filters are predefined, only allow limited constraint value can be passed from URL Query Parameter.
-- **Admin Panel API**: Similarly, complex filters can be encoded in query strings (using packages like `qs` for handling).
+- **Admin Panel API**: Complex filters can be encoded in query strings (using packages like `qs` for handling).

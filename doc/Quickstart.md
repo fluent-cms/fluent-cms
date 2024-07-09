@@ -1,5 +1,5 @@
 # Quick Start
-For this tutorial, I will walk you though how to build cooking blog website from scratch.
+For this tutorial, I will walk you though how to build cooking blog website backend APIs from scratch.
 By the end of this tutorials, you have:
 1. An admin panel to manage blog content.
 2. REST APIs for mobile and web clients.
@@ -45,15 +45,14 @@ With Fluent CMS, there's no need for coding—just some configuration.
     - You can see a new menu item `Blogs` is added,
     - now you can manage content   
       ![img_14.png](screenshots/admin_panel_entity_list.png "Entity List Page")
-## Add Relationship
 
 ## Add Public API
-Fluent CMS generates a set of CRUD Rest APIs, these APIs are protected by Authentication.
-We don't want expose Admin CRUD APIs to public user directly, We want expose API to public by carefully selected
+Fluent CMS provides a set of CRUD Rest APIs for Admin Panel, these APIs are protected by Authentication.
+We don't want expose these APIs to public user directly, We want expose API to public by carefully selected
 - Attributes to expose
 - Order
 - Filter
-- Page Size for pagination
+- Page Size of each request
 
 Follow the follow steps to define a public API
 1. Fill the View Detail
