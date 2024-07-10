@@ -17,6 +17,12 @@ namespace Utils.QueryBuilder;
 
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public SortOrder Order { get; set; }
+
+        public string GetCompareOperator(bool forNextPage)
+        {
+            return   forNextPage ? Order == SortOrder.Asc ? ">" : "<":
+                Order == SortOrder.Asc ? "<" : ">";
+        }
     }
 
     public class Sorts : List<Sort>

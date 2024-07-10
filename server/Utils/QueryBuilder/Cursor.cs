@@ -72,23 +72,40 @@ public class Cursor
         return Base64UrlEncoder.Encode(cursor);
     }
 
-    private void Apply(Entity entity, Query? query,  Sorts? sorts,string cursor, bool back)
+
+    private void Apply(Entity entity, Query? query, Sorts? sorts, string cursor, bool forNextPage)
     {
-        if (cursor =="" || sorts is null || query is null)
+        if (cursor == "" || sorts is null || sorts.Count == 0 || query is null)
         {
             return;
         }
-        
+
         cursor = Base64UrlEncoder.Decode(cursor);
         var element = JsonSerializer.Deserialize<JsonElement>(cursor);
         var dict = RecordParser.Parse(element, entity);
-        foreach (var sort in sorts)
+        if (sorts.Count == 1)
         {
-            var op = back ? sort.Order == SortOrder.Asc ? "<" : ">" :
-                sort.Order == SortOrder.Asc ? ">" : "<";
-           query.Where(entity.Fullname(sort.FieldName), op, dict[sort.FieldName]);
+            var sort = sorts[0];
+            query.Where(entity.Fullname(sort.FieldName), sort.GetCompareOperator(forNextPage), dict[sort.FieldName]);
+            return;
         }
-    }
+
+        if (sorts.Count > 2)
+        {
+            throw new Exception("Only Support order by two field");
+        }
+
+        var first = sorts.First();
+        var last = sorts.Last();
+        query.Where(q =>
+        {
+            q.Where(entity.Fullname(first.FieldName), first.GetCompareOperator(forNextPage), dict[first.FieldName]);
+            q.Or();
+            q.Where(entity.Fullname(first.FieldName), dict[first.FieldName]);
+            q.Where(entity.Fullname(last.FieldName), last.GetCompareOperator(forNextPage), dict[last.FieldName]);
+            return q;
+        });
+   }
 
     public void Apply(Entity entity, Query? query, Sorts? sorts)
     {
@@ -98,11 +115,11 @@ public class Cursor
         }
         if (!string.IsNullOrWhiteSpace(Last))
         {
-            Apply(entity, query, sorts, Last, false);
+            Apply(entity, query, sorts, Last, true);
         }
         else if (!string.IsNullOrWhiteSpace(First))
         {
-            Apply(entity, query, sorts, First, true);
+            Apply(entity, query, sorts, First, false);
         }
 
         query.Limit(Limit);
