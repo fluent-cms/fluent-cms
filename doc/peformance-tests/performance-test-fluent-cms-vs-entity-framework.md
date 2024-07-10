@@ -46,14 +46,13 @@ To compare performance, I developed a small application called BlogEfExample usi
 ```
 - Entity Framework Example 
 ```
-
-     http_req_duration..............: avg=9.14s    min=114.21ms med=9.59s max=15.32s  p(90)=14.07s  p(95)=14.46s
-     http_reqs......................: 14249   67.208765/s
+     http_req_duration..............: avg=232.81ms min=3.13ms  med=227.4ms  max=801.73ms p(90)=361.15ms p(95)=397.25ms
+     http_reqs......................: 469557  2546.973785/s
 ```
 ### 6. **Analysis and Reporting**
 
 - **Compare Metrics**:
-    - Response Times: Fluent CMS is 15 times faster than Strapi.
-    - Throughput: Fluent CMS can handle 15 times more requests per second compared to Strapi.
+    - Response Times: EF example is twice faster than Fluent CMS
+    - Throughput:  EF example can handle twice requests
 - **Identify Bottlenecks**:
-    - Fluent CMS prioritizes performance, with optimized queries.
+    -  Fluent CMS need to read schema and build query, there are space to optimize

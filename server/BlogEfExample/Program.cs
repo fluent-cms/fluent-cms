@@ -20,16 +20,10 @@ app.MapGet("/posts", async (BloggingContext context,[FromQuery] string? last) =>
         ts = JsonSerializer.Deserialize<Cursor>(Decode(last))?.Ts;
     }
 
-    var query = context.Posts
-        .Include(p => p.Category)
-        .Include(p => p.PostAuthors)
-        .ThenInclude(pa => pa.Author)
-        .Where(p => 
-            !p.Deleted 
-            && (ts == null || p.PublishedAt.ToLocalTime() < ts ) 
-            &&  !p.Category.Deleted 
-            && p.PostAuthors.All(pa => !pa.Author.Deleted))
-        .OrderByDescending(p=>p.PublishedAt)
+    var posts = context.Posts
+        .Where(p => !p.Deleted && (ts == null || p.PublishedAt.ToLocalTime() < ts))
+        .OrderByDescending(p => p.PublishedAt)
+        .Take(11)
         .Select(p => new
         {
             p.Id,
@@ -37,34 +31,62 @@ app.MapGet("/posts", async (BloggingContext context,[FromQuery] string? last) =>
             p.PublishedAt,
             p.Slug,
             p.CategoryId,
-            p.ThumbnailImage,
-            CategoryIdData = new
-            {
-                p.Category.Id,
-                p.Category.Name,
-                p.Category.ParentCategoryId,
-                p.Category.FeaturedImage,
-                p.Category.ThumbnailImage,
-                p.Category.CreatedAt,
-                p.Category.UpdatedAt,
-                p.Category.Slug
-            },
-            Authors = p.PostAuthors.Select(pa => new
-            {
-                pa.Author.Id,
-                pa.Author.Name,
-                pa.Author.Slug,
-                pa.Author.ThumbnailImage,
-                pa.Author.FeaturedImage,
-                pa.Author.CreatedAt,
-                pa.Author.UpdatedAt,
-                PostId = p.Id
-            })
+            p.ThumbnailImage
+        })
+        .ToList();
+    var categoryIds = posts.Select(p => p.CategoryId).Distinct().ToList();
 
-        }).Take(10);
-    var posts = await query.ToListAsync();
-    var lastItem = new Cursor{Ts = posts.Last().PublishedAt}; 
-    return new { items = posts, last = Encode( JsonSerializer.Serialize(lastItem))};
+    var categories = context.Categories
+        .Where(c => categoryIds.Contains(c.Id))
+        .Select(c => new
+        {
+            c.Id,
+            c.Name,
+            c.ParentCategoryId,
+            c.FeaturedImage,
+            c.ThumbnailImage,
+            c.CreatedAt,
+            c.UpdatedAt,
+            c.Slug
+        })
+        .ToList();
+
+    var postIds = posts.Select(p => p.Id).ToList();
+
+    var authors = (from pa in context.PostAuthors
+        join a in context.Authors on pa.AuthorId equals a.Id
+        where postIds.Contains(pa.PostId) && !pa.Deleted && !a.Deleted
+        select new
+        {
+            pa.PostId,
+            Author = new
+            {
+                a.Id,
+                a.Name,
+                a.Slug,
+                a.ThumbnailImage,
+                a.FeaturedImage,
+                a.CreatedAt,
+                a.UpdatedAt
+            }
+        }).ToList();
+
+
+    var result = posts.Select(p => new
+    {
+        p.Id,
+        p.Title,
+        p.PublishedAt,
+        p.Slug,
+        p.CategoryId,
+        p.ThumbnailImage,
+        CategoryIdData = categories.FirstOrDefault(c => c.Id == p.CategoryId),
+        Authors = authors.Where(a => a.PostId == p.Id).Select(a => a.Author).ToList()
+    }).ToList();
+
+
+    var lastItem = new Cursor{Ts = result.Last().PublishedAt}; 
+    return new { items = result, last = Encode( JsonSerializer.Serialize(lastItem))};
 });
 
 app.Run();

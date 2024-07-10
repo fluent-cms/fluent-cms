@@ -13,8 +13,8 @@ export let options = {
     ],
 };
 
-let baseUrl = 'http://localhost:5000/api/views/latest-posts'
-//let baseUrl = 'http://localhost:9080/posts'
+//let baseUrl = 'http://localhost:5000/api/views/latest-posts'
+let baseUrl = 'http://localhost:8080/api/views/latest-posts'
 export default function () {
     // Initial request to get the `last` parameter
     let initialRes = http.get(baseUrl);

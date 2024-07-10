@@ -54,7 +54,7 @@ app.Run();
 
 string? GetConnectionString(string key)
 {
-    var ret = builder.Configuration.GetConnectionString(key) ?? Environment.GetEnvironmentVariable(key);
+    var ret = Environment.GetEnvironmentVariable(key)?? builder.Configuration.GetConnectionString(key);
     if (ret is not null)
     {
         Console.WriteLine("***********************************");
