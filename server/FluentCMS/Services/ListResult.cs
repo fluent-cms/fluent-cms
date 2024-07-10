@@ -10,5 +10,7 @@ public struct ViewResult
 {
     public Record[]? Items { get; set; }
     public string First { get; set; }
+    public bool HasPrevious { get; set; }
     public string Last { get; set; }
+    public bool HasNext { get; set; }
 } 

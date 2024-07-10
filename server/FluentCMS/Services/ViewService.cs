@@ -43,41 +43,22 @@ public class ViewService(KateQueryExecutor queryKateQueryExecutor, ISchemaServic
                 : items.Take(items.Length -1).ToArray();
         }
 
-        if (!Cursor.GenerateCursor(items, view.Sorts, out var first, out var last))
+        if (!cursor.GetFirstAndLastCursor(items, view.Sorts, hasMore,  
+                out var first, out var hasPrevious,
+                out var last, out var hasNext))
         {
             return null;
         }
-        
         await AttachRelatedEntity(entity, view, scope, items);
         
-        var result = new ViewResult
+        return new ViewResult
         {
             Items = items,
+            First = first,
+            HasPrevious = hasPrevious,
+            Last = last,
+            HasNext = hasNext
         };
-        
-        if (!string.IsNullOrWhiteSpace(cursor.First))
-        {
-            //click back button, always has next button
-            result.Last = last;
-            if (hasMore)
-            {
-                result.First =  first ;
-            }
-        }
-        else
-        {
-            //click next button, always has back button
-            if (!string.IsNullOrWhiteSpace(cursor.Last )) 
-            {
-                result.First = first;
-            } // if last == "" and first =="", means first page, no need to go back
-            if (hasMore)
-            {
-                result.Last = last;
-            }
-        }
-
-        return result;
     }
 
 

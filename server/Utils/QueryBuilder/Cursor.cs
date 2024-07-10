@@ -10,18 +10,50 @@ public class Cursor
     public string Last { get; set; } = "";
     public int Limit { get; set; }
 
-    public static bool GenerateCursor(Record[]? items, Sorts? sorts, out string first,
-        out string last)
+    public bool GetFirstAndLastCursor(Record[]? items, Sorts? sorts, bool hasMore, 
+        out string first, out bool hasPrevious,
+        out string last, out bool hasNext)
     {
         first = "";
         last = "";
+        hasNext = false;
+        hasPrevious = false;
+        
         if (sorts is null || items is null || items.Length == 0)
         {
             return false;
         }
 
-        last = GenerateCursor(items.Last(), sorts);
-        first = GenerateCursor(items.First(), sorts);
+        if (hasMore)
+        {
+            if (string.IsNullOrWhiteSpace(Last) && string.IsNullOrWhiteSpace(First))
+            {
+                // the home page, keep hasPrevious false 
+                hasNext = true;
+                last = GenerateCursor(items.Last(), sorts);
+            }
+            else
+            {
+                hasNext = true;
+                hasPrevious = true;
+                first = GenerateCursor(items.First(), sorts);
+                last = GenerateCursor(items.Last(), sorts);
+            }
+        }
+        else
+        {
+            if (!string.IsNullOrWhiteSpace(Last))
+            {
+                // click next, so must has previous
+                hasPrevious = true;
+                first = GenerateCursor(items.First(), sorts);
+            }else if (!string.IsNullOrWhiteSpace(First))
+            {
+                // click previous, so must has next
+                hasNext = true;
+                last = GenerateCursor(items.Last(), sorts);
+            }
+        }
         return true;
     }
 
