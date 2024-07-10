@@ -92,9 +92,6 @@ public class Entity
                 DataType = attribute.DataType,
             });
         }
-
-       
-
         return ret.ToArray();
     }
 

@@ -21,7 +21,7 @@ public class Attribute
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public DisplayType Type { get; set; }
 
-    public string? Options { get; set; } 
+    public string Options { get; set; } = "";
 
     [JsonIgnore]
     public Entity? Parent { get; set; }
@@ -47,12 +47,12 @@ public class Attribute
         ArgumentNullException.ThrowIfNull(Parent);
         return Parent.TableName + "." + Field;
     }
-    public string? GetCrossJoinEntityName()
+    public string? GetCrossEntityName()
     {
         return Options;
     }
  
-    public string GetLookupEntityName()
+    public string? GetLookupEntityName()
     {
         return Options;
     }

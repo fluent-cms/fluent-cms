@@ -1,4 +1,5 @@
 using SqlKata;
+using Utils.DataDefinitionExecutor;
 
 namespace Utils.QueryBuilder;
 
@@ -9,6 +10,35 @@ public class Crosstable
     public Attribute FromAttribute { get; set; } = null!;
     public Attribute TargetAttribute { get; set; } = null!;
 
+    public ColumnDefinition[] GetColumnDefinitions()
+    {
+        CrossEntity.Attributes = [FromAttribute, TargetAttribute];
+        CrossEntity.EnsureDefaultAttribute();
+        return CrossEntity.GetColumnDefinitions();
+    }
+    
+    public Crosstable(Entity fromEntity, Entity targetEntity)
+    {
+        TargetEntity = targetEntity;
+        string[] strs = [fromEntity.Name, targetEntity.Name];
+        var sorted = strs.OrderBy(x => x).ToArray();
+        var crossEntityName = $"{sorted[0]}_{sorted[1]}_cross";
+        CrossEntity = new Entity
+        {
+            TableName = crossEntityName,
+
+        };
+        FromAttribute = new Attribute
+        {
+            Field = $"{fromEntity.Name}_id",
+            Parent = CrossEntity,
+        };
+        TargetAttribute = new Attribute
+        {
+            Field = $"{targetEntity.Name}_id",
+            Parent = CrossEntity
+        };
+    }
 
     public Query Delete(string fromId, Record[] targetItems)
     {

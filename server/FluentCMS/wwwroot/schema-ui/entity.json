@@ -2,6 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Entity",
   "type": "object",
+  "required": ["name","tableName","primaryKey","titleAttribute","defaultPageSize","title","attributes"],
   "properties": {
     "name": {
       "type": "string",

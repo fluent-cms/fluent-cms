@@ -3,6 +3,7 @@
   "type": "object",
   "title": "View",
   "format": "grid",
+  "required": ["name", "entityName","attributeNames", "pageSize", "sorts", "filters"],
   "properties": {
     "name": {
       "minLength": 1,

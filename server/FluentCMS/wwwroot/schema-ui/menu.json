@@ -2,6 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Menu Bar",
   "type": "object",
+  "required": ["name", "menuItems"],
   "properties": {
     "name": {
       "minLength": 1,

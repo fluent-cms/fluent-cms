@@ -1,5 +1,6 @@
 using FluentCMS.Data;
 using FluentCMS.Models;
+using Microsoft.VisualBasic;
 using Utils.DataDefinitionExecutor;
 using Utils.QueryBuilder;
 
@@ -22,6 +23,24 @@ public class SchemaService(AppDbContext context, IDefinitionExecutor definitionE
     {
         var entity = dto.Settings?.Entity;
         ArgumentNullException.ThrowIfNull(entity);
+        foreach (var attribute in entity.GetAttributes(DisplayType.crosstable, null, null))
+        {
+            var entityName = attribute.GetCrossEntityName();
+            if (string.IsNullOrWhiteSpace(entityName))
+            {
+                throw new Exception($"crosstable entity name not set for {attribute.Field}");
+            }
+
+            var targetEntity = await GetEntityByName(entityName);
+            ArgumentNullException.ThrowIfNull(targetEntity);
+            var crossTable = new Crosstable(entity, targetEntity);
+            var columns = await definitionExecutor.GetColumnDefinitions(crossTable.CrossEntity.TableName);
+            if (columns.Length == 0)
+            {
+                await definitionExecutor.CreateTable(crossTable.CrossEntity.TableName, crossTable.GetColumnDefinitions());
+            }
+        }
+        
         var cols = await definitionExecutor.GetColumnDefinitions(entity.TableName);
 
         if (cols.Length > 0) //if table exists, alter table add columns
@@ -38,7 +57,6 @@ public class SchemaService(AppDbContext context, IDefinitionExecutor definitionE
         }
 
         return await Save(dto);
-
     }
 
     public async Task<SchemaDisplayDto?> GetTableDefine(int id)
@@ -140,7 +158,10 @@ public class SchemaService(AppDbContext context, IDefinitionExecutor definitionE
         var item = await context.Schemas.Where(x => x.Name == name && x.Type == SchemaType.Entity)
             .FirstOrDefaultAsync();
 
-        ArgumentNullException.ThrowIfNull(item);
+        if (item is null)
+        {
+            throw new Exception($"not find schema by name: {name}");
+        }
         var dto = new SchemaDto(item);
 
         var entity = dto.Settings?.Entity;
@@ -170,31 +191,13 @@ public class SchemaService(AppDbContext context, IDefinitionExecutor definitionE
 
         foreach (var attribute in entity.GetAttributes(DisplayType.crosstable, null, null))
         {
-            var joinEntityName = attribute.GetCrossJoinEntityName();
-            if (string.IsNullOrWhiteSpace(joinEntityName))
+            var targetEntityName = attribute.GetCrossEntityName();
+            if (string.IsNullOrWhiteSpace(targetEntityName))
             {
-                throw new Exception($"Crosstable entity name is not set for {entity.Name}");
+                throw new Exception($"target entity is not set for {entity.Name}.{attribute.Field}");
             }
-
-            var crossEntity = await GetEntityByName(joinEntityName, false);
-            var lookups = crossEntity.GetAttributes(DisplayType.lookup, null, null);
-            var fromAttribute = lookups.FirstOrDefault(x => x.GetLookupEntityName() == entity.Name);
-            var targetAttribute = lookups.FirstOrDefault(x => x.GetLookupEntityName() != entity.Name);
-
-            if (fromAttribute == null || targetAttribute == null)
-            {
-                throw new Exception($"Load Crosstable Fail, not find from attribute or target attribute");
-            }
-
-            var targetEntity = await GetEntityByName(targetAttribute.GetLookupEntityName(), false);
-            attribute.Crosstable = new Crosstable
-            {
-                FromAttribute = fromAttribute,
-                TargetAttribute = targetAttribute,
-                TargetEntity = targetEntity,
-                CrossEntity = crossEntity,
-            };
+            var targetEntity = await GetEntityByName(targetEntityName, false);
+            attribute.Crosstable = new Crosstable(entity, targetEntity);
         }
-
     }
 }
