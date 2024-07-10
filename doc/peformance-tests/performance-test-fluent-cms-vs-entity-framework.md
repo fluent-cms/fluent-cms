@@ -55,4 +55,4 @@ To compare performance, I developed a small application called BlogEfExample usi
     - Response Times: EF example is twice faster than Fluent CMS
     - Throughput:  EF example can handle twice requests
 - **Identify Bottlenecks**:
-    -  Fluent CMS need to read schema and build query, there are space to optimize
+    -  Fluent CMS need to extra cost (read schema and build query) where Ef doesn't, there are space to optimize
