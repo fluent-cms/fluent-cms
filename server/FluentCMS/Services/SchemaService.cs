@@ -31,7 +31,7 @@ public class SchemaService(AppDbContext context, IDefinitionExecutor definitionE
                 throw new Exception($"crosstable entity name not set for {attribute.Field}");
             }
 
-            var targetEntity = await GetEntityByName(entityName);
+            var targetEntity = await GetEntityByName(entityName,false);
             ArgumentNullException.ThrowIfNull(targetEntity);
             var crossTable = new Crosstable(entity, targetEntity);
             var columns = await definitionExecutor.GetColumnDefinitions(crossTable.CrossEntity.TableName);
@@ -59,17 +59,12 @@ public class SchemaService(AppDbContext context, IDefinitionExecutor definitionE
         return await Save(dto);
     }
 
-    public async Task<SchemaDisplayDto?> GetTableDefine(int id)
+    
+    public async Task<Entity?> GetTableDefine(string tableName)
     {
-        var schema = await context.Schemas.FindAsync(id);
-        ArgumentNullException.ThrowIfNull(schema);
-
-        var dto = new SchemaDisplayDto(schema);
-        var entity = dto.Settings?.Entity;
-        ArgumentNullException.ThrowIfNull(entity);
-
-        entity.LoadDefine(await definitionExecutor.GetColumnDefinitions(entity.TableName));
-        return dto;
+        var entity = new Entity { TableName = tableName };
+        entity.LoadDefine(await definitionExecutor.GetColumnDefinitions(tableName));
+        return entity;
     }
 
 
@@ -140,9 +135,32 @@ public class SchemaService(AppDbContext context, IDefinitionExecutor definitionE
             ArgumentNullException.ThrowIfNull(item);
             dto.Attach(item);
             await context.SaveChangesAsync();
-            return dto;
         }
+
+        if (dto.Type == SchemaType.Entity)
+        {
+            //add to top-menu-bar
+            var menuBarSchema = await GetByIdOrName("top-menu-bar");
+            var menuBar = menuBarSchema?.Settings?.Menu;
+            if (menuBarSchema is not null && menuBar is not null)
+            {
+                var link = "/entities/" + dto.Name;
+                var menuItem = menuBar.MenuItems.FirstOrDefault(me => me.Url == link);
+                if (menuItem is null)
+                {
+                    var label = dto.Settings?.Entity?.Title ??"";
+                    menuBar.MenuItems = [..menuBar.MenuItems, new MenuItem
+                    {
+                        Url = link,
+                        Label = label
+                    }];
+                }
+                await Save(menuBarSchema);
+            }
+        }
+        return dto;
     }
+    
 
     public async Task<bool> Delete(int id)
     {

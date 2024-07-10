@@ -5,7 +5,11 @@ namespace Utils.QueryBuilder;
 
 public class Entity
 {
-    public string Name { get; set; } = "";
+    private string _name;
+    public string Name {
+        get{return _name;}
+        set{_name = value.Replace(" ", string.Empty);}
+    }
     public string TableName { get; set; } = "";
     public string Title { get; set; } = "";
     public string PrimaryKey { get; set; } = "";
@@ -30,9 +34,10 @@ public class Entity
     
     public ColumnDefinition[] GetAddedColumnDefinitions(ColumnDefinition[] columnDefinitions)
     {
-        var set = columnDefinitions.Select((x => x.ColumnName.ToLower())).ToHashSet();
-        var attr = GetAttributes(null, null, null).Where(x=>!set.Contains(x.Field.ToLower()));
-        return attr.Select(x => new ColumnDefinition { ColumnName = x.Field, DataType = x.DataType}).ToArray();
+        var set = columnDefinitions.Select(x => x.ColumnName.ToLower()).ToHashSet();
+        var attr = GetAttributes(null, null, null);
+        var items = attr.Where(x=>!set.Contains(x.Field.ToLower().Trim()));
+        return items.Select(x => new ColumnDefinition { ColumnName = x.Field, DataType = x.DataType}).ToArray();
     }
 
     public void EnsureDefaultAttribute()

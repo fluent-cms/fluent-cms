@@ -10,8 +10,18 @@ public class Attribute
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public DataType DataType { get; set; }
 
-    public string Field { get; set; } = "";
-    
+    private string _field;
+    public string Field
+    {
+        get
+        {
+            return _field;
+        }
+        set
+        {
+            _field = value.Replace(" ", string.Empty);
+        }
+    }
     public string Header { get; set; } = "";
     public bool InList { get; set; } = false;
     public bool InDetail { get; set; } = false;

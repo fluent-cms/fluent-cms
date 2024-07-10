@@ -1,0 +1,10 @@
+@startuml C4_Elements
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Sequence.puml
+
+Person(developer, "Developer", "Define Schema")
+System(schemaBuilder, "Schema Builder", "")
+Rel(developer, schemaBuilder, "Add Entity","")
+Rel(developer, schemaBuilder, "Add Fields/Attributes","")
+Rel(developer, schemaBuilder, "Add Relationships","")
+Rel(developer, schemaBuilder, "Add View/Public API","")
+@enduml

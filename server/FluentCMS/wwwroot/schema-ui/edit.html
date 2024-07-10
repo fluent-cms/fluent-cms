@@ -116,7 +116,12 @@
         });
 
         document.getElementById('define').addEventListener('click', function () {
-            define(id).then(item=> editor.setValue(item));
+            const oldValue = editor.getValue();
+            const tableName = oldValue.tableName;
+            define(tableName).then(item=> {
+                oldValue.attributes = item.attributes;
+                editor.setValue(oldValue)
+            });
         });
 
         document.getElementById('saveDefine').addEventListener('click', function () {

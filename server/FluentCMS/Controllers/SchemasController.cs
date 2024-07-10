@@ -25,10 +25,10 @@ public class SchemasController(ISchemaService schemaService):ControllerBase
         var item = await schemaService.SaveTableDefine(dto);
         return Ok(item);
     }
-    [HttpGet("{id}/define")]
-    public async Task<ActionResult<SchemaDisplayDto>> GetTableDefine(int id)
+    [HttpGet("{name}/define")]
+    public async Task<ActionResult<SchemaDisplayDto>> GetTableDefine(string name)
     {
-        var item = await schemaService.GetTableDefine(id);
+        var item = await schemaService.GetTableDefine(name);
         return Ok(item);
     }
 

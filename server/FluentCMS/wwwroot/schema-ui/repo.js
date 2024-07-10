@@ -32,9 +32,9 @@ async function saveDefine(data){
     return res.data;
 }
 
-async function define(id){
-    const res= await  axios.get(apiPrefix + `/schemas/${id}/define`)
-    return res.data.settings
+async function define(name){
+    const res= await  axios.get(apiPrefix + `/schemas/${name}/define`)
+    return res.data
 }
 
 async function one(id){

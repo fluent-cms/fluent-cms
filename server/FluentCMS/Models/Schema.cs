@@ -42,8 +42,8 @@ public class SchemaDto
     public int ?Id { get; set; }
     public string? Name { get; set; }
     public string? Type { get; set; }
-    
-    public Settings? Settings { get; set; }
+
+    public Settings? Settings { get; set; } 
     public SchemaDto(){}
 
     public bool IsEmpty()
