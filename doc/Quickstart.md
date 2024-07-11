@@ -38,12 +38,25 @@ With Fluent CMS, there's no need for coding—just some configuration.
     - Click the `Update Database` button to save schema and create a table in database.  
    ![img_3.png](screenshots/img_3.png)
 ### Add Entity Relationships
-   - 
+   - Add a lookup Attribute `author`
+     - Field : `author`
+     - Header : `Author`
+     - Database Type : `int`
+     - Display Type : `crosstable`
+     - Option: `author`, author is another entity's name
+   - Add a crosstable Attribute `tags`
+     - Field : `tags`
+     - Header: `Tags`
+     - In List Page: `false`
+     - Database Type: `NA`
+     - Display Type : `corsstable`
+     - Option: `tag`, tag is another entity's name
 ![img_4.png](screenshots/img_4.png)
-
+### Click the `Update Database button`, to create tables in database.
 ### Add Public API
 Fluent CMS provides a set of CRUD Rest APIs for Admin Panel, these APIs are protected by Authentication.
-We don't want expose these APIs to public user directly, We want expose API to public by carefully selected
+We don't want expose these APIs to public user directly for security and performance concerns.  
+We want expose API to public by carefully selected
 - Attributes to expose
 - Order
 - Filter
@@ -57,24 +70,37 @@ Follow the follow steps to define a public API
         - View Name : `lastest-blog`
         - Entity Name : `blogs`
         - Page Size : 10
-          ![img.png](screenshots/schema_builder_view_detail.png)
+    ![img_2.png](img_2.png)
 2. Fill Sort Detail
     - Click `+ row` button
     - Input the Sort Detail
         - Attribute Name : `published_at`
         - Order Direction: `Desc`
+    - Input Attribute 
+      - id,
+      - title
+      - published_time,
+      - tags
     - Click `Save Schema` button
-      ![img_2.png](screenshots/schema_builder_view_sorts.png)
+   ![img_4.png](img_4.png)
 3. Test the public API
 - Access https://fluent-cms-admin.azurewebsites.net/api/views/latest-blogs from browser
-  ![img_1.png](screenshots/public_api.png)
-
+![img_5.png](img_5.png)
 
 ## Manage Content in Admin Panel
 ![quickstart-admin-panel.png](diagrams%2Fquickstart-admin-panel.png)
 
-
-- Click the `Fluent CMS` logo, go to Admin Panel
-- You can see a new menu item `Blogs` is added,
-- now you can manage content   
+### Add Data for Entity `Blog`
+1. Login to Admin Panel
+   - Go to Admin Panel https://fluent-cms-admin.azurewebsites.net/ or http://localhost:5210 ,
+   - use Email `admin@cms.com`, Password `Admin1!`         
+2. Click button `Create New Blogs` 
 ![img_14.png](screenshots/admin_panel_entity_list.png "Entity List Page")
+3. Input data
+![img.png](img.png)
+4. Click button `Save Blogs`
+
+### Add Tags
+1. Click the button `Select Tags` to Add Post Related Tag
+![img_1.png](img_1.png)
+2. Click the button `Delete Tags` to Delete Tag
