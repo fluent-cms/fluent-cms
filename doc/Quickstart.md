@@ -50,9 +50,9 @@ With Fluent CMS, there's no need for coding—just some configuration.
      - In List Page: `false`
      - Database Type: `NA`
      - Display Type : `corsstable`
-     - Option: `tag`, tag is another entity's name
+       - Option: `tag`, tag is another entity's name
 ![img_4.png](screenshots/img_4.png)
-### Click the `Update Database button`, to create tables in database.
+   - Click the `Update Database button`, to create tables in database.
 ### Add Public API
 Fluent CMS provides a set of CRUD Rest APIs for Admin Panel, these APIs are protected by Authentication.
 We don't want expose these APIs to public user directly for security and performance concerns.  
