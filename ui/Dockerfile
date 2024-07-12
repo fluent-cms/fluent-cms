@@ -18,4 +18,4 @@ EXPOSE 3000
 
 CMD ["npm", "run", "dev"]
 
-# to publishto azure, use docker buildx build --platform linux/amd64 -t usename/imagename:0.1 --push .
+# to publishto azure, use docker buildx build --platform linux/amd64 -t jaike/fluent-cms-ui-linux:0.1 --push .

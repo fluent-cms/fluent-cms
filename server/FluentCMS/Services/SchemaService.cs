@@ -127,7 +127,6 @@ public class SchemaService(AppDbContext context, IDefinitionExecutor definitionE
             context.Schemas.Add(item);
             await context.SaveChangesAsync();
             dto.Id = item.Id;
-            return dto;
         }
         else
         {
