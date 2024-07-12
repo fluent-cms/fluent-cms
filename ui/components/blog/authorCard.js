@@ -14,6 +14,7 @@ export default function AuthorCard({ author }) {
                 className="rounded-full object-cover"
                 fill
                 sizes="96px"
+                unoptimized
               />
             </Link>
         </div>

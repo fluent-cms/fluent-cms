@@ -44,6 +44,7 @@ export default function PostList({
                 alt={"Thumbnail"}
                 className="object-cover transition-all"
                 sizes="(max-width: 768px) 30vw, 33vw"
+                unoptimized
               />
             ) : (
               <span className="absolute left-1/2 top-1/2 h-16 w-16 -translate-x-1/2 -translate-y-1/2 text-gray-200">
@@ -113,6 +114,7 @@ export default function PostList({
                           alt={author.name}
                           className="rounded-full object-cover"
                           sizes="20px"
+                          unoptimized
                         />
                       )}
                     </div>

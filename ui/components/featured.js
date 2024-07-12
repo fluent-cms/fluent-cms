@@ -36,6 +36,7 @@ export default function Featured({ post, pathPrefix }) {
               })}
               alt={post.mainImage?.alt || "Thumbnail"}
               className="object-cover"
+              unoptimized
             />
           </Link>
         </div>

@@ -41,6 +41,7 @@ export default function Post(props) {
                         className="rounded-full object-cover"
                         fill
                         sizes="40px"
+                        unoptimized
                       />
                     </Link>
                   </div>
@@ -77,6 +78,7 @@ export default function Post(props) {
             loading="eager"
             sizes="100vw"
             className="object-cover"
+            unoptimized
           />
       </div>
 
