@@ -1,17 +1,43 @@
 const apiPrefix = "/api";
 axios.defaults.withCredentials = true
 async function save(data) {
-    try {
-        const res = await axios.post(apiPrefix + "/schemas", encode(data))
-        return res.data;
-    } catch (err) {
-        console.error('POST request error:', err);
-    }
+    return tryFetch(async ()=>await axios.post(apiPrefix + "/schemas", encode(data)))
+}
+async function list(type){
+    return  await tryFetch(async ()=>await  axios.get(apiPrefix + `/schemas?type=${type??''}`))
+}
+async function saveDefine(data){
+    return await tryFetch(async ()=>await  axios.post(apiPrefix + `/schemas/define`, encode(data)))
 }
 
+async function define(name){
+    return await tryFetch(async ()=> await  axios.get(apiPrefix + `/schemas/${name}/define`))
+}
+
+async function one(id){
+    const {data, err} = await tryFetch(async ()=>await  axios.get(apiPrefix + `/schemas/${id}`))
+    if (err){
+        return {err}
+    }
+    
+    data.settings[data.type].name = data.name;
+    data.settings[data.type].id = data.id;
+    return {data: data.settings[data.type]}
+}
+
+async function del(id){
+    return tryFetch(async ()=> await axios.delete(apiPrefix + `/schemas/${id}`));
+}
+async function tryFetch(cb){
+    try {
+        const res = await cb()
+        return {data:res.data};
+    }catch (err){
+        return {error: err.response.data.title??'An error has occurred. Please try again.'}
+    }
+}
 function encode(data){
     data = removeEmptyProperties(data);
-    console.log({data})
     return {
         id : data.id,
         name: data.name,
@@ -19,36 +45,8 @@ function encode(data){
         settings: {
             [data.type]: data,
         },
-    } 
+    }
 }
-
-async function list(){
-    const res= await  axios.get(apiPrefix + "/schemas")
-    return res.data
-}
-async function saveDefine(data){
-    
-    const res= await  axios.post(apiPrefix + `/schemas/define`, encode(data));
-    return res.data;
-}
-
-async function define(name){
-    const res= await  axios.get(apiPrefix + `/schemas/${name}/define`)
-    return res.data
-}
-
-async function one(id){
-    const res= await  axios.get(apiPrefix + `/schemas/${id}`)
-    const data = res.data;
-    data.settings[data.type].name = data.name
-    return data.settings[data.type]
-}
-
-async function del(id){
-    const res= await  axios.delete(apiPrefix + `/schemas/${id}`)
-    return res.data
-}
-
 function removeEmptyProperties(obj) {
     for (let key in obj) {
         if (obj.hasOwnProperty(key)) {

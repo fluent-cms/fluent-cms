@@ -8,9 +8,9 @@ namespace FluentCMS.Controllers;
 public class SchemasController(ISchemaService schemaService):ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<SchemaDisplayDto>>> Get()
+    public async Task<ActionResult<IEnumerable<SchemaDisplayDto>>> GetAll([FromQuery]string? type )
     {
-        return Ok(await schemaService.GetAll());
+        return Ok(await schemaService.GetAll(type));
     }
     
     [HttpPost]
@@ -33,7 +33,7 @@ public class SchemasController(ISchemaService schemaService):ControllerBase
     }
 
     [HttpGet("{name}")]
-    public async Task<ActionResult<SchemaDisplayDto>> Get(string name)
+    public async Task<ActionResult<SchemaDisplayDto>> GetOne(string name)
     {
         return Ok(await schemaService.GetByIdOrName(name));
     }

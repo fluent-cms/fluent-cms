@@ -50,23 +50,21 @@ public class SchemaDto
     {
         return string.IsNullOrEmpty(Name);
     }
-    public SchemaDto(Schema? item)
-    {
-        if (item is not null)
-        {
 
-            Name = item.Name;
-            Type = item.Type;
-            try
-            {
-                Settings = JsonSerializer.Deserialize<Settings>(item.Settings);
-            }
-            catch (Exception e)
-            {
-                throw new Exception($"fail to deserialize {Name}, settings = {item.Settings}, err = {e.Message}");
-            }
+    public SchemaDto(Schema item)
+    {
+        Name = item.Name;
+        Type = item.Type;
+        try
+        {
+            Settings = JsonSerializer.Deserialize<Settings>(item.Settings);
+        }
+        catch (Exception e)
+        {
+            throw new Exception($"fail to deserialize {Name}, settings = {item.Settings}, err = {e.Message}");
         }
     }
+
     public Schema ToModel()
     {
         var item = new Schema();

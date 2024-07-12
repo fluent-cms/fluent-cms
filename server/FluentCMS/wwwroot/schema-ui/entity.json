@@ -9,6 +9,19 @@
       "title": "Entity Name",
       "minLength": 1
     },
+
+    "title": {
+      "minLength": 1,
+      "type": "string",
+      "title": "Entity's Display Title",
+      "description": "Shows in page header bar"
+    },
+    "defaultPageSize": {
+      "type": "number",
+      "title": "Default Page Size",
+      "default": 20,
+      "description": "Default Page Size for pagination"
+    },
     "tableName": {
       "type": "string",
       "title": "Table Name",
@@ -20,26 +33,15 @@
       "default": "id",
       "title": "Primary Key",
       "minLength": 1,
-      "description": "A field to identify the record"
+      "description": "identify the record"
     },
     "titleAttribute": {
       "minLength": 1,
       "type": "string",
       "title": "Title Attribute",
-      "description": "A string field used to describe records, such as name, title, and subject"
+      "description": "such as name, title, and subject"
     },
-    "defaultPageSize": {
-      "type": "number",
-      "title": "Default Page Size",
-      "default": 20,
-      "description": "Default Page Size for pagination"
-    },
-    "title": {
-      "minLength": 1,
-      "type": "string",
-      "title": "Entity Title",
-      "description": "Shows in page header bar"
-    },
+
     "attributes": {
       "title": "Attributes",
       "description": "Attributes of entity, including database table fields and customized attribute",

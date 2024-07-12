@@ -7,6 +7,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@json-editor/json-editor@latest/dist/jsoneditor.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
+    <script src="//code.jquery.com/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.7/dist/loadingoverlay.min.js"></script>
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"  crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"  crossorigin="anonymous">
     <link rel="stylesheet" href="styles.css">
@@ -23,112 +26,132 @@
                 <img alt="logo" src="/fluent-cms.png" height="40" class="mr-2">
             </a>
             <div class="navbar-nav">
-                <a class="nav-item nav-link border-item" href="./list.html">Schema List</a>
-                <a class="nav-item nav-link border-item" href="./edit.html?schema=menu">Add Menu</a>
-                <a class="nav-item nav-link border-item" href="./edit.html?schema=entity">Add Entity</a>
-                <a class="nav-item nav-link border-item" href="./edit.html?schema=view">Add View</a>
+                <a class="nav-item nav-link border-item" href="/">Admin Panel</a>
+                <a class="nav-item nav-link border-item" href="./list.html?schema=entity">Entities</a>
+                <a class="nav-item nav-link border-item" href="./list.html?schema=view">Views</a>
+                <a class="nav-item nav-link border-item" href="./edit.html?schema=menu&id=top-menu-bar">MenuItems</a>
             </div>
         </nav>
-
+            
         <div class="header">
             <button id='submit' class="btn btn-primary">Save Schema</button>
             <button id='define' class="btn btn-primary">Get Schema from Database</button>
             <button id='saveDefine' class="btn btn-primary">Update Database</button>
             <span id='valid_indicator'></span>
         </div>
+        <div id="errorPanel" class="alert alert-danger" role="alert" style="display: none;">
+            An error has occurred. Please try again.
+        </div>
         <div class='column col-md-12' id='editor_holder'></div>
 
 <script>
-    const searchParams = new URLSearchParams(window.location.search);
-    const schema = searchParams.get("schema");
-    const id = searchParams.get("id");
-    const editor= loadEditor()
-    if (schema !== "entity"){
-        document.getElementById('define').hidden = true
-        document.getElementById('saveDefine').hidden = true
-    }
+    $(document).ready(function() {
+        const searchParams = new URLSearchParams(window.location.search);
+        const schema = searchParams.get("schema");
+        let id = searchParams.get("id");
+        const editor = loadEditor();
 
-    setListeners(editor)
-    function loadEditor() {
-        let editor = new JSONEditor(document.getElementById('editor_holder'), {
-            ajax: true,
-            schema: {
-                "$ref": schema + ".json",
-            },
-            compact: true,
-            disable_collapse:true,
-            disable_array_delete_last_row: true,
-            disable_array_delete_all_rows: true,
-//            no_additional_properties: true,
-            disable_properties: true,
-            disable_edit_json: true,
-//            required_by_default: true,
-            collapsed: true,
-            object_layout:"grid",
-            show_errors: 'always'
-        });
+        if (schema !== "entity") {
+            $('#define').prop('hidden', true);
+            $('#saveDefine').prop('hidden', true);
+        }
 
-        editor.on('ready', function (){
-            if (id){
-                one(id).then(item=>editor.setValue(item))
-            }else {
-                editor.setValue(null)
-            }           
-        })
+        function loadEditor() {
+            let editor = new JSONEditor($('#editor_holder')[0], {
+                ajax: true,
+                schema: {
+                    "$ref": schema + ".json",
+                },
+                compact: true,
+                disable_collapse: true,
+                disable_array_delete_last_row: true,
+                disable_array_delete_all_rows: true,
+                disable_properties: true,
+                disable_edit_json: true,
+                collapsed: true,
+                object_layout: "grid",
+                show_errors: 'always'
+            });
 
-        editor.on('change', function () {
-            let errors = editor.validate();
-            let indicator = document.getElementById('valid_indicator');
-            if (errors.length) {
-                indicator.style.color = 'red';
-                indicator.textContent = "not valid";
-            } else {
-                indicator.style.color = 'green';
-                indicator.textContent = "valid";
-            }
-        });
-        return editor
-    }
+            editor.on('ready',async function() {
+                if (id) {
+                    $.LoadingOverlay("show");
+                    const {data, error} = await one(id);
+                    if (data){
+                        id = data.id;
+                        delete (data.id);
+                        editor.setValue(data);
+                    }else {
+                        $('#errorPanel').text(error).show();
+                    }
+                    $.LoadingOverlay("hide");
+                } else {
+                    editor.setValue(null);
+                }
+            });
 
-    async function setListeners(editor) {
-        function submit(callback){
+            editor.on('change', function() {
+                let errors = editor.validate();
+                let indicator = $('#valid_indicator');
+                if (errors.length) {
+                    indicator.css('color', 'red').text("not valid");
+                } else {
+                    indicator.css('color', 'green').text("valid");
+                }
+            });
+            return editor;
+        }
+        setListeners(editor);
+        async function setListeners(editor) {
+            $('#submit').on('click', function() {
+                submit(save);
+            });
+
+            $('#define').on('click',async function() {
+                const oldValue = editor.getValue();
+                const tableName = oldValue.tableName;
+                $.LoadingOverlay("show");
+                const {data, error} = await define(tableName);
+                if (data){
+                    oldValue.attributes = data.attributes;
+                    editor.setValue(oldValue); 
+                }else {
+                    $('#errorPanel').text(error).show();
+                }
+                $.LoadingOverlay("hide");
+            });
+
+            $('#saveDefine').on('click', function() {
+                submit(saveDefine);
+            });
+        }
+
+        async function submit(callback) {
             const errors = editor.validate();
             if (errors.length) {
-                console.log(errors);
-                return 
+                return;
             }
+
+            const val = editor.getValue();
+            val.type = schema;
             
-            const val = editor.getValue()
-            val.type = schema
-            if (id){
-                val.id = +id
-            } 
-            
-            callback(val).then(item=>{
-                alert("submit succeed!")
-                if (id == null){
-                    window.location.href = `edit.html?schema=${schema}&id=${item.id}`
+            if (id) {
+                val.id = +id;
+            }
+
+            $.LoadingOverlay("show");
+            const {data, error} = await callback(val);
+            if (data) {
+                alert("submit succeed!");
+                if (!id) {
+                    window.location.href = `edit.html?schema=${schema}&id=${data.id}`;
                 }
-            })
+            } else {
+                $('#errorPanel').text(error).show();
+            }
+            $.LoadingOverlay("hide");
         }
-        document.getElementById('submit').addEventListener('click', function () {
-            submit(save)
-        });
-
-        document.getElementById('define').addEventListener('click', function () {
-            const oldValue = editor.getValue();
-            const tableName = oldValue.tableName;
-            define(tableName).then(item=> {
-                oldValue.attributes = item.attributes;
-                editor.setValue(oldValue)
-            });
-        });
-
-        document.getElementById('saveDefine').addEventListener('click', function () {
-            submit(saveDefine)
-        });
-
-    }
+    });
 </script>
 </body>
 </html>

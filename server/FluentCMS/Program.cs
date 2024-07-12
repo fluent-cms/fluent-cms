@@ -1,9 +1,12 @@
 using System.Text.Json.Serialization;
 using FluentCMS.Services;
 using FluentCMS.Data;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Utils.DataDefinitionExecutor;
 using Utils.File;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Utils.KateQueryExecutor;
 
@@ -35,6 +38,11 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseExceptionHandler("/error-development");
+}
+else
+{
+    app.UseExceptionHandler("/error");
 }
 
 app.UseHttpsRedirection();

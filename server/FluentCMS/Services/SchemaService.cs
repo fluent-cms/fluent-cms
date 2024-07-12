@@ -1,8 +1,8 @@
 using FluentCMS.Data;
 using FluentCMS.Models;
-using Microsoft.VisualBasic;
 using Utils.DataDefinitionExecutor;
 using Utils.QueryBuilder;
+using Attribute = Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.Services;
 
@@ -19,30 +19,14 @@ public static class  SchemaType
 
 public class SchemaService(AppDbContext context, IDefinitionExecutor definitionExecutor) : ISchemaService
 {
-    public async Task<SchemaDto?> SaveTableDefine(SchemaDto dto)
+    public async Task<SchemaDto> SaveTableDefine(SchemaDto dto)
     {
-        var entity = dto.Settings?.Entity;
-        ArgumentNullException.ThrowIfNull(entity);
+        var entity = Val.NotNull( "entity",dto.Settings?.Entity);
         foreach (var attribute in entity.GetAttributes(DisplayType.crosstable, null, null))
         {
-            var entityName = attribute.GetCrossEntityName();
-            if (string.IsNullOrWhiteSpace(entityName))
-            {
-                throw new Exception($"crosstable entity name not set for {attribute.Field}");
-            }
-
-            var targetEntity = await GetEntityByName(entityName,false);
-            ArgumentNullException.ThrowIfNull(targetEntity);
-            var crossTable = new Crosstable(entity, targetEntity);
-            var columns = await definitionExecutor.GetColumnDefinitions(crossTable.CrossEntity.TableName);
-            if (columns.Length == 0)
-            {
-                await definitionExecutor.CreateTable(crossTable.CrossEntity.TableName, crossTable.GetColumnDefinitions());
-            }
+            await CreateCrosstable(entity, attribute);
         }
-        
         var cols = await definitionExecutor.GetColumnDefinitions(entity.TableName);
-
         if (cols.Length > 0) //if table exists, alter table add columns
         {
             await definitionExecutor.AlterTableAddColumns(entity.TableName, entity.GetAddedColumnDefinitions(cols));
@@ -55,39 +39,38 @@ public class SchemaService(AppDbContext context, IDefinitionExecutor definitionE
             //no need to expose deleted field to frontend 
             entity.RemoveDeleted();
         }
-
         return await Save(dto);
     }
 
     
     public async Task<Entity?> GetTableDefine(string tableName)
     {
+        Val.NotEmpty(tableName,"table name");
         var entity = new Entity { TableName = tableName };
         entity.LoadDefine(await definitionExecutor.GetColumnDefinitions(tableName));
         return entity;
     }
 
 
-    public async Task<IEnumerable<SchemaDisplayDto>> GetAll()
+    public async Task<IEnumerable<SchemaDisplayDto>> GetAll(string type)
     {
-        var schemas = await context.Schemas.ToListAsync();
+        var schemas = await context.Schemas.
+            Where(x=> string.IsNullOrWhiteSpace(type) || x.Type == type).
+            ToListAsync();
         return schemas.Select(x => new SchemaDisplayDto(x));
     }
 
     public async Task<View?> GetViewByName(string name)
     {
-        var item = await context.Schemas.Where(x => x.Name == name && x.Type == SchemaType.View)
+        Val.NotEmpty(name, "view name");
+        var item =  await context.Schemas
+            .Where(x => x.Name == name && x.Type == SchemaType.View)
             .FirstOrDefaultAsync();
-        ArgumentNullException.ThrowIfNull(item);
+        item = Val.NotNull($"view of {name}", item);
         var dto = new SchemaDto(item);
-        var view = dto.Settings?.View;
-        ArgumentNullException.ThrowIfNull(view);
-        if (string.IsNullOrWhiteSpace(view.EntityName))
-        {
-            throw new Exception($"Entity Name not set for view {item.Name}");
-        }
-
-        view.Entity = await GetEntityByName(view.EntityName, true);
+        var view = Val.NotNull($"view of {name}",dto.Settings?.View);
+        var entityName = Val.NotNull($"entity name of {name}", view.EntityName);
+        view.Entity = await GetEntityByName(entityName, true);
         return view;
     }
 
@@ -130,8 +113,7 @@ public class SchemaService(AppDbContext context, IDefinitionExecutor definitionE
         }
         else
         {
-            var item = context.Schemas.FirstOrDefault(i => i.Id == dto.Id);
-            ArgumentNullException.ThrowIfNull(item);
+            var item = Val.NotNull($"schema of {dto.Id} ",context.Schemas.FirstOrDefault(i => i.Id == dto.Id));
             dto.Attach(item);
             await context.SaveChangesAsync();
         }
@@ -170,21 +152,22 @@ public class SchemaService(AppDbContext context, IDefinitionExecutor definitionE
         return true;
     }
 
-    private async Task<Entity> GetEntityByName(string name, bool loadRelated)
+    private async Task<Entity?> GetEntityByName(string name, bool loadRelated)
     {
         var item = await context.Schemas.Where(x => x.Name == name && x.Type == SchemaType.Entity)
             .FirstOrDefaultAsync();
-
         if (item is null)
         {
-            throw new Exception($"not find schema by name: {name}");
+            return null;
         }
         var dto = new SchemaDto(item);
-
         var entity = dto.Settings?.Entity;
-        ArgumentNullException.ThrowIfNull(entity);
+        if (entity is null)
+        {
+            return null;
+        }
+        
         entity.Init();
-
         if (loadRelated)
         {
             await LoadRelated(entity);
@@ -197,24 +180,31 @@ public class SchemaService(AppDbContext context, IDefinitionExecutor definitionE
     {
         foreach (var attribute in entity.GetAttributes(DisplayType.lookup, null, null))
         {
-            var lookupEntityName = attribute.GetLookupEntityName();
-            if (string.IsNullOrWhiteSpace(lookupEntityName))
-            {
-                throw new Exception($"lookup entity name is not set for {entity.Name}");
-            }
-
-            attribute.Lookup = await GetEntityByName(lookupEntityName, false);
+            var errorVariable = $"lookup entity name for ${entity.Name}.{attribute.Field}";
+            var lookupEntityName = Val.NotEmpty(errorVariable,attribute.GetLookupEntityName());
+            attribute.Lookup = Val.NotNull(errorVariable,await GetEntityByName(lookupEntityName, false));
         }
 
         foreach (var attribute in entity.GetAttributes(DisplayType.crosstable, null, null))
         {
-            var targetEntityName = attribute.GetCrossEntityName();
-            if (string.IsNullOrWhiteSpace(targetEntityName))
-            {
-                throw new Exception($"target entity is not set for {entity.Name}.{attribute.Field}");
-            }
-            var targetEntity = await GetEntityByName(targetEntityName, false);
+            var errorVariable = $"crosstable entity name for ${entity.Name}.{attribute.Field}";
+            var targetEntityName = Val.NotEmpty(errorVariable,attribute.GetCrossEntityName());
+            var targetEntity =Val.NotNull(errorVariable, await GetEntityByName(targetEntityName, false));
             attribute.Crosstable = new Crosstable(entity, targetEntity);
+        }
+    }
+    
+    private async Task CreateCrosstable(Entity entity, Attribute attribute)
+    {
+        var entityName = Val.NotEmpty($"crosstable of {attribute.Field}",
+            attribute.GetCrossEntityName());
+        var targetEntity = Val.NotNull($"target entity {attribute.Field}",
+            await GetEntityByName(entityName, false));
+        var crossTable = new Crosstable(entity, targetEntity);
+        var columns = await definitionExecutor.GetColumnDefinitions(crossTable.CrossEntity.TableName);
+        if (columns.Length == 0)
+        {
+            await definitionExecutor.CreateTable(crossTable.CrossEntity.TableName, crossTable.GetColumnDefinitions());
         }
     }
 }
