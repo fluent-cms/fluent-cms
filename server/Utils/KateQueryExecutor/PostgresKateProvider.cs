@@ -10,7 +10,7 @@ public class PostgresKateProvider(string connectionString, ILogger<PostgresKateP
 {
     private readonly Compiler _compiler = new PostgresCompiler();
 
-    public async Task<T> Execute<T>(Query? query, Func<QueryFactory, Task<T>> queryFunc)
+    public async Task<T> Execute<T>(Func<QueryFactory, Task<T>> queryFunc)
     {
         await using var connection = new NpgsqlConnection(connectionString);
         await connection.OpenAsync();

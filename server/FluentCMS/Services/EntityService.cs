@@ -177,9 +177,15 @@ public class EntityService(KateQueryExecutor queryKateQueryExecutor, ISchemaServ
     }
     public async Task AttachLookup(Attribute lookupAttribute, Record[] items, Func<Entity, Attribute[]> getFields)
     {
-        var lookupEntity = await schemaService.GetEntityByName(lookupAttribute.GetLookupEntityName());
+        var lookupEntityName = Val.StrNotEmpty(lookupAttribute.GetLookupEntityName())
+            .ValOrThrow($"lookup Entity Name is not set for {lookupAttribute.Parent?.Name}");
+        var lookupEntity = await schemaService.GetEntityByName(lookupEntityName);
         ArgumentNullException.ThrowIfNull(lookupEntity);
         var ids = lookupAttribute.GetValues(items);
+        if (ids.Length == 0)
+        {
+            return;
+        }
         var lookupRecords = await queryKateQueryExecutor.Many(lookupEntity.Many(ids, getFields(lookupEntity)));
         ArgumentNullException.ThrowIfNull(lookupRecords);
         foreach (var lookupRecord in lookupRecords)

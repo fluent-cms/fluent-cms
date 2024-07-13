@@ -10,7 +10,7 @@ public class SqliteKateProvider(string connectionString , ILogger<SqliteKateProv
 {
     private readonly Compiler _compiler = new SqliteCompiler();
 
-    public async Task<T> Execute<T>(Query? query , Func<QueryFactory, Task<T>> queryFunc)
+    public async Task<T> Execute<T>(Func<QueryFactory, Task<T>> queryFunc)
     {
         await using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync();
