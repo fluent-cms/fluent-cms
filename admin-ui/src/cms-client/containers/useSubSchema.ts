@@ -1,4 +1,3 @@
-import {useSchema} from "../services/schema";
 import {getListColumns, getWriteColumns} from "../services/columnUtil";
 import {useState} from "react";
 

@@ -3,7 +3,7 @@ import {Button} from "primereact/button";
 import {useFormDialogState} from "../components/dialogs/useFormDialogState";
 import {SelectDataTable} from "../components/dataTable/SelectDataTable";
 import {ListDialog} from "../components/dialogs/ListDialog";
-import {useRequestStatus} from "./useFormStatusUI";
+import {useRequestStatus} from "./useFormStatus";
 import {useSubSchema} from "./useSubSchema";
 import {useLazyStateHandlers} from "./useLazyStateHandlers";
 
@@ -44,14 +44,13 @@ export function Crosstable({column, data, schema, getFullURL}: {
 
     const onDelete = async () => {
         confirm('Do you want to delete these item?', async () => {
-            const res = await deleteSubPageItems(schema.name, id, column.field, existingItems)
-            checkError(res, 'Delete Succeed')
-            if (!res.err) {
+            const {error} = await deleteSubPageItems(schema.name, id, column.field, existingItems)
+            checkError(error, 'Delete Succeed')
+            if (!error) {
                 mutateDate()
             }
         })
     }
-    console.log({excludedSubgridData,listColumns})
 
     return <div className={'card col-12'}>
         <label id={column.field} className="font-bold">

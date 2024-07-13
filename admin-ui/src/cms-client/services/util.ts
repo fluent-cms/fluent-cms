@@ -2,13 +2,20 @@ import axios from "axios";
 export const swrConfig = {
     revalidateOnFocus:false
 }
-export const fetcher = (url: string) => axios.get(url).then(res => res.data)
+export const fetcher = async (url: string) => {
+    const res = await axios.get(url)
+    return res.data;
+}
 
 export async function catchResponse(req: any) {
     try {
         const res  =await req()
         return {data:res.data}
     } catch (err: any) {
-        return {err: err?.response?.data ?? JSON.stringify(err, null, 2)}
+        return {error: decodeError(err)}
     }
+}
+
+export function decodeError(error: any) {
+    return error.response?.data?.title ?? 'An error has occurred. Please try again.';
 }

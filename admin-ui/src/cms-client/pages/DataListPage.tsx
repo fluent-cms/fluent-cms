@@ -1,26 +1,29 @@
 import {Link, useParams } from "react-router-dom";
-import {useSchema} from "../services/schema";
 import {LazyDataTable} from "../components/dataTable/LazyDataTable";
 import {useListData} from "../services/entity";
 import {useLazyStateHandlers} from "../containers/useLazyStateHandlers";
-import {createColumn} from "../components/dataTable/columns/createColumn";
 import {getListColumns, } from "../services/columnUtil";
 import {Button} from "primereact/button";
 import {getFullAssetsURL} from "../configs";
+import {PageLayout} from "./PageLayout";
+import {FetchingStatus} from "../components/FetchingStatus";
 
 export function DataListPage(){
-    //todo: load lazyState from URL, set lazyState to URL
     const {schemaName} = useParams()
-    const schema = useSchema(schemaName)
-    const columns = getListColumns(schema,schemaName,schemaName)
+    return <PageLayout schemaName={schemaName??''} page={DataListPageComponent}/>
+}
+
+export function DataListPageComponent({schema}:{schema:any}){
+    const columns = getListColumns(schema,schema.name,schema.name)
     const {primaryKey,titleAttribute} = schema;
     const {lazyState, eventHandlers} = useLazyStateHandlers(50)
-    const data = useListData(schemaName,lazyState)
+    const {data, error, isLoading}= useListData(schema.name,lazyState)
     return <>
+        <FetchingStatus isLoading={isLoading} error={error}/>
         <h2>{schema.title} list</h2>
         <Link to={"new"}><Button>Create New {schema.title}</Button></Link>
         <div className="card">
-        {schema && <LazyDataTable {...{columns ,primaryKey, titleAttribute ,data, eventHandlers, lazyState,  getFullURL: getFullAssetsURL}}/>}
+            <LazyDataTable {...{columns ,primaryKey, titleAttribute ,data, eventHandlers, lazyState,  getFullURL: getFullAssetsURL}}/>
         </div>
     </>
 }

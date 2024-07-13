@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="styles.css">
     
     <script src="repo.js"></script>
+    <script src="edit.js"></script>
     <script>
         JSONEditor.defaults.theme = 'bootstrap5';
         JSONEditor.defaults.iconlib = 'bootstrap';
@@ -26,132 +27,38 @@
                 <img alt="logo" src="/fluent-cms.png" height="40" class="mr-2">
             </a>
             <div class="navbar-nav">
-                <a class="nav-item nav-link border-item" href="/">Admin Panel</a>
+                <a class="nav-item nav-link border-item" href="./list.html">All Schemas</a>
                 <a class="nav-item nav-link border-item" href="./list.html?schema=entity">Entities</a>
                 <a class="nav-item nav-link border-item" href="./list.html?schema=view">Views</a>
                 <a class="nav-item nav-link border-item" href="./edit.html?schema=menu&id=top-menu-bar">MenuItems</a>
+                <a class="nav-item nav-link border-item" href="/">Admin Panel</a>
             </div>
         </nav>
             
         <div class="header">
-            <button id='submit' class="btn btn-primary">Save Schema</button>
-            <button id='define' class="btn btn-primary">Get Schema from Database</button>
-            <button id='saveDefine' class="btn btn-primary">Update Database</button>
-            <span id='valid_indicator'></span>
+            <span id="entityActions" >
+                <button id='saveDefine' class="btn btn-primary">Save Schema</button>
+                <button id='editContent' class="btn btn-primary">Edit Content</button>
+                <span >
+                    <input type="checkbox" class="form-check-input" id="showAdvancedActions">
+                    <label for="showAdvancedActions">Advanced Actions</label>
+                </span>
+                <span id="advancedEntityActions">
+                    <button id='define' class="btn btn-primary">Get Columns Definition from Database</button>
+                    <button id='saveEntity' class="btn btn-primary">Save Schema Not Update Database</button>
+                </span>
+            </span>
+            <span id="viewActions">
+                <button id='saveView' class="btn btn-primary">Save View</button>
+                <button id='viewAPI' class="btn btn-primary">View Public API</button>
+            </span>
+            <span id="menuActions">
+                <button id='saveMenu' class="btn btn-primary">Save Menu</button>
+            </span>
         </div>
         <div id="errorPanel" class="alert alert-danger" role="alert" style="display: none;">
             An error has occurred. Please try again.
         </div>
         <div class='column col-md-12' id='editor_holder'></div>
-
-<script>
-    $(document).ready(function() {
-        const searchParams = new URLSearchParams(window.location.search);
-        const schema = searchParams.get("schema");
-        let id = searchParams.get("id");
-        const editor = loadEditor();
-
-        if (schema !== "entity") {
-            $('#define').prop('hidden', true);
-            $('#saveDefine').prop('hidden', true);
-        }
-
-        function loadEditor() {
-            let editor = new JSONEditor($('#editor_holder')[0], {
-                ajax: true,
-                schema: {
-                    "$ref": schema + ".json",
-                },
-                compact: true,
-                disable_collapse: true,
-                disable_array_delete_last_row: true,
-                disable_array_delete_all_rows: true,
-                disable_properties: true,
-                disable_edit_json: true,
-                collapsed: true,
-                object_layout: "grid",
-                show_errors: 'always'
-            });
-
-            editor.on('ready',async function() {
-                if (id) {
-                    $.LoadingOverlay("show");
-                    const {data, error} = await one(id);
-                    if (data){
-                        id = data.id;
-                        delete (data.id);
-                        editor.setValue(data);
-                    }else {
-                        $('#errorPanel').text(error).show();
-                    }
-                    $.LoadingOverlay("hide");
-                } else {
-                    editor.setValue(null);
-                }
-            });
-
-            editor.on('change', function() {
-                let errors = editor.validate();
-                let indicator = $('#valid_indicator');
-                if (errors.length) {
-                    indicator.css('color', 'red').text("not valid");
-                } else {
-                    indicator.css('color', 'green').text("valid");
-                }
-            });
-            return editor;
-        }
-        setListeners(editor);
-        async function setListeners(editor) {
-            $('#submit').on('click', function() {
-                submit(save);
-            });
-
-            $('#define').on('click',async function() {
-                const oldValue = editor.getValue();
-                const tableName = oldValue.tableName;
-                $.LoadingOverlay("show");
-                const {data, error} = await define(tableName);
-                if (data){
-                    oldValue.attributes = data.attributes;
-                    editor.setValue(oldValue); 
-                }else {
-                    $('#errorPanel').text(error).show();
-                }
-                $.LoadingOverlay("hide");
-            });
-
-            $('#saveDefine').on('click', function() {
-                submit(saveDefine);
-            });
-        }
-
-        async function submit(callback) {
-            const errors = editor.validate();
-            if (errors.length) {
-                return;
-            }
-
-            const val = editor.getValue();
-            val.type = schema;
-            
-            if (id) {
-                val.id = +id;
-            }
-
-            $.LoadingOverlay("show");
-            const {data, error} = await callback(val);
-            if (data) {
-                alert("submit succeed!");
-                if (!id) {
-                    window.location.href = `edit.html?schema=${schema}&id=${data.id}`;
-                }
-            } else {
-                $('#errorPanel').text(error).show();
-            }
-            $.LoadingOverlay("hide");
-        }
-    });
-</script>
 </body>
 </html>

@@ -20,7 +20,7 @@ public class ErrorController:ControllerBase
         var ex = HttpContext.Features.Get<IExceptionHandlerFeature>()?.Error!;
 
         return ex is Services.InvalidParamException ? 
-            Problem(title: ex.Message, statusCode:400)
+            Problem(title: ex.Message, detail:ex.StackTrace, statusCode:400)
             : Problem( detail: ex.StackTrace, title: ex.Message);
     }
 

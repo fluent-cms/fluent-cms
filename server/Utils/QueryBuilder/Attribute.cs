@@ -13,14 +13,8 @@ public class Attribute
     private string _field;
     public string Field
     {
-        get
-        {
-            return _field;
-        }
-        set
-        {
-            _field = value.Replace(" ", string.Empty);
-        }
+        get => _field;
+        set => _field = NameFormatter.LowerNoSpace(value);
     }
     public string Header { get; set; } = "";
     public bool InList { get; set; } = false;

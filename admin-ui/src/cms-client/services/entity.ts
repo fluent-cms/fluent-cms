@@ -6,13 +6,16 @@ import {catchResponse, fetcher, swrConfig} from "./util";
 
 
 export function useListData(schemaName: string | undefined, lazyState: any) {
-    const {data} = useSWR(fullAPIURI(`/entities/${schemaName}?${lazyStateUtil.encode(lazyState)}`), fetcher,swrConfig)
-    return data
+    return useSWR(fullAPIURI(`/entities/${schemaName}?${lazyStateUtil.encode(lazyState)}`), fetcher,swrConfig)
 }
 
 export function useItemData(schemaName: any, id: any) {
-    const {data} = useSWR(fullAPIURI(`/entities/${schemaName}/${id}`), fetcher, swrConfig)
-    return data??{}
+    return  useSWR(fullAPIURI(`/entities/${schemaName}/${id}`), fetcher, swrConfig)
+}
+
+export function useSubPageData(schemaName: any, id:any, field:any, exclude:boolean, lazyState:any ) {
+    const lazy = lazyStateUtil.encode(lazyState)
+    return useSWR(schemaName &&id &&field ?  fullAPIURI(`/entities/${schemaName}/${id}/${field}?exclude=${exclude}&${lazy}`):null, fetcher,swrConfig)
 }
 
 export async function updateItem(schemaName:any,item:any){
@@ -25,11 +28,6 @@ export async function addItem(schemaName:any, item:any){
 
 export async function deleteItem(schemaName:any, item:any){
     return catchResponse(()=>axios.post(fullAPIURI(`/entities/${schemaName}/delete`), item))
-}
-
-export function useSubPageData(schemaName: any, id:any, field:any, exclude:boolean, lazyState:any ) {
-    const lazy = lazyStateUtil.encode(lazyState)
-    return useSWR(schemaName &&id &&field ?  fullAPIURI(`/entities/${schemaName}/${id}/${field}?exclude=${exclude}&${lazy}`):null, fetcher,swrConfig)
 }
 
 export async function saveSubPageItems(schemaName: any, id:any, field:any, items:any ) {

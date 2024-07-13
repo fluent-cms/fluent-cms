@@ -3,17 +3,34 @@ using SqlKata;
 
 namespace Utils.QueryBuilder;
 
-public class Entity
+public sealed class Entity
 {
     private string _name;
+    private string _tableName;
+    private string _primaryKey;
+    private string _titleAttribute;
     public string Name {
         get{return _name;}
-        set{_name = value.Replace(" ", string.Empty);}
+        set{_name = NameFormatter.LowerNoSpace(value);}
     }
-    public string TableName { get; set; } = "";
+    public string TableName
+    {
+        get =>  _tableName;
+        set => _tableName = NameFormatter.LowerNoSpace(value);
+    }
     public string Title { get; set; } = "";
-    public string PrimaryKey { get; set; } = "";
-    public string TitleAttribute { get; set; } = "";
+
+    public string PrimaryKey
+    {
+        get => _primaryKey;
+        set =>_primaryKey =NameFormatter.LowerNoSpace(value); 
+    }
+
+    public string TitleAttribute
+    {
+        get => _titleAttribute;
+        set => _titleAttribute = NameFormatter.LowerNoSpace(value);
+    }
     
     public int DefaultPageSize { get; set; } = 20;
     //must be public to expose to json parser

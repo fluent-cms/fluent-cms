@@ -5,13 +5,13 @@ import {confirmDialog, ConfirmDialog} from "primereact/confirmdialog";
 
 export function useRequestStatus(id:any){
     const toastRef = useRef<any>(null);
-    const [error, setError] = useState()
+    const [error, setError] = useState('')
     return {
-        checkError :(res :any, noErrorMessage:any) =>{
-            if (res?.err){
-                setError(res.err)
+        checkError :(error :string, succeedMessage:string) =>{
+            if (error){
+                setError(error)
             }else {
-                toastRef.current.show({severity: 'info', summary:noErrorMessage})
+                toastRef.current.show({severity: 'info', summary:succeedMessage})
             }
         },
         confirm:(msg :any, accept:any) =>{

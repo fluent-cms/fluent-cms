@@ -1,0 +1,16 @@
+import {useSchema} from "../services/schema";
+import {FetchingStatus} from "../components/FetchingStatus";
+
+interface PageLayoutProps {
+    schemaName:string,
+    page: React.FC<{schema:any}>;
+}
+export function PageLayout({schemaName, page:Page}: PageLayoutProps){
+    let {data:schema, error, isLoading} = useSchema(schemaName)
+    if (isLoading || error) {
+        return <FetchingStatus isLoading={isLoading} error={error}/>
+    }
+    return <>
+        <Page schema={schema}/>
+    </>
+}

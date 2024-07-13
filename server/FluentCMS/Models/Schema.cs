@@ -2,10 +2,12 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 
 namespace FluentCMS.Models;
 
 [Table("__schemas")]
+[Index(nameof(Name), IsUnique = true)]
 public class Schema:ModelBase
 {
     [Column(TypeName = "VARCHAR")]
@@ -24,16 +26,15 @@ public class SchemaDisplayDto : SchemaDto
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
-    public SchemaDisplayDto(){}
-    public SchemaDisplayDto(Schema? item):base(item)
+    public SchemaDisplayDto()
     {
-        if (item is not null)
-        {
+    }
 
-            Id = item.Id;
-            CreatedAt = item.CreatedAt;
-            UpdatedAt = item.UpdatedAt;
-        }
+    public SchemaDisplayDto(Schema item) : base(item)
+    {
+        Id = item.Id;
+        CreatedAt = item.CreatedAt;
+        UpdatedAt = item.UpdatedAt;
     }
 }
 

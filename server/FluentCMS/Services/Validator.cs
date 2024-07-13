@@ -2,33 +2,64 @@ namespace FluentCMS.Services;
 
 public class InvalidParamException(string message) : Exception(message);
 
-public static class Val
+public class NullableObjectExceptionBuilder<T>(T? val)
 {
-    public  static string NotEmpty(string variableName,string? str)
+    public T ValOrThrow(string message)
+    {
+        if (val is null)
+        {
+            throw new InvalidParamException(message);
+        }
+        return val;
+    }
+}
+
+public class EmptyStringExceptionBuilder(string? str)
+{
+    public string ValOrThrow(string message)
     {
         if (string.IsNullOrWhiteSpace(str))
         {
-            throw new InvalidParamException($"[{variableName}] should not be empty string");
+            throw new InvalidParamException(message);
         }
 
         return str;
     }
+}
 
-    public static T[] NotEmpty<T>(string variableName, T[]? arr)
+public class BoolExceptionBuilder(bool val)
+{
+    public void ThrowTrue(string message)
     {
-        if (arr is null || arr.Length == 0)
+        if (val)
         {
-            throw new InvalidParamException($"[{variableName}] should not be null or empty");
+            throw new InvalidParamException(message);
         }
-
-        return arr;
     }
-    public  static T NotNull<T>(string variableName,T? obj) 
+
+    public void ThrowFalse(string message)
     {
-        if (obj is null)
+        if (!val)
         {
-            throw new InvalidParamException($"[{variableName}] should not be null");
+            throw new InvalidParamException(message);
         }
-        return obj;
+    }
+}
+
+public static class Val
+{
+    public  static EmptyStringExceptionBuilder StrNotEmpty(string? str)
+    {
+        return new EmptyStringExceptionBuilder(str);
+    }
+
+    public  static NullableObjectExceptionBuilder<T> NotNull<T>( T? obj)
+    {
+        return new NullableObjectExceptionBuilder<T>(obj);
+    }
+
+    public static BoolExceptionBuilder CheckBool(bool condition)
+    {
+        return new BoolExceptionBuilder(condition);
     }
 }
