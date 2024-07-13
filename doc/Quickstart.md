@@ -1,5 +1,5 @@
 # Quick Start
-For this tutorial, I will walk you though how to build cooking blog website backend APIs from scratch.
+For this tutorial, I will walk you though how to build blog website backend APIs from scratch.
 By the end of this tutorials, you have:
 1. CRUD pages for manage content in Admin Panel.
 2. REST APIs for mobile and web clients.
@@ -18,7 +18,7 @@ With Fluent CMS, there's no need for coding—just some configuration.
       ![img.png](screenshots/admin_panel_home.png)
 3. Access the Add Entity Page by
     - click the Menu Item  `Add Entity`      
-      ![img_8.png](screenshots/schema_builder_home.png)
+   ![img_6.png](img_6.png)
 4. Fill in the Entity Detail
     - On the Add Entity Page
         - Entity name: `blog`
@@ -27,7 +27,7 @@ With Fluent CMS, there's no need for coding—just some configuration.
         - Title Attribute: `title`
         - Default Page Size: `20`
         - Entity Title : `Blogs`                
-      ![img_2.png](screenshots/img_2.png)
+      ![img_7.png](img_7.png)
 ### Add Fields/Attributes
 1. Add attributes to the entity
     - The system will add 3 system fields `id`, `created_at`, `updated_at` automatically.
@@ -36,7 +36,7 @@ With Fluent CMS, there's no need for coding—just some configuration.
         - `published_time`   {Database Type: `Datetime`, Display Type: `dateTime`}
         - `body` {Database Type: `Text`, Display Type: `Editor`}
     - Click the `Update Database` button to save schema and create a table in database.  
-   ![img_3.png](screenshots/img_3.png)
+   ![img_8.png](img_8.png)
 ### Add Entity Relationships
    - Add a lookup Attribute `author`
      - Field : `author`
@@ -51,8 +51,9 @@ With Fluent CMS, there's no need for coding—just some configuration.
      - Database Type: `NA`
      - Display Type : `corsstable`
        - Option: `tag`, tag is another entity's name
-![img_4.png](screenshots/img_4.png)
-   - Click the `Update Database button`, to create tables in database.
+       ![img_9.png](img_9.png)
+   - Click the `Save Schema` button, to create tables in database.
+   - Click the `Edit Content` button, to add some data.see [Manage Content](#manage-content-in-admin-panel) 
 ### Add Public API
 Fluent CMS provides a set of CRUD Rest APIs for Admin Panel, these APIs are protected by Authentication.
 We don't want expose these APIs to public user directly for security and performance concerns.  
@@ -74,7 +75,7 @@ Follow the follow steps to define a public API
 2. Fill Sort Detail
     - Click `+ row` button
     - Input the Sort Detail
-        - Attribute Name : `published_at`
+        - Attribute Name : `published_time`
         - Order Direction: `Desc`
     - Input Attribute 
       - id,
@@ -84,9 +85,8 @@ Follow the follow steps to define a public API
     - Click `Save Schema` button
    ![img_4.png](img_4.png)
 3. Test the public API
-- Access https://fluent-cms-admin.azurewebsites.net/api/views/latest-blogs from browser
-![img_5.png](img_5.png)
-
+-  Click the button `View Public API`
+![img_10.png](img_10.png)
 ## Manage Content in Admin Panel
 ![quickstart-admin-panel.png](diagrams%2Fquickstart-admin-panel.png)
 

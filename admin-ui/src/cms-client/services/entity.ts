@@ -2,20 +2,23 @@ import useSWR, {useSWRConfig} from "swr";
 import {fullAPIURI} from "../configs";
 import {lazyStateUtil} from "./lazyState";
 import axios from "axios";
-import {catchResponse, fetcher, swrConfig} from "./util";
+import {catchResponse, decodeError, fetcher, swrConfig} from "./util";
 
 
 export function useListData(schemaName: string | undefined, lazyState: any) {
-    return useSWR(fullAPIURI(`/entities/${schemaName}?${lazyStateUtil.encode(lazyState)}`), fetcher,swrConfig)
+    let res = useSWR(fullAPIURI(`/entities/${schemaName}?${lazyStateUtil.encode(lazyState)}`), fetcher,swrConfig)
+    return {...res, error:decodeError(res.error)}
 }
 
 export function useItemData(schemaName: any, id: any) {
-    return  useSWR(fullAPIURI(`/entities/${schemaName}/${id}`), fetcher, swrConfig)
+    let res =  useSWR(fullAPIURI(`/entities/${schemaName}/${id}`), fetcher, swrConfig)
+    return {...res, error:decodeError(res.error)}
 }
 
 export function useSubPageData(schemaName: any, id:any, field:any, exclude:boolean, lazyState:any ) {
     const lazy = lazyStateUtil.encode(lazyState)
-    return useSWR(schemaName &&id &&field ?  fullAPIURI(`/entities/${schemaName}/${id}/${field}?exclude=${exclude}&${lazy}`):null, fetcher,swrConfig)
+    let res = useSWR(schemaName &&id &&field ?  fullAPIURI(`/entities/${schemaName}/${id}/${field}?exclude=${exclude}&${lazy}`):null, fetcher,swrConfig)
+    return {...res, error:decodeError(res.error)}
 }
 
 export async function updateItem(schemaName:any,item:any){

@@ -17,5 +17,8 @@ export async function catchResponse(req: any) {
 }
 
 export function decodeError(error: any) {
-    return error.response?.data?.title ?? 'An error has occurred. Please try again.';
+    if (!error){
+        return null
+    }
+    return  error.response?.data?.title ?? 'An error has occurred. Please try again.';
 }

@@ -8,6 +8,9 @@ $(document).ready(function() {
         $('#viewActions').prop('hidden', true);
         $('#menuActions').prop('hidden', true);
         $('#advancedEntityActions').hide();
+        if (!id){
+            $('#editContent').prop('hidden', true);
+        }
     }else if (schema ==="view"){
         $("#entityActions").prop('hidden', true);
         $("#menuActions").prop('hidden', true);
