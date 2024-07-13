@@ -13,9 +13,10 @@ RUN npm install
 # Copy the rest of the application code
 COPY . .
 
+RUN npm run build
 # Expose the port the app runs on
 EXPOSE 3000
 
-CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "start"]
 
 # to publishto azure, use docker buildx build --platform linux/amd64 -t jaike/fluent-cms-ui-linux:0.1 --push .
