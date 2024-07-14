@@ -117,9 +117,7 @@ void AddCors()
 void InjectServices()
 {
     builder.Services.AddSingleton<MemoryCacheFactory>();
-    builder.Services.AddSingleton<KeyValCache<SqlResult>>(p => new KeyValCache<SqlResult>(p.GetRequiredService<IMemoryCache>(), 30));
-    builder.Services.AddSingleton<KeyValCache<View>>(p=> new KeyValCache<View>(p.GetRequiredService<IMemoryCache>(),30));
-    
+    builder.Services.AddSingleton<KeyValCache<View>>(p=> new KeyValCache<View>(p.GetRequiredService<IMemoryCache>(),30,"view"));
     builder.Services.AddSingleton<FileUtl>(p => new FileUtl("wwwroot/files"));
     builder.Services.AddSingleton<KateQueryExecutor>();
     builder.Services.AddScoped<ISchemaService, SchemaService>();

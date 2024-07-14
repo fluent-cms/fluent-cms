@@ -178,13 +178,9 @@ public sealed class Entity
             .Select(attributes.Select(x=>x.FullName()));
     }
     
-    public Query? List(Filters? filters,Sorts? sorts, Pagination? pagination,Cursor? cursor,  Attribute[]? attributes)
+    public Query List(Filters? filters,Sorts? sorts, Pagination? pagination,Cursor? cursor,  Attribute[] attributes)
     {
-        if (attributes is null)
-        {
-            return null;
-        }
-        var query = Basic().Select(attributes.Select(x=>x.FullName()));
+       var query = Basic().Select(attributes.Select(x=>x.FullName()));
         pagination?.Apply (query);
         cursor?.Apply (this,query,sorts);
         sorts?.Apply(this, query);

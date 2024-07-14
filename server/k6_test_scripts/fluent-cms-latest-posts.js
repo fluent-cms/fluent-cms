@@ -13,8 +13,8 @@ export let options = {
     ],
 };
 
-let baseUrl = 'http://localhost:5000/api/views/latest-posts'
-//let baseUrl = 'http://localhost:8080/api/views/latest-posts'
+//let baseUrl = 'http://localhost:5000/api/views/latest-posts'
+let baseUrl = 'http://localhost:8080/api/views/latest-posts'
 export default function () {
     // Initial request to get the `last` parameter
     let initialRes = http.get(baseUrl);
@@ -49,6 +49,65 @@ export default function () {
     }
 }
 /*
+
+scenarios: (100.00%) 1 scenario, 1000 max VUs, 3m32s max duration (incl. graceful stop):
+           * default: Up to 1000 looping VUs for 3m2s over 4 stages (gracefulRampDown: 30s, gracefulStop: 30s)
+
+
+running (3m03.9s), 0000/1000 VUs, 49248 complete and 0 interrupted iterations
+default ✓ [======================================] 0000/1000 VUs  3m2s
+
+     ✓ initial request status is 200
+     ✓ subsequent request status is 200
+     ✓ response contains items
+
+     checks.........................: 100.00% ✓ 1034208     ✗ 0
+     data_received..................: 4.2 GB  23 MB/s
+     data_sent......................: 88 MB   477 kB/s
+     http_req_blocked...............: avg=1.9µs    min=0s      med=1µs      max=11.55ms  p(90)=2µs      p(95)=2µs
+     http_req_connecting............: avg=725ns    min=0s      med=0s       max=8.61ms   p(90)=0s       p(95)=0s
+     http_req_duration..............: avg=201.08ms min=2.58ms  med=206.57ms max=761.09ms p(90)=303.77ms p(95)=321.64ms
+       { expected_response:true }...: avg=201.08ms min=2.58ms  med=206.57ms max=761.09ms p(90)=303.77ms p(95)=321.64ms
+     http_req_failed................: 0.00%   ✓ 0           ✗ 541728
+     http_req_receiving.............: avg=247.1µs  min=8µs     med=27µs     max=201.74ms p(90)=116µs    p(95)=267µs
+     http_req_sending...............: avg=6.85µs   min=1µs     med=5µs      max=26.44ms  p(90)=10µs     p(95)=13µs
+     http_req_tls_handshaking.......: avg=0s       min=0s      med=0s       max=0s       p(90)=0s       p(95)=0s
+     http_req_waiting...............: avg=200.83ms min=2.52ms  med=206.39ms max=759.87ms p(90)=303.3ms  p(95)=320.95ms
+     http_reqs......................: 541728  2946.204184/s
+     iteration_duration.............: avg=2.21s    min=38.11ms med=2.27s    max=3.73s    p(90)=3.31s    p(95)=3.42s
+     iterations.....................: 49248   267.836744/s
+     vus............................: 731     min=1         max=999
+     vus_max........................: 1000    min=1000      max=1000
+
+scenarios: (100.00%) 1 scenario, 1000 max VUs, 3m32s max duration (incl. graceful stop):
+           * default: Up to 1000 looping VUs for 3m2s over 4 stages (gracefulRampDown: 30s, gracefulStop: 30s)
+
+
+running (3m03.8s), 0000/1000 VUs, 55023 complete and 0 interrupted iterations
+default ✓ [======================================] 0000/1000 VUs  3m2s
+
+     ✓ initial request status is 200
+     ✓ subsequent request status is 200
+     ✓ response contains items
+
+     checks.........................: 100.00% ✓ 1155483    ✗ 0
+     data_received..................: 4.7 GB  26 MB/s
+     data_sent......................: 98 MB   534 kB/s
+     http_req_blocked...............: avg=46.44µs  min=0s     med=1µs      max=339.85ms p(90)=3µs      p(95)=4µs
+     http_req_connecting............: avg=37.37µs  min=0s     med=0s       max=199.25ms p(90)=0s       p(95)=0s
+     http_req_duration..............: avg=158.02ms min=2.23ms med=145.93ms max=1.12s    p(90)=287.88ms p(95)=321.79ms
+       { expected_response:true }...: avg=158.02ms min=2.23ms med=145.93ms max=1.12s    p(90)=287.88ms p(95)=321.79ms
+     http_req_failed................: 0.00%   ✓ 0          ✗ 605253
+     http_req_receiving.............: avg=7.11ms   min=6µs    med=20µs     max=810.29ms p(90)=965µs    p(95)=44.89ms
+     http_req_sending...............: avg=456.86µs min=1µs    med=5µs      max=597.35ms p(90)=18µs     p(95)=49µs
+     http_req_tls_handshaking.......: avg=0s       min=0s     med=0s       max=0s       p(90)=0s       p(95)=0s
+     http_req_waiting...............: avg=150.45ms min=1.98ms med=141.58ms max=811.41ms p(90)=274.9ms  p(95)=301.79ms
+     http_reqs......................: 605253  3293.45561/s
+     iteration_duration.............: avg=1.98s    min=39.3ms med=2.03s    max=4.58s    p(90)=3.08s    p(95)=3.23s
+     iterations.....................: 55023   299.405055/s
+     vus............................: 738     min=1        max=999
+     vus_max........................: 1000    min=1000     max=1000
+     
  scenarios: (100.00%) 1 scenario, 1000 max VUs, 3m32s max duration (incl. graceful stop):
            * default: Up to 1000 looping VUs for 3m2s over 4 stages (gracefulRampDown: 30s, gracefulStop: 30s)
 

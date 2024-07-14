@@ -3,7 +3,7 @@ using SqlKata;
 
 namespace Utils.QueryBuilder;
 
-public class Constraint
+public sealed class Constraint
 {
     public string Match { get; set; } = "";
     public string Value { get; set; } = "";

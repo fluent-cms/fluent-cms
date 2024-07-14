@@ -4,7 +4,7 @@ using SqlKata;
 namespace Utils.QueryBuilder;
 using System.Collections.Generic;
 
-public class Filter
+public sealed class Filter
 {
     const string Pre = "f[";
     const string End = "][operator]";
@@ -84,6 +84,7 @@ public class Filter
             constraint.Apply(query,fieldName);
         }
     }
+
 }
 
 public class Filters : List<Filter>

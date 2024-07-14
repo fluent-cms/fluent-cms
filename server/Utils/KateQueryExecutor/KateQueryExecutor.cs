@@ -22,11 +22,9 @@ public sealed class KateQueryExecutor(IKateProvider provider)
          : await provider.Execute(async db => await db.FirstOrDefaultAsync(query));
    }
 
-   public async Task<Record[]?> Many(Query? query)
+   public async Task<Record[]> Many(Query query)
    {
-      return query is null
-         ? null
-         : await provider.Execute(async db =>
+      return await provider.Execute(async db =>
          {
             var items = await db.GetAsync(query);
             return items.Select(x => (Record)x).ToArray();

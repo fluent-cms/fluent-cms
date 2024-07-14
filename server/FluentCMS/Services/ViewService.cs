@@ -1,25 +1,20 @@
 using Utils.KateQueryExecutor;
 using Utils.QueryBuilder;
-
 using Microsoft.Extensions.Primitives;
-using SqlKata;
 using Utils.Cache;
-
 namespace FluentCMS.Services;
 
 
 public class ViewService(
-    KateQueryExecutor queryKateQueryExecutor, 
+    KateQueryExecutor kateQueryExecutor, 
     ISchemaService schemaService, 
     IEntityService entityService,
-    KeyValCache<SqlResult> sqlCache,
     KeyValCache<View> viewCache
     ) : IViewService
 {
-   
-    
     public async Task<ViewResult?> List(string viewName, Cursor cursor,
-        Dictionary<string, StringValues> querystringDictionary)
+        Dictionary<string, StringValues> querystringDictionary 
+        )
     {
         var view = await ResolvedView(viewName, querystringDictionary);
         var entity = Val.NotNull(view.Entity).ValOrThrow($"entity not exist for {viewName}");
@@ -29,11 +24,7 @@ public class ViewService(
         }
         cursor.Limit += 1;
         var query = entity.List(view.Filters,view.Sorts, null, cursor, view.LocalAttributes(InListOrDetail.InList));
-        var items = await queryKateQueryExecutor.Many(query);
-        if (items is null)
-        {
-            return null;
-        }
+        var items = await kateQueryExecutor.Many(query);
         
         var hasMore = items.Length == cursor.Limit;
         if (hasMore)
@@ -69,12 +60,7 @@ public class ViewService(
        
         var query = entity.List(  view.Filters,view.Sorts, new Pagination{Limit = view.PageSize}, null,
             view.LocalAttributes(InListOrDetail.InDetail));
-        var items = await queryKateQueryExecutor.Many(query);
-        if (items is null)
-        {
-            return null;
-        }
-
+        var items = await kateQueryExecutor.Many(query);
         await AttachRelatedEntity(view, InListOrDetail.InDetail, items);
         return items;
     }
@@ -85,7 +71,7 @@ public class ViewService(
         var entity = Val.NotNull(view.Entity).ValOrThrow($"entity not exist for {viewName}");
 
         var query = entity.One(view.Filters, view.LocalAttributes(InListOrDetail.InDetail));
-        var item = await queryKateQueryExecutor.One(query);
+        var item = await kateQueryExecutor.One(query);
         if (item is null)
         {
             return null;
@@ -112,7 +98,7 @@ public class ViewService(
     private async Task<View> ResolvedView(string viewName,
         Dictionary<string, StringValues> querystringDictionary)
     {
-        return await viewCache.GetOrSet(viewName, async (entry) =>
+        return await viewCache.GetOrSet(viewName, async () =>
         {
             var view = await schemaService.GetViewByName(viewName);
             var entity = Val.NotNull(view.Entity).ValOrThrow($"not find view {viewName}'s entity");

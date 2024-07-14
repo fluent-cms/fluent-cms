@@ -48,7 +48,8 @@ public class EntityService(KateQueryExecutor queryKateQueryExecutor, ISchemaServ
 
         var query = entity.List(filters, sorts, pagination, null,
             entity.LocalAttributes(InListOrDetail.InList));
-        
+
+
         var records = await queryKateQueryExecutor.Many(query);
         if (records is null)
         {

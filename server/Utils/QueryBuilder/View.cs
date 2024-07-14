@@ -21,7 +21,7 @@ public class View
         Sorts = new Sorts();
         Filters = new Filters();
     }
-    
+
     public Attribute[] LocalAttributes(InListOrDetail inListOrDetail)
     {
         if (Entity is null)

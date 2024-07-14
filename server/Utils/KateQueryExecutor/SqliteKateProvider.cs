@@ -1,3 +1,4 @@
+using Dapper;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using SqlKata;
@@ -12,12 +13,9 @@ public class SqliteKateProvider(string connectionString, ILogger<SqliteKateProvi
 
     public async Task<T> Execute<T>(Func<QueryFactory, Task<T>> queryFunc)
     {
-        await using var connection = new SqliteConnection(connectionString);
-        await connection.OpenAsync();
+        var connection = new SqliteConnection(connectionString);
         var db = new QueryFactory(connection, _compiler);
         db.Logger = result => logger.LogInformation(result.ToString());
         return await queryFunc(db);
     }
-
-    public SqlResult Compile(Query query) => _compiler.Compile(query);
 }
