@@ -14,7 +14,7 @@ public class Crosstable
     {
         CrossEntity.Attributes = [FromAttribute, TargetAttribute];
         CrossEntity.EnsureDefaultAttribute();
-        return CrossEntity.GetColumnDefinitions();
+        return CrossEntity.ColumnDefinitions();
     }
     
     public Crosstable(Entity fromEntity, Entity targetEntity)

@@ -92,19 +92,19 @@ public partial class SchemaService(AppDbContext context, IDefinitionExecutor def
         var cols = await definitionExecutor.GetColumnDefinitions(entity.TableName);
         await VerifyEntity(dto, cols, entity);
         
-        foreach (var attribute in entity.GetAttributes(DisplayType.crosstable, null, null))
+        foreach (var attribute in entity.GetAttributesByType(DisplayType.crosstable))
         {
             await CreateCrosstable(entity, attribute);
         }
 
         if (cols.Length > 0) //if table exists, alter table add columns
         {
-            await definitionExecutor.AlterTableAddColumns(entity.TableName, entity.GetAddedColumnDefinitions(cols));
+            await definitionExecutor.AlterTableAddColumns(entity.TableName, entity.AddedColumnDefinitions(cols));
         }
         else
         {
             entity.EnsureDefaultAttribute();
-            await definitionExecutor.CreateTable(entity.TableName, entity.GetColumnDefinitions());
+            await definitionExecutor.CreateTable(entity.TableName, entity.ColumnDefinitions());
             //no need to expose deleted field to frontend 
             entity.RemoveDeleted();
         }
@@ -118,7 +118,7 @@ public partial class SchemaService(AppDbContext context, IDefinitionExecutor def
     {
         Val.StrNotEmpty(tableName).ValOrThrow("Table name should not be empty");
         var entity = new Entity { TableName = tableName };
-        entity.LoadDefine(await definitionExecutor.GetColumnDefinitions(tableName));
+        entity.LoadAttributesByColDefines(await definitionExecutor.GetColumnDefinitions(tableName));
         return entity;
     }
 

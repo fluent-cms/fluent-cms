@@ -11,12 +11,35 @@ public partial class SchemaService
     private async Task PreSaveView(SchemaDto dto)
     {
         var view = dto.Settings?.View;
-        if (view is null)
+        if (view is null) //not view, just ignore
         {
             return;
         }
-        var existing = await context.Schemas.FirstOrDefaultAsync(s => s.Name == view.EntityName );
-        Val.NotNull(existing).ValOrThrow($"not found entity {view.EntityName}");
+
+        var entityName = Val.StrNotEmpty(view.EntityName).
+            ValOrThrow($"entity name of {view.EntityName} should not be empty");
+        view.Entity = Val.NotNull(await GetEntityByName(entityName, true)).
+            ValOrThrow($"not find entity {entityName}");
+        
+        foreach (var viewAttributeName in view.AttributeNames??[])
+        {
+            Val.NotNull(view.Entity.FindOneAttribute(viewAttributeName))
+                .ValOrThrow($"not find attribute {viewAttributeName} of enity {entityName}");
+        }
+
+        var listAttributes = view.LocalAttributes(InListOrDetail.InList);
+        foreach (var viewSort in view.Sorts??[])
+        {
+            var find = listAttributes.FirstOrDefault(x=>x.Field == viewSort.FieldName);
+            Val.NotNull(find).ValOrThrow($"sort field {viewSort.FieldName} should in list attributes");
+        }
+
+        var attr = view.Entity.LocalAttributes();
+        foreach (var viewFilter in view.Filters??[])
+        {
+            var find = attr.FirstOrDefault(x => x.Field == viewFilter.FieldName);
+            Val.NotNull(find).ValOrThrow($"filter field {viewFilter.FieldName} should in entity's attribute list");
+        }
     }
     
     private async Task PostLoadEntity(SchemaDto dto)
@@ -37,7 +60,7 @@ public partial class SchemaService
         Val.CheckBool(existing is null).ThrowFalse($"the schema name {dto.Name} exists");
 
         Val.CheckBool(cols.Length > 0 && dto.Id is null).ThrowTrue($"the table name {entity.TableName} exists");
-        foreach (var attribute in entity.GetAttributes(DisplayType.lookup, null, null))
+        foreach (var attribute in entity.GetAttributesByType(DisplayType.lookup))
         {
             await CheckLookup(attribute);
         }
@@ -95,7 +118,7 @@ public partial class SchemaService
 
     private async Task LoadRelated(Entity entity)
     {
-        foreach (var attribute in entity.GetAttributes(DisplayType.lookup, null, null))
+        foreach (var attribute in entity.GetAttributesByType(DisplayType.lookup))
         {
             var lookupEntityName = Val.StrNotEmpty(attribute.GetLookupEntityName())
                 .ValOrThrow($"lookup entity name for {entity.Name}.{attribute.Field} should not be empty");
@@ -103,7 +126,7 @@ public partial class SchemaService
                 .ValOrThrow($"not find entity by name by name {entity.Name}");
         }
 
-        foreach (var attribute in entity.GetAttributes(DisplayType.crosstable, null, null))
+        foreach (var attribute in entity.GetAttributesByType(DisplayType.crosstable))
         {
             var targetEntityName = Val.StrNotEmpty(attribute.GetCrossEntityName())
                 .ValOrThrow($"crosstable entity name for ${entity.Name}.{attribute.Field}");

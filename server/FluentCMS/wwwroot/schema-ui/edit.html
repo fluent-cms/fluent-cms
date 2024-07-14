@@ -14,8 +14,11 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"  crossorigin="anonymous">
     <link rel="stylesheet" href="styles.css">
     
-    <script src="repo.js"></script>
-    <script src="edit.js"></script>
+    <script src="js/repo.js"></script>
+    <script src="js/edit.js"></script>
+    <script src="js/entity.js"></script>
+    <script src="js/view.js"></script>
+    <script src="js/menu.js"></script>
     <script>
         JSONEditor.defaults.theme = 'bootstrap5';
         JSONEditor.defaults.iconlib = 'bootstrap';
@@ -36,23 +39,23 @@
         </nav>
             
         <div class="header">
-            <span id="entityActions" >
+            <span id="entityActions" hidden>
                 <button id='saveDefine' class="btn btn-primary">Save Schema</button>
                 <button id='editContent' class="btn btn-primary">Edit Content</button>
                 <span >
                     <input type="checkbox" class="form-check-input" id="showAdvancedActions">
                     <label for="showAdvancedActions">Advanced Actions</label>
                 </span>
-                <span id="advancedEntityActions">
+                <span id="advancedEntityActions" hidden>
                     <button id='define' class="btn btn-primary">Get Columns Definition from Database</button>
                     <button id='saveEntity' class="btn btn-primary">Save Schema Not Update Database</button>
                 </span>
             </span>
-            <span id="viewActions">
+            <span id="viewActions" hidden>
                 <button id='saveView' class="btn btn-primary">Save View</button>
                 <button id='viewAPI' class="btn btn-primary">View Public API</button>
             </span>
-            <span id="menuActions">
+            <span id="menuActions" hidden>
                 <button id='saveMenu' class="btn btn-primary">Save Menu</button>
             </span>
         </div>

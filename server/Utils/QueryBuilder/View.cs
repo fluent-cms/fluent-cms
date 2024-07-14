@@ -21,4 +21,30 @@ public class View
         Sorts = new Sorts();
         Filters = new Filters();
     }
+    
+    public Attribute[] LocalAttributes(InListOrDetail inListOrDetail)
+    {
+        if (Entity is null)
+        {
+            throw new Exception($"entity of view {Name} is not initialized");
+        }
+        if (AttributeNames?.Length > 0)
+        {
+            return Entity.LocalAttributes(AttributeNames);
+        }
+        return Entity.LocalAttributes(inListOrDetail);
+    }
+    
+    public Attribute[] GetAttributesByType(DisplayType displayType, InListOrDetail inListOrDetail)
+    {
+        if (Entity is null)
+        {
+            throw new Exception($"entity of view {Name} is not initialized");
+        }
+        if (AttributeNames?.Length > 0)
+        {
+            return Entity.GetAttributesByType(displayType,AttributeNames);
+        }
+        return Entity.GetAttributesByType(displayType,inListOrDetail);
+    }
 }

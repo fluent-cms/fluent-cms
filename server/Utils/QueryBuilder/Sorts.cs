@@ -13,7 +13,13 @@ namespace Utils.QueryBuilder;
 
     public class Sort
     {
-        public string FieldName { get; set; } = "";
+        private string _fieldName;
+
+        public string FieldName
+        {
+            get => _fieldName;
+            set => _fieldName = NameFormatter.LowerNoSpace(value);
+        }
 
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public SortOrder Order { get; set; }

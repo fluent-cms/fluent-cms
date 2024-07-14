@@ -10,8 +10,13 @@ public class Filter
     const string End = "][operator]";
     const string ConstraintValue = "[constraints][value]";
     const string ConstraintMathMode = "[constraints][matchMode]";
-    
-    public string FieldName { get; set; }
+
+    private string _fieldName;
+    public string FieldName
+    {
+        get => _fieldName;
+        set => _fieldName = NameFormatter.LowerNoSpace(value);
+    }
 
     public string Operator { get; set; }
 

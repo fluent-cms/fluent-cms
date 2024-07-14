@@ -2,7 +2,11 @@ using Utils.DataDefinitionExecutor;
 using SqlKata;
 
 namespace Utils.QueryBuilder;
-
+public enum InListOrDetail
+{
+    InList,
+    InDetail,
+}
 public sealed class Entity
 {
     private string _name;
@@ -43,20 +47,24 @@ public sealed class Entity
             attribute.Parent = this;
         }
     }
-    public Entity(){}
-    public void LoadDefine(ColumnDefinition[] cols )
+    public void LoadAttributesByColDefines(ColumnDefinition[] cols )
     {
         Attributes = cols.Select(x => new Attribute(x)).ToArray();
     }
     
-    public ColumnDefinition[] GetAddedColumnDefinitions(ColumnDefinition[] columnDefinitions)
+    public ColumnDefinition[] AddedColumnDefinitions(ColumnDefinition[] columnDefinitions)
     {
         var set = columnDefinitions.Select(x => x.ColumnName.ToLower()).ToHashSet();
-        var attr = GetAttributes(null, null, null);
+        var attr = LocalAttributes();
         var items = attr.Where(x=>!set.Contains(x.Field.ToLower().Trim()));
         return items.Select(x => new ColumnDefinition { ColumnName = x.Field, DataType = x.DataType}).ToArray();
     }
 
+    public ColumnDefinition[] ColumnDefinitions()
+    {
+        return LocalAttributes().Select(x => new ColumnDefinition { ColumnName = x.Field, DataType = x.DataType })
+            .ToArray();
+    }
     public void EnsureDefaultAttribute()
     {
         var list = new List<Attribute>();
@@ -102,31 +110,9 @@ public sealed class Entity
         Attributes = Attributes.Where(x => x.Field != "deleted").ToArray();
     }
 
-    public ColumnDefinition[] GetColumnDefinitions()
-    {
-        List<ColumnDefinition> ret = new();
-
-        foreach (var attribute in GetAttributes(null, null, null))
-        {
-            ret.Add(new ColumnDefinition
-            {
-                ColumnName = attribute.Field,
-                DataType = attribute.DataType,
-            });
-        }
-        return ret.ToArray();
-    }
-
-
-    public Attribute[] AttributesForLookup()
+    public Attribute[] ReferencedAttributes()
     {
         return Attributes.Where(x => x.Field == PrimaryKey || x.Field == TitleAttribute).ToArray();
-    }
-
-    public enum InListOrDetail
-    {
-        InList,
-        InDetail,
     }
 
     public string Fullname(string fieldName)
@@ -134,20 +120,40 @@ public sealed class Entity
         return TableName + "." + fieldName;
     }
 
-    public Attribute[] GetAttributes(DisplayType? type, InListOrDetail? listOrDetail, string[]? attributes)
+    public Attribute[] LocalAttributes()
     {
-        IEnumerable<Attribute> ret = Attributes.Where(x =>
-            type is not null ? x.Type == type : x.Type != DisplayType.crosstable && x.Type != DisplayType.subtable);
-        if (listOrDetail is not null)
-        {
-            ret = ret.Where(x => listOrDetail == InListOrDetail.InList ? x.InList : x.InDetail);
-        }
-        if (attributes?.Length > 0)
-        {
-            ret = ret.Where(x => attributes.Contains(x.Field));
-        }
-        return ret.ToArray();
+        return Attributes.Where(x=>x.Type != DisplayType.crosstable).ToArray();
     }
+    
+    public Attribute[] LocalAttributes(InListOrDetail listOrDetail)
+    {
+        return Attributes.Where(x =>
+                x.Type != DisplayType.crosstable && 
+                (listOrDetail == InListOrDetail.InList ? x.InList : x.InDetail))
+            .ToArray();
+    }
+
+    public Attribute[] LocalAttributes(string[] attributes)
+    {
+        return Attributes
+            .Where(x => x.Type != DisplayType.crosstable && attributes.Contains(x.Field)).ToArray();
+    }
+
+    public Attribute[] GetAttributesByType(DisplayType type)
+    {
+        return Attributes.Where(x => x.Type == type).ToArray();
+    }
+
+    public Attribute[] GetAttributesByType(DisplayType type, string[] attributes)
+    {
+        return Attributes.Where(x => x.Type == type && attributes.Contains(x.Field)).ToArray();
+    }
+     public Attribute[] GetAttributesByType(DisplayType type, InListOrDetail listOrDetail)
+     {
+         return Attributes.Where(x => x.Type == type && (listOrDetail == InListOrDetail.InList ? x.InList : x.InDetail))
+             .ToArray();
+     }
+   
 
     public Attribute PrimaryKeyAttribute()
     {
@@ -186,7 +192,7 @@ public sealed class Entity
         return query;
     }
 
-    public Query? Count(Filters? filters)
+    public Query Count(Filters? filters)
     {
         var query = Basic();
         filters?.Apply(this, query);

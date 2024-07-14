@@ -23,12 +23,8 @@ public class ViewService(KateQueryExecutor queryKateQueryExecutor, ISchemaServic
         }
         cursor.Limit += 1;
         
-        Entity.InListOrDetail? scope = view.AttributeNames?.Length > 0
-            ? null
-            : Entity.InListOrDetail.InList;
 
-        var query = entity.List(  view.Filters,view.Sorts, null, cursor,
-            entity.GetAttributes(null, scope, view.AttributeNames));
+        var query = entity.List(  view.Filters,view.Sorts, null, cursor, view.LocalAttributes(InListOrDetail.InList));
         var items = await queryKateQueryExecutor.Many(query);
         if (items is null)
         {
@@ -49,7 +45,7 @@ public class ViewService(KateQueryExecutor queryKateQueryExecutor, ISchemaServic
         {
             return null;
         }
-        await AttachRelatedEntity(entity, view, scope, items);
+        await AttachRelatedEntity(entity, view, InListOrDetail.InList, items);
         
         return new ViewResult
         {
@@ -69,19 +65,16 @@ public class ViewService(KateQueryExecutor queryKateQueryExecutor, ISchemaServic
         {
             return null;
         }
-        Entity.InListOrDetail? scope = view.AttributeNames?.Length > 0
-            ? null
-            : Entity.InListOrDetail.InDetail;
         
         var query = entity.List(  view.Filters,view.Sorts, new Pagination{Limit = view.PageSize}, null,
-            entity.GetAttributes(null, scope, view.AttributeNames));
+            view.LocalAttributes(InListOrDetail.InDetail));
         var items = await queryKateQueryExecutor.Many(query);
         if (items is null)
         {
             return null;
         }
 
-        await AttachRelatedEntity(entity, view, scope, items);
+        await AttachRelatedEntity(entity, view, InListOrDetail.InDetail, items);
         return items;
     }
 
@@ -92,32 +85,29 @@ public class ViewService(KateQueryExecutor queryKateQueryExecutor, ISchemaServic
         {
             return null;
         }
-        Entity.InListOrDetail? scope = view.AttributeNames?.Length > 0
-            ? Entity.InListOrDetail.InDetail
-            : null;
 
-        var query = entity.One(view.Filters, entity.GetAttributes(null, scope, view.AttributeNames));
+        var query = entity.One(view.Filters, view.LocalAttributes(InListOrDetail.InDetail));
         var item = await queryKateQueryExecutor.One(query);
         if (item is null)
         {
             return null;
         }
-        await AttachRelatedEntity(entity, view, scope, [item]);
+        await AttachRelatedEntity(entity, view, InListOrDetail.InDetail, [item]);
         return item;
     }
     
-    private async Task AttachRelatedEntity(Entity entity, View view, Entity.InListOrDetail? scope, Record[] items)
+    private async Task AttachRelatedEntity(Entity entity, View view, InListOrDetail scope, Record[] items)
     {
-        foreach (var attribute in entity.GetAttributes(DisplayType.lookup, scope, view.AttributeNames))
+        foreach (var attribute in view.GetAttributesByType(DisplayType.lookup, scope))
         {
             await entityService.AttachLookup(attribute, items,
-                entity1 => entity1.GetAttributes(null, Entity.InListOrDetail.InList, null));
+                entity1 => entity1.LocalAttributes(scope));
         }
 
-        foreach (var attribute in entity.GetAttributes(DisplayType.crosstable, scope, view.AttributeNames))
+        foreach (var attribute in view.GetAttributesByType(DisplayType.crosstable, scope ))
         {
             await entityService.AttachCrosstable(attribute, items,
-                entity1 => entity1.GetAttributes(null, Entity.InListOrDetail.InList, null));
+                entity1 => entity1.LocalAttributes(scope));
         }
     }
     

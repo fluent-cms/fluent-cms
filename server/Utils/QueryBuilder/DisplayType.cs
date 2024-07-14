@@ -22,5 +22,4 @@ public enum DisplayType
     multiselect,
     
     crosstable,
-    subtable,
 }

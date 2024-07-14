@@ -17,17 +17,17 @@ public class EntityService(KateQueryExecutor queryKateQueryExecutor, ISchemaServ
 
         var record =
             await queryKateQueryExecutor.One(entity.ById(id,
-                entity.GetAttributes(null, Entity.InListOrDetail.InDetail, null)));
+                entity.LocalAttributes(InListOrDetail.InDetail)));
         if (record is null)
         {
             return record;
         }
 
-        foreach (var detailLookupsAttribute in entity.GetAttributes(DisplayType.lookup,
-                     Entity.InListOrDetail.InDetail, null))
+        foreach (var detailLookupsAttribute in entity.GetAttributesByType(DisplayType.lookup,
+                     InListOrDetail.InDetail))
         {
             await AttachLookup(detailLookupsAttribute, [record],
-                lookupEntity => lookupEntity.GetAttributes(null, Entity.InListOrDetail.InDetail, null));
+                lookupEntity => lookupEntity.LocalAttributes(InListOrDetail.InDetail));
         }
 
         return record;
@@ -47,7 +47,7 @@ public class EntityService(KateQueryExecutor queryKateQueryExecutor, ISchemaServ
         };
 
         var query = entity.List(filters, sorts, pagination, null,
-            entity.GetAttributes(null, Entity.InListOrDetail.InList, null));
+            entity.LocalAttributes(InListOrDetail.InList));
         
         var records = await queryKateQueryExecutor.Many(query);
         if (records is null)
@@ -64,9 +64,9 @@ public class EntityService(KateQueryExecutor queryKateQueryExecutor, ISchemaServ
             };
         }
 
-        foreach (var listLookupsAttribute in entity.GetAttributes(DisplayType.lookup, Entity.InListOrDetail.InList, null))
+        foreach (var listLookupsAttribute in entity.GetAttributesByType(DisplayType.lookup, InListOrDetail.InList))
         {
-            await AttachLookup(listLookupsAttribute, records, lookupEntity => lookupEntity.AttributesForLookup());
+            await AttachLookup(listLookupsAttribute, records, lookupEntity => lookupEntity.ReferencedAttributes());
         }
 
         return new ListResult
@@ -139,7 +139,7 @@ public class EntityService(KateQueryExecutor queryKateQueryExecutor, ISchemaServ
             return null;
         }
         
-        var selectAttributes = attribute.Crosstable.TargetEntity.GetAttributes(null, Entity.InListOrDetail.InList, null);
+        var selectAttributes = attribute.Crosstable.TargetEntity.LocalAttributes(InListOrDetail.InList);
         var query = attribute.Crosstable.Many(selectAttributes,exclude, attribute.Crosstable.FromAttribute.CastToDatabaseType(strId));
         return new ListResult
         {
@@ -178,7 +178,7 @@ public class EntityService(KateQueryExecutor queryKateQueryExecutor, ISchemaServ
     public async Task AttachLookup(Attribute lookupAttribute, Record[] items, Func<Entity, Attribute[]> getFields)
     {
         var lookupEntityName = Val.StrNotEmpty(lookupAttribute.GetLookupEntityName())
-            .ValOrThrow($"lookup Entity Name is not set for {lookupAttribute.Parent?.Name}");
+            .ValOrThrow($"lookup entity name for {lookupAttribute.FullName()} is empty");
         var lookupEntity = await schemaService.GetEntityByName(lookupEntityName);
         ArgumentNullException.ThrowIfNull(lookupEntity);
         var ids = lookupAttribute.GetValues(items);
