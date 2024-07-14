@@ -155,9 +155,7 @@ public class EntityService(KateQueryExecutor queryKateQueryExecutor, ISchemaServ
             return;
         }
 
-        var cross = attribute.Crosstable;
-        ArgumentNullException.ThrowIfNull(cross);
-
+        var cross = Val.NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable for {attribute.FullName()}");
         var query = cross.Many(getFields(cross.TargetEntity), ids);
         var targetRecords = await queryKateQueryExecutor.Many(query);
         if (targetRecords is null)
@@ -177,15 +175,13 @@ public class EntityService(KateQueryExecutor queryKateQueryExecutor, ISchemaServ
     }
     public async Task AttachLookup(Attribute lookupAttribute, Record[] items, Func<Entity, Attribute[]> getFields)
     {
-        var lookupEntityName = Val.StrNotEmpty(lookupAttribute.GetLookupEntityName())
-            .ValOrThrow($"lookup entity name for {lookupAttribute.FullName()} is empty");
-        var lookupEntity = await schemaService.GetEntityByName(lookupEntityName);
-        ArgumentNullException.ThrowIfNull(lookupEntity);
+        var lookupEntity = Val.NotNull(lookupAttribute.Lookup).ValOrThrow($"not find lookup entity from {lookupAttribute.FullName()}");
         var ids = lookupAttribute.GetValues(items);
         if (ids.Length == 0)
         {
             return;
         }
+        
         var lookupRecords = await queryKateQueryExecutor.Many(lookupEntity.Many(ids, getFields(lookupEntity)));
         ArgumentNullException.ThrowIfNull(lookupRecords);
         foreach (var lookupRecord in lookupRecords)

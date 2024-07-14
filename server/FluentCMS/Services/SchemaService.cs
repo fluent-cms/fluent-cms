@@ -65,7 +65,7 @@ public partial class SchemaService(AppDbContext context, IDefinitionExecutor def
         return dto;
     }
 
-    public async Task<View?> GetViewByName(string name)
+    public async Task<View> GetViewByName(string name)
     {
         Val.StrNotEmpty(name).ValOrThrow("view name should not be empty");
         var item = await context.Schemas

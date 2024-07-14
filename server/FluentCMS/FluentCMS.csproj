@@ -23,6 +23,7 @@
         <PackageReference Include="SqlKata" Version="2.4.0" />
         <PackageReference Include="SqlKata.Execution" Version="2.4.0" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+        <PackageReference Include="System.Runtime.Caching" Version="8.0.0" />
     </ItemGroup>
 
     <ItemGroup>

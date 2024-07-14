@@ -3,17 +3,20 @@ using System;
 using FluentCMS.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace FluentCMS.Migrations.pg
+namespace FluentCMS.Migrations.postgres
 {
     [DbContext(typeof(PostgresContext))]
-    partial class PgContextModelSnapshot : ModelSnapshot
+    [Migration("20240714183952_uniq_schema_name")]
+    partial class uniq_schema_name
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

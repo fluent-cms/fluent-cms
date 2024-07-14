@@ -9,6 +9,10 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["FluentCMS/FluentCMS.csproj", "FluentCMS/"]
 RUN dotnet restore "FluentCMS/FluentCMS.csproj"
+
+COPY ["Utils/Utils.csproj", "Utils/"]
+RUN dotnet restore "Utils/Utils.csproj"
+
 COPY . .
 WORKDIR "/src/FluentCMS"
 RUN dotnet build "FluentCMS.csproj" -c $BUILD_CONFIGURATION -o /app/build

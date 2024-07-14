@@ -8,7 +8,11 @@ using Utils.File;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using SqlKata;
+using Utils.Cache;
 using Utils.KateQueryExecutor;
+using Utils.QueryBuilder;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -112,8 +116,12 @@ void AddCors()
 
 void InjectServices()
 {
-    builder.Services.AddSingleton<FileUtl, FileUtl>(p => new FileUtl("wwwroot/files"));
-    builder.Services.AddSingleton<KateQueryExecutor, KateQueryExecutor>();
+    builder.Services.AddSingleton<MemoryCacheFactory>();
+    builder.Services.AddSingleton<KeyValCache<SqlResult>>(p => new KeyValCache<SqlResult>(p.GetRequiredService<IMemoryCache>(), 30));
+    builder.Services.AddSingleton<KeyValCache<View>>(p=> new KeyValCache<View>(p.GetRequiredService<IMemoryCache>(),30));
+    
+    builder.Services.AddSingleton<FileUtl>(p => new FileUtl("wwwroot/files"));
+    builder.Services.AddSingleton<KateQueryExecutor>();
     builder.Services.AddScoped<ISchemaService, SchemaService>();
     builder.Services.AddScoped<IEntityService, EntityService >();
     builder.Services.AddScoped<IViewService, ViewService >();

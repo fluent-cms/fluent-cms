@@ -18,4 +18,6 @@ public class PostgresKateProvider(string connectionString, ILogger<PostgresKateP
         db.Logger = result => logger.LogInformation(result.ToString());
         return await queryFunc(db);
     }
+    
+    public SqlResult Compile(Query query) => _compiler.Compile(query);
 }

@@ -23,5 +23,9 @@ $(document).ready(function (){
     $('#editContent').on('click', function() {
         const val = editor.getValue();
         window.location.href=`/entities/${val.name}`;
-    });   
+    });
+    
+    $('#showAdvancedActions').change(function() {
+        $("#advancedEntityActions").prop('hidden',!$(this).is(':checked'));
+    });
 });

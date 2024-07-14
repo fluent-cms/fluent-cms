@@ -6,7 +6,7 @@ using SqlKata.Execution;
 
 namespace Utils.KateQueryExecutor;
 
-public class SqliteKateProvider(string connectionString , ILogger<SqliteKateProvider> logger):IKateProvider
+public class SqliteKateProvider(string connectionString, ILogger<SqliteKateProvider> logger) : IKateProvider
 {
     private readonly Compiler _compiler = new SqliteCompiler();
 
@@ -18,4 +18,6 @@ public class SqliteKateProvider(string connectionString , ILogger<SqliteKateProv
         db.Logger = result => logger.LogInformation(result.ToString());
         return await queryFunc(db);
     }
+
+    public SqlResult Compile(Query query) => _compiler.Compile(query);
 }

@@ -2,29 +2,33 @@ using Utils.KateQueryExecutor;
 using Utils.QueryBuilder;
 
 using Microsoft.Extensions.Primitives;
+using SqlKata;
+using Utils.Cache;
 
 namespace FluentCMS.Services;
 
 
-public class ViewService(KateQueryExecutor queryKateQueryExecutor, ISchemaService schemaService, IEntityService entityService) : IViewService
+public class ViewService(
+    KateQueryExecutor queryKateQueryExecutor, 
+    ISchemaService schemaService, 
+    IEntityService entityService,
+    KeyValCache<SqlResult> sqlCache,
+    KeyValCache<View> viewCache
+    ) : IViewService
 {
+   
+    
     public async Task<ViewResult?> List(string viewName, Cursor cursor,
         Dictionary<string, StringValues> querystringDictionary)
     {
-        var (ok, view, entity) = await ResolvedView(viewName, querystringDictionary);
-        if (!ok)
-        {
-            return null;
-        }
-
+        var view = await ResolvedView(viewName, querystringDictionary);
+        var entity = Val.NotNull(view.Entity).ValOrThrow($"entity not exist for {viewName}");
         if (cursor.Limit == 0 || cursor.Limit > view.PageSize)
         {
             cursor.Limit = view.PageSize;
         }
         cursor.Limit += 1;
-        
-
-        var query = entity.List(  view.Filters,view.Sorts, null, cursor, view.LocalAttributes(InListOrDetail.InList));
+        var query = entity.List(view.Filters,view.Sorts, null, cursor, view.LocalAttributes(InListOrDetail.InList));
         var items = await queryKateQueryExecutor.Many(query);
         if (items is null)
         {
@@ -45,7 +49,7 @@ public class ViewService(KateQueryExecutor queryKateQueryExecutor, ISchemaServic
         {
             return null;
         }
-        await AttachRelatedEntity(entity, view, InListOrDetail.InList, items);
+        await AttachRelatedEntity(view, InListOrDetail.InList, items);
         
         return new ViewResult
         {
@@ -60,12 +64,9 @@ public class ViewService(KateQueryExecutor queryKateQueryExecutor, ISchemaServic
 
     public async Task<Record[]?> Many(string viewName, Dictionary<string, StringValues> querystringDictionary)
     {
-        var (ok,view, entity) = await ResolvedView(viewName, querystringDictionary);
-        if (!ok)
-        {
-            return null;
-        }
-        
+        var view = await ResolvedView(viewName, querystringDictionary);
+        var entity = Val.NotNull(view.Entity).ValOrThrow($"entity not exist for {viewName}");
+       
         var query = entity.List(  view.Filters,view.Sorts, new Pagination{Limit = view.PageSize}, null,
             view.LocalAttributes(InListOrDetail.InDetail));
         var items = await queryKateQueryExecutor.Many(query);
@@ -74,17 +75,14 @@ public class ViewService(KateQueryExecutor queryKateQueryExecutor, ISchemaServic
             return null;
         }
 
-        await AttachRelatedEntity(entity, view, InListOrDetail.InDetail, items);
+        await AttachRelatedEntity(view, InListOrDetail.InDetail, items);
         return items;
     }
 
     public async Task<IDictionary<string, object>?> One(string viewName, Dictionary<string, StringValues> querystringDictionary)
     {
-        var (ok, view, entity) = await ResolvedView(viewName, querystringDictionary);
-        if (!ok)
-        {
-            return null;
-        }
+        var view = await ResolvedView(viewName, querystringDictionary);
+        var entity = Val.NotNull(view.Entity).ValOrThrow($"entity not exist for {viewName}");
 
         var query = entity.One(view.Filters, view.LocalAttributes(InListOrDetail.InDetail));
         var item = await queryKateQueryExecutor.One(query);
@@ -92,11 +90,11 @@ public class ViewService(KateQueryExecutor queryKateQueryExecutor, ISchemaServic
         {
             return null;
         }
-        await AttachRelatedEntity(entity, view, InListOrDetail.InDetail, [item]);
+        await AttachRelatedEntity(view, InListOrDetail.InDetail, [item]);
         return item;
     }
     
-    private async Task AttachRelatedEntity(Entity entity, View view, InListOrDetail scope, Record[] items)
+    private async Task AttachRelatedEntity(View view, InListOrDetail scope, Record[] items)
     {
         foreach (var attribute in view.GetAttributesByType(DisplayType.lookup, scope))
         {
@@ -111,16 +109,15 @@ public class ViewService(KateQueryExecutor queryKateQueryExecutor, ISchemaServic
         }
     }
     
-    private async Task<(bool,View, Entity)> ResolvedView(string viewName,
+    private async Task<View> ResolvedView(string viewName,
         Dictionary<string, StringValues> querystringDictionary)
     {
-        var view = await schemaService.GetViewByName(viewName);
-        var entity = view?.Entity;
-        if (view is null || entity is null)
+        return await viewCache.GetOrSet(viewName, async (entry) =>
         {
-            return (false, new View(), new Entity());
-        }
-        view.Filters?.Resolve(entity, querystringDictionary, null);
-        return (true,view, entity);
+            var view = await schemaService.GetViewByName(viewName);
+            var entity = Val.NotNull(view.Entity).ValOrThrow($"not find view {viewName}'s entity");
+            view.Filters?.Resolve(entity, querystringDictionary, null);
+            return view;
+        });
     }
 }

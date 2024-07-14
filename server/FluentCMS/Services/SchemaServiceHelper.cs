@@ -45,7 +45,7 @@ public partial class SchemaService
     private async Task PostLoadEntity(SchemaDto dto)
     {
         var entity = dto.Settings?.Entity;
-        if (entity is null)
+        if (entity is null)//not a engity, ignore
         {
             return;
         }
@@ -121,17 +121,17 @@ public partial class SchemaService
         foreach (var attribute in entity.GetAttributesByType(DisplayType.lookup))
         {
             var lookupEntityName = Val.StrNotEmpty(attribute.GetLookupEntityName())
-                .ValOrThrow($"lookup entity name for {entity.Name}.{attribute.Field} should not be empty");
+                .ValOrThrow($"lookup entity name for {attribute.FullName()} should not be empty");
             attribute.Lookup = Val.NotNull(await GetEntityByName(lookupEntityName, false))
-                .ValOrThrow($"not find entity by name by name {entity.Name}");
+                .ValOrThrow($"not find entity by name {lookupEntityName} for lookup {attribute.FullName()}");
         }
 
         foreach (var attribute in entity.GetAttributesByType(DisplayType.crosstable))
         {
             var targetEntityName = Val.StrNotEmpty(attribute.GetCrossEntityName())
-                .ValOrThrow($"crosstable entity name for ${entity.Name}.{attribute.Field}");
+                .ValOrThrow($"crosstable entity name for ${attribute.FullName()}");
             var targetEntity = Val.NotNull(await GetEntityByName(targetEntityName, false))
-                .ValOrThrow($"not find entity by name by name {entity.Name}");
+                .ValOrThrow($"not find entity by name {entity.Name} for crosstable {attribute.FullName()}");
             attribute.Crosstable = new Crosstable(entity, targetEntity);
         }
     }
