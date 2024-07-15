@@ -39,13 +39,13 @@ SELECT
     'http://example.com/featured/' || i
 FROM generate_series(1, 1000000) AS s(i);
 
-INSERT INTO post_tags (post_id, tag_id)
+INSERT INTO post_tag_cross (post_id, tag_id)
 SELECT
     (random()*999999 + 1)::int,
     (random()*9999 + 1)::int
 FROM generate_series(1, 1000000) AS s(i);
 
-INSERT INTO post_authors (post_id, author_id)
+INSERT INTO author_post_cross (post_id, author_id)
 SELECT
     (random()*999999 + 1)::int,
     (random()*9999 + 1)::int

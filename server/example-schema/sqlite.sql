@@ -98,7 +98,7 @@ WHERE id = OLD.id;
 END;
 
 -- Create the post_tags table
-CREATE TABLE post_tags (
+CREATE TABLE post_tag_cross (
                            id INTEGER PRIMARY KEY AUTOINCREMENT,
                            post_id INTEGER,
                            tag_id INTEGER,
@@ -111,16 +111,16 @@ CREATE TABLE post_tags (
 
 -- Trigger to update the updated_at column before row update in post_tags table
 CREATE TRIGGER update_post_tags_updated_at
-    BEFORE UPDATE ON post_tags
+    BEFORE UPDATE ON post_tag_cross
     FOR EACH ROW
 BEGIN
-UPDATE post_tags
+UPDATE post_tag_cross
 SET updated_at =  (datetime('now', 'localtime'))
 WHERE id = OLD.id;
 END;
 
 -- Create the post_authors table
-CREATE TABLE post_authors (
+CREATE TABLE author_post_corss (
                               id INTEGER PRIMARY KEY AUTOINCREMENT,
                               post_id INTEGER,
                               author_id INTEGER,
@@ -133,10 +133,10 @@ CREATE TABLE post_authors (
 
 -- Trigger to update the updated_at column before row update in post_authors table
 CREATE TRIGGER update_post_authors_updated_at
-    BEFORE UPDATE ON post_authors
+    BEFORE UPDATE ON author_post_corss
     FOR EACH ROW
 BEGIN
-UPDATE post_authors
+UPDATE author_post_corss
 SET updated_at =  (datetime('now', 'localtime'))
 WHERE id = OLD.id;
 END;

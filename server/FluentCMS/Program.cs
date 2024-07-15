@@ -64,54 +64,60 @@ app.MapFallbackToFile("index.html");
 
 app.Run();
 
-string? GetConnectionString(string key)
-{
-    var ret = Environment.GetEnvironmentVariable(key)?? builder.Configuration.GetConnectionString(key);
-    if (ret is not null)
-    {
-        Console.WriteLine("***********************************");
-        Console.WriteLine($"Current Connection string is {ret}");
-        Console.WriteLine("***********************************");
-    }
-    return ret;
-}
+string? ConnectionString(string key) =>
+    Environment.GetEnvironmentVariable(key) ?? builder.Configuration.GetConnectionString(key);
+
+string? ConfigurationString(string key) =>
+    Environment.GetEnvironmentVariable(key) ?? builder.Configuration.GetValue<string>(key);
 
 void InjectDb()
 {
-    var isDebug = builder.Environment.IsDevelopment();
-    var connectionString = GetConnectionString("Sqlite");
-    if (connectionString is not null)
+    var provider = Val.StrNotEmpty(ConfigurationString("DatabaseProvider"))
+        .ValOrThrow("Not find Database Provider");
+
+    var connectionString = Val.StrNotEmpty(ConnectionString(provider))
+        .ValOrThrow($"Not  find Connection string for {provider}");
+    switch (provider)
     {
-        builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
-        builder.Services.AddSingleton<IKateProvider>(p => new SqliteKateProvider(connectionString, p.GetRequiredService<ILogger<SqliteKateProvider>>()));
-        builder.Services.AddSingleton<IDefinitionExecutor>(p => new SqliteDefinitionExecutor(connectionString, p.GetRequiredService<ILogger<SqliteDefinitionExecutor>>()));
-        return;
+        case "Sqlite":
+            builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
+            builder.Services.AddSingleton<IKateProvider>(p =>
+                new SqliteKateProvider(connectionString, p.GetRequiredService<ILogger<SqliteKateProvider>>()));
+            builder.Services.AddSingleton<IDefinitionExecutor>(p =>
+                new SqliteDefinitionExecutor(connectionString,
+                    p.GetRequiredService<ILogger<SqliteDefinitionExecutor>>()));
+            break;
+        case "Postgres":
+            builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
+            builder.Services.AddSingleton<IKateProvider>(p =>
+                new PostgresKateProvider(connectionString, p.GetRequiredService<ILogger<PostgresKateProvider>>()));
+            builder.Services.AddSingleton<IDefinitionExecutor>(p =>
+                new PostgresDefinitionExecutor(connectionString,
+                    p.GetRequiredService<ILogger<PostgresDefinitionExecutor>>()));
+            break;
+        default:
+            throw new Exception($"Not supported Provider {provider}");
     }
-
-    connectionString = GetConnectionString("Postgres");
-    if (connectionString is not null)
-    {
-        builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
-        builder.Services.AddSingleton<IKateProvider>(p => new PostgresKateProvider(connectionString,p.GetRequiredService<ILogger<PostgresKateProvider>>()));
-        builder.Services.AddSingleton<IDefinitionExecutor>(p => new PostgresDefinitionExecutor(connectionString, p.GetRequiredService<ILogger<PostgresDefinitionExecutor>>()));
-        return;
-    }
-
-
-    throw new Exception("didn't find any connection settings");
+    Console.WriteLine("*********************************************************");
+    Console.WriteLine($"Resolved Database Provider: {provider}");
+    Console.WriteLine("*********************************************************");
 }
 
 void AddCors()
 {
-    builder.Services.AddCors(options =>
+    var origins = ConfigurationString("AllowedOrigins");
+    if (!string.IsNullOrWhiteSpace(origins))
     {
-        options.AddPolicy("AllowAllOrigins",
-            policy =>
-            {
-                policy.WithOrigins("http://127.0.0.1:5173", "http://localhost:5173").AllowAnyHeader()
-                    .AllowCredentials();
-            });
-    });
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowAllOrigins",
+                policy =>
+                {
+                    policy.WithOrigins(origins.Split(",")).AllowAnyHeader()
+                        .AllowCredentials();
+                });
+        });
+    }
 }
 
 void InjectServices()

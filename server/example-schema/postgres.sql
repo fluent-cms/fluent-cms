@@ -84,7 +84,7 @@ EXECUTE FUNCTION update_updated_at_column();
 create index posts_deleted_published_at_index
     on posts (deleted asc, published_at desc);
 
-CREATE TABLE post_tags (
+CREATE TABLE post_tag_cross (
                            id SERIAL PRIMARY KEY,
                            post_id INT,
                            tag_id INT,
@@ -96,11 +96,11 @@ CREATE TABLE post_tags (
 );
 
 CREATE TRIGGER update_post_tags_updated_at
-    BEFORE UPDATE ON post_tags
+    BEFORE UPDATE ON post_tag_cross
     FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TABLE post_authors (
+CREATE TABLE author_post_cross (
                               id SERIAL PRIMARY KEY,
                               post_id INT,
                               author_id INT,
@@ -112,9 +112,9 @@ CREATE TABLE post_authors (
 );
 
 CREATE TRIGGER update_post_authors_updated_at
-    BEFORE UPDATE ON post_authors
+    BEFORE UPDATE ON author_post_cross
     FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
 create index post_authors_deleted_post_id_index
-    on post_authors (deleted asc, post_id desc);
+    on author_post_cross (deleted asc, post_id desc);
