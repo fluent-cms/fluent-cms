@@ -4,7 +4,7 @@
     image: fluent-cms-demo-ui-sqlite
     build:
       context: ../ui
-      dockerfile: ../ui/Dockerfile
+      dockerfile: ../ui/Dockerfile.dev
     ports:
       - "3000:3000"
     environment:
@@ -18,6 +18,7 @@
       context: ../server/
       dockerfile: FluentCMS/Dockerfile
     environment:
+      - DatabaseProvider=Sqlite
       - Sqlite=Data Source=cms.db
     volumes:
       - ./files:/app/wwwroot/files

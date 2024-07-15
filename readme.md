@@ -22,11 +22,16 @@ rather than hard-coded specifics for each entity. This approach reduces repetiti
    2. **Bring Up Services**
       ```shell
       cd fluent-cms-sqlite-docker
+      docker-compose build
       docker-compose up
       ```
    3. **Explore the App**
        - Admin Panel: http://localhost:8080, use username `admin@cms.com` and password `Admin1!` to login.
-       - Demo Public Site: http://localhost:3000  
+       - Demo Public Site: http://localhost:3000 
+       - Optional, add  `127.0.0.1 fluent-cms-server-sqlite` to the  file `hosts`
+         - for window it is located at `C:\Windows\System32\drivers\etc\hosts`
+         - for mac/linux, it is located at `/etc/hosts`
+
 3. Source code
    1. **Clone the Repository**
       ```shell
