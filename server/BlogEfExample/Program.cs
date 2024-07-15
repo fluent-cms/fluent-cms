@@ -23,7 +23,7 @@ app.MapGet("/posts", async (BloggingContext context,[FromQuery] string? last) =>
     var posts = context.Posts
         .Where(p => !p.Deleted && (ts == null || p.PublishedAt.ToLocalTime() < ts))
         .OrderByDescending(p => p.PublishedAt)
-        .Take(11)
+        .Take(10)
         .Select(p => new
         {
             p.Id,

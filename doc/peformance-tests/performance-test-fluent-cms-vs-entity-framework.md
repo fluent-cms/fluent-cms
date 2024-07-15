@@ -40,19 +40,19 @@ To compare performance, I developed a small application called BlogEfExample usi
 ### 5. **Data Collection**
 - Fluent CMS
 ```
-     http_req_duration..............: avg=581.02ms min=6.5ms    med=575.23ms max=1.38s  p(90)=926.85ms p(95)=965.43ms
-     http_reqs......................: 192687  1024.561066/s
-
+     http_req_duration..............: avg=196.85ms min=2.64ms  med=204.43ms max=775.83ms p(90)=298.72ms p(95)=315ms
+     http_reqs......................: 552783  3008.503605/s
 ```
 - Entity Framework Example 
 ```
-     http_req_duration..............: avg=232.81ms min=3.13ms  med=227.4ms  max=801.73ms p(90)=361.15ms p(95)=397.25ms
-     http_reqs......................: 469557  2546.973785/s
+     http_req_duration..............: avg=223.19ms min=2.53ms  med=220.84ms max=771.67ms p(90)=342.61ms p(95)=373.5ms
+     http_reqs......................: 488356  2653.795461/s
 ```
 ### 6. **Analysis and Reporting**
 
 - **Compare Metrics**:
-    - Response Times: EF example is twice faster than Fluent CMS
-    - Throughput:  EF example can handle twice requests
+    - Response Times: EF example is slower than Fluent CMS
+    - Throughput:  EF example can handle less requests
 - **Identify Bottlenecks**:
-    -  Fluent CMS need to extra cost (read schema and build query) where Ef doesn't, there are space to optimize
+    - Fluent CMS is using SqlData for performance critical query, behind the scene, it use  Dapper ORM. 
+    - According Dapper's document, dapper's performance is better https://www.learndapper.com/#when-should-you-use-dapper 

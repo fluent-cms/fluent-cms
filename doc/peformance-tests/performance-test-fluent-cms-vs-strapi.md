@@ -42,8 +42,8 @@ an blogs/post api to compare their performance.
 ### 5. **Data Collection**
 - Fluent CMS
 ```
-     http_req_duration..............: avg=581.02ms min=6.5ms    med=575.23ms max=1.38s  p(90)=926.85ms p(95)=965.43ms
-     http_reqs......................: 192687  1024.561066/s
+      http_req_duration..............: avg=196.85ms min=2.64ms  med=204.43ms max=775.83ms p(90)=298.72ms p(95)=315ms
+      http_reqs......................: 552783  3008.503605/s
 
 ```
 - Strapi 
@@ -54,8 +54,8 @@ an blogs/post api to compare their performance.
 ### 6. **Analysis and Reporting**
 
 - **Compare Metrics**:
-    - Response Times: Fluent CMS is 50 times faster than Strapi.
-    - Throughput: Fluent CMS can handle 57 times more requests per second compared to Strapi.
+    - Response Times: Fluent CMS is more than 100 times faster than Strapi.
+    - Throughput: Fluent CMS can handle 100 times more requests per second compared to Strapi.
 - **Identify Bottlenecks**:
     - Node.js can only utilize one CPU, while .NET can utilize the full potential of the CPU.
     - .NET code runs faster than Node.js.
