@@ -14,14 +14,15 @@ rather than hard-coded specifics for each entity. This approach reduces repetiti
       - Email: `admin@cms.com`
       - Password: `Admin1!`  
    - Public Site : https://fluent-cms-ui.azurewebsites.net/
-2. Docker
+2. Docker 
    1. **Clone the Repository**
       ```shell
       git clone https://github.com/fluent-cms/fluent-cms
       ```
+      - for Postgres go to `fluent-cms/fluent-cms-postgres-docker`
+      - for Sqlite go to `fluent-cms/fluent-cms-sqlite-docker`
    2. **Bring Up Services**
       ```shell
-      cd fluent-cms-sqlite-docker
       docker-compose build
       docker-compose up
       ```
@@ -31,7 +32,6 @@ rather than hard-coded specifics for each entity. This approach reduces repetiti
        - Optional, add  `127.0.0.1 fluent-cms-server-sqlite` to the  file `hosts`
          - for window it is located at `C:\Windows\System32\drivers\etc\hosts`
          - for mac/linux, it is located at `/etc/hosts`
-
 3. Source code
    1. **Clone the Repository**
       ```shell
