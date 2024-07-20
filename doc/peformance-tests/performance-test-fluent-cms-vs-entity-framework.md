@@ -51,7 +51,7 @@ To compare performance, I developed a small application called BlogEfExample usi
 ### 6. **Analysis and Reporting**
 
 - **Compare Metrics**:
-    - Response Times: EF example is slower than Fluent CMS
+    - Response Times: EF example is 10% than Fluent CMS
     - Throughput:  EF example can handle less requests
 - **Identify Bottlenecks**:
     - Fluent CMS is using SqlData for performance critical query, behind the scene, it use  Dapper ORM. 
