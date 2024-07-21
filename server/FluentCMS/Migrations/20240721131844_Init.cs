@@ -4,23 +4,31 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace FluentCMS.Migrations.pg
+namespace FluentCMS.Migrations
 {
     /// <inheritdoc />
-    public partial class identity : Migration
+    public partial class Init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterColumn<string>(
-                name: "Type",
-                table: "__schemas",
-                type: "character varying(10)",
-                maxLength: 10,
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "VARCHAR",
-                oldMaxLength: 250);
+            migrationBuilder.CreateTable(
+                name: "__schemas",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "VARCHAR", maxLength: 250, nullable: false),
+                    Type = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    Settings = table.Column<string>(type: "text", nullable: false),
+                    Deleted = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK___schemas", x => x.Id);
+                });
 
             migrationBuilder.CreateTable(
                 name: "AspNetRoles",
@@ -168,6 +176,12 @@ namespace FluentCMS.Migrations.pg
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX___schemas_Name",
+                table: "__schemas",
+                column: "Name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
                 column: "RoleId");
@@ -209,6 +223,9 @@ namespace FluentCMS.Migrations.pg
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "__schemas");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
 
             migrationBuilder.DropTable(
@@ -228,16 +245,6 @@ namespace FluentCMS.Migrations.pg
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
-
-            migrationBuilder.AlterColumn<string>(
-                name: "Type",
-                table: "__schemas",
-                type: "VARCHAR",
-                maxLength: 250,
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "character varying(10)",
-                oldMaxLength: 10);
         }
     }
 }

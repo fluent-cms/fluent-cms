@@ -131,5 +131,8 @@ public partial class SchemaService(AppDbContext context, IDefinitionExecutor def
         return true;
     }
 
-
+    public async Task AddTopMenuBar()
+    {
+        await _AddTopMenuBar();
+    }
 }

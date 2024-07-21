@@ -1,22 +1,18 @@
 using System.Text.Json.Serialization;
 using FluentCMS.Services;
 using FluentCMS.Data;
-using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Utils.DataDefinitionExecutor;
 using Utils.File;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using SqlKata;
 using Utils.Cache;
 using Utils.KateQueryExecutor;
 using Utils.QueryBuilder;
 
 var builder = WebApplication.CreateBuilder(args);
 
-InjectDb();
+InjectDbServices();
 InjectServices();
 AddCors();
 
@@ -36,7 +32,6 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
-
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -62,6 +57,7 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 app.MapFallbackToFile("index.html");
 
+await InitDb();
 app.Run();
 
 string? ConnectionString(string key) =>
@@ -70,34 +66,62 @@ string? ConnectionString(string key) =>
 string? ConfigurationString(string key) =>
     Environment.GetEnvironmentVariable(key) ?? builder.Configuration.GetValue<string>(key);
 
-void InjectDb()
+async Task InitDb()
+{
+    using var scope = app.Services.CreateScope();
+    var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var first = ctx.Database.GetAppliedMigrations().FirstOrDefault();
+    if (string.IsNullOrWhiteSpace(first))
+    {
+        //now it's save to do migrate
+        await ctx.Database.MigrateAsync();
+        Console.WriteLine("*********************************************************");
+        Console.WriteLine("Database initialized");
+        Console.WriteLine("*********************************************************"); 
+        var schemaService = scope.ServiceProvider.GetRequiredService<ISchemaService>();
+        await schemaService.AddTopMenuBar();
+    }
+}
+void InjectDbServices()
 {
     var provider = Val.StrNotEmpty(ConfigurationString("DatabaseProvider"))
         .ValOrThrow("Not find Database Provider");
 
     var connectionString = Val.StrNotEmpty(ConnectionString(provider))
         .ValOrThrow($"Not  find Connection string for {provider}");
+
+    IDefinitionExecutor? definitionExecutor = null;
+    
     switch (provider)
     {
         case "Sqlite":
+            
             builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
             builder.Services.AddSingleton<IKateProvider>(p =>
                 new SqliteKateProvider(connectionString, p.GetRequiredService<ILogger<SqliteKateProvider>>()));
             builder.Services.AddSingleton<IDefinitionExecutor>(p =>
-                new SqliteDefinitionExecutor(connectionString,
-                    p.GetRequiredService<ILogger<SqliteDefinitionExecutor>>()));
+                {
+                    definitionExecutor = new SqliteDefinitionExecutor(connectionString,
+                        p.GetRequiredService<ILogger<SqliteDefinitionExecutor>>());
+                    return definitionExecutor;
+                });
             break;
         case "Postgres":
             builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
             builder.Services.AddSingleton<IKateProvider>(p =>
                 new PostgresKateProvider(connectionString, p.GetRequiredService<ILogger<PostgresKateProvider>>()));
             builder.Services.AddSingleton<IDefinitionExecutor>(p =>
-                new PostgresDefinitionExecutor(connectionString,
-                    p.GetRequiredService<ILogger<PostgresDefinitionExecutor>>()));
+            {
+                 definitionExecutor = new PostgresDefinitionExecutor(connectionString,
+                    p.GetRequiredService<ILogger<PostgresDefinitionExecutor>>());
+                return definitionExecutor;
+            });
             break;
         default:
             throw new Exception($"Not supported Provider {provider}");
     }
+
+
     Console.WriteLine("*********************************************************");
     Console.WriteLine($"Resolved Database Provider: {provider}");
     Console.WriteLine("*********************************************************");

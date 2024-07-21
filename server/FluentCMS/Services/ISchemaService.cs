@@ -12,5 +12,6 @@ public interface ISchemaService
     Task<Entity?> GetTableDefine(string tableName);
     Task<SchemaDto> SaveTableDefine(SchemaDto schemaDto);
     Task<SchemaDto> Save(SchemaDto schema);
+    Task AddTopMenuBar();
     Task<bool> Delete(int id);
 }

@@ -8,6 +8,7 @@ namespace FluentCMS.Services;
 public partial class SchemaService
 {
 
+    private const string TopMenuBar = "top-menu-bar";
     private async Task PreSaveView(SchemaDto dto)
     {
         var view = dto.Settings?.View;
@@ -66,9 +67,34 @@ public partial class SchemaService
         }
     }
 
+    private async Task _AddTopMenuBar()
+    {
+        var item = new MenuItem
+        {
+            Label = "Schema Builder",
+            Url = "/schema-ui/list.html",
+            Icon = "pi-cog",
+            IsHref = true
+        };
+        var menuBarSchema = new SchemaDto
+        {
+            Name = TopMenuBar,
+            Type = SchemaType.Menu,
+        };
+        menuBarSchema.Settings = new Settings
+        {
+            Menu = new Menu
+            {
+                Name = TopMenuBar,
+                MenuItems = [item]
+            }
+        };
+        await Save(menuBarSchema);
+    }
+
     private async Task EnsureEntityInTopMenuBar(Entity entity)
     {
-        var menuBarSchema = await GetByIdOrName("top-menu-bar");
+        var menuBarSchema = await GetByIdOrName(TopMenuBar);
         var menuBar = menuBarSchema?.Settings?.Menu;
         if (menuBarSchema is not null && menuBar is not null)
         {
