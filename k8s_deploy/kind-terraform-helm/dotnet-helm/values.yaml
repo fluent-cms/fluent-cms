@@ -12,4 +12,4 @@ extraEnvVars:
   - name: DatabaseProvider
     value: Postgres
   - name: Postgres
-    value: Host=fluent-cms-postgresql;Database=cms;Username=postgres;Password=3saxYX3kbx
+    value: Host=cms-db-postgresql;Database=cms;Username=postgres;Password=${DB_PASSWORD}

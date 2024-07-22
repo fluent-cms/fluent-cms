@@ -1,6 +1,8 @@
 auth:
-  postgresPassword: 3saxYX3kbx
+  postgresPassword: ${DB_PASSWORD}
   existingSecret: ""
+replication:
+  enabled: false
 primary:
   initdb:
     scripts:
