@@ -24,4 +24,4 @@ COPY --from=publish /app/publish .
 
 ENTRYPOINT ["dotnet", "FluentCMS.dll"]
 
-#docker  build -f FluentCMS/Dockerfile -t jaike/fluent-cms:0.1 --push .
+#docker  build -f FluentCMS/Dockerfile -t jaike/fluent-cms:0.3 --push .

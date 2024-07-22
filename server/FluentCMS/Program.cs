@@ -12,6 +12,7 @@ using Utils.QueryBuilder;
 
 var builder = WebApplication.CreateBuilder(args);
 
+PrintVersion();
 InjectDbServices();
 InjectServices();
 AddCors();
@@ -71,17 +72,22 @@ async Task InitDb()
     using var scope = app.Services.CreateScope();
     var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var first = ctx.Database.GetAppliedMigrations().FirstOrDefault();
-    if (string.IsNullOrWhiteSpace(first))
+    if (!string.IsNullOrWhiteSpace(first))
     {
-        //now it's save to do migrate
-        await ctx.Database.MigrateAsync();
         Console.WriteLine("*********************************************************");
-        Console.WriteLine("Database initialized");
-        Console.WriteLine("*********************************************************"); 
-        var schemaService = scope.ServiceProvider.GetRequiredService<ISchemaService>();
-        await schemaService.AddTopMenuBar();
+        Console.WriteLine("Database initialized, Ignore");
+        Console.WriteLine("*********************************************************");
     }
+
+    //now it's save to do migrate
+    await ctx.Database.MigrateAsync();
+    Console.WriteLine("*********************************************************");
+    Console.WriteLine("Initializing database");
+    Console.WriteLine("*********************************************************");
+    var schemaService = scope.ServiceProvider.GetRequiredService<ISchemaService>();
+    await schemaService.AddTopMenuBar();
 }
+
 void InjectDbServices()
 {
     var provider = Val.StrNotEmpty(ConfigurationString("DatabaseProvider"))
@@ -122,9 +128,26 @@ void InjectDbServices()
     }
 
 
-    Console.WriteLine("*********************************************************");
-    Console.WriteLine($"Resolved Database Provider: {provider}");
-    Console.WriteLine("*********************************************************");
+
+}
+
+void PrintVersion()
+{
+    var provider = Val.StrNotEmpty(ConfigurationString("DatabaseProvider"))
+        .ValOrThrow("Not find Database Provider");
+
+    var connectionString = Val.StrNotEmpty(ConnectionString(provider))
+        .ValOrThrow($"Not  find Connection string for {provider}");
+
+     var parts = connectionString.Split(";")
+         .Where(x => !x.StartsWith("Password"))
+         .ToArray();
+     
+     Console.WriteLine("*********************************************************");
+     Console.WriteLine($"Fluent CMS: version 0.1, build Jul21 4pm");
+     Console.WriteLine($"Resolved Database Provider: {provider}");
+     Console.WriteLine($"Connection String: {String.Join(";", parts)}");
+     Console.WriteLine("*********************************************************");   
 }
 
 void AddCors()

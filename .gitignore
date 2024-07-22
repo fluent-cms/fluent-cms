@@ -4,3 +4,7 @@
 /fluent-cms-postgres-docker/db_data_1m
 /fluent-cms-postgres-docker/db_data_1m_back
 /fluent-cms-postgres-docker/db_data_demo
+/k8s_deploy/kind-terraform-helm/.terraform/
+/k8s_deploy/kind-terraform-helm/.terraform.lock.hcl
+/k8s_deploy/kind-terraform-helm/terraform.tfstate
+/k8s_deploy/kind-terraform-helm/terraform.tfstate.backup

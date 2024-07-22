@@ -1,0 +1,8 @@
+auth:
+  postgresPassword: 3saxYX3kbx
+  existingSecret: ""
+primary:
+  initdb:
+    scripts:
+      init.sql: | 
+        CREATE DATABASE cms;
