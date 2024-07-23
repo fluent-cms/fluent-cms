@@ -1,0 +1,15 @@
+image:
+  registry: docker.io
+  repository: jaike/fluent-cms-amd64
+  tag: "0.1"
+appFromExternalRepo:
+  enabled: false
+command: ["dotnet"]
+args: ["FluentCMS.dll"]
+extraEnvVars:
+  - name: ASPNETCORE_ENVIRONMENT
+    value: Production
+  - name: DatabaseProvider
+    value: Postgres
+  - name: Postgres
+    value: Host=cms-db-postgresql;Database=cms;Username=postgres;Password=${DB_PASSWORD}

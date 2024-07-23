@@ -1,4 +1,4 @@
-# Deploy Fluent CMS on local K8s
+# Deploy Fluent CMS on Kind
 This guide provides instructions for setting up and testing a Kubernetes cluster using Kind, Helm, Terraform, and kubectl.
 Test everything on Kind first to save the cost of cloud Kubernetes services like EKS.
 ## Prerequisites

@@ -1,0 +1,16 @@
+auth:
+  postgresPassword: ${DB_PASSWORD}
+  existingSecret: ""
+replication:
+  enabled: false
+primary:
+  initdb:
+    scripts:
+      init.sql: | 
+        CREATE DATABASE cms;
+  persistence:
+    enabled: true
+    storageClass: gp2-encrypted
+    accessModes:
+      - ReadWriteOnce
+    size: 8Gi
