@@ -66,3 +66,5 @@ With Fluent CMS, there's no need for coding—just some configuration, detailed 
   - Doc [Schema-Builder-UI](doc%2FDevelopment.md#Schema-Builder-UI)
 - Demo Publish Site:
   - Code [ui](..%2Fui)
+## Deployment
+Fluent CMS has terraForm code for deploy it to AWS EKS, view the wiki page for detail https://github.com/fluent-cms/fluent-cms/wiki/Deploy-Asp.net-Core-Application(Fluent%E2%80%90CMS)-to-Cloud-(EKS-%E2%80%90-AWS-Elastic-Kubernetes-Service)--using-terraform-and-helm
