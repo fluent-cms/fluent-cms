@@ -9,6 +9,6 @@ variable "kube_config_path" {
 }
 
 variable "kube_context" {
-  default = "arn:aws:eks:us-east-1:773594168572:cluster/cms-aws"
+  type = string
 }
 

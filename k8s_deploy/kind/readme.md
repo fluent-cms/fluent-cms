@@ -11,7 +11,14 @@ Test everything on Kind first to save the cost of cloud Kubernetes services like
    ```shell
    kind create cluster --name cms     
    ```
+   then check if kind-cms is the active context
+   ```shell
+   kubectl config get-contexts
+   CURRENT   NAME                                                 CLUSTER                                              AUTHINFO                                             NAMESPACE
+   *         kind-cms                                             kind-cms                                             kind-cms   
+   ```
 2. create resource
+   cd `fluent-cms/k8_deploy/kind`
    ```shell
    terraform apply
    ```
@@ -20,6 +27,7 @@ Test everything on Kind first to save the cost of cloud Kubernetes services like
    kubectl get service   #check if cms-app-aspnet-core exists
    kubectl port-forward svc/cms-app-aspnet-core 8080:80 &
    ```
+   then use a browser navigate to `http://localhost:8080`, see if everything works
 4. check the app log
    ```shell
    kubectl get pod  # find the pod whose name starts with cms-app
@@ -47,7 +55,7 @@ if there are something wrong, we can use helm to debug.
    ```
    kubectl delete pvc --all && kubectl delete pv --all
    ```
-### postgres-helm
+### dotnet-helm
 1. install
    ```shell
    helm install cms-app bitnami/aspnet-core --version 3.5.5 -f dotnet-helm/values.yaml
