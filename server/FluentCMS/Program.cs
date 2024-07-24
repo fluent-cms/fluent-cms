@@ -61,12 +61,6 @@ app.MapFallbackToFile("index.html");
 await InitDb();
 app.Run();
 
-string? ConnectionString(string key) =>
-    Environment.GetEnvironmentVariable(key) ?? builder.Configuration.GetConnectionString(key);
-
-string? ConfigurationString(string key) =>
-    Environment.GetEnvironmentVariable(key) ?? builder.Configuration.GetValue<string>(key);
-
 async Task InitDb()
 {
     using var scope = app.Services.CreateScope();
@@ -177,3 +171,11 @@ void InjectServices()
     builder.Services.AddScoped<IEntityService, EntityService >();
     builder.Services.AddScoped<IViewService, ViewService >();
 }
+
+//When put connection string to environment variable, both key Postgres and ConnectionString_Postgres work
+string? ConnectionString(string key)
+{
+    return Environment.GetEnvironmentVariable(key) ?? builder.Configuration.GetConnectionString(key);
+}
+
+string? ConfigurationString(string key) => builder.Configuration.GetValue<string>(key);
