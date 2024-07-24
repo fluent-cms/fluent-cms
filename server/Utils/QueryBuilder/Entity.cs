@@ -9,13 +9,13 @@ public enum InListOrDetail
 }
 public sealed class Entity
 {
-    private string _name;
-    private string _tableName;
-    private string _primaryKey;
-    private string _titleAttribute;
+    private string _name ="";
+    private string _tableName ="";
+    private string _primaryKey ="";
+    private string _titleAttribute="";
     public string Name {
-        get{return _name;}
-        set{_name = NameFormatter.LowerNoSpace(value);}
+        get => _name;
+        set => _name = NameFormatter.LowerNoSpace(value);
     }
     public string TableName
     {

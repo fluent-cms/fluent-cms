@@ -71,6 +71,7 @@ async Task InitDb()
         Console.WriteLine("*********************************************************");
         Console.WriteLine("Database initialized, Ignore");
         Console.WriteLine("*********************************************************");
+        return;
     }
 
     //now it's save to do migrate

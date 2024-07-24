@@ -2,11 +2,11 @@ using System.Text.Json.Serialization;
 
 namespace Utils.QueryBuilder;
 
-public class View
+public sealed class View
 {
-    public string Name { get; set; }
+    public string Name { get; set; } = "";
     public string[]? AttributeNames { get; set; } // if not set default to entity list attribute
-    public string? EntityName { get; set; }
+    public string EntityName { get; set; } = "";
     public int PageSize { get; set; }
 
     
@@ -24,27 +24,20 @@ public class View
 
     public Attribute[] LocalAttributes(InListOrDetail inListOrDetail)
     {
-        if (Entity is null)
-        {
-            throw new Exception($"entity of view {Name} is not initialized");
-        }
-        if (AttributeNames?.Length > 0)
-        {
-            return Entity.LocalAttributes(AttributeNames);
-        }
-        return Entity.LocalAttributes(inListOrDetail);
+        var entity = QueryExceptionChecker.NotNull(Entity).
+            ValueOrThrow($"entity of view {Name} is not initialized");
+        return AttributeNames?.Length > 0
+            ? entity.LocalAttributes(AttributeNames)
+            : entity.LocalAttributes(inListOrDetail);
     }
     
     public Attribute[] GetAttributesByType(DisplayType displayType, InListOrDetail inListOrDetail)
     {
-        if (Entity is null)
-        {
-            throw new Exception($"entity of view {Name} is not initialized");
-        }
-        if (AttributeNames?.Length > 0)
-        {
-            return Entity.GetAttributesByType(displayType,AttributeNames);
-        }
-        return Entity.GetAttributesByType(displayType,inListOrDetail);
+        var entity = QueryExceptionChecker.NotNull(Entity).
+            ValueOrThrow($"entity of view {Name} is not initialized");
+        
+        return AttributeNames?.Length > 0
+            ? entity.GetAttributesByType(displayType, AttributeNames)
+            : entity.GetAttributesByType(displayType, inListOrDetail);
     }
 }

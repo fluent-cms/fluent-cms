@@ -1,6 +1,4 @@
-using System.Text.Json;
 using System.Text.Json.Serialization;
-using FluentCMS.Utils.Base64Url;
 using Microsoft.Extensions.Primitives;
 using SqlKata;
 
@@ -13,7 +11,7 @@ namespace Utils.QueryBuilder;
 
     public class Sort
     {
-        private string _fieldName;
+        private string _fieldName = "";
 
         public string FieldName
         {
@@ -42,24 +40,25 @@ namespace Utils.QueryBuilder;
 
         public Sorts(Dictionary<string, StringValues> queryStringDictionary)
         {
-            if (queryStringDictionary.ContainsKey(SortFields) && queryStringDictionary.ContainsKey(SortOrders))
+            if (!(queryStringDictionary.TryGetValue(SortFields, out var fields) &&
+                  queryStringDictionary.TryGetValue(SortOrders, out var orders) &&
+                  fields.Count == orders.Count))
             {
-                var fields = queryStringDictionary[SortFields];
-                var orders = queryStringDictionary[SortOrders];
-                if (fields.Count == orders.Count)
+                return;
+            }
+
+            for (var i = 0; i < fields.Count; i++)
+            {
+                var sort = new Sort
                 {
-                    for (var i = 0; i < fields.Count; i++)
-                    {
-                        var sort = new Sort
-                        {
-                            FieldName = fields[i],
-                            Order = orders[i] == "1" ? SortOrder.Desc : SortOrder.Asc
-                        };
-                        Add(sort);
-                    }
-                }
+                    FieldName = QueryExceptionChecker.StrNotEmpty(fields[i])
+                        .ValueOrThrow($"Fail to resolve sorts, not find the {i} field"),
+                    Order = orders[i] == "1" ? SortOrder.Desc : SortOrder.Asc
+                };
+                Add(sort);
             }
         }
+
         public void Apply(Entity entity, Query? query)
         {
             if (query is null)

@@ -10,16 +10,16 @@ public class Attribute
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public DataType DataType { get; set; }
 
-    private string _field;
+    private string _field = "";
     public string Field
     {
         get => _field;
         set => _field = NameFormatter.LowerNoSpace(value);
     }
     public string Header { get; set; } = "";
-    public bool InList { get; set; } = false;
-    public bool InDetail { get; set; } = false;
-    public bool IsDefault { get; set; } = false; //frontend not show readonly attributes
+    public bool InList { get; set; } 
+    public bool InDetail { get; set; }
+    public bool IsDefault { get; set; } //for admin panel
 
     
     [JsonConverter(typeof(JsonStringEnumConverter))]
@@ -51,12 +51,12 @@ public class Attribute
         ArgumentNullException.ThrowIfNull(Parent);
         return Parent.TableName + "." + Field;
     }
-    public string? GetCrossEntityName()
+    public string GetCrossEntityName()
     {
         return Options;
     }
  
-    public string? GetLookupEntityName()
+    public string GetLookupEntityName()
     {
         return Options;
     }
@@ -75,12 +75,12 @@ public class Attribute
     {
         return records.Where(x=>x.ContainsKey(Field)).Select(x => x[Field]).Distinct().Where(x => x != null).ToArray();
     }
-    private  string SnakeToTitle(string snakeStr)
+    private static string SnakeToTitle(string snakeStr)
     {
         // Split the snake_case string by underscores
-        string[] components = snakeStr.Split('_');
+        var components = snakeStr.Split('_');
         // Capitalize the first letter of each component and join them with spaces
-        for (int i = 0; i < components.Length; i++)
+        for (var i = 0; i < components.Length; i++)
         {
             if (components[i].Length > 0)
             {

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Primitives;
+using Microsoft.VisualBasic;
 using SqlKata;
 
 namespace Utils.QueryBuilder;
@@ -6,19 +7,19 @@ using System.Collections.Generic;
 
 public sealed class Filter
 {
-    const string Pre = "f[";
-    const string End = "][operator]";
-    const string ConstraintValue = "[constraints][value]";
-    const string ConstraintMathMode = "[constraints][matchMode]";
+    private const string Pre = "f[";
+    private const string End = "][operator]";
+    private const string ConstraintValue = "[constraints][value]";
+    private const string ConstraintMathMode = "[constraints][matchMode]";
 
-    private string _fieldName;
+    private string _fieldName = "";
     public string FieldName
     {
         get => _fieldName;
         set => _fieldName = NameFormatter.LowerNoSpace(value);
     }
 
-    public string Operator { get; set; }
+    public string Operator { get; set; } = "";
 
     public List<Constraint> Constraints { get; set; }
 
@@ -33,11 +34,17 @@ public sealed class Filter
         {
             return false;
         }
-
+        
+        var op = val.FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(op))
+        {
+            return false;
+        }
+        
         filter = new Filter
         {
             FieldName = key.Substring(Pre.Length, key.Length - Pre.Length - End.Length),
-            Operator = val.First(),
+            Operator = op
         };
 
         if (!qs.TryGetValue(Pre + filter.FieldName + "]" + ConstraintValue, out var values))
@@ -57,10 +64,16 @@ public sealed class Filter
 
         for (var i = 0; i < values.Count; i++)
         {
+            var v = values[i];
+            var m = mods[i];
+            if (v is null || m is null)
+            {
+                return false;
+            }
             var cons = new Constraint
             {
-                Value = values[i],
-                Match = mods[i],
+                Value = v,
+                Match = m,
             };
             filter.Constraints.Add(cons);
         }
@@ -102,42 +115,49 @@ public class Filters : List<Filter>
             }
         }
     }
-    
-    public void Resolve(Entity entity,Dictionary<string,StringValues>? querystringDictionary, Dictionary<string, object>? tokenDictionary)
+
+    public void Resolve(Entity entity, Dictionary<string, StringValues>? querystringDictionary,
+        Dictionary<string, object>? tokenDictionary)
     {
         foreach (var filter in this)
         {
-            var field = entity.FindOneAttribute(filter.FieldName);
-            if (field is null)
-            {
-                throw new Exception($"Fail to resolve filter: no field ${filter.FieldName} in ${entity.Name}");
-
-            }
+            var field = QueryExceptionChecker
+                .NotNull(entity.FindOneAttribute(filter.FieldName))
+                .ValueOrThrow($"Fail to resolve filter: no field ${filter.FieldName} in ${entity.Name}");
             foreach (var filterConstraint in filter.Constraints)
             {
-                var val = filterConstraint.Value;
-                if (val.StartsWith(QuerystringPrefix))
-                {
-                    var key = val.Substring(QuerystringPrefix.Length);
-                    if (querystringDictionary is null)
+                filterConstraint.ResolvedValues = QueryExceptionChecker
+                        .StrNotEmpty(filterConstraint.Value)
+                        .ValueOrThrow($"Fail to resolve Filter, value not set for field{field.Field}") switch
                     {
-                        throw new Exception($"Fail to resolve filter: no key ${key} in querystring");
-                    }
-                    filterConstraint.ResolvedValues =
-                        querystringDictionary[key].Select(x => field.CastToDatabaseType(x)).ToArray();
-                    
-                }
-                else if (val.StartsWith(TokenPrefix))
-                {
-                    //todo
-                }
-                else
-                {
-                    filterConstraint.ResolvedValues = [field.CastToDatabaseType(filterConstraint.Value)];
-                }
+                        var s when s.StartsWith(QuerystringPrefix) => ResolveQuerystringPrefix(field, s),
+                        var s when s.StartsWith(TokenPrefix) => ResolveTokenPrefix(s),
+                        var s => [field.CastToDatabaseType(s)]
+                    };
             }
         }
+
+        return;
+        
+        object[] ResolveQuerystringPrefix(Attribute field, string val)
+        {
+            var key = val[QuerystringPrefix.Length..];
+            var querystringDictionaryChecked = QueryExceptionChecker
+                .NotNull(querystringDictionary)
+                .ValueOrThrow($"Fail to resolve filter: no key {key} in query string");
+
+            return querystringDictionaryChecked[key].Select(x =>
+                field.CastToDatabaseType(QueryExceptionChecker.StrNotEmpty(x)
+                    .ValueOrThrow($"Fail to resolve filter: {key} not found in attribute"))).ToArray();
+        }
+
+        object[] ResolveTokenPrefix(string val)
+        {
+            // Implement the logic for resolving TokenPrefix here
+            throw new NotImplementedException();
+        }
     }
+
     public void Apply(Entity entity, Query? query)
     {
         if (query is null)
@@ -150,4 +170,6 @@ public class Filters : List<Filter>
             filter.Apply(entity, query);
         }
     }
+    
+   
 }
