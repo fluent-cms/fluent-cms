@@ -608,8 +608,7 @@ COPY public."AspNetUsers" ("Id", "UserName", "NormalizedUserName", "Email", "Nor
 --
 
 COPY public."__EFMigrationsHistory" ("MigrationId", "ProductVersion") FROM stdin;
-20240618230208_first	8.0.6
-20240629130611_identity	8.0.6
+20240721131844_Init	8.0.6
 \.
 
 
