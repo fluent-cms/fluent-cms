@@ -25,34 +25,24 @@ public class AccountController : ControllerBase
     [HttpGet("whoami")]
     public async Task<IActionResult> WhoAmI()
     {
-        try
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null)
-            {
-                return Unauthorized(new { message = "User is not authenticated" });
-            }
-
-            var user = await _signInManager.UserManager.FindByIdAsync(userId);
-            if (user == null)
-            {
-                return NotFound(new { message = "User not found" });
-            }
-
-            var userInfo = new
-            {
-                user.UserName,
-                user.Email,
-                // Add other properties you want to return
-            };
-
-            return Ok(userInfo);
+            return Unauthorized(new { message = "User is not authenticated" });
         }
-        catch (Exception ex)
+
+        var user = await _signInManager.UserManager.FindByIdAsync(userId);
+        if (user == null)
         {
-            return Problem(title: "");
+            return NotFound(new { message = "User not found" });
         }
+
+        var userInfo = new
+        {
+            user.UserName,
+            user.Email,
+            // Add other properties you want to return
+        };
+        return Ok(userInfo);
     }
-
-
 }

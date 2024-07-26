@@ -18,12 +18,20 @@ public class PostgresDefinitionExecutor(string connectionString, ILogger<Postgre
         });
         
         var sql= $"CREATE TABLE {tableName} ({string.Join(", ", columnDefinitionStrs)});";
-        sql += $@"
-            CREATE TRIGGER update_{tableName}_updated_at 
-                BEFORE UPDATE ON {tableName} 
-                FOR EACH ROW
-            EXECUTE FUNCTION update_updated_at_column();";
-
+        sql += $"""
+                CREATE OR REPLACE FUNCTION __update_updated_at_column()
+                    RETURNS TRIGGER AS $$
+                BEGIN
+                    NEW.updated_at = NOW();
+                    RETURN NEW;
+                END;
+                $$ LANGUAGE plpgsql;
+                
+                CREATE TRIGGER update_{tableName}_updated_at 
+                                BEFORE UPDATE ON {tableName} 
+                                FOR EACH ROW
+                EXECUTE FUNCTION __update_updated_at_column();
+                """;
         await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync());
     }
    

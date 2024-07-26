@@ -7,14 +7,13 @@ namespace Utils.Tests.DaoTests;
 
 public class SqliteDefinitionExecutorTests
 {
-    private readonly Mock<ILogger<SqliteDefinitionExecutor>> _mockLogger;
     private readonly SqliteDefinitionExecutor _executor;
 
     public SqliteDefinitionExecutorTests()
     {
+        var logger = new Mock<ILogger<SqliteDefinitionExecutor>>();
+        _executor = new SqliteDefinitionExecutor("Data Source=test.db",logger.Object);
         Batteries.Init();
-        _mockLogger = new Mock<ILogger<SqliteDefinitionExecutor>>();
-        _executor = new SqliteDefinitionExecutor("Data Source=test.db",_mockLogger.Object);
     }
     [Fact]
     public async Task GetDefinitionOfNotExistsTable()

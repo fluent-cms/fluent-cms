@@ -60,7 +60,7 @@ app.MapFallbackToFile("index.html");
 
 await InitDb();
 app.Run();
-
+    
 async Task InitDb()
 {
     using var scope = app.Services.CreateScope();
@@ -71,16 +71,18 @@ async Task InitDb()
         Console.WriteLine("*********************************************************");
         Console.WriteLine("Database initialized, Ignore");
         Console.WriteLine("*********************************************************");
-        return;
     }
-
-    //now it's save to do migrate
-    await ctx.Database.MigrateAsync();
-    Console.WriteLine("*********************************************************");
-    Console.WriteLine("Initializing database");
-    Console.WriteLine("*********************************************************");
-    var schemaService = scope.ServiceProvider.GetRequiredService<ISchemaService>();
-    await schemaService.AddTopMenuBar();
+    else
+    {
+        //now it's save to do migrate
+        await ctx.Database.MigrateAsync();
+        Console.WriteLine("*********************************************************");
+        Console.WriteLine("Initializing database");
+        Console.WriteLine("*********************************************************");
+        var schemaService = scope.ServiceProvider.GetRequiredService<ISchemaService>();
+        await schemaService.AddSchemaTable();
+        await schemaService.AddTopMenuBar();
+    }
 }
 
 void InjectDbServices()
@@ -121,9 +123,6 @@ void InjectDbServices()
         default:
             throw new Exception($"Not supported Provider {provider}");
     }
-
-
-
 }
 
 void PrintVersion()

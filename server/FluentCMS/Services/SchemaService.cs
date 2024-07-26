@@ -1,12 +1,12 @@
-using FluentCMS.Data;
 using FluentCMS.Models;
+using SqlKata;
 using Utils.DataDefinitionExecutor;
+using Utils.KateQueryExecutor;
 using Utils.QueryBuilder;
+using Attribute = Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.Services;
 
-using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 public static class  SchemaType
@@ -16,64 +16,76 @@ public static class  SchemaType
     public const string View = "view";
 }
 
-public partial class SchemaService(AppDbContext context, IDefinitionExecutor definitionExecutor) : ISchemaService
+public static class SchemaName
 {
-    public async Task<IEnumerable<SchemaDisplayDto>> GetAll(string type)
+    public const string TopMenuBar = "top-menu-bar";
+}
+public partial class SchemaService(IDefinitionExecutor definitionExecutor, KateQueryExecutor kateQueryExecutor) : ISchemaService
+{
+    private const string SchemaTableName = "__schemas";
+    private const string SchemaColumnId = "id";
+    private const string SchemaColumnName = "name";
+    private const string SchemaColumnType = "type";
+    private const string SchemaColumnSettings = "settings";
+    private const string SchemaColumnDeleted = "deleted";
+
+    private static string[] Fields() => [SchemaColumnId, SchemaColumnName, SchemaColumnType, SchemaColumnSettings];
+
+    private static Query BaseQuery()
     {
-        var schemas = await context.Schemas.Where(x => string.IsNullOrWhiteSpace(type) || x.Type == type).ToListAsync();
-        return schemas.Select(x => new SchemaDisplayDto(x));
+        return new Query(SchemaTableName).Select(Fields()).Where(SchemaColumnDeleted, false);
     }
 
-    public async Task<SchemaDisplayDto?> GetByIdOrName(string name)
+    
+    public async Task<Schema[]> GetAll(string type)
     {
-        if ( int.TryParse(name, out var id))
+        var query = BaseQuery();
+        if (!string.IsNullOrWhiteSpace(type))
         {
-            var item = Val.NotNull(await context.Schemas.FindAsync(id)).ValOrThrow($"not find schema by id {id}");
-            return new SchemaDisplayDto(item);
+            query = query.Where(SchemaColumnType, type);
         }
-        else
-        {
-            var item = await context.Schemas.FirstOrDefaultAsync(x => x.Name == name);
-            item = Val.NotNull(item).ValOrThrow($"Schema [{name}] does not exist");
-            var dto = new SchemaDisplayDto(item);
-            //get by name is called from Admin Panel, need load related settings
-            await PostLoadEntity(dto);
-            return dto;
-        }
+        return  ParseSchema(await kateQueryExecutor.Many(query)); 
     }
 
-    public async Task<SchemaDto> Save(SchemaDto dto)
+    public async Task<Schema?> GetByIdOrNameDefault(string name)
     {
-        var existing = await context.Schemas.FirstOrDefaultAsync(s => s.Name == dto.Name && s.Id != dto.Id);
-        Val.CheckBool(existing is null).ThrowFalse($"the schema name {dto.Name} exists");
+        var query = int.TryParse(name, out var id)
+            ? BaseQuery().Where(SchemaColumnId, id)
+            : BaseQuery().Where(SchemaColumnName, name);
+        return ParseSchema(await kateQueryExecutor.One(query));
+    }
 
-        await PreSaveView(dto);
-        if (dto.Id is null)
+    public async Task<Schema> GetByIdOrName(string name,bool extend)
+    {
+        var item =  Val.NotNull(await GetByIdOrNameDefault(name)).
+            ValOrThrow($"Schema [{name}] does not exist");
+        if (extend)
         {
-            var item = dto.ToModel();
-            context.Schemas.Add(item);
-            await context.SaveChangesAsync();
-            dto.Id = item.Id;
+            await IniIfSchemaIsEntity(item);
         }
-        else
-        {
-            var item = Val.NotNull(context.Schemas.FirstOrDefault(i => i.Id == dto.Id))
-                .ValOrThrow($"not find schema by id {dto.Id}");
-            dto.Attach(item);
-            await context.SaveChangesAsync();
-        }
+
+        return item;
+    }
+
+    public async Task<Schema> Save(Schema dto)
+    {
+        var query = BaseQuery().Where(SchemaColumnName, dto.Name)
+            .WhereNot(SchemaColumnId, dto.Id);
+        var existing = await kateQueryExecutor.Count(query);
+        Val.CheckBool(existing ==0)
+            .ThrowFalse($"the schema name {dto.Name} exists");
+        await VerifyIfSchemaIsView(dto);
+        await SaveSchema(dto);
         return dto;
     }
 
     public async Task<View> GetViewByName(string name)
     {
         Val.StrNotEmpty(name).ValOrThrow("view name should not be empty");
-        var item = await context.Schemas
-            .Where(x => x.Name == name && x.Type == SchemaType.View)
-            .FirstOrDefaultAsync();
+        var query = BaseQuery().Where(SchemaColumnName, name).Where(SchemaColumnType, SchemaType.View);
+        var item = ParseSchema(await kateQueryExecutor.One(query));
         item = Val.NotNull(item).ValOrThrow($"didn't find {name}");
-        var dto = new SchemaDto(item);
-        var view = Val.NotNull(dto.Settings?.View)
+        var view = Val.NotNull(item.Settings.View)
             .ValOrThrow("invalid view format");
         var entityName = Val.StrNotEmpty(view.EntityName)
             .ValOrThrow($"referencing entity was not set for {view}");
@@ -86,7 +98,7 @@ public partial class SchemaService(AppDbContext context, IDefinitionExecutor def
         return await GetEntityByName(name, true);
     }
 
-    public async Task<SchemaDto> SaveTableDefine(SchemaDto dto)
+    public async Task<Schema> SaveTableDefine(Schema dto)
     {
         var entity = Val.NotNull(dto.Settings?.Entity).ValOrThrow("invalid payload");
         var cols = await definitionExecutor.GetColumnDefinitions(entity.TableName);
@@ -124,15 +136,72 @@ public partial class SchemaService(AppDbContext context, IDefinitionExecutor def
 
     public async Task<bool> Delete(int id)
     {
-        var item = await context.Schemas.FindAsync(id);
-        ArgumentNullException.ThrowIfNull(item);
-        context.Schemas.Remove(item);
-        await context.SaveChangesAsync();
+        var query = new Query(SchemaTableName).Where(SchemaColumnId,id).AsUpdate([SchemaColumnDeleted],[1]);
+        await kateQueryExecutor.Exec(query);
         return true;
     }
 
     public async Task AddTopMenuBar()
     {
-        await _AddTopMenuBar();
+        var query = BaseQuery().Where(SchemaColumnName, SchemaName.TopMenuBar);
+        var item = ParseSchema(await kateQueryExecutor.One(query));
+        if (item is not null)
+        {
+            return;
+        }
+        
+        var menuItem = new MenuItem
+        {
+            Label = "Schema Builder",
+            Url = "/schema-ui/list.html",
+            Icon = "pi-cog",
+            IsHref = true
+        };
+        var menuBarSchema = new Schema
+        {
+            Name = SchemaName.TopMenuBar,
+            Type = SchemaType.Menu,
+        };
+        menuBarSchema.Settings = new Settings
+        {
+            Menu = new Menu
+            {
+                Name = SchemaName.TopMenuBar,
+                MenuItems = [menuItem]
+            }
+        };
+        await SaveSchema(menuBarSchema);
+    }
+
+    public async Task AddSchemaTable()
+    {
+        var cols = await definitionExecutor.GetColumnDefinitions(SchemaTableName);
+        if (cols.Length > 0)
+        {
+            return;
+        }
+        var entity = new Entity
+        {
+            TableName = SchemaTableName,
+            Attributes = [
+                new Attribute
+                {
+                    Field = SchemaColumnName,
+                    DataType = DataType.String,
+                },
+                new Attribute
+                {
+                    Field = SchemaColumnType,
+                    DataType = DataType.String,
+                }, 
+                new Attribute
+                {
+                    Field = SchemaColumnSettings,
+                    DataType = DataType.Text,
+                },            
+            ]
+        };
+        entity.EnsureDefaultAttribute();
+        await definitionExecutor.CreateTable(entity.TableName, entity.ColumnDefinitions());
     }
 }

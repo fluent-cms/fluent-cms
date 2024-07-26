@@ -13,24 +13,6 @@ namespace FluentCMS.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "__schemas",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "VARCHAR", maxLength: 250, nullable: false),
-                    Type = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Settings = table.Column<string>(type: "text", nullable: false),
-                    Deleted = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK___schemas", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "AspNetRoles",
                 columns: table => new
                 {
@@ -176,12 +158,6 @@ namespace FluentCMS.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX___schemas_Name",
-                table: "__schemas",
-                column: "Name",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
                 column: "RoleId");
@@ -222,9 +198,6 @@ namespace FluentCMS.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "__schemas");
-
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
 

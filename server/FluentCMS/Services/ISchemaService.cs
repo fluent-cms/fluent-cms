@@ -5,13 +5,15 @@ namespace FluentCMS.Services;
 
 public interface ISchemaService
 {
-    Task<IEnumerable<SchemaDisplayDto>> GetAll(string type);
+    Task<Schema[]> GetAll(string type);
     Task<Entity?> GetEntityByName(string name);
     Task<View> GetViewByName(string name);
-    Task<SchemaDisplayDto?> GetByIdOrName(string name);
+    Task<Schema> GetByIdOrName(string name, bool extend);
+    Task<Schema?> GetByIdOrNameDefault(string name);
     Task<Entity?> GetTableDefine(string tableName);
-    Task<SchemaDto> SaveTableDefine(SchemaDto schemaDto);
-    Task<SchemaDto> Save(SchemaDto schema);
+    Task<Schema> SaveTableDefine(Schema schemaDto);
+    Task<Schema> Save(Schema schema);
     Task AddTopMenuBar();
+    Task AddSchemaTable();
     Task<bool> Delete(int id);
 }

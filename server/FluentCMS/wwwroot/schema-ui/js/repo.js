@@ -15,7 +15,7 @@ async function define(name){
 }
 
 async function one(id){
-    const {data, err} = await tryFetch(async ()=>await  axios.get(apiPrefix + `/schemas/${id}`))
+    const {data, err} = await tryFetch(async ()=>await  axios.get(apiPrefix + `/schemas/${id}/?extend=false`))
     if (err){
         return {err}
     }

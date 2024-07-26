@@ -64,5 +64,7 @@
       <_ContentIncludedByDefault Remove="wwwroot\assets\quill-600b9110.js" />
       <_ContentIncludedByDefault Remove="wwwroot\assets\quill-6a9ab64a.js" />
     </ItemGroup>
-
+    <ItemGroup>
+        <InternalsVisibleTo Include="FluentCMS.IntegrationTests" />
+    </ItemGroup>
 </Project>

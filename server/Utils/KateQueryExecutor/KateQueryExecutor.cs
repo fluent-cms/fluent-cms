@@ -4,10 +4,10 @@ namespace Utils.KateQueryExecutor;
 
 public sealed class KateQueryExecutor(IKateProvider provider)
 {
-   public async Task<int?> Exec(Query? query)
+   public async Task<int> Exec(Query? query)
    {
       return query is null
-         ? null
+         ? 0
          : await provider.Execute(async db =>
          {
             var res = await db.ExecuteScalarAsync<int>(query);

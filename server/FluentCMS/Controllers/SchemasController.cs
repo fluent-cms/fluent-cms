@@ -8,34 +8,34 @@ namespace FluentCMS.Controllers;
 public class SchemasController(ISchemaService schemaService):ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<SchemaDisplayDto>>> GetAll([FromQuery]string? type )
+    public async Task<ActionResult<IEnumerable<Schema>>> GetAll([FromQuery]string? type )
     {
-        return Ok(await schemaService.GetAll(type));
+        return Ok(await schemaService.GetAll(type??""));
     }
     
     [HttpPost]
-    public async Task<ActionResult<Schema>> Post([FromBody] SchemaDto dto)
+    public async Task<ActionResult<Schema>> Post([FromBody] Schema dto)
     {
         var item = await schemaService.Save(dto);
         return  Ok(item);
     }
     [HttpPost("define")]
-    public async Task<ActionResult<SchemaDisplayDto>> SaveTableDefine( [FromBody] SchemaDto dto)
+    public async Task<ActionResult<Schema>> SaveTableDefine( [FromBody] Schema dto)
     {
         var item = await schemaService.SaveTableDefine(dto);
         return Ok(item);
     }
     [HttpGet("{name}/define")]
-    public async Task<ActionResult<SchemaDisplayDto>> GetTableDefine(string name)
+    public async Task<ActionResult<Schema>> GetTableDefine(string name)
     {
         var item = await schemaService.GetTableDefine(name);
         return Ok(item);
     }
 
     [HttpGet("{name}")]
-    public async Task<ActionResult<SchemaDisplayDto>> GetOne(string name)
+    public async Task<ActionResult<Schema>> GetOne(string name, [FromQuery] bool? extend)
     {
-        return Ok(await schemaService.GetByIdOrName(name));
+        return Ok(await schemaService.GetByIdOrName(name, extend?? true));
     }
 
 
