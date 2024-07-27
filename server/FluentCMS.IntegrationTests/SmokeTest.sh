@@ -34,7 +34,7 @@ set -e
 export Logging__LogLevel__Microsoft_AspNetCore=Warning
 
 # Sqlite With Default Data 
-test_sqlite "cms.db"
+db_path=$(pwd)/default.db && rm -f $db_path && cp ../FluentCMS/cms.db "$db_path" && test_sqlite "$db_path"
 
 # Sqlite With Empty Data 
 db_path=$(pwd)/temp.db && rm -f "$db_path" && test_sqlite "$db_path"

@@ -138,9 +138,10 @@ void PrintVersion()
          .ToArray();
      
      Console.WriteLine("*********************************************************");
-     Console.WriteLine($"Fluent CMS: version 0.1, build Jul21 4pm");
+     Console.WriteLine("Fluent CMS: version 0.1, build Jul21 4pm");
      Console.WriteLine($"Resolved Database Provider: {provider}");
      Console.WriteLine($"Connection String: {String.Join(";", parts)}");
+     Console.WriteLine($"Current Directory: {Directory.GetCurrentDirectory()}");
      Console.WriteLine("*********************************************************");   
 }
 
