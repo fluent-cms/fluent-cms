@@ -1,5 +1,6 @@
 using System.Text.Json;
 using FluentCMS.Models;
+using FluentResults;
 using SqlKata;
 using Utils.DataDefinitionExecutor;
 using Utils.QueryBuilder;
@@ -9,7 +10,7 @@ public partial class SchemaService
 {
     private async Task VerifyIfSchemaIsView(Schema dto)
     {
-        var view = dto.Settings?.View;
+        var view = dto.Settings.View;
         if (view is null) //not view, just ignore
         {
             return;
@@ -17,8 +18,7 @@ public partial class SchemaService
 
         var entityName = Val.StrNotEmpty(view.EntityName).
             ValOrThrow($"entity name of {view.EntityName} should not be empty");
-        view.Entity = Val.NotNull(await GetEntityByName(entityName, true)).
-            ValOrThrow($"not find entity {entityName}");
+        view.Entity = Val.CheckResult(await GetEntityByNameOrDefault(entityName, true));
         
         foreach (var viewAttributeName in view.AttributeNames??[])
         {
@@ -26,7 +26,7 @@ public partial class SchemaService
                 .ValOrThrow($"not find attribute {viewAttributeName} of enity {entityName}");
         }
 
-        var listAttributes = view.LocalAttributes(InListOrDetail.InList);
+        var listAttributes = Val.CheckResult(view.LocalAttributes(InListOrDetail.InList));
         foreach (var viewSort in view.Sorts??[])
         {
             var find = listAttributes.FirstOrDefault(x=>x.Field == viewSort.FieldName);
@@ -41,15 +41,15 @@ public partial class SchemaService
         }
     }
     
-    private async Task IniIfSchemaIsEntity(Schema? dto)
+    private async Task<Result> InitIfSchemaIsEntity(Schema dto)
     {
-        var entity = dto?.Settings.Entity;
+        var entity = dto.Settings.Entity;
         if (entity is null)//not a entity, ignore
         {
-            return;
+            return Result.Ok();
         }
         entity.Init();
-        await LoadRelated(entity);
+        return await LoadRelated(entity);
     }
 
     private async Task VerifyEntity(Schema dto, ColumnDefinition[] cols, Entity entity)
@@ -88,7 +88,7 @@ public partial class SchemaService
         }
     }
 
-    private async Task<Entity?> GetEntityByName(string name, bool loadRelated)
+    private async Task<Result<Entity>> GetEntityByNameOrDefault(string name, bool loadRelated)
     {
         var query = BaseQuery().Where(SchemaColumnName, name).Where(SchemaColumnType, SchemaType.Entity);
         var item = ParseSchema(await kateQueryExecutor.One(query));
@@ -96,44 +96,66 @@ public partial class SchemaService
         var entity = item?.Settings.Entity;
         if (entity is null)
         {
-            return null;
+            return Result.Fail($"Not find entity ${name}");
         }
 
         entity.Init();
-        if (loadRelated)
+        if (!loadRelated)
         {
-            await LoadRelated(entity);
+            return entity;
+        }
+
+        var result = await LoadRelated(entity);
+        if (result.IsFailed)
+        {
+            return Result.Fail(result.Errors);
         }
 
         return entity;
     }
 
-    private async Task LoadRelated(Entity entity)
+    private async Task<Result> LoadRelated(Entity entity)
     {
         foreach (var attribute in entity.GetAttributesByType(DisplayType.lookup))
         {
-            var lookupEntityName = Val.StrNotEmpty(attribute.GetLookupEntityName())
-                .ValOrThrow($"lookup entity name for {attribute.FullName()} should not be empty");
-            attribute.Lookup = Val.NotNull(await GetEntityByName(lookupEntityName, false))
-                .ValOrThrow($"not find entity by name {lookupEntityName} for lookup {attribute.FullName()}");
+            var lookupEntityName = attribute.GetLookupEntityName();
+            if (lookupEntityName.IsFailed)
+            {
+                return Result.Fail(lookupEntityName.Errors);
+            }
+
+            var lookup = await GetEntityByNameOrDefault(lookupEntityName.Value, false);
+            if (lookup.IsFailed)
+            {
+                return Result.Fail($"not find entity by name {lookupEntityName} for lookup {attribute.FullName()}");
+            }
+
+            attribute.Lookup = lookup.Value;
         }
 
         foreach (var attribute in entity.GetAttributesByType(DisplayType.crosstable))
         {
-            var targetEntityName = Val.StrNotEmpty(attribute.GetCrossEntityName())
-                .ValOrThrow($"crosstable entity name for ${attribute.FullName()}");
-            var targetEntity = Val.NotNull(await GetEntityByName(targetEntityName, false))
-                .ValOrThrow($"not find entity by name {entity.Name} for crosstable {attribute.FullName()}");
-            attribute.Crosstable = new Crosstable(entity, targetEntity);
+            var targetEntityName = attribute.GetCrossEntityName();
+            if (targetEntityName.IsFailed)
+            {
+                return Result.Fail(targetEntityName.Errors);
+            }
+
+            var targetEntity = await GetEntityByNameOrDefault(targetEntityName.Value, false);
+            if (targetEntity.IsFailed)
+            {
+                return Result.Fail($"not find entity by name {entity.Name} for crosstable {attribute.FullName()}");
+            }
+
+            attribute.Crosstable = new Crosstable(entity, targetEntity.Value);
         }
+        return Result.Ok();
     }
 
     private async Task CreateCrosstable(Entity entity, global::Utils.QueryBuilder.Attribute attribute)
     {
-        var entityName = Val.StrNotEmpty(attribute.GetCrossEntityName())
-            .ValOrThrow($"crosstable entity of {attribute.Field} was not set");
-        var targetEntity = Val.NotNull(await GetEntityByName(entityName, false))
-            .ValOrThrow($"not find entity by name {entityName}");
+        var entityName = Val.CheckResult(attribute.GetCrossEntityName());
+        var targetEntity = Val.CheckResult(await GetEntityByNameOrDefault(entityName, false));
         var crossTable = new Crosstable(entity, targetEntity);
         var columns = await definitionExecutor.GetColumnDefinitions(crossTable.CrossEntity.TableName);
         if (columns.Length == 0)
@@ -146,9 +168,8 @@ public partial class SchemaService
     {
         Val.CheckBool(attribute.DataType != DataType.Int)
             .ThrowTrue("lookup datatype should be int");
-        var entityName = Val.StrNotEmpty(attribute.GetLookupEntityName())
-            .ValOrThrow($"lookup entity of {attribute.Field} was not set");
-        Val.NotNull(await GetEntityByName(entityName, false))
+        var entityName = Val.CheckResult(attribute.GetLookupEntityName());
+        Val.NotNull(await GetEntityByNameOrDefault(entityName, false))
             .ValOrThrow($"not find entity by name {entityName}");
     }
 

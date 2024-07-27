@@ -2,12 +2,12 @@ using System.Text.Json.Serialization;
 using FluentCMS.Services;
 using FluentCMS.Data;
 using Utils.DataDefinitionExecutor;
-using Utils.File;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Utils.Cache;
 using Utils.KateQueryExecutor;
+using Utils.LocalFileStore;
 using Utils.QueryBuilder;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -165,7 +165,7 @@ void InjectServices()
 {
     builder.Services.AddSingleton<MemoryCacheFactory>();
     builder.Services.AddSingleton<KeyValCache<View>>(p=> new KeyValCache<View>(p.GetRequiredService<IMemoryCache>(),30,"view"));
-    builder.Services.AddSingleton<FileUtl>(p => new FileUtl("wwwroot/files"));
+    builder.Services.AddSingleton<LocalFileStore>(p => new LocalFileStore("wwwroot/files"));
     builder.Services.AddSingleton<KateQueryExecutor>();
     builder.Services.AddScoped<ISchemaService, SchemaService>();
     builder.Services.AddScoped<IEntityService, EntityService >();

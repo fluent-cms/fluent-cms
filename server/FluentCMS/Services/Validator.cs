@@ -1,3 +1,5 @@
+using FluentResults;
+
 namespace FluentCMS.Services;
 
 public class InvalidParamException(string message) : Exception(message);
@@ -61,5 +63,21 @@ public static class Val
     public static BoolExceptionBuilder CheckBool(bool condition)
     {
         return new BoolExceptionBuilder(condition);
+    }
+    public static void CheckResult(Result? result)
+    {
+        if (result is not null && result.IsFailed)
+        {
+            throw new InvalidParamException($"{result.Errors}");
+        }
+    }
+    
+    public static T CheckResult<T>(Result<T> result)
+    {
+        return result switch
+        {
+            { IsFailed: true } => throw new InvalidParamException($"{result.Errors}"),
+            _ => result.Value
+        };
     }
 }

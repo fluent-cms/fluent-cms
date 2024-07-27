@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace FluentCMS.Utils.Base64Url
+namespace Utils.Base64Url
 {
     public static class Base64UrlEncoder
     {

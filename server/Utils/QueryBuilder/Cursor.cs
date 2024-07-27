@@ -1,60 +1,44 @@
 using System.Text.Json;
-using FluentCMS.Utils.Base64Url;
+using Utils.Base64Url;
+using FluentResults;
 using SqlKata;
 
 namespace Utils.QueryBuilder;
 
-public class Cursor
+public sealed class Cursor
 {
     public string First { get; set; } = "";
     public string Last { get; set; } = "";
+
     public int Limit { get; set; }
 
-    public bool GetFirstAndLastCursor(Record[]? items, Sorts? sorts, bool hasMore, 
-        out string first, out bool hasPrevious,
-        out string last, out bool hasNext)
+    public Result<Cursor> GetNextCursor(Record[] items, Sorts? sorts, bool hasMore)
     {
-        first = "";
-        last = "";
-        hasNext = false;
-        hasPrevious = false;
-        
-        if (sorts is null || items is null || items.Length == 0)
+        if (sorts is null)
         {
-            return false;
+            return Result.Fail("Can not generate next cursor, sort was not set");
         }
 
-        if (hasMore)
+        if (items.Length == 0)
         {
-            if (string.IsNullOrWhiteSpace(Last) && string.IsNullOrWhiteSpace(First))
-            {
-                // the home page, keep hasPrevious false 
-                hasNext = true;
-                last = GenerateCursor(items.Last(), sorts);
-            }
-            else
-            {
-                hasNext = true;
-                hasPrevious = true;
-                first = GenerateCursor(items.First(), sorts);
-                last = GenerateCursor(items.Last(), sorts);
-            }
+            return Result.Fail("No result, can not generate cursor");
         }
-        else
+
+        var (hasPrevious, hasNext) = (hasMore, First,Last) switch
         {
-            if (!string.IsNullOrWhiteSpace(Last))
-            {
-                // click next, so must has previous
-                hasPrevious = true;
-                first = GenerateCursor(items.First(), sorts);
-            }else if (!string.IsNullOrWhiteSpace(First))
-            {
-                // click previous, so must has next
-                hasNext = true;
-                last = GenerateCursor(items.Last(), sorts);
-            }
-        }
-        return true;
+            (true, "", "") => (false, true), // home page, should not has previous
+            (false, "", "") => (false, false), // home page
+            (true, _, _) => (true, true), // no matter click next or previous, show both
+            (false, _, "") => (false, true), // click preview, should have next
+            (false, "", _) => (true, false), // click next, should nave previous
+            _ => (false, false)
+        };
+        
+        return new Cursor
+        {
+            First = hasPrevious? GenerateCursor(items.First(), sorts):"",
+            Last = hasNext? GenerateCursor(items.Last(), sorts):""
+        };
     }
 
     private static string GenerateCursor(Record item, Sorts sorts)
@@ -83,29 +67,32 @@ public class Cursor
         cursor = Base64UrlEncoder.Decode(cursor);
         var element = JsonSerializer.Deserialize<JsonElement>(cursor);
         var dict = RecordParser.Parse(element, entity);
-        if (sorts.Count == 1)
+        switch (sorts.Count)
         {
-            var sort = sorts[0];
-            query.Where(entity.Fullname(sort.FieldName), sort.GetCompareOperator(forNextPage), dict[sort.FieldName]);
-            return;
-        }
+            case 1:
 
-        if (sorts.Count > 2)
-        {
-            throw new Exception("Only Support order by two field");
+                var sort = sorts[0];
+                query.Where(entity.Fullname(sort.FieldName), sort.GetCompareOperator(forNextPage),
+                    dict[sort.FieldName]);
+                break;
+            case 2:
+                var first = sorts.First();
+                var last = sorts.Last();
+                query.Where(q =>
+                {
+                    q.Where(entity.Fullname(first.FieldName), first.GetCompareOperator(forNextPage),
+                        dict[first.FieldName]);
+                    q.Or();
+                    q.Where(entity.Fullname(first.FieldName), dict[first.FieldName]);
+                    q.Where(entity.Fullname(last.FieldName), last.GetCompareOperator(forNextPage),
+                        dict[last.FieldName]);
+                    return q;
+                });
+                break;
+            default:
+                throw new Exception("Only Support sort more than 2 fields");
         }
-
-        var first = sorts.First();
-        var last = sorts.Last();
-        query.Where(q =>
-        {
-            q.Where(entity.Fullname(first.FieldName), first.GetCompareOperator(forNextPage), dict[first.FieldName]);
-            q.Or();
-            q.Where(entity.Fullname(first.FieldName), dict[first.FieldName]);
-            q.Where(entity.Fullname(last.FieldName), last.GetCompareOperator(forNextPage), dict[last.FieldName]);
-            return q;
-        });
-   }
+    }
 
     public void Apply(Entity entity, Query? query, Sorts? sorts)
     {

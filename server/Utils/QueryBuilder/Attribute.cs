@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json.Serialization;
+using FluentResults;
 using Utils.DataDefinitionExecutor;
 
 namespace Utils.QueryBuilder;
@@ -51,14 +52,14 @@ public class Attribute
         ArgumentNullException.ThrowIfNull(Parent);
         return Parent.TableName + "." + Field;
     }
-    public string GetCrossEntityName()
+    public Result<string> GetCrossEntityName()
     {
-        return Options;
+        return string.IsNullOrWhiteSpace(Options) ? Result.Fail($"not find corsstable for {FullName()}") : Options;
     }
  
-    public string GetLookupEntityName()
+    public Result<string> GetLookupEntityName()
     {
-        return Options;
+        return string.IsNullOrWhiteSpace(Options) ? Result.Fail($"not find lookup for {FullName()}") : Options;
     }
     
     public object CastToDatabaseType(string str)

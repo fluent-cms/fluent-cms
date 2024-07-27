@@ -1,3 +1,4 @@
+using FluentResults;
 using Microsoft.Extensions.Primitives;
 using Microsoft.VisualBasic;
 using SqlKata;
@@ -116,42 +117,53 @@ public class Filters : List<Filter>
         }
     }
 
-    public void Resolve(Entity entity, Dictionary<string, StringValues>? querystringDictionary,
+    public Result Resolve(Entity entity, Dictionary<string, StringValues>? querystringDictionary,
         Dictionary<string, object>? tokenDictionary)
     {
         foreach (var filter in this)
         {
-            var field = QueryExceptionChecker
-                .NotNull(entity.FindOneAttribute(filter.FieldName))
-                .ValueOrThrow($"Fail to resolve filter: no field ${filter.FieldName} in ${entity.Name}");
+            var field = entity.FindOneAttribute(filter.FieldName);
+            if (field is null)
+            {
+                return Result.Fail($"Fail to resolve filter: no field ${filter.FieldName} in ${entity.Name}");
+            }    
             foreach (var filterConstraint in filter.Constraints)
             {
-                filterConstraint.ResolvedValues = QueryExceptionChecker
-                        .StrNotEmpty(filterConstraint.Value)
-                        .ValueOrThrow($"Fail to resolve Filter, value not set for field{field.Field}") switch
-                    {
-                        var s when s.StartsWith(QuerystringPrefix) => ResolveQuerystringPrefix(field, s),
-                        var s when s.StartsWith(TokenPrefix) => ResolveTokenPrefix(s),
-                        var s => [field.CastToDatabaseType(s)]
-                    };
+                var val = filterConstraint.Value;
+                if (string.IsNullOrWhiteSpace(val))
+                {
+                    return Result.Fail($"Fail to resolve Filter, value not set for field{field.Field}");
+                }
+
+                var result = val switch
+                {
+                    _ when val.StartsWith(QuerystringPrefix) => ResolveQuerystringPrefix(field, val),
+                    _ when val.StartsWith(TokenPrefix) => ResolveTokenPrefix(val),
+                    _ => Result.Ok<object[]>([field.CastToDatabaseType(val)]),
+                };
+                if (result.IsFailed)
+                {
+                    return Result.Fail(result.Errors);
+                }
+
+                filterConstraint.ResolvedValues = result.Value;
             }
         }
-
-        return;
+        return Result.Ok();
         
-        object[] ResolveQuerystringPrefix(Attribute field, string val)
+        Result<object[]> ResolveQuerystringPrefix(Attribute field, string val)
         {
             var key = val[QuerystringPrefix.Length..];
-            var querystringDictionaryChecked = QueryExceptionChecker
-                .NotNull(querystringDictionary)
-                .ValueOrThrow($"Fail to resolve filter: no key {key} in query string");
+            if (querystringDictionary is null)
+            {
+                return Result.Fail($"Fail to resolve filter: no key {key} in query string");
+            }
 
-            return querystringDictionaryChecked[key].Select(x =>
-                field.CastToDatabaseType(QueryExceptionChecker.StrNotEmpty(x)
-                    .ValueOrThrow($"Fail to resolve filter: {key} not found in attribute"))).ToArray();
+            return querystringDictionary[key].Select(x =>
+                field.CastToDatabaseType(x!)).ToArray();
         }
 
-        object[] ResolveTokenPrefix(string val)
+        Result<object[]> ResolveTokenPrefix(string val)
         {
             // Implement the logic for resolving TokenPrefix here
             throw new NotImplementedException();

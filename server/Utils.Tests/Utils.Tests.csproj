@@ -26,8 +26,4 @@
       <ProjectReference Include="..\Utils\Utils.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="QueryBuilderTests\" />
-    </ItemGroup>
-
 </Project>

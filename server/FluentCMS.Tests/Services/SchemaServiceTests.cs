@@ -16,7 +16,6 @@ public class SchemaServiceTests :IAsyncLifetime
     private readonly string _dbFilePath = Path.Combine(Directory.GetCurrentDirectory(), $"{Guid.NewGuid()}.db");
     public SchemaServiceTests()
     {
-        Batteries.Init();
         var connectionString = $"Data Source={_dbFilePath}";
         var defineLogger = new Mock<ILogger<SqliteDefinitionExecutor>>();
         var definitionExecutor = new SqliteDefinitionExecutor(connectionString,defineLogger.Object);
@@ -24,6 +23,7 @@ public class SchemaServiceTests :IAsyncLifetime
         var sqlite = new SqliteKateProvider(connectionString,providerLogger.Object);
         var kateQueryExecutor = new KateQueryExecutor(sqlite);
         _schemaService = new SchemaService(definitionExecutor, kateQueryExecutor);
+        Batteries.Init();
     }
     private void CleanDb()
     {
@@ -57,7 +57,7 @@ public class SchemaServiceTests :IAsyncLifetime
         await _schemaService.AddSchemaTable();
         await _schemaService.AddTopMenuBar();
         await _schemaService.Save(TestSchema());
-        var entity = _schemaService.GetEntityByName(TestEntity().Name);
+        var entity = _schemaService.GetEntityByNameOrDefault(TestEntity().Name);
         Assert.NotNull(entity);
         Assert.True(entity.Id > 0);
     }
@@ -70,8 +70,9 @@ public class SchemaServiceTests :IAsyncLifetime
         var schema = await _schemaService.Save(TestSchema());
         schema.Settings.Entity!.TableName = "test2";
         await _schemaService.Save(schema);
-        var entity = await _schemaService.GetEntityByName(TestEntity().Name);
-        Assert.Equal("test2",entity!.TableName);
+        var entity = await _schemaService.GetEntityByNameOrDefault(TestEntity().Name);
+        Assert.False(entity.IsFailed);
+        Assert.Equal("test2",entity.Value.TableName);
     }
 
     [Fact]

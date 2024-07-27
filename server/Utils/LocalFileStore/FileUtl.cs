@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Http;
 
-namespace Utils.File;
+namespace Utils.LocalFileStore;
 
-public class FileUtl(string pathPrefix)
+public class LocalFileStore(string pathPrefix)
 {
     public async Task<string[]> Save(IFormFile[] files)
     {

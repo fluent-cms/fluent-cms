@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using FluentResults;
 using Microsoft.Extensions.Primitives;
 using SqlKata;
 
@@ -38,25 +39,33 @@ namespace Utils.QueryBuilder;
         {
         }
 
-        public Sorts(Dictionary<string, StringValues> queryStringDictionary)
+        public static Result<Sorts>  Parse(Dictionary<string, StringValues> queryStringDictionary)
         {
+            var ret = new Sorts();
             if (!(queryStringDictionary.TryGetValue(SortFields, out var fields) &&
                   queryStringDictionary.TryGetValue(SortOrders, out var orders) &&
                   fields.Count == orders.Count))
             {
-                return;
+                return ret;
             }
+
 
             for (var i = 0; i < fields.Count; i++)
             {
+                if (string.IsNullOrWhiteSpace(fields[i]))
+                {
+                    return Result.Fail($"Fail to resolve sorts, not find the {i} field");
+                }
+
                 var sort = new Sort
                 {
-                    FieldName = QueryExceptionChecker.StrNotEmpty(fields[i])
-                        .ValueOrThrow($"Fail to resolve sorts, not find the {i} field"),
+                    FieldName = fields[i]!,
                     Order = orders[i] == "1" ? SortOrder.Desc : SortOrder.Asc
                 };
-                Add(sort);
+                ret.Add(sort);
             }
+
+            return ret;
         }
 
         public void Apply(Entity entity, Query? query)

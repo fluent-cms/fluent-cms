@@ -1,4 +1,5 @@
 using FluentCMS.Models;
+using FluentResults;
 using SqlKata;
 using Utils.DataDefinitionExecutor;
 using Utils.KateQueryExecutor;
@@ -61,9 +62,8 @@ public partial class SchemaService(IDefinitionExecutor definitionExecutor, KateQ
             ValOrThrow($"Schema [{name}] does not exist");
         if (extend)
         {
-            await IniIfSchemaIsEntity(item);
+            Val.CheckResult(await InitIfSchemaIsEntity(item));
         }
-
         return item;
     }
 
@@ -89,13 +89,13 @@ public partial class SchemaService(IDefinitionExecutor definitionExecutor, KateQ
             .ValOrThrow("invalid view format");
         var entityName = Val.StrNotEmpty(view.EntityName)
             .ValOrThrow($"referencing entity was not set for {view}");
-        view.Entity = await GetEntityByName(entityName, true);
+        view.Entity = Val.CheckResult(await GetEntityByNameOrDefault(entityName));
         return view;
     }
 
-    public async Task<Entity?> GetEntityByName(string name)
+    public async Task<Result<Entity>> GetEntityByNameOrDefault(string name)
     {
-        return await GetEntityByName(name, true);
+        return await GetEntityByNameOrDefault(name, true);
     }
 
     public async Task<Schema> SaveTableDefine(Schema dto)

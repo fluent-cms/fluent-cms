@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using FluentResults;
 
 namespace Utils.QueryBuilder;
 
@@ -22,22 +23,26 @@ public sealed class View
         Filters = new Filters();
     }
 
-    public Attribute[] LocalAttributes(InListOrDetail inListOrDetail)
+    public Result<Attribute[]> LocalAttributes(InListOrDetail inListOrDetail)
     {
-        var entity = QueryExceptionChecker.NotNull(Entity).
-            ValueOrThrow($"entity of view {Name} is not initialized");
+        if (Entity is null)
+        {
+            return Result.Fail($"entity of view {Name} is not initialized");
+        }
+
         return AttributeNames?.Length > 0
-            ? entity.LocalAttributes(AttributeNames)
-            : entity.LocalAttributes(inListOrDetail);
+            ? Entity.LocalAttributes(AttributeNames)
+            : Entity.LocalAttributes(inListOrDetail);
     }
-    
-    public Attribute[] GetAttributesByType(DisplayType displayType, InListOrDetail inListOrDetail)
+
+    public Result<Attribute[]> GetAttributesByType(DisplayType displayType, InListOrDetail inListOrDetail)
     {
-        var entity = QueryExceptionChecker.NotNull(Entity).
-            ValueOrThrow($"entity of view {Name} is not initialized");
-        
+        if (Entity is null)
+        {
+            return Result.Fail($"entity of view {Name} is not initialized");
+        }
         return AttributeNames?.Length > 0
-            ? entity.GetAttributesByType(displayType, AttributeNames)
-            : entity.GetAttributesByType(displayType, inListOrDetail);
+            ? Entity.GetAttributesByType(displayType, AttributeNames)
+            : Entity.GetAttributesByType(displayType, inListOrDetail);
     }
 }

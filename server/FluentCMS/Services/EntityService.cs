@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.Extensions.Primitives;
 using Utils.KateQueryExecutor;
 using Utils.QueryBuilder;
 using Attribute = Utils.QueryBuilder.Attribute;
@@ -9,14 +10,9 @@ public class EntityService(KateQueryExecutor queryKateQueryExecutor, ISchemaServ
 {
     public async Task<Record?> One(string entityName, string id)
     {
-        var entity = await schemaService.GetEntityByName(entityName);
-        if (entity is null)
-        {
-            return null;
-        }
-
+        var entity = Val.CheckResult(await schemaService.GetEntityByNameOrDefault(entityName));
         var record =
-            await queryKateQueryExecutor.One(entity.ById(id,
+            await queryKateQueryExecutor.One(entity.ByIdQuery(id,
                 entity.LocalAttributes(InListOrDetail.InDetail)));
         if (record is null)
         {
@@ -33,29 +29,20 @@ public class EntityService(KateQueryExecutor queryKateQueryExecutor, ISchemaServ
         return record;
     }
 
-    public async Task<ListResult?> List(string entityName, Pagination? pagination, Sorts? sorts, Filters? filters)
+    public async Task<ListResult> List(string entityName, Pagination? pagination, Dictionary<string,StringValues> qs)
     {
-        var entity = await schemaService.GetEntityByName(entityName);
-        if (entity is null)
-        {
-            return null;
-        }
-
+        var entity = Val.CheckResult(await schemaService.GetEntityByNameOrDefault(entityName));
         pagination ??= new Pagination
         {
             Limit = entity.DefaultPageSize
         };
 
-        var query = entity.List(filters, sorts, pagination, null,
+        var filters = new Filters(qs);
+        var query = entity.ListQuery(filters, Val.CheckResult(Sorts.Parse(qs)), pagination, null,
             entity.LocalAttributes(InListOrDetail.InList));
 
 
         var records = await queryKateQueryExecutor.Many(query);
-        if (records is null)
-        {
-            return null;
-        }
-
         if (records.Length == 0)
         {
             return new ListResult
@@ -73,83 +60,74 @@ public class EntityService(KateQueryExecutor queryKateQueryExecutor, ISchemaServ
         return new ListResult
         {
             Items = records,
-            TotalRecords = await queryKateQueryExecutor.Count(entity.Count(filters))
+            TotalRecords = await queryKateQueryExecutor.Count(entity.CountQuery(filters))
         };
     }
     
-    public async Task<int?> Insert(string entityName, JsonElement ele)
+    public async Task<int> Insert(string entityName, JsonElement ele)
     {
-        var entity = await schemaService.GetEntityByName(entityName);
-        if (entity is null) return null;
-
+        var entity = Val.CheckResult(await schemaService.GetEntityByNameOrDefault(entityName));
         var record = RecordParser.Parse(ele, entity);
         return await queryKateQueryExecutor.Exec(entity.Insert(record));
     }
 
-    public async Task<int?> Update(string entityName, JsonElement ele)
+    public async Task<int> Update(string entityName, JsonElement ele)
     {
-        var entity = await schemaService.GetEntityByName(entityName);
-        if (entity is null) return null;
-
+        var entity = Val.CheckResult(await schemaService.GetEntityByNameOrDefault(entityName));
         var record = RecordParser.Parse(ele, entity);
-        return await queryKateQueryExecutor.Exec(entity.Update(record));
+        return await queryKateQueryExecutor.Exec(Val.CheckResult(entity.UpdateQuery(record)));
     }
 
-    public async Task<int?> Delete(string entityName, JsonElement ele)
+    public async Task<int> Delete(string entityName, JsonElement ele)
     {
-        var entity = await schemaService.GetEntityByName(entityName);
-        if (entity is null) return null;
-
+        var entity = Val.CheckResult(await schemaService.GetEntityByNameOrDefault(entityName));
         var record = RecordParser.Parse(ele, entity);
-        return await queryKateQueryExecutor.Exec(entity.Delete(record));
+        return await queryKateQueryExecutor.Exec(Val.CheckResult(entity.DeleteQuery(record)));
     }
 
-   
-
-    public async Task<int?> CrosstableDelete(string entityName, string strId, string attributeName, JsonElement[] elements)
+    public async Task<int> CrosstableDelete(string entityName, string strId, string attributeName, JsonElement[] elements)
     {
-        var attribute = await FindAttribute(entityName, attributeName);
-        if (attribute is null || attribute.Crosstable is null)
-        {
-            return null;
-        }
-
-        var items = elements.Select(ele =>
-            RecordParser.Parse(ele, attribute.Crosstable.TargetEntity));
-        return await queryKateQueryExecutor.Exec(attribute.Crosstable.Delete(strId, items.ToArray()));
-    }
-
-    public async Task<int?> CrosstableSave(string entityName, string strId, string attributeName, JsonElement[] elements)
-    {
-        var attribute = await FindAttribute(entityName, attributeName);
-        if (attribute is null || attribute.Crosstable is null)
-        {
-            return null;
-        }
-
-        var items = elements.Select(ele =>
-            RecordParser.Parse(ele, attribute.Crosstable.TargetEntity));
-        return await queryKateQueryExecutor.Exec(attribute.Crosstable.Insert(strId,items.ToArray() ));
-        }
-
-    public async Task<ListResult?> CrosstableList(string entityName, string strId, string attributeName, bool exclude)
-    {
-        var attribute =await FindAttribute(entityName, attributeName);
-        if (attribute is null || attribute.Crosstable is null)
-        {
-            return null;
-        }
+        var attribute = Val.NotNull(await FindAttribute(entityName, attributeName))
+            .ValOrThrow($"not find {attributeName} in {entityName}");
         
-        var selectAttributes = attribute.Crosstable.TargetEntity.LocalAttributes(InListOrDetail.InList);
-        var query = attribute.Crosstable.Many(selectAttributes,exclude, attribute.Crosstable.FromAttribute.CastToDatabaseType(strId));
+        var crossTable = Val.NotNull(attribute.Crosstable).
+            ValOrThrow($"not find crosstable for ${attributeName}");
+        
+        var items = elements.Select(ele =>
+            RecordParser.Parse(ele, crossTable.TargetEntity));
+        return await queryKateQueryExecutor.Exec(crossTable.Delete(strId, items.ToArray()));
+    }
+
+    public async Task<int> CrosstableSave(string entityName, string strId, string attributeName, JsonElement[] elements)
+    {
+        var attribute = Val.NotNull(await FindAttribute(entityName, attributeName))
+            .ValOrThrow($"not find {attributeName} in {entityName}");
+
+        var crossTable = Val.NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable for ${attributeName}");
+
+        var items = elements.Select(ele =>
+            RecordParser.Parse(ele, crossTable.TargetEntity));
+        return await queryKateQueryExecutor.Exec(crossTable.Insert(strId, items.ToArray()));
+    }
+
+    public async Task<ListResult> CrosstableList(string entityName, string strId, string attributeName, bool exclude)
+    {
+        var attribute = Val.NotNull(await FindAttribute(entityName, attributeName))
+            .ValOrThrow($"not find {attributeName} in {entityName}");
+
+        var crossTable = Val.NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable for ${attributeName}");
+        var selectAttributes = crossTable.TargetEntity.LocalAttributes(InListOrDetail.InList);
+        var query = crossTable.Many(selectAttributes, exclude, crossTable.FromAttribute.CastToDatabaseType(strId));
         return new ListResult
         {
             Items = await queryKateQueryExecutor.Many(query),
             TotalRecords = await queryKateQueryExecutor.Count(query)
         };
     }
+
     public async Task AttachCrosstable(Attribute attribute, Record[] items, Func<Entity, Attribute[]> getFields)
     {
+        //no need to attach, ignore
         var ids = attribute.Parent?.PrimaryKeyAttribute().GetValues(items);
         if (ids is null || ids.Length == 0)
         {
@@ -159,11 +137,6 @@ public class EntityService(KateQueryExecutor queryKateQueryExecutor, ISchemaServ
         var cross = Val.NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable for {attribute.FullName()}");
         var query = cross.Many(getFields(cross.TargetEntity), ids);
         var targetRecords = await queryKateQueryExecutor.Many(query);
-        if (targetRecords is null)
-        {
-            return;
-        }
-
         var group = targetRecords.GroupBy(x => x[cross.FromAttribute.Field], x=>x);
         foreach (var grouping in group)
         {
@@ -183,7 +156,7 @@ public class EntityService(KateQueryExecutor queryKateQueryExecutor, ISchemaServ
             return;
         }
         
-        var lookupRecords = await queryKateQueryExecutor.Many(lookupEntity.Many(ids, getFields(lookupEntity)));
+        var lookupRecords = await queryKateQueryExecutor.Many(lookupEntity.ManyQuery(ids, getFields(lookupEntity)));
         ArgumentNullException.ThrowIfNull(lookupRecords);
         foreach (var lookupRecord in lookupRecords)
         {
@@ -198,13 +171,7 @@ public class EntityService(KateQueryExecutor queryKateQueryExecutor, ISchemaServ
 
     private async Task<Attribute?> FindAttribute(string entityName, string attributeName)
     {
-        var entity = await schemaService.GetEntityByName(entityName);
-        if (entity is null)
-        {
-            return null;
-        }
-
+        var entity = Val.CheckResult(await schemaService.GetEntityByNameOrDefault(entityName));
         return entity.FindOneAttribute(attributeName);
     }
-
 }

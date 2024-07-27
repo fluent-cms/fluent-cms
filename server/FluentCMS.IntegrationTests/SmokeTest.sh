@@ -34,14 +34,14 @@ set -e
 export Logging__LogLevel__Microsoft_AspNetCore=Warning
 
 # Sqlite With Default Data 
-#test_sqlite "cms.db"
+test_sqlite "cms.db"
 
 # Sqlite With Empty Data 
-#db_path=$(pwd)/temp.db && rm -f "$db_path" && test_sqlite "$db_path"
+db_path=$(pwd)/temp.db && rm -f "$db_path" && test_sqlite "$db_path"
 
 # Postgres With Default Data
 test_postgres_container "$(pwd)/../../fluent-cms-postgres-docker/init.sql"
 
 # Postgres With Empty Data 
-#test_postgres_container ""
+test_postgres_container ""
 

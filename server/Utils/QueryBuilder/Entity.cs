@@ -1,3 +1,4 @@
+using FluentResults;
 using Utils.DataDefinitionExecutor;
 using SqlKata;
 
@@ -164,21 +165,21 @@ public sealed class Entity
     {
         return Attributes.FirstOrDefault(x => x.Field == name);
     }
-    public Query One(Filters? filters, Attribute[]attributes)
+    public Query OneQuery(Filters? filters, Attribute[]attributes)
     {
         var query = Basic().Select(attributes.Select(x=>x.FullName()));
         filters?.Apply(this, query);
         return query;
     }
     
-    public Query? ById(string key, Attribute[]attributes)
+    public Query ByIdQuery(string key, Attribute[]attributes)
     {
         var id = PrimaryKeyAttribute().CastToDatabaseType(key);
         return Basic().Where(PrimaryKey, id)
             .Select(attributes.Select(x=>x.FullName()));
     }
     
-    public Query List(Filters? filters,Sorts? sorts, Pagination? pagination,Cursor? cursor,  Attribute[] attributes)
+    public Query ListQuery(Filters? filters,Sorts? sorts, Pagination? pagination,Cursor? cursor,  Attribute[] attributes)
     {
        var query = Basic().Select(attributes.Select(x=>x.FullName()));
         pagination?.Apply (query);
@@ -188,7 +189,7 @@ public sealed class Entity
         return query;
     }
 
-    public Query Count(Filters? filters)
+    public Query CountQuery(Filters? filters)
     {
         var query = Basic();
         filters?.Apply(this, query);
@@ -196,7 +197,7 @@ public sealed class Entity
     }
 
 
-    public Query Many(object[]ids, Attribute[] attributes)
+    public Query ManyQuery(object[]ids, Attribute[] attributes)
     {
         if (ids.Length == 0)
         {
@@ -211,18 +212,18 @@ public sealed class Entity
         return new Query(TableName).AsInsert(item, true);
     }
 
-    public Query? Update(Record item)
+    public Result<Query> UpdateQuery(Record item)
     {
         return item.TryGetValue(PrimaryKey, out var val)
-            ? new Query(TableName).Where(PrimaryKey, val).AsUpdate(item.Keys, item.Values)
-            : null;
+            ? Result.Ok(new Query(TableName).Where(PrimaryKey, val).AsUpdate(item.Keys, item.Values))
+            : Result.Fail($"Fail to parse value for primary key ${PrimaryKey} ");
     }
 
-    public Query? Delete(Record item)
+    public Result<Query> DeleteQuery(Record item)
     {
         return item.TryGetValue(PrimaryKey, out var key)
-            ? new Query(TableName).Where(PrimaryKey, key).AsUpdate(["deleted"], [true])
-            : null;
+            ? Result.Ok(new Query(TableName).Where(PrimaryKey, key).AsUpdate(["deleted"], [true]))
+            : Result.Fail($"Fail to parse value for primary key ${PrimaryKey} ");
     }
     
     public Query Basic()
