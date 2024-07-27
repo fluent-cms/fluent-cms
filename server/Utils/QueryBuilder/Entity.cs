@@ -197,37 +197,29 @@ public sealed class Entity
     }
 
 
-    public Query ManyQuery(object[]ids, Attribute[] attributes)
+    public Result<Query> ManyQuery(object[]ids, Attribute[] attributes)
     {
         if (ids.Length == 0)
         {
-            throw new Exception("ids is empty");
+            Result.Fail("ids is empty");
         }
         var lstFields = attributes.Select(x => x.Field);
         return Basic().Select(lstFields.ToArray()).WhereIn(PrimaryKey,ids);
     }
-   
-    public Query Insert(Record item)
-    {
-        return new Query(TableName).AsInsert(item, true);
-    }
 
-    public Result<Query> UpdateQuery(Record item)
-    {
-        return item.TryGetValue(PrimaryKey, out var val)
+    public Query Insert(Record item) => new Query(TableName).AsInsert(item, true);
+
+    public Result<Query> UpdateQuery(Record item) =>
+        item.TryGetValue(PrimaryKey, out var val)
             ? Result.Ok(new Query(TableName).Where(PrimaryKey, val).AsUpdate(item.Keys, item.Values))
-            : Result.Fail($"Fail to parse value for primary key ${PrimaryKey} ");
-    }
+            : Result.Fail($"Failed to get value for primary key ${PrimaryKey} ");
 
     public Result<Query> DeleteQuery(Record item)
     {
         return item.TryGetValue(PrimaryKey, out var key)
             ? Result.Ok(new Query(TableName).Where(PrimaryKey, key).AsUpdate(["deleted"], [true]))
-            : Result.Fail($"Fail to parse value for primary key ${PrimaryKey} ");
+            : Result.Fail($"Failed to get value for primary key ${PrimaryKey} ");
     }
     
-    public Query Basic()
-    {
-        return new Query(TableName).Where(TableName + ".deleted", false);
-    }
+    public Query Basic() =>  new Query(TableName).Where(TableName + ".deleted", false);
 }

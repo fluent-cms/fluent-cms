@@ -9,6 +9,7 @@ using Attribute = Utils.QueryBuilder.Attribute;
 namespace FluentCMS.Services;
 
 using System.Threading.Tasks;
+using static InvalidParamExceptionFactory;
 
 public static class  SchemaType
 {
@@ -58,11 +59,11 @@ public partial class SchemaService(IDefinitionExecutor definitionExecutor, KateQ
 
     public async Task<Schema> GetByIdOrName(string name,bool extend)
     {
-        var item =  Val.NotNull(await GetByIdOrNameDefault(name)).
+        var item =  NotNull(await GetByIdOrNameDefault(name)).
             ValOrThrow($"Schema [{name}] does not exist");
         if (extend)
         {
-            Val.CheckResult(await InitIfSchemaIsEntity(item));
+            CheckResult(await InitIfSchemaIsEntity(item));
         }
         return item;
     }
@@ -72,8 +73,7 @@ public partial class SchemaService(IDefinitionExecutor definitionExecutor, KateQ
         var query = BaseQuery().Where(SchemaColumnName, dto.Name)
             .WhereNot(SchemaColumnId, dto.Id);
         var existing = await kateQueryExecutor.Count(query);
-        Val.CheckBool(existing ==0)
-            .ThrowFalse($"the schema name {dto.Name} exists");
+        CheckBool(existing ==0).ThrowFalse($"the schema name {dto.Name} exists");
         await VerifyIfSchemaIsView(dto);
         await SaveSchema(dto);
         return dto;
@@ -81,15 +81,15 @@ public partial class SchemaService(IDefinitionExecutor definitionExecutor, KateQ
 
     public async Task<View> GetViewByName(string name)
     {
-        Val.StrNotEmpty(name).ValOrThrow("view name should not be empty");
+        StrNotEmpty(name).ValOrThrow("view name should not be empty");
         var query = BaseQuery().Where(SchemaColumnName, name).Where(SchemaColumnType, SchemaType.View);
         var item = ParseSchema(await kateQueryExecutor.One(query));
-        item = Val.NotNull(item).ValOrThrow($"didn't find {name}");
-        var view = Val.NotNull(item.Settings.View)
+        item = NotNull(item).ValOrThrow($"didn't find {name}");
+        var view = NotNull(item.Settings.View)
             .ValOrThrow("invalid view format");
-        var entityName = Val.StrNotEmpty(view.EntityName)
+        var entityName = StrNotEmpty(view.EntityName)
             .ValOrThrow($"referencing entity was not set for {view}");
-        view.Entity = Val.CheckResult(await GetEntityByNameOrDefault(entityName));
+        view.Entity = CheckResult(await GetEntityByNameOrDefault(entityName));
         return view;
     }
 
@@ -100,7 +100,7 @@ public partial class SchemaService(IDefinitionExecutor definitionExecutor, KateQ
 
     public async Task<Schema> SaveTableDefine(Schema dto)
     {
-        var entity = Val.NotNull(dto.Settings?.Entity).ValOrThrow("invalid payload");
+        var entity = NotNull(dto.Settings?.Entity).ValOrThrow("invalid payload");
         var cols = await definitionExecutor.GetColumnDefinitions(entity.TableName);
         await VerifyEntity(dto, cols, entity);
         
@@ -128,7 +128,7 @@ public partial class SchemaService(IDefinitionExecutor definitionExecutor, KateQ
 
     public async Task<Entity?> GetTableDefine(string tableName)
     {
-        Val.StrNotEmpty(tableName).ValOrThrow("Table name should not be empty");
+        StrNotEmpty(tableName).ValOrThrow("Table name should not be empty");
         var entity = new Entity { TableName = tableName };
         entity.LoadAttributesByColDefines(await definitionExecutor.GetColumnDefinitions(tableName));
         return entity;

@@ -1,10 +1,11 @@
+using FluentResults;
 using Microsoft.AspNetCore.Http;
 
 namespace Utils.LocalFileStore;
 
 public class LocalFileStore(string pathPrefix)
 {
-    public async Task<string[]> Save(IFormFile[] files)
+    public async Task<Result<string[]>> Save(IFormFile[] files)
     {
         var dir = GetDirectoryName();
         Directory.CreateDirectory(Path.Combine(pathPrefix,dir));
@@ -13,7 +14,7 @@ public class LocalFileStore(string pathPrefix)
         {
             if (file.Length == 0)
             {
-                throw new Exception($"Invalid file length {file.FileName}");
+                return Result.Fail($"Invalid file length {file.FileName}");
             }
 
             var fileName = Path.Combine(dir, GetFileName(file.FileName));

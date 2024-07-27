@@ -87,10 +87,10 @@ async Task InitDb()
 
 void InjectDbServices()
 {
-    var provider = Val.StrNotEmpty(ConfigurationString("DatabaseProvider"))
+    var provider = InvalidParamExceptionFactory.StrNotEmpty(ConfigurationString("DatabaseProvider"))
         .ValOrThrow("Not find Database Provider");
 
-    var connectionString = Val.StrNotEmpty(ConnectionString(provider))
+    var connectionString = InvalidParamExceptionFactory.StrNotEmpty(ConnectionString(provider))
         .ValOrThrow($"Not  find Connection string for {provider}");
 
     IDefinitionExecutor? definitionExecutor = null;
@@ -127,10 +127,10 @@ void InjectDbServices()
 
 void PrintVersion()
 {
-    var provider = Val.StrNotEmpty(ConfigurationString("DatabaseProvider"))
+    var provider = InvalidParamExceptionFactory.StrNotEmpty(ConfigurationString("DatabaseProvider"))
         .ValOrThrow("Not find Database Provider");
 
-    var connectionString = Val.StrNotEmpty(ConnectionString(provider))
+    var connectionString = InvalidParamExceptionFactory.StrNotEmpty(ConnectionString(provider))
         .ValOrThrow($"Not  find Connection string for {provider}");
 
      var parts = connectionString.Split(";")

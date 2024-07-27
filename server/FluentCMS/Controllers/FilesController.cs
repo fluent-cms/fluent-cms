@@ -10,6 +10,10 @@ public class FilesController(LocalFileStore store):ControllerBase
     public async Task<ActionResult<string>> Post(List<IFormFile> files)
     {
         var paths = await store.Save(files.ToArray());
-        return Ok(string.Join(",", paths));
+        if (paths.IsFailed)
+        {
+            return BadRequest(paths.Errors);
+        }
+        return Ok(string.Join(",", paths.Value));
     } 
 }

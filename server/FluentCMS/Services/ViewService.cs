@@ -4,6 +4,7 @@ using Microsoft.Extensions.Primitives;
 using Utils.Cache;
 namespace FluentCMS.Services;
 
+using static InvalidParamExceptionFactory;
 
 public class ViewService(
     KateQueryExecutor kateQueryExecutor, 
@@ -17,13 +18,13 @@ public class ViewService(
         )
     {
         var view = await ResolvedView(viewName, querystringDictionary);
-        var entity = Val.NotNull(view.Entity).ValOrThrow($"entity not exist for {viewName}");
+        var entity = NotNull(view.Entity).ValOrThrow($"entity not exist for {viewName}");
         if (cursor.Limit == 0 || cursor.Limit > view.PageSize)
         {
             cursor.Limit = view.PageSize;
         }
         cursor.Limit += 1;
-        var query = entity.ListQuery(view.Filters,view.Sorts, null, cursor, Val.CheckResult(view.LocalAttributes(InListOrDetail.InList)));
+        var query = entity.ListQuery(view.Filters,view.Sorts, null, cursor, InvalidParamExceptionFactory.CheckResult(view.LocalAttributes(InListOrDetail.InList)));
         var items = await kateQueryExecutor.Many(query);
         
         var hasMore = items.Length == cursor.Limit;
@@ -34,7 +35,7 @@ public class ViewService(
                 : items.Take(items.Length -1).ToArray();
         }
 
-        var nextCursor = Val.CheckResult(cursor.GetNextCursor(items, view.Sorts, hasMore));
+        var nextCursor = CheckResult(cursor.GetNextCursor(items, view.Sorts, hasMore));
         await AttachRelatedEntity(view, InListOrDetail.InList, items);
         
         return new ViewResult
@@ -51,10 +52,10 @@ public class ViewService(
     public async Task<Record[]> Many(string viewName, Dictionary<string, StringValues> querystringDictionary)
     {
         var view = await ResolvedView(viewName, querystringDictionary);
-        var entity = Val.NotNull(view.Entity).ValOrThrow($"entity not exist for {viewName}");
+        var entity = NotNull(view.Entity).ValOrThrow($"entity not exist for {viewName}");
        
         var query = entity.ListQuery(  view.Filters,view.Sorts, new Pagination{Limit = view.PageSize}, null,
-            Val.CheckResult(view.LocalAttributes(InListOrDetail.InDetail)));
+            CheckResult(view.LocalAttributes(InListOrDetail.InDetail)));
         var items = await kateQueryExecutor.Many(query);
         await AttachRelatedEntity(view, InListOrDetail.InDetail, items);
         return items;
@@ -63,23 +64,23 @@ public class ViewService(
     public async Task<Record> One(string viewName, Dictionary<string, StringValues> querystringDictionary)
     {
         var view = await ResolvedView(viewName, querystringDictionary);
-        var entity = Val.NotNull(view.Entity).ValOrThrow($"entity not exist for {viewName}");
+        var entity = NotNull(view.Entity).ValOrThrow($"entity not exist for {viewName}");
 
-        var query = entity.OneQuery(view.Filters, Val.CheckResult(view.LocalAttributes(InListOrDetail.InDetail)));
-        var item = Val.NotNull(await kateQueryExecutor.One(query)).ValOrThrow("Not find record");
+        var query = entity.OneQuery(view.Filters, CheckResult(view.LocalAttributes(InListOrDetail.InDetail)));
+        var item = NotNull(await kateQueryExecutor.One(query)).ValOrThrow("Not find record");
         await AttachRelatedEntity(view, InListOrDetail.InDetail, [item]);
         return item;
     }
     
     private async Task AttachRelatedEntity(View view, InListOrDetail scope, Record[] items)
     {
-        foreach (var attribute in Val.CheckResult(view.GetAttributesByType(DisplayType.lookup, scope)))
+        foreach (var attribute in CheckResult(view.GetAttributesByType(DisplayType.lookup, scope)))
         {
             await entityService.AttachLookup(attribute, items,
                 entity1 => entity1.LocalAttributes(scope));
         }
 
-        foreach (var attribute in Val.CheckResult(view.GetAttributesByType(DisplayType.crosstable, scope )))
+        foreach (var attribute in CheckResult(view.GetAttributesByType(DisplayType.crosstable, scope )))
         {
             await entityService.AttachCrosstable(attribute, items,
                 entity1 => entity1.LocalAttributes(scope));
@@ -90,7 +91,7 @@ public class ViewService(
         Dictionary<string, StringValues> querystringDictionary)
     {
         var view = await viewCache.GetOrSet(viewName, async () => await schemaService.GetViewByName(viewName));
-        Val.CheckResult(view.Filters?.Resolve(view.Entity!, querystringDictionary, null));
+        CheckResult(view.Filters?.Resolve(view.Entity!, querystringDictionary, null));
         return view;
     }
 }

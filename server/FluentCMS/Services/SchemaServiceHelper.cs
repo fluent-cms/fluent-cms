@@ -6,6 +6,7 @@ using Utils.DataDefinitionExecutor;
 using Utils.QueryBuilder;
 
 namespace FluentCMS.Services;
+using static InvalidParamExceptionFactory;
 public partial class SchemaService
 {
     private async Task VerifyIfSchemaIsView(Schema dto)
@@ -16,28 +17,28 @@ public partial class SchemaService
             return;
         }
 
-        var entityName = Val.StrNotEmpty(view.EntityName).
+        var entityName = StrNotEmpty(view.EntityName).
             ValOrThrow($"entity name of {view.EntityName} should not be empty");
-        view.Entity = Val.CheckResult(await GetEntityByNameOrDefault(entityName, true));
+        view.Entity = CheckResult(await GetEntityByNameOrDefault(entityName, true));
         
         foreach (var viewAttributeName in view.AttributeNames??[])
         {
-            Val.NotNull(view.Entity.FindOneAttribute(viewAttributeName))
+            NotNull(view.Entity.FindOneAttribute(viewAttributeName))
                 .ValOrThrow($"not find attribute {viewAttributeName} of enity {entityName}");
         }
 
-        var listAttributes = Val.CheckResult(view.LocalAttributes(InListOrDetail.InList));
+        var listAttributes = CheckResult(view.LocalAttributes(InListOrDetail.InList));
         foreach (var viewSort in view.Sorts??[])
         {
             var find = listAttributes.FirstOrDefault(x=>x.Field == viewSort.FieldName);
-            Val.NotNull(find).ValOrThrow($"sort field {viewSort.FieldName} should in list attributes");
+            NotNull(find).ValOrThrow($"sort field {viewSort.FieldName} should in list attributes");
         }
 
         var attr = view.Entity.LocalAttributes();
         foreach (var viewFilter in view.Filters??[])
         {
             var find = attr.FirstOrDefault(x => x.Field == viewFilter.FieldName);
-            Val.NotNull(find).ValOrThrow($"filter field {viewFilter.FieldName} should in entity's attribute list");
+            NotNull(find).ValOrThrow($"filter field {viewFilter.FieldName} should in entity's attribute list");
         }
     }
     
@@ -56,9 +57,9 @@ public partial class SchemaService
     {
         var query = BaseQuery().Where(SchemaColumnName, dto.Name).WhereNot(SchemaColumnId, dto.Id);
         var existing = await kateQueryExecutor.Count(query);
-        Val.CheckBool(existing ==0).ThrowFalse($"the schema name {dto.Name} exists");
+        CheckBool(existing ==0).ThrowFalse($"the schema name {dto.Name} exists");
 
-        Val.CheckBool(cols.Length > 0 && dto.Id ==0 ).ThrowTrue($"the table name {entity.TableName} exists");
+        CheckBool(cols.Length > 0 && dto.Id ==0 ).ThrowTrue($"the table name {entity.TableName} exists");
         foreach (var attribute in entity.GetAttributesByType(DisplayType.lookup))
         {
             await CheckLookup(attribute);
@@ -154,8 +155,8 @@ public partial class SchemaService
 
     private async Task CreateCrosstable(Entity entity, global::Utils.QueryBuilder.Attribute attribute)
     {
-        var entityName = Val.CheckResult(attribute.GetCrossEntityName());
-        var targetEntity = Val.CheckResult(await GetEntityByNameOrDefault(entityName, false));
+        var entityName = CheckResult(attribute.GetCrossEntityName());
+        var targetEntity = CheckResult(await GetEntityByNameOrDefault(entityName, false));
         var crossTable = new Crosstable(entity, targetEntity);
         var columns = await definitionExecutor.GetColumnDefinitions(crossTable.CrossEntity.TableName);
         if (columns.Length == 0)
@@ -166,10 +167,10 @@ public partial class SchemaService
 
     private async Task CheckLookup(global::Utils.QueryBuilder.Attribute attribute)
     {
-        Val.CheckBool(attribute.DataType != DataType.Int)
+        CheckBool(attribute.DataType != DataType.Int)
             .ThrowTrue("lookup datatype should be int");
-        var entityName = Val.CheckResult(attribute.GetLookupEntityName());
-        Val.NotNull(await GetEntityByNameOrDefault(entityName, false))
+        var entityName = CheckResult(attribute.GetLookupEntityName());
+        NotNull(await GetEntityByNameOrDefault(entityName, false))
             .ValOrThrow($"not find entity by name {entityName}");
     }
 

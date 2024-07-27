@@ -8,7 +8,6 @@ public class ErrorController:ControllerBase
 {
     [Route("/error-development")]
     [ApiExplorerSettings(IgnoreApi = true)]
-
     public IActionResult HandleErrorDevelopment(
         [FromServices] IHostEnvironment hostEnvironment)
     {
@@ -18,7 +17,6 @@ public class ErrorController:ControllerBase
         }
 
         var ex = HttpContext.Features.Get<IExceptionHandlerFeature>()?.Error!;
-
         return ex is Services.InvalidParamException ? 
             Problem(title: ex.Message, detail:ex.StackTrace, statusCode:400)
             : Problem( detail: ex.StackTrace, title: ex.Message);

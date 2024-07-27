@@ -48,7 +48,7 @@ public class BoolExceptionBuilder(bool val)
     }
 }
 
-public static class Val
+public static class InvalidParamExceptionFactory
 {
     public  static EmptyStringExceptionBuilder StrNotEmpty(string? str)
     {
