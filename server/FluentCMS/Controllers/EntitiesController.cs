@@ -2,7 +2,7 @@ using System.Text.Json;
 using FluentCMS.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
-using Utils.QueryBuilder;
+using FluentCMS.Utils.QueryBuilder;
 
 namespace FluentCMS.Controllers;
 [ApiController]

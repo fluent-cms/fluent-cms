@@ -1,10 +1,10 @@
 using FluentCMS.Models;
 using FluentResults;
 using SqlKata;
-using Utils.DataDefinitionExecutor;
-using Utils.KateQueryExecutor;
-using Utils.QueryBuilder;
-using Attribute = Utils.QueryBuilder.Attribute;
+using FluentCMS.Utils.DataDefinitionExecutor;
+using FluentCMS.Utils.KateQueryExecutor;
+using FluentCMS.Utils.QueryBuilder;
+using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.Services;
 

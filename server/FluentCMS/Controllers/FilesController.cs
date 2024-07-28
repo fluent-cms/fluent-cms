@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using Utils.LocalFileStore;
+using FluentCMS.Utils.LocalFileStore;
 
 namespace FluentCMS.Controllers;
 [ApiController]

@@ -2,11 +2,11 @@ using System.Net.Http.Json;
 using System.Text;
 using FluentCMS.Models;
 using FluentCMS.Services;
+using FluentCMS.Utils.DataDefinitionExecutor;
+using FluentCMS.Utils.QueryBuilder;
 using Newtonsoft.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Utils.DataDefinitionExecutor;
-using Utils.QueryBuilder;
-using Attribute = Utils.QueryBuilder.Attribute;
+using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.IntegrationTests;
 

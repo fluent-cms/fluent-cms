@@ -6,6 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
         <UserSecretsId>a5afdf68-db24-42a3-bf96-6c4bf027de65</UserSecretsId>
+        <IsPackable>true</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
@@ -43,7 +44,7 @@
       </None>
     </ItemGroup>
     <ItemGroup>
-      <ProjectReference Include="..\Utils\Utils.csproj" />
+      <ProjectReference Include="..\FluentCMS.Utils\FluentCMS.Utils.csproj" />
     </ItemGroup>
     <ItemGroup>
       <_ContentIncludedByDefault Remove="wwwroot\assets\index-562e3a14.js" />
@@ -68,4 +69,16 @@
     <ItemGroup>
         <InternalsVisibleTo Include="FluentCMS.IntegrationTests" />
     </ItemGroup>
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <PackageId>FluentCMS</PackageId>
+        <Version>0.0.1</Version>
+        <Authors>jaike</Authors>
+        <Company>fluent-cms</Company>
+        <Description>A utility package for FluentCMS</Description>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/fluent-cms/fluent-cms</RepositoryUrl>
+    </PropertyGroup>
+    
 </Project>

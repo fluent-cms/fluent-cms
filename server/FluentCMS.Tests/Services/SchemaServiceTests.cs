@@ -1,12 +1,12 @@
 using FluentCMS.Models;
 using FluentCMS.Services;
+using FluentCMS.Utils.DataDefinitionExecutor;
+using FluentCMS.Utils.KateQueryExecutor;
+using FluentCMS.Utils.QueryBuilder;
 using Microsoft.Extensions.Logging;
 using Moq;
 using SQLitePCL;
-using Utils.DataDefinitionExecutor;
-using Utils.KateQueryExecutor;
-using Utils.QueryBuilder;
-using Attribute = Utils.QueryBuilder.Attribute;
+using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.Tests.Services;
 

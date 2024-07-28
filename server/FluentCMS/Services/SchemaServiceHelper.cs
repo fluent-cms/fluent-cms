@@ -2,8 +2,8 @@ using System.Text.Json;
 using FluentCMS.Models;
 using FluentResults;
 using SqlKata;
-using Utils.DataDefinitionExecutor;
-using Utils.QueryBuilder;
+using FluentCMS.Utils.DataDefinitionExecutor;
+using FluentCMS.Utils.QueryBuilder;
 
 namespace FluentCMS.Services;
 using static InvalidParamExceptionFactory;
@@ -153,7 +153,7 @@ public partial class SchemaService
         return Result.Ok();
     }
 
-    private async Task CreateCrosstable(Entity entity, global::Utils.QueryBuilder.Attribute attribute)
+    private async Task CreateCrosstable(Entity entity, global::FluentCMS.Utils.QueryBuilder.Attribute attribute)
     {
         var entityName = CheckResult(attribute.GetCrossEntityName());
         var targetEntity = CheckResult(await GetEntityByNameOrDefault(entityName, false));
@@ -165,7 +165,7 @@ public partial class SchemaService
         }
     }
 
-    private async Task CheckLookup(global::Utils.QueryBuilder.Attribute attribute)
+    private async Task CheckLookup(global::FluentCMS.Utils.QueryBuilder.Attribute attribute)
     {
         CheckBool(attribute.DataType != DataType.Int)
             .ThrowTrue("lookup datatype should be int");

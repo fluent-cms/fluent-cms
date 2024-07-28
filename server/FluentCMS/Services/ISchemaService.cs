@@ -1,6 +1,6 @@
 using FluentCMS.Models;
 using FluentResults;
-using Utils.QueryBuilder;
+using FluentCMS.Utils.QueryBuilder;
 
 namespace FluentCMS.Services;
 

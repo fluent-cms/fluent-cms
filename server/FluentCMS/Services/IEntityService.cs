@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Microsoft.Extensions.Primitives;
-using Utils.QueryBuilder;
-using Attribute = Utils.QueryBuilder.Attribute;
+using FluentCMS.Utils.QueryBuilder;
+using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.Services;
 

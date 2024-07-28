@@ -1,158 +1,76 @@
-using System.Text.Json.Serialization;
-using FluentCMS.Services;
+using FluentCMS.App;
 using FluentCMS.Data;
-using Utils.DataDefinitionExecutor;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
-using Utils.Cache;
-using Utils.KateQueryExecutor;
-using Utils.LocalFileStore;
-using Utils.QueryBuilder;
 
+const string corsPolicyName = "AllowAllOrigins";
 var builder = WebApplication.CreateBuilder(args);
+var (databaseProvider, connectionString) = GetProviderAndConnectionString();
 
-PrintVersion();
-InjectDbServices();
-InjectServices();
+var cmsServer = databaseProvider switch
+{
+    "Sqlite" => Server.UseSqlite(connectionString),
+    "Postgres" => Server.UsePostgres(connectionString),
+    _ => throw new Exception("not support")
+};
+
+cmsServer.PrintVersion();
+
+var buildResult = cmsServer.Build(builder);
+if (buildResult.IsFailed)
+{
+    Console.WriteLine(buildResult.Errors);
+    return;
+};
+
+AddDbContext();
 AddCors();
 
-// Add services to the container.
-builder.Services.AddRazorPages();
-builder.Services.AddRouting(options =>
-{
-    options.LowercaseUrls = true;
-}); 
-builder.Services.AddControllers().AddJsonOptions(options =>
-{
-    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-});
 builder.Services.AddIdentityApiEndpoints<IdentityUser>().AddEntityFrameworkStores<AppDbContext>();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-    app.UseExceptionHandler("/error-development");
-}
-else
-{
-    app.UseExceptionHandler("/error");
-}
 
 app.UseHttpsRedirection();
-
-app.UseCors("AllowAllOrigins");
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors(corsPolicyName);
+}
 app.UseAuthorization();
+await Migrate();
 
-app.MapControllers().RequireAuthorization();
-var group = app.MapGroup("/api");
-group.MapIdentityApi<IdentityUser>();
-
-app.UseDefaultFiles();
-app.UseStaticFiles();
-app.MapFallbackToFile("index.html");
-
-await InitDb();
+var endPoint = await cmsServer.Use(app);
+endPoint.GroupBuilder.MapIdentityApi<IdentityUser>();
+endPoint.ActionEndpoint.RequireAuthorization();
 app.Run();
-    
-async Task InitDb()
+
+return;
+
+(string, string) GetProviderAndConnectionString()
 {
-    using var scope = app.Services.CreateScope();
-    var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    var first = ctx.Database.GetAppliedMigrations().FirstOrDefault();
-    if (!string.IsNullOrWhiteSpace(first))
+    var provider = builder.Configuration.GetValue<string>("DatabaseProvider");
+    if (string.IsNullOrWhiteSpace(provider))
     {
-        Console.WriteLine("*********************************************************");
-        Console.WriteLine("Database initialized, Ignore");
-        Console.WriteLine("*********************************************************");
+        throw new Exception("Not find DatabaseProvider");
     }
-    else
+
+    //both key Sqlite and ConnectionString_Sqlite work
+    var connection = Environment.GetEnvironmentVariable(provider) ??
+                           builder.Configuration.GetConnectionString(provider);
+    if (string.IsNullOrWhiteSpace(connection))
     {
-        //now it's save to do migrate
-        await ctx.Database.MigrateAsync();
-        Console.WriteLine("*********************************************************");
-        Console.WriteLine("Initializing database");
-        Console.WriteLine("*********************************************************");
-        var schemaService = scope.ServiceProvider.GetRequiredService<ISchemaService>();
-        await schemaService.AddSchemaTable();
-        await schemaService.AddTopMenuBar();
-    }
-}
-
-void InjectDbServices()
-{
-    var provider = InvalidParamExceptionFactory.StrNotEmpty(ConfigurationString("DatabaseProvider"))
-        .ValOrThrow("Not find Database Provider");
-
-    var connectionString = InvalidParamExceptionFactory.StrNotEmpty(ConnectionString(provider))
-        .ValOrThrow($"Not  find Connection string for {provider}");
-
-    IDefinitionExecutor? definitionExecutor = null;
-    
-    switch (provider)
-    {
-        case "Sqlite":
-            
-            builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
-            builder.Services.AddSingleton<IKateProvider>(p =>
-                new SqliteKateProvider(connectionString, p.GetRequiredService<ILogger<SqliteKateProvider>>()));
-            builder.Services.AddSingleton<IDefinitionExecutor>(p =>
-                {
-                    definitionExecutor = new SqliteDefinitionExecutor(connectionString,
-                        p.GetRequiredService<ILogger<SqliteDefinitionExecutor>>());
-                    return definitionExecutor;
-                });
-            break;
-        case "Postgres":
-            builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
-            builder.Services.AddSingleton<IKateProvider>(p =>
-                new PostgresKateProvider(connectionString, p.GetRequiredService<ILogger<PostgresKateProvider>>()));
-            builder.Services.AddSingleton<IDefinitionExecutor>(p =>
-            {
-                 definitionExecutor = new PostgresDefinitionExecutor(connectionString,
-                    p.GetRequiredService<ILogger<PostgresDefinitionExecutor>>());
-                return definitionExecutor;
-            });
-            break;
-        default:
-            throw new Exception($"Not supported Provider {provider}");
-    }
-}
-
-void PrintVersion()
-{
-    var provider = InvalidParamExceptionFactory.StrNotEmpty(ConfigurationString("DatabaseProvider"))
-        .ValOrThrow("Not find Database Provider");
-
-    var connectionString = InvalidParamExceptionFactory.StrNotEmpty(ConnectionString(provider))
-        .ValOrThrow($"Not  find Connection string for {provider}");
-
-     var parts = connectionString.Split(";")
-         .Where(x => !x.StartsWith("Password"))
-         .ToArray();
-     
-     Console.WriteLine("*********************************************************");
-     Console.WriteLine("Fluent CMS: version 0.1, build Jul21 4pm");
-     Console.WriteLine($"Resolved Database Provider: {provider}");
-     Console.WriteLine($"Connection String: {String.Join(";", parts)}");
-     Console.WriteLine($"Current Directory: {Directory.GetCurrentDirectory()}");
-     Console.WriteLine("*********************************************************");   
+        throw new Exception("Not find connection string");
+    }  
+    return (provider, connection);
 }
 
 void AddCors()
 {
-    var origins = ConfigurationString("AllowedOrigins");
+    var origins = builder.Configuration.GetValue<string>("AllowedOrigins");
     if (!string.IsNullOrWhiteSpace(origins))
     {
         builder.Services.AddCors(options =>
         {
-            options.AddPolicy("AllowAllOrigins",
+            options.AddPolicy(corsPolicyName,
                 policy =>
                 {
                     policy.WithOrigins(origins.Split(",")).AllowAnyHeader()
@@ -162,21 +80,29 @@ void AddCors()
     }
 }
 
-void InjectServices()
+async Task Migrate()
 {
-    builder.Services.AddSingleton<MemoryCacheFactory>();
-    builder.Services.AddSingleton<KeyValCache<View>>(p=> new KeyValCache<View>(p.GetRequiredService<IMemoryCache>(),30,"view"));
-    builder.Services.AddSingleton<LocalFileStore>(p => new LocalFileStore("wwwroot/files"));
-    builder.Services.AddSingleton<KateQueryExecutor>();
-    builder.Services.AddScoped<ISchemaService, SchemaService>();
-    builder.Services.AddScoped<IEntityService, EntityService >();
-    builder.Services.AddScoped<IViewService, ViewService >();
+    using var scope = app.Services.CreateScope();
+    var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var first = ctx.Database.GetAppliedMigrations().FirstOrDefault();
+    if (string.IsNullOrWhiteSpace(first))
+    {
+        //it's save to do migrate, because database is empty
+        await ctx.Database.MigrateAsync();
+    }
 }
 
-//When put connection string to environment variable, both key Postgres and ConnectionString_Postgres work
-string? ConnectionString(string key)
+void AddDbContext()
 {
-    return Environment.GetEnvironmentVariable(key) ?? builder.Configuration.GetConnectionString(key);
+    switch (databaseProvider)
+    {
+        case "Sqlite":
+            builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
+            break;
+        case "Postgres":
+            builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
+            break;
+        default:
+            throw new Exception($"Not supported Provider {databaseProvider}");
+    }
 }
-
-string? ConfigurationString(string key) => builder.Configuration.GetValue<string>(key);

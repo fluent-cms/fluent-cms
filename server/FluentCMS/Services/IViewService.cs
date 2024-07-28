@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Primitives;
-using Utils.QueryBuilder;
+using FluentCMS.Utils.QueryBuilder;
 
 namespace FluentCMS.Services;
 
