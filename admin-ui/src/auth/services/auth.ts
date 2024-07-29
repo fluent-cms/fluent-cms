@@ -18,5 +18,5 @@ export async function register(item:any) {
 }
 
 export async function logout() {
-    return catchResponse(() => axios.post(fullAuthAPIURI(`/account/logout`)));
+    return catchResponse(() => axios.get(fullAuthAPIURI(`/logout`)));
 }

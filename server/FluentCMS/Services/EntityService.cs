@@ -1,4 +1,5 @@
 using System.Text.Json;
+using FluentCMS.Utils.HookFactory;
 using Microsoft.Extensions.Primitives;
 using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.QueryBuilder;
@@ -7,18 +8,22 @@ using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 namespace FluentCMS.Services;
 using static InvalidParamExceptionFactory;
 
-public class EntityService(KateQueryExecutor queryKateQueryExecutor, ISchemaService schemaService) : IEntityService
+public sealed class EntityService(IServiceProvider provider,
+    KateQueryExecutor queryKateQueryExecutor, ISchemaService schemaService, HookFactory hookFactory) : IEntityService
 {
-    public async Task<Record?> One(string entityName, string id)
+    public async Task<object> One(string entityName, string id)
     {
         var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName));
-        var record =
-            await queryKateQueryExecutor.One(entity.ByIdQuery(id,
-                entity.LocalAttributes(InListOrDetail.InDetail)));
-        if (record is null)
+        var (ret ,next) = await hookFactory.ExecuteStringToObject(provider, Occasion.BeforeQueryOne, entityName, id);
+        if (next == Next.Exit)
         {
-            return record;
+            return ret;
         }
+
+        id = (string)ret;
+        var query = entity.ByIdQuery(id, entity.LocalAttributes(InListOrDetail.InDetail));
+        var record = NotNull(await queryKateQueryExecutor.One(query))
+                .ValOrThrow($"not find record by [{id}]");
 
         foreach (var detailLookupsAttribute in entity.GetAttributesByType(DisplayType.lookup,
                      InListOrDetail.InDetail))
@@ -27,10 +32,10 @@ public class EntityService(KateQueryExecutor queryKateQueryExecutor, ISchemaServ
                 lookupEntity => lookupEntity.LocalAttributes(InListOrDetail.InDetail));
         }
 
-        return record;
+        return await hookFactory.ExecuteRecordToObject(provider, Occasion.AfterQueryOne,entityName, record);
     }
 
-    public async Task<ListResult> List(string entityName, Pagination? pagination, Dictionary<string,StringValues> qs)
+    public async Task<object> List(string entityName, Pagination? pagination, Dictionary<string,StringValues> qs)
     {
         var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName));
         pagination ??= new Pagination
@@ -39,51 +44,86 @@ public class EntityService(KateQueryExecutor queryKateQueryExecutor, ISchemaServ
         };
 
         var filters = new Filters(qs);
-        var query = entity.ListQuery(filters, CheckResult(Sorts.Parse(qs)), pagination, null,
-            entity.LocalAttributes(InListOrDetail.InList));
+        var sorts = CheckResult(Sorts.Parse(qs));
+        var attributes = entity.LocalAttributes(InListOrDetail.InList);
+        var query = entity.ListQuery(filters, sorts, pagination, null, attributes);
 
-
+        var (res, next) = await hookFactory.ExecuteBeforeQuery(provider, Occasion.BeforeQueryMany, entityName, filters, sorts,
+            pagination);
+        if (next == Next.Exit)
+        {
+            return NotNull(res).ValOrThrow($"Before Query Many hook of {entityName}, required exit, but the hook return no value");
+        }
+        
         var records = await queryKateQueryExecutor.Many(query);
-        if (records.Length == 0)
-        {
-            return new ListResult
-            {
-                Items = [],
-                TotalRecords = 0,
-            };
-        }
 
-        foreach (var listLookupsAttribute in entity.GetAttributesByType(DisplayType.lookup, InListOrDetail.InList))
+        var ret = new ListResult
         {
-            await AttachLookup(listLookupsAttribute, records, lookupEntity => lookupEntity.ReferencedAttributes());
-        }
-
-        return new ListResult
-        {
-            Items = records,
-            TotalRecords = await queryKateQueryExecutor.Count(entity.CountQuery(filters))
+            Items = records
         };
+
+        if (records.Length > 0)
+        {
+            foreach (var listLookupsAttribute in entity.GetAttributesByType(DisplayType.lookup, InListOrDetail.InList))
+            {
+                await AttachLookup(listLookupsAttribute, records, lookupEntity => lookupEntity.ReferencedAttributes());
+            }
+
+            ret.TotalRecords = await queryKateQueryExecutor.Count(entity.CountQuery(filters));
+        }
+        
+        await hookFactory.ExecuteAfterQuery(provider, Occasion.AfterQueryMany, entityName, ret);
+        return ret;
     }
     
-    public async Task<int> Insert(string entityName, JsonElement ele)
+    public async Task<object> Insert(string entityName, JsonElement ele)
     {
         var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName));
         var record = RecordParser.Parse(ele, entity);
-        return await queryKateQueryExecutor.Exec(entity.Insert(record));
+        var (res, next) = await hookFactory.ExecuteRecordToRecord(provider, Occasion.BeforeInsert, entityName, record);
+        if (next == Next.Exit)
+        {
+            return res;
+        }
+
+        record = res;
+        var id = await queryKateQueryExecutor.Exec(entity.Insert(record));
+        record[entity.PrimaryKey] = id;
+        var (hookRes, _) = await hookFactory.ExecuteRecordToObject(provider, Occasion.AfterInsert, entityName, record);
+        return hookRes;
     }
 
-    public async Task<int> Update(string entityName, JsonElement ele)
+    public async Task<object> Update(string entityName, JsonElement ele)
     {
         var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName));
         var record = RecordParser.Parse(ele, entity);
-        return await queryKateQueryExecutor.Exec(CheckResult(entity.UpdateQuery(record)));
+        var (res, next) = await hookFactory.ExecuteRecordToRecord(provider, Occasion.BeforeUpdate, entityName, record);
+        if (next == Next.Exit)
+        {
+            return res;
+        }
+
+        record = res;
+        await queryKateQueryExecutor.Exec(CheckResult(entity.UpdateQuery(record)));
+        var (hookRes, _) = await hookFactory.ExecuteRecordToObject(provider, Occasion.AfterUpdate, entityName, record);
+        return hookRes;
     }
 
-    public async Task<int> Delete(string entityName, JsonElement ele)
+    public async Task<object> Delete(string entityName, JsonElement ele)
     {
         var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName));
         var record = RecordParser.Parse(ele, entity);
-        return await queryKateQueryExecutor.Exec(CheckResult(entity.DeleteQuery(record)));
+        var (res, next) = await hookFactory.ExecuteRecordToRecord(provider, Occasion.BeforeDelete, entityName, record);
+        if (next == Next.Exit)
+        {
+            return res;
+        }
+
+        record = res;
+        await queryKateQueryExecutor.Exec(CheckResult(entity.DeleteQuery(record)));
+        
+        var (ret, _) = await hookFactory.ExecuteRecordToObject(provider, Occasion.AfterDelete, entityName, record);
+        return ret;
     }
 
     public async Task<int> CrosstableDelete(string entityName, string strId, string attributeName, JsonElement[] elements)

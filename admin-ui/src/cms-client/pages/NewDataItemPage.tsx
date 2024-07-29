@@ -23,7 +23,7 @@ export function NewDataItemPageComponent({schema}:{schema:any}) {
         checkError(error, 'saved')
         if (!error) {
             await new Promise(r => setTimeout(r, 500));
-            window.location.href = getLinkToEntity(schema.name??'',schema.name??'') + "/" + data
+            window.location.href = getLinkToEntity(schema.name??'',schema.name??'') + "/" + data[schema.primaryKey]
         }
     }
 

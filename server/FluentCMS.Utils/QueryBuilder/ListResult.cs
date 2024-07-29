@@ -1,16 +1,16 @@
-namespace FluentCMS.Services;
+namespace FluentCMS.Utils.QueryBuilder;
 
-public struct ListResult
+public class ListResult
 {
     public Record[]? Items { get; set; }
     public int TotalRecords { get; set; }
 }
 
-public struct ViewResult
+public class ViewResult
 {
     public Record[]? Items { get; set; }
-    public string First { get; set; }
+    public string First { get; set; } = "";
     public bool HasPrevious { get; set; }
-    public string Last { get; set; }
+    public string Last { get; set; } = "";
     public bool HasNext { get; set; }
 } 

@@ -9,27 +9,18 @@ var (databaseProvider, connectionString) = GetProviderAndConnectionString();
 
 var cmsServer = databaseProvider switch
 {
-    "Sqlite" => Server.UseSqlite(connectionString),
-    "Postgres" => Server.UsePostgres(connectionString),
+    "Sqlite" => builder.CreateSqliteAppBuilder(connectionString),
+    "Postgres" => builder.CreatePostgresCmsAppBuilder(connectionString),
     _ => throw new Exception("not support")
 };
 
 cmsServer.PrintVersion();
-
-var buildResult = cmsServer.Build(builder);
-if (buildResult.IsFailed)
-{
-    Console.WriteLine(buildResult.Errors);
-    return;
-};
-
 AddDbContext();
 AddCors();
 
 builder.Services.AddIdentityApiEndpoints<IdentityUser>().AddEntityFrameworkStores<AppDbContext>();
 
 var app = builder.Build();
-
 app.UseHttpsRedirection();
 if (app.Environment.IsDevelopment())
 {
@@ -37,12 +28,13 @@ if (app.Environment.IsDevelopment())
 }
 app.UseAuthorization();
 await Migrate();
+await app.UseFluentCmsAsync(true);
+app.MapGroup("/api").MapIdentityApi<IdentityUser>();
+app.MapGet("/api/logout", async (SignInManager<IdentityUser> signInManager) => await signInManager.SignOutAsync());
 
-var endPoint = await cmsServer.Use(app);
-endPoint.GroupBuilder.MapIdentityApi<IdentityUser>();
-endPoint.ActionEndpoint.RequireAuthorization();
 app.Run();
 
+/////////////////////////////////////////////////
 return;
 
 (string, string) GetProviderAndConnectionString()

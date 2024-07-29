@@ -15,7 +15,7 @@ public class EntitiesController(IEntityService entityService) : ControllerBase
             QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value)));
 
     [HttpGet("{entityName}/{id}")]
-    public async Task<ActionResult<Record>> One(string entityName, string id) =>
+    public async Task<ActionResult<object>> One(string entityName, string id) =>
         Ok(await entityService.One(entityName, id));
 
     [HttpPost("{entityName}/insert")]
@@ -25,8 +25,6 @@ public class EntitiesController(IEntityService entityService) : ControllerBase
     [HttpPost("{entityName}/update")]
     public async Task<ActionResult<int>> Update(string entityName, [FromBody] JsonElement item) =>
         Ok(await entityService.Update(entityName, item));
-
-
 
     [HttpPost("{entityName}/delete")]
     public async Task<ActionResult<int>> Delete(string entityName, [FromBody] JsonElement item) =>

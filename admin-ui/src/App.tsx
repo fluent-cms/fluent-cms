@@ -9,17 +9,13 @@ import {setAPIUrlPrefix, setAssetsBaseURL} from "./cms-client/configs";
 import {configs} from "./config";
 import {EntityRouter} from "./cms-client/EntityRouter";
 import {Navigate, Route, Routes} from "react-router-dom";
-import {EditorRouter} from "./code-editor/EditorRouter";
-import {setVersionAPI} from "./code-editor/configs";
 import axios from "axios";
 import {setAuthAPIURL} from "./auth/config";
 import {useUserInfo} from "./auth/services/auth";
 import {LoginPage} from "./auth/pages/LoginPage";
 import {RegisterPage} from "./auth/pages/RegisterPage";
-import {Avatar} from "primereact/avatar";
 import UserAvatarDropdown from "./auth/components/UserAvatarDropDown";
 setAPIUrlPrefix(configs.apiURL)
-setVersionAPI(configs.versionAPIURL)
 setAssetsBaseURL(configs.assetURL);
 setAuthAPIURL(configs.authAPIURL)
 
@@ -27,7 +23,7 @@ axios.defaults.withCredentials = true
 
 function App() {
 
-    var {data:userInfo} = useUserInfo()
+    const {data:userInfo} = useUserInfo()
     const start = <img alt="logo" src="/fluent-cms.png" height="40" className="mr-2"></img>;
     const end = (
         <div className="flex align-items-center gap-2">
@@ -39,7 +35,6 @@ function App() {
             <TopMenuBar start={start} end={end}/>
             <Routes>
                 <Route path={'/entities/*'} element={<EntityRouter/>}/>
-                <Route path={'/editor/*'} element={<EditorRouter/>}/>
             </Routes>
         </>:<>
             <Routes>
