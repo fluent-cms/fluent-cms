@@ -209,10 +209,17 @@ public sealed class Entity
 
     public Query Insert(Record item) => new Query(TableName).AsInsert(item, true);
 
-    public Result<Query> UpdateQuery(Record item) =>
-        item.TryGetValue(PrimaryKey, out var val)
-            ? Result.Ok(new Query(TableName).Where(PrimaryKey, val).AsUpdate(item.Keys, item.Values))
-            : Result.Fail($"Failed to get value for primary key ${PrimaryKey} ");
+    public Result<Query> UpdateQuery(Record item)
+    {
+        //to prevent SqlServer 'Cannot update identity column' error 
+        if (!item.Remove(PrimaryKey, out var val))
+        {
+            return Result.Fail($"Failed to get value for primary key ${PrimaryKey} ");
+        }
+        var ret = new Query(TableName).Where(PrimaryKey, val).AsUpdate(item.Keys, item.Values);
+        item[PrimaryKey] = val;
+        return ret;
+    }
 
     public Result<Query> DeleteQuery(Record item)
     {

@@ -29,3 +29,5 @@
 /k8s_deploy/eks/ebs/.terraform/
 /k8s_deploy/eks/ebs/mainfest/
 /server/FluentCMS.App/wwwroot/
+/server/FluentCMS.IntegrationTests/temp.db
+/server/FluentCMS.IntegrationTests/default.db

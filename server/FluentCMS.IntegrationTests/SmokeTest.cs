@@ -34,6 +34,11 @@ public class SmokeTest
         await GetAllSchema();
         await AddSimpleEntity("teacher", "name");
         await AddSimpleData("teacher", "name", "Tom");
+        
+        await UpdateSimpleData("teacher", 1, "name", "TomUpdate");
+        var teacher = await GetObjectWithCookie("/api/entities/teacher/1");
+        Assert.Equal("TomUpdate", (string)teacher.name);
+        
         await AddSimpleEntity("student", "name");
         await AddSimpleData("student", "name", "Bob");
 
@@ -48,11 +53,9 @@ public class SmokeTest
         response.EnsureSuccessStatusCode();
         response = await GetWithCookie("/api/entities/class/1/student?exclude=true");
         response.EnsureSuccessStatusCode();
-        response = await GetWithCookie("/api/entities/class/1");
-        response.EnsureSuccessStatusCode();
-        dynamic payload = JObject.Parse(await response.Content.ReadAsStringAsync());
-        Assert.Equal(1, (int)payload.id);
-        Assert.Equal(1, (int)payload.teacher_data.id);
+
+        var cls = await GetObjectWithCookie("/api/entities/class/1");
+        Assert.Equal(1, (int)cls.teacher_data.id);
     }
 
    
@@ -69,7 +72,22 @@ public class SmokeTest
         res.EnsureSuccessStatusCode();
 
     }
-
+    
+    private async Task UpdateSimpleData(string entity,int id, string field, string val)
+    {
+        var payload = new Dictionary<string, object>
+        {
+            { "id", id },
+            { field, val }
+        };
+        await UpdateSimpleData(entity, payload);
+    }
+    private async Task UpdateSimpleData(string entity, Dictionary<string, object> payload)
+    {
+        var res = await PostWithCookie($"/api/entities/{entity}/update", payload);
+        res.EnsureSuccessStatusCode();
+    }
+ 
     private async Task AddSimpleData(string entity, string field, string val)
     {
         var payload = new Dictionary<string, object>
@@ -162,6 +180,13 @@ public class SmokeTest
         return await _client.SendAsync(_cookieHolder.SetCookie(message));
     }
 
+    private async Task<dynamic> GetObjectWithCookie(string uri)
+    {
+        var res = await GetWithCookie(uri);
+        res.EnsureSuccessStatusCode();
+        dynamic payload = JObject.Parse(await res.Content.ReadAsStringAsync());
+        return payload;
+    }
     private async Task<HttpResponseMessage> GetWithCookie(string uri) =>
         await _client.SendAsync(_cookieHolder.SetCookie(new HttpRequestMessage(HttpMethod.Get, uri)));
 
