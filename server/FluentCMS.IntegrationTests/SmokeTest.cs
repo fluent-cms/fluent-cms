@@ -6,6 +6,7 @@ using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.QueryBuilder;
 using Newtonsoft.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Newtonsoft.Json.Linq;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.IntegrationTests;
@@ -47,6 +48,11 @@ public class SmokeTest
         response.EnsureSuccessStatusCode();
         response = await GetWithCookie("/api/entities/class/1/student?exclude=true");
         response.EnsureSuccessStatusCode();
+        response = await GetWithCookie("/api/entities/class/1");
+        response.EnsureSuccessStatusCode();
+        dynamic payload = JObject.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal(1, (int)payload.id);
+        Assert.Equal(1, (int)payload.teacher_data.id);
     }
 
    

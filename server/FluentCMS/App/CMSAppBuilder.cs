@@ -14,6 +14,7 @@ public enum DatabaseProvider
 {
     Sqlite,
     Postgres,
+    SqlServer,
 }
 
 public sealed class CmsAppBuilder(WebApplicationBuilder builder,DatabaseProvider databaseProvider, string connectionString)
@@ -73,13 +74,13 @@ public sealed class CmsAppBuilder(WebApplicationBuilder builder,DatabaseProvider
     {
         switch (databaseProvider)
         {
-            case  DatabaseProvider.Sqlite:
+            case DatabaseProvider.Sqlite:
                 builder.Services.AddSingleton<IKateProvider>(p =>
                     new SqliteKateProvider(connectionString, p.GetRequiredService<ILogger<SqliteKateProvider>>()));
                 builder.Services.AddSingleton<IDefinitionExecutor>(p =>
                     new SqliteDefinitionExecutor(connectionString,
                         p.GetRequiredService<ILogger<SqliteDefinitionExecutor>>()));
-                    
+
                 break;
             case DatabaseProvider.Postgres:
                 builder.Services.AddSingleton<IKateProvider>(p =>
@@ -87,6 +88,13 @@ public sealed class CmsAppBuilder(WebApplicationBuilder builder,DatabaseProvider
                 builder.Services.AddSingleton<IDefinitionExecutor>(p =>
                     new PostgresDefinitionExecutor(connectionString,
                         p.GetRequiredService<ILogger<PostgresDefinitionExecutor>>()));
+                break;
+            case DatabaseProvider.SqlServer:
+                builder.Services.AddSingleton<IKateProvider>(p =>
+                    new SqlServerKateProvider(connectionString, p.GetRequiredService<ILogger<SqlServerKateProvider>>()));
+                builder.Services.AddSingleton<IDefinitionExecutor>(p =>
+                    new SqlServerDefinitionExecutor(connectionString,
+                        p.GetRequiredService<ILogger<SqlServerDefinitionExecutor>>()));
                 break;
         }
     }
@@ -103,6 +111,12 @@ public static class WebApplicationExtensions
     {
         return new CmsAppBuilder(builder, DatabaseProvider.Sqlite, connectionString).Build();
     }
+    
+    public static CmsAppBuilder CreateSqlServerAppBuilder(this WebApplicationBuilder builder, string connectionString)
+    {
+        return new CmsAppBuilder(builder, DatabaseProvider.SqlServer, connectionString).Build();
+    }
+
 
     public static async Task UseFluentCmsAsync(this WebApplication app, bool requireAuth)
     {

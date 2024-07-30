@@ -28,3 +28,4 @@
 /k8s_deploy/eks/ebs/terraform.tfstate.backup
 /k8s_deploy/eks/ebs/.terraform/
 /k8s_deploy/eks/ebs/mainfest/
+/server/FluentCMS.App/wwwroot/

@@ -11,6 +11,7 @@ var cmsServer = databaseProvider switch
 {
     "Sqlite" => builder.CreateSqliteAppBuilder(connectionString),
     "Postgres" => builder.CreatePostgresCmsAppBuilder(connectionString),
+    "SqlServer" =>builder.CreateSqlServerAppBuilder(connectionString),
     _ => throw new Exception("not support")
 };
 
@@ -76,12 +77,7 @@ async Task Migrate()
 {
     using var scope = app.Services.CreateScope();
     var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    var first = ctx.Database.GetAppliedMigrations().FirstOrDefault();
-    if (string.IsNullOrWhiteSpace(first))
-    {
-        //it's save to do migrate, because database is empty
-        await ctx.Database.MigrateAsync();
-    }
+    await ctx.Database.EnsureCreatedAsync();
 }
 
 void AddDbContext()
@@ -93,6 +89,9 @@ void AddDbContext()
             break;
         case "Postgres":
             builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
+            break;
+        case "SqlServer":
+            builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
             break;
         default:
             throw new Exception($"Not supported Provider {databaseProvider}");

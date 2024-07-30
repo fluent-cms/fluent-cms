@@ -165,9 +165,11 @@ public sealed class Hook
         Record dictionary = new Dictionary<string, object>();
         foreach (var property in obj?.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance) ?? [])
         {
-            if (property.CanRead)
+            if (!property.CanRead) continue;
+            var val = property.GetValue(obj);
+            if (val is not null)
             {
-                dictionary[ToSnakeCase(property.Name)] = property.GetValue(obj);
+                dictionary[ToSnakeCase(property.Name)] = val;
             }
         }
 

@@ -32,7 +32,8 @@ public sealed class EntityService(IServiceProvider provider,
                 lookupEntity => lookupEntity.LocalAttributes(InListOrDetail.InDetail));
         }
 
-        return await hookFactory.ExecuteRecordToObject(provider, Occasion.AfterQueryOne,entityName, record);
+        var (res, _) = await hookFactory.ExecuteRecordToObject(provider, Occasion.AfterQueryOne,entityName, record);
+        return res;
     }
 
     public async Task<object> List(string entityName, Pagination? pagination, Dictionary<string,StringValues> qs)

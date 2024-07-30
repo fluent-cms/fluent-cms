@@ -29,4 +29,8 @@
       <Folder Include="Utils\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Remove="default.db" />
+    </ItemGroup>
+
 </Project>

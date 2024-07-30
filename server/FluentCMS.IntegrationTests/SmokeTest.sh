@@ -28,6 +28,20 @@ test_postgres_container() {
   dotnet test
 }
 
+test_sqlserver_container(){
+  local container_name="fluent-cms-db-sql-edge"
+  local password=Admin12345678!
+  if docker ps -a --format '{{.Names}}' | grep -q "^${container_name}$"; then
+    echo "Removing existing container: ${container_name}"
+    docker rm -f "${container_name}"
+  fi
+  docker run --cap-add SYS_PTRACE -e 'ACCEPT_EULA=1' -e "MSSQL_SA_PASSWORD=$password" -p 1433:1433 --name $container_name -d mcr.microsoft.com/azure-sql-edge
+  sleep 5
+  export DatabaseProvider=SqlServer
+  export SqlServer="Server=localhost;Database=cms;User Id=sa;Password=Admin12345678!;TrustServerCertificate=True"
+  dotnet test
+}
+
 # Exit immediately if a command exits with a non-zero status
 set -e
 #export Logging__LogLevel__Default=Warning
@@ -44,4 +58,6 @@ test_postgres_container "$(pwd)/../../fluent-cms-postgres-docker/init.sql"
 
 # Postgres With Empty Data 
 test_postgres_container ""
+
+test_sqlserver_container
 
