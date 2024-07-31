@@ -24,6 +24,8 @@
     &lt;TestId&gt;xUnit::6EDECA16-B67A-4EAA-A296-F21FBDC7561E::net8.0::Utils.Tests.HookFactoryTests.HooksTests&lt;/TestId&gt;
     &lt;TestId&gt;xUnit::6EDECA16-B67A-4EAA-A296-F21FBDC7561E::net8.0::Utils.Tests.HookFactoryTests.HookFactoryTests&lt;/TestId&gt;
     &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net8.0::FluentCMS.IntegrationTests.SmokeTest.BasicFlow&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::E7EAD0DD-856C-4530-9F62-4B3EFEB15F01::net8.0::FluentCMS.App.Tests.EntityHookTests.TestHooks&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::E7EAD0DD-856C-4530-9F62-4B3EFEB15F01::net8.0::FluentCMS.App.Tests.EntityHookTests&lt;/TestId&gt;
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String>
 	</wpf:ResourceDictionary>

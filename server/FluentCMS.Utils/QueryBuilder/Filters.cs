@@ -17,7 +17,7 @@ public sealed class Filter
     public string FieldName
     {
         get => _fieldName;
-        set => _fieldName = NameFormatter.LowerNoSpace(value);
+        set => _fieldName = value.Trim();
     }
 
     public string Operator { get; set; } = "";
@@ -81,7 +81,7 @@ public sealed class Filter
         return true;
     }
 
-    public void Apply(Entity entity, Query query)
+    public Result Apply(Entity entity, Query query)
     {
         var fieldName = entity.Fullname(FieldName);
         switch (Operator)
@@ -95,10 +95,15 @@ public sealed class Filter
         }
         foreach (var constraint in Constraints)
         {
-            constraint.Apply(query,fieldName);
+            var result = constraint.Apply(query,fieldName);
+            if (result.IsFailed)
+            {
+                return Result.Fail(result.Errors);
+            }
         }
-    }
 
+        return Result.Ok();
+    }
 }
 
 public class Filters : List<Filter>
@@ -170,18 +175,24 @@ public class Filters : List<Filter>
         }
     }
 
-    public void Apply(Entity entity, Query? query)
+    public Result Apply(Entity entity, Query? query)
     {
         if (query is null)
         {
-            return;
+            return Result.Ok();
         }
 
         foreach (var filter in this)
         {
-            filter.Apply(entity, query);
+            var result = filter.Apply(entity, query);
+            if (result.IsFailed)
+            {
+                return Result.Fail(result.Errors);
+            }
         }
+
+        return Result.Ok();
     }
-    
-   
+
+
 }

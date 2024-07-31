@@ -73,7 +73,7 @@ public partial class SchemaService(IDefinitionExecutor definitionExecutor, KateQ
         var query = BaseQuery().Where(SchemaColumnName, dto.Name)
             .WhereNot(SchemaColumnId, dto.Id);
         var existing = await kateQueryExecutor.Count(query);
-        CheckBool(existing ==0).ThrowFalse($"the schema name {dto.Name} exists");
+        True(existing == 0).ThrowNotTrue($"the schema name {dto.Name} exists");
         await VerifyIfSchemaIsView(dto);
         await SaveSchema(dto);
         return dto;
@@ -100,7 +100,8 @@ public partial class SchemaService(IDefinitionExecutor definitionExecutor, KateQ
 
     public async Task<Schema> SaveTableDefine(Schema dto)
     {
-        var entity = NotNull(dto.Settings?.Entity).ValOrThrow("invalid payload");
+        var entity = NotNull(dto.Settings.Entity).ValOrThrow("invalid payload");
+        entity.EnsureDefaultAttribute();
         var cols = await definitionExecutor.GetColumnDefinitions(entity.TableName);
         await VerifyEntity(dto, cols, entity);
         
@@ -115,17 +116,15 @@ public partial class SchemaService(IDefinitionExecutor definitionExecutor, KateQ
         }
         else
         {
-            entity.EnsureDefaultAttribute();
+            entity.EnsureDeleted();
             await definitionExecutor.CreateTable(entity.TableName, entity.ColumnDefinitions());
             //no need to expose deleted field to frontend 
             entity.RemoveDeleted();
         }
-
         await EnsureEntityInTopMenuBar(entity);
         return await Save(dto);
     }
-
-
+    
     public async Task<Entity?> GetTableDefine(string tableName)
     {
         StrNotEmpty(tableName).ValOrThrow("Table name should not be empty");
@@ -141,7 +140,7 @@ public partial class SchemaService(IDefinitionExecutor definitionExecutor, KateQ
         return true;
     }
 
-    public async Task AddTopMenuBar()
+    public async Task EnsureTopMenuBar()
     {
         var query = BaseQuery().Where(SchemaColumnName, SchemaName.TopMenuBar);
         var item = ParseSchema(await kateQueryExecutor.One(query));
@@ -173,7 +172,7 @@ public partial class SchemaService(IDefinitionExecutor definitionExecutor, KateQ
         await SaveSchema(menuBarSchema);
     }
 
-    public async Task AddSchemaTable()
+    public async Task EnsureSchemaTable()
     {
         var cols = await definitionExecutor.GetColumnDefinitions(SchemaTableName);
         if (cols.Length > 0)
@@ -202,6 +201,82 @@ public partial class SchemaService(IDefinitionExecutor definitionExecutor, KateQ
             ]
         };
         entity.EnsureDefaultAttribute();
+        entity.EnsureDeleted();
         await definitionExecutor.CreateTable(entity.TableName, entity.ColumnDefinitions());
     }
+
+    public async Task<Schema> AddOrSaveEntity(Entity entity)
+    {
+        var find = await GetByIdOrNameDefault(entity.Name);
+        var schema = new Schema
+        {
+            Name = entity.Name,
+            Type = SchemaType.Entity,
+            Settings = new Settings
+            {
+                Entity = entity
+            }
+        };
+        
+        if (find is not null)
+        {
+            True(find.Type == SchemaType.Entity).
+                ThrowNotTrue("Schema Name exists and it's not entity");
+            schema.Id = find.Id;
+        }
+        return await SaveTableDefine(schema);
+    }
+    
+    public async Task<Schema> AddOrSaveSimpleEntity(string entityName, string field, string? lookup, string? crossTable)
+    {
+        var entity = new Entity
+        {
+            Name = entityName,
+            TableName = entityName,
+            Title = entityName,
+            DefaultPageSize = 10,
+            PrimaryKey = "id",
+            TitleAttribute = field,
+            Attributes =
+            [
+                new Attribute
+                {
+                    Field = field,
+                    Header = field,
+                    InList = true,
+                    InDetail = true,
+                    DataType = DataType.String
+                }
+            ]
+        };
+        if (!string.IsNullOrWhiteSpace(lookup))
+        {
+            entity.Attributes = entity.Attributes.Append(new Attribute
+            {
+                Field = lookup,
+                Options = lookup,
+                Header = lookup,
+                InList = true,
+                InDetail = true,
+                DataType = DataType.Int,
+                Type = DisplayType.lookup,
+            }).ToArray();
+
+        }
+
+        if (!string.IsNullOrWhiteSpace(crossTable))
+        {
+            entity.Attributes = entity.Attributes.Append(new Attribute
+            {
+                Field = crossTable,
+                Options = crossTable,
+                Header = crossTable,
+                DataType = DataType.Na,
+                Type = DisplayType.crosstable,
+                InDetail = true,
+            }).ToArray();
+        }
+        return await AddOrSaveEntity(entity);
+    }
+
 }

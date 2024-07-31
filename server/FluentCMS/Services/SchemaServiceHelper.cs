@@ -57,9 +57,10 @@ public partial class SchemaService
     {
         var query = BaseQuery().Where(SchemaColumnName, dto.Name).WhereNot(SchemaColumnId, dto.Id);
         var existing = await kateQueryExecutor.Count(query);
-        CheckBool(existing ==0).ThrowFalse($"the schema name {dto.Name} exists");
-
-        CheckBool(cols.Length > 0 && dto.Id ==0 ).ThrowTrue($"the table name {entity.TableName} exists");
+        True(existing ==0).ThrowNotTrue($"the schema name {dto.Name} exists");
+        False(cols.Length > 0 && dto.Id ==0 ).
+            ThrowNotFalse($"the table name {entity.TableName} exists");
+        
         foreach (var attribute in entity.GetAttributesByType(DisplayType.lookup))
         {
             await CheckLookup(attribute);
@@ -153,7 +154,7 @@ public partial class SchemaService
         return Result.Ok();
     }
 
-    private async Task CreateCrosstable(Entity entity, global::FluentCMS.Utils.QueryBuilder.Attribute attribute)
+    private async Task CreateCrosstable(Entity entity, Utils.QueryBuilder.Attribute attribute)
     {
         var entityName = CheckResult(attribute.GetCrossEntityName());
         var targetEntity = CheckResult(await GetEntityByNameOrDefault(entityName, false));
@@ -165,10 +166,9 @@ public partial class SchemaService
         }
     }
 
-    private async Task CheckLookup(global::FluentCMS.Utils.QueryBuilder.Attribute attribute)
+    private async Task CheckLookup(Utils.QueryBuilder.Attribute attribute)
     {
-        CheckBool(attribute.DataType != DataType.Int)
-            .ThrowTrue("lookup datatype should be int");
+        True(attribute.DataType == DataType.Int).ThrowNotTrue("lookup datatype should be int");
         var entityName = CheckResult(attribute.GetLookupEntityName());
         NotNull(await GetEntityByNameOrDefault(entityName, false))
             .ValOrThrow($"not find entity by name {entityName}");

@@ -39,14 +39,14 @@ public class SchemaServiceTests :IAsyncLifetime
     [Fact]
     public async Task AddSchemaTable_NoException()
     {
-        await _schemaService.AddSchemaTable();
-        await _schemaService.AddSchemaTable();
+        await _schemaService.EnsureSchemaTable();
+        await _schemaService.EnsureSchemaTable();
     }
     [Fact]
     public async Task AddTopMenuBar_Success()
     {
-        await _schemaService.AddSchemaTable();
-        await _schemaService.AddTopMenuBar();
+        await _schemaService.EnsureSchemaTable();
+        await _schemaService.EnsureTopMenuBar();
         var menus = await _schemaService.GetByIdOrName(SchemaName.TopMenuBar,false);
         Assert.NotNull(menus);
     }
@@ -54,8 +54,8 @@ public class SchemaServiceTests :IAsyncLifetime
     [Fact]
     public async Task SaveEntity_Insert()
     {
-        await _schemaService.AddSchemaTable();
-        await _schemaService.AddTopMenuBar();
+        await _schemaService.EnsureSchemaTable();
+        await _schemaService.EnsureTopMenuBar();
         await _schemaService.Save(TestSchema());
         var entity = _schemaService.GetEntityByNameOrDefault(TestEntity().Name);
         Assert.NotNull(entity);
@@ -65,8 +65,8 @@ public class SchemaServiceTests :IAsyncLifetime
     [Fact]
     public async Task SaveEntity_Update()
     {
-        await _schemaService.AddSchemaTable();
-        await _schemaService.AddTopMenuBar();
+        await _schemaService.EnsureSchemaTable();
+        await _schemaService.EnsureTopMenuBar();
         var schema = await _schemaService.Save(TestSchema());
         schema.Settings.Entity!.TableName = "test2";
         await _schemaService.Save(schema);
@@ -78,8 +78,8 @@ public class SchemaServiceTests :IAsyncLifetime
     [Fact]
     public async Task Delete_Success()
     {
-        await _schemaService.AddSchemaTable();
-        await _schemaService.AddTopMenuBar();
+        await _schemaService.EnsureSchemaTable();
+        await _schemaService.EnsureTopMenuBar();
 
         var schema = await _schemaService.GetByIdOrNameDefault(TestEntity().Name) ??
                      await _schemaService.Save(TestSchema());
@@ -92,8 +92,8 @@ public class SchemaServiceTests :IAsyncLifetime
     [Fact]
     public async Task GetAll_NUllType()
     {
-        await _schemaService.AddSchemaTable();
-        await _schemaService.AddTopMenuBar();
+        await _schemaService.EnsureSchemaTable();
+        await _schemaService.EnsureTopMenuBar();
         await _schemaService.Save(TestSchema());
         var items = await _schemaService.GetAll("");
         Assert.Equal(2, items.Length );
@@ -102,8 +102,8 @@ public class SchemaServiceTests :IAsyncLifetime
     [Fact]
     public async Task GetAll_EntityType()
     {
-        await _schemaService.AddSchemaTable();
-        await _schemaService.AddTopMenuBar();
+        await _schemaService.EnsureSchemaTable();
+        await _schemaService.EnsureTopMenuBar();
         await _schemaService.Save(TestSchema());
         var items = await _schemaService.GetAll(SchemaType.Menu);
         Assert.Single(items);

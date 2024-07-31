@@ -14,7 +14,9 @@ public interface ISchemaService
     Task<Entity?> GetTableDefine(string tableName);
     Task<Schema> SaveTableDefine(Schema schemaDto);
     Task<Schema> Save(Schema schema);
-    Task AddTopMenuBar();
-    Task AddSchemaTable();
+    Task EnsureTopMenuBar();
+    Task EnsureSchemaTable();
     Task<bool> Delete(int id);
+    Task<Schema> AddOrSaveEntity(Entity entity);
+    Task<Schema> AddOrSaveSimpleEntity(string entity, string field, string? lookup, string? crossTable);
 }

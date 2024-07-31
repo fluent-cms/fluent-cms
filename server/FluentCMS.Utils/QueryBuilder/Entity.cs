@@ -16,25 +16,25 @@ public sealed class Entity
     private string _titleAttribute="";
     public string Name {
         get => _name;
-        set => _name = NameFormatter.LowerNoSpace(value);
+        set => _name = value.Replace(" ", string.Empty).ToLower(); // make sure it is url friendly
     }
     public string TableName
     {
         get =>  _tableName;
-        set => _tableName = NameFormatter.LowerNoSpace(value);
+        set => _tableName = value.Trim();
     }
     public string Title { get; set; } = "";
 
     public string PrimaryKey
     {
-        get => _primaryKey;
-        set =>_primaryKey =NameFormatter.LowerNoSpace(value); 
+        get => string.IsNullOrWhiteSpace(_primaryKey) ? "id": _primaryKey;
+        set =>_primaryKey =value.Trim(); 
     }
 
     public string TitleAttribute
     {
         get => _titleAttribute;
-        set => _titleAttribute = NameFormatter.LowerNoSpace(value);
+        set => _titleAttribute = value.Trim();
     }
     
     public int DefaultPageSize { get; set; } = 20;
@@ -95,15 +95,19 @@ public sealed class Entity
                 Field = "updated_at", Header = "Updated At", InList = true, InDetail = true, IsDefault = true, DataType = DataType.Datetime
             });
         }
+        Attributes = list.ToArray();
+    }
 
+    public void EnsureDeleted()
+    {
         if (FindOneAttribute("deleted") == null)
         {
-            list.Add(new Attribute
-            {
-                Field = "deleted", InList = true, InDetail = true, IsDefault = true, DataType = DataType.Int
-            });
+            Attributes = Attributes.Append(new Attribute
+                {
+                    Field = "deleted", InList = true, InDetail = true, IsDefault = true, DataType = DataType.Int
+                }
+            ).ToArray();
         }
-        Attributes = list.ToArray();
     }
 
     public void RemoveDeleted()
@@ -165,10 +169,17 @@ public sealed class Entity
     {
         return Attributes.FirstOrDefault(x => x.Field == name);
     }
-    public Query OneQuery(Filters? filters, Attribute[]attributes)
+    public Result<Query> OneQuery(Filters? filters, Attribute[]attributes)
     {
         var query = Basic().Select(attributes.Select(x=>x.FullName()));
-        filters?.Apply(this, query);
+        if (filters is not null)
+        {
+            var result = filters.Apply(this, query);
+            if (result.IsFailed)
+            {
+                return Result.Fail(result.Errors);
+            }
+        }
         return query;
     }
     
@@ -207,7 +218,15 @@ public sealed class Entity
         return Basic().Select(lstFields.ToArray()).WhereIn(PrimaryKey,ids);
     }
 
-    public Query Insert(Record item) => new Query(TableName).AsInsert(item, true);
+    public Query Insert(Record item)
+    {
+        //auto increased value
+        if (PrimaryKeyAttribute().IsDefault)
+        {
+            item.Remove(PrimaryKey);
+        }
+        return new Query(TableName).AsInsert(item, true);
+    }
 
     public Result<Query> UpdateQuery(Record item)
     {

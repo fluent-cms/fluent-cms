@@ -25,6 +25,15 @@ public class SchemasController(ISchemaService schemaService):ControllerBase
         var item = await schemaService.SaveTableDefine(dto);
         return Ok(item);
     }
+
+    [HttpPost("simple_entity_define")]
+    public async Task<ActionResult<Schema>> EnsureSimpleEntity(
+        [FromQuery] string entity,
+        [FromQuery] string field,
+        [FromQuery] string? lookup,
+        [FromQuery] string? crosstable) =>
+        Ok(await schemaService.AddOrSaveSimpleEntity(entity, field, lookup, crosstable));
+    
     [HttpGet("{name}/define")]
     public async Task<ActionResult<Schema>> GetTableDefine(string name)
     {
@@ -38,7 +47,6 @@ public class SchemasController(ISchemaService schemaService):ControllerBase
         return Ok(await schemaService.GetByIdOrName(name, extend?? true));
     }
 
-
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
@@ -46,5 +54,5 @@ public class SchemasController(ISchemaService schemaService):ControllerBase
         return NoContent();
     }
 
-    
+   
 }

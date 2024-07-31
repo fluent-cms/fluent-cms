@@ -1,27 +1,29 @@
 using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.QueryBuilder;
 using Moq;
-using Xunit.Abstractions;
 
 namespace Utils.Tests.HookFactoryTests;
 using Record = IDictionary<string,object>;
 
 public class People
 {
-   public int Id { get; set; }
-   public string Name { get; set; } = "";
+    public const string EntityName = "people";
+    public const string NameFieldName = "Name";
+    public const string NameValue = "Alice";
+    public int id { get; set; }
+    public string Name { get; set; } = "";
 }
 
 public class PeopleService
 {
-    public void ModifyRecord(Record dictionary)
+    public void ModifyRecord(Record dictionary, string s)
     {
-        dictionary["name"] += "ModifyRecord";
+        dictionary[People.NameFieldName] += s;
     }
 
-    public void ModifyPeople(People people)
+    public void ModifyPeople(People people, string s)
     {
-        people.Name += "ModifyPeople";
+        people.Name += s;
     }
     public async Task<People> ModifyPeopleAsyncReturn(People people)
     {
@@ -29,7 +31,7 @@ public class PeopleService
         people.Name += "ModifyPeopleAsyncReturn";
         return new People
         {
-            Id = people.Id,
+            id = people.id,
             Name = people.Name
         };
     }
@@ -44,8 +46,6 @@ public class HookFactoryTests
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly HookFactory _hookFactory;
-    private const string EntityName = "people";
-    private const string  Name = "Alice";
     
     public HookFactoryTests()
     {
@@ -61,7 +61,7 @@ public class HookFactoryTests
     public async Task TestExecuteAfterQuery()
     {
         var occasion = Occasion.AfterQueryMany;
-        _hookFactory.AddHook(EntityName, occasion, Next.Exit, (ListResult res) =>
+        _hookFactory.AddHook(People.EntityName, occasion, Next.Exit, (ListResult res) =>
         {
             res.TotalRecords = 100;
         });
@@ -70,7 +70,7 @@ public class HookFactoryTests
         {
             TotalRecords = 10,
         };
-        await _hookFactory.ExecuteAfterQuery(_serviceProvider, occasion, EntityName, res);
+        await _hookFactory.ExecuteAfterQuery(_serviceProvider, occasion, People.EntityName, res);
         Assert.Equal(100, res.TotalRecords);
     }
 
@@ -78,22 +78,23 @@ public class HookFactoryTests
     public async Task TestExecuteBeforeQueryReplace()
     {
         var occasion = Occasion.AfterQueryMany;
-        _hookFactory.AddHook(EntityName,occasion,Next.Exit, () =>new People
+        _hookFactory.AddHook(People.EntityName,occasion,Next.Exit, () =>new People
         {
-            Id = 3,Name = Name
+            id = 3,Name = People.NameValue
         } );
         
         var (filters, sorts, pagination) = (new Filters(), new Sorts(), new Pagination());
-        var (obj,next) = await _hookFactory.ExecuteBeforeQuery(_serviceProvider, occasion, EntityName, filters, sorts, pagination);
+        var (obj,next) = await _hookFactory.
+            ExecuteBeforeQuery(_serviceProvider, occasion, People.EntityName, filters, sorts, pagination);
         Assert.Equal(Next.Exit,next);
-        Assert.Equal(Name, ((People)obj!).Name);
+        Assert.Equal(People.NameValue, ((People)obj!).Name);
     }
 
     [Fact]
     public async Task TestExecuteBeforeQuery()
     {
         var occasion = Occasion.AfterQueryMany;
-        _hookFactory.AddHook(EntityName,occasion,Next.Continue, (Filters filters1, Sorts sorts1, Pagination pagination1) =>
+        _hookFactory.AddHook(People.EntityName,occasion,Next.Continue, (Filters filters1, Sorts sorts1, Pagination pagination1) =>
         {
             filters1.Add(new Filter());
             sorts1.Add(new Sort());
@@ -101,7 +102,7 @@ public class HookFactoryTests
         });
         
         var (filters, sorts, pagination) = (new Filters(), new Sorts(), new Pagination());
-        await _hookFactory.ExecuteBeforeQuery(_serviceProvider, occasion, EntityName, filters, sorts, pagination);
+        await _hookFactory.ExecuteBeforeQuery(_serviceProvider, occasion,People.EntityName, filters, sorts, pagination);
         Assert.Single(filters);
         Assert.Single(sorts);
         Assert.Equal(100,pagination.Offset);
@@ -111,16 +112,16 @@ public class HookFactoryTests
     public async Task TestAsyncReturnStringToObject()
     {
         var occasion = Occasion.BeforeQueryOne;
-        _hookFactory.AddHook("people", occasion, Next.Continue,
-            (string id) => new People { Id = Int32.Parse(id), Name = Name });
+        _hookFactory.AddHook(People.EntityName, occasion, Next.Continue,
+            (string id) => new People { id = Int32.Parse(id), Name = People.NameValue });
 
-        _hookFactory.AddHook("people", occasion, Next.Continue,
+        _hookFactory.AddHook(People.EntityName, occasion, Next.Continue,
             async (PeopleService service, People people) =>await service.ModifyPeopleAsyncReturn(people));
 
         var (res, _) = await _hookFactory.ExecuteStringToObject(_serviceProvider, occasion, "people", "1");
         var people = (People)res;
-        Assert.Equal(1, people.Id);
-        Assert.Equal(Name + "ModifyPeopleAsyncReturn", people.Name);
+        Assert.Equal(1, people.id);
+        Assert.Equal(People.NameValue + "ModifyPeopleAsyncReturn", people.Name);
     }
 
     [Fact]
@@ -128,16 +129,16 @@ public class HookFactoryTests
     {
         var occasion = Occasion.BeforeQueryOne;
 
-        _hookFactory.AddHook(EntityName, occasion, Next.Continue,
-            (string id) => new People { Id = Int32.Parse(id), Name = Name });
+        _hookFactory.AddHook(People.EntityName, occasion, Next.Continue,
+            (string id) => new People { id = Int32.Parse(id), Name = People.NameValue });
 
-        _hookFactory.AddHook("people", occasion, Next.Continue,
+        _hookFactory.AddHook(People.EntityName, occasion, Next.Continue,
             async (PeopleService service, People people) => await service.ModifyPeopleAsync(people));
 
         var (res, _) = await _hookFactory.ExecuteStringToObject(_serviceProvider, occasion, "people", "1");
         var people = (People)res;
-        Assert.Equal(1, people.Id);
-        Assert.Equal(Name + "ModifyPeopleAsync", people.Name);
+        Assert.Equal(1, people.id);
+        Assert.Equal(People.NameValue + "ModifyPeopleAsync", people.Name);
     }
 
     [Fact]
@@ -145,16 +146,16 @@ public class HookFactoryTests
     {
         var occasion = Occasion.BeforeQueryOne;
         
-        _hookFactory.AddHook(EntityName, occasion, Next.Continue,
-            (string id) => new People{Id = Int32.Parse(id), Name = Name});
+        _hookFactory.AddHook(People.EntityName, occasion, Next.Continue,
+            (string id) => new People{id = Int32.Parse(id), Name = People.NameValue});
 
-        _hookFactory.AddHook(EntityName, occasion, Next.Continue,
-            (PeopleService service, People people) => service.ModifyPeople(people));
+        _hookFactory.AddHook(People.EntityName, occasion, Next.Continue,
+            (PeopleService service, People people) => service.ModifyPeople(people,"ModifyPeople"));
         
         var (res,_ )= await _hookFactory.ExecuteStringToObject(_serviceProvider, occasion, "people", "1");
         var people = (People)res;
-        Assert.Equal(1, people.Id);
-        Assert.Equal(Name + "ModifyPeople", people.Name);
+        Assert.Equal(1, people.id);
+        Assert.Equal(People.NameValue + "ModifyPeople", people.Name);
     }
     
     [Fact]
@@ -165,16 +166,16 @@ public class HookFactoryTests
         Record records = new Dictionary<string, object>
         {
             ["id"] = 1,
-            ["name"] = Name
+            [People.NameFieldName] = People.NameValue
         };
-        _hookFactory.AddHook(EntityName, occasion, Next.Continue,
-            (PeopleService service, Record record) => service.ModifyRecord(record));
+        _hookFactory.AddHook(People.EntityName, occasion, Next.Continue,
+            (PeopleService service, Record record) => service.ModifyRecord(record,"ModifyRecord"));
 
-        _hookFactory.AddHook(EntityName, occasion, Next.Continue,
-            (PeopleService service, People people) => service.ModifyPeople(people));
-        var (res,_ )= await _hookFactory.ExecuteRecordToObject(_serviceProvider, occasion, "people", records);
+        _hookFactory.AddHook(People.EntityName, occasion, Next.Continue,
+            (PeopleService service, People people) => service.ModifyPeople(people,"ModifyPeople"));
+        var (res,_ )= await _hookFactory.ExecuteRecordToObject(_serviceProvider, occasion, People.EntityName, records);
         var people = (People)res;
-        Assert.Equal(Name + "ModifyRecord" + "ModifyPeople", people.Name);
+        Assert.Equal(People.NameValue + "ModifyRecord" + "ModifyPeople", people.Name);
     }
 
     [Fact]
@@ -184,17 +185,17 @@ public class HookFactoryTests
         Record records = new Dictionary<string, object>
         {
             ["id"] = 1,
-            ["name"] = name
+            [People.NameFieldName] = name
         };
 
-        _hookFactory.AddHook(EntityName, Occasion.BeforeInsert, Next.Exit,
-            (PeopleService service, Record record) => service.ModifyRecord(record));
+        _hookFactory.AddHook(People.EntityName, Occasion.BeforeInsert, Next.Exit,
+            (PeopleService service, Record record) => service.ModifyRecord(record,"ModifyRecord"));
         
-        _hookFactory.AddHook(EntityName, Occasion.BeforeInsert, Next.Continue,
-            (PeopleService service, People people) => service.ModifyPeople(people));
+        _hookFactory.AddHook(People.EntityName, Occasion.BeforeInsert, Next.Continue,
+            (PeopleService service, People people) => service.ModifyPeople(people,"ModifyPeople"));
         
         var (res,_ )= await _hookFactory.ExecuteRecordToRecord(_serviceProvider, Occasion.BeforeInsert, "people", records);
-        Assert.Equal(name + "ModifyRecord" , res["name"]);
+        Assert.Equal(name + "ModifyRecord" , res[People.NameFieldName]);
     }
     
     [Fact]
@@ -203,16 +204,16 @@ public class HookFactoryTests
         Record records = new Dictionary<string, object>
         {
             ["id"] = 1,
-            ["name"] = Name
+            [People.NameFieldName] = People.NameValue
         };
 
-        _hookFactory.AddHook(EntityName, Occasion.BeforeInsert, Next.Continue,
-            (PeopleService service, Record record) => service.ModifyRecord(record));
+        _hookFactory.AddHook(People.EntityName, Occasion.BeforeInsert, Next.Continue,
+            (PeopleService service, Record record) => service.ModifyRecord(record,"ModifyRecord"));
         
-        _hookFactory.AddHook(EntityName, Occasion.BeforeInsert, Next.Continue,
-            (PeopleService service, People people) => service.ModifyPeople(people));
+        _hookFactory.AddHook(People.EntityName, Occasion.BeforeInsert, Next.Continue,
+            (PeopleService service, People people) => service.ModifyPeople(people,"ModifyPeople"));
         
         var (res,_ )= await _hookFactory.ExecuteRecordToRecord(_serviceProvider, Occasion.BeforeInsert, "people", records);
-        Assert.Equal(Name + "ModifyRecord" + "ModifyPeople", res["name"]);
+        Assert.Equal(People.NameValue + "ModifyRecord" + "ModifyPeople", res[People.NameFieldName]);
     }
 }

@@ -15,7 +15,7 @@ public class Attribute
     public string Field
     {
         get => _field;
-        set => _field = NameFormatter.LowerNoSpace(value);
+        set => _field = value.Trim();
     }
     public string Header { get; set; } = "";
     public bool InList { get; set; } 

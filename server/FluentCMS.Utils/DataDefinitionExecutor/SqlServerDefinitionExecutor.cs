@@ -38,6 +38,11 @@ public class SqlServerDefinitionExecutor(string connectionString, ILogger<SqlSer
 
     public async Task AlterTableAddColumns(string tableName, ColumnDefinition[] columnDefinitions)
     {
+        if (columnDefinitions.Length == 0)
+        {
+            return;
+        }
+        
         var parts = columnDefinitions.Select(x =>
             $"ALTER TABLE [{tableName}] ADD [{x.ColumnName}] {DataTypeToString(x.DataType)}"
         );

@@ -17,7 +17,7 @@ namespace FluentCMS.Utils.QueryBuilder;
         public string FieldName
         {
             get => _fieldName;
-            set => _fieldName = NameFormatter.LowerNoSpace(value);
+            set => _fieldName = value.Trim();
         }
 
         [JsonConverter(typeof(JsonStringEnumConverter))]

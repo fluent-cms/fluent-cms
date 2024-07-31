@@ -29,19 +29,22 @@ public class EmptyStringExceptionBuilder(string? str)
     }
 }
 
-public class BoolExceptionBuilder(bool val)
+public class MustTrueExceptionBuilder(bool val)
 {
-    public void ThrowTrue(string message)
+    public void ThrowNotTrue(string message)
     {
-        if (val)
+        if (!val)
         {
             throw new InvalidParamException(message);
         }
     }
+}
 
-    public void ThrowFalse(string message)
+public class MustFalseExceptionBuilder(bool val)
+{
+    public void ThrowNotFalse(string message)
     {
-        if (!val)
+        if (val)
         {
             throw new InvalidParamException(message);
         }
@@ -59,10 +62,13 @@ public static class InvalidParamExceptionFactory
     {
         return new NullableObjectExceptionBuilder<T>(obj);
     }
-
-    public static BoolExceptionBuilder CheckBool(bool condition)
+    public static MustFalseExceptionBuilder False(bool condition)
     {
-        return new BoolExceptionBuilder(condition);
+        return new MustFalseExceptionBuilder(condition);
+    }
+    public static MustTrueExceptionBuilder True(bool condition)
+    {
+        return new MustTrueExceptionBuilder(condition);
     }
     public static void CheckResult(Result? result)
     {

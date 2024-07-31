@@ -87,7 +87,7 @@ public sealed class Hook
             .ValOrThrow($"{ExceptionPrefix} didn't get result from hook, con not proceed");
         return result is Record or Dictionary<string,object>
             ? (Record)result
-            : ConvertObjectToDictionary(result);
+            : ConvertObjectToDictionary(record,result);
     }
 
     private  (MethodInfo, object[], object []) PrepareArgument(IServiceProvider provider, Func<Type, object> getInput)
@@ -121,12 +121,23 @@ public sealed class Hook
         var returnType = method.ReturnType;
         var isAsync = returnType == typeof(Task) ||
                       returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>);
-        var result = isAsync ? await InvokeAsyncTask(method, args.ToArray()) : method.Invoke(Callback, args.ToArray());
-        if (method.ReturnType == typeof(Task) || method.ReturnType == typeof(void))
+        try
         {
-            result = defaultValue;
+            var result = isAsync
+                ? await InvokeAsyncTask(method, args.ToArray())
+                : method.Invoke(Callback, args.ToArray());
+
+            if (method.ReturnType == typeof(Task) || method.ReturnType == typeof(void))
+            {
+                result = defaultValue;
+            }
+
+            return result;
         }
-        return result;
+        catch(Exception ex)
+        {
+            throw ex.InnerException??ex;
+        }
     }
 
     private async Task<object?> InvokeAsyncTask(MethodInfo method, object[] args)
@@ -150,7 +161,7 @@ public sealed class Hook
         foreach (var (key, value) in dictionary)
         {
             var property = targetType.GetProperty(key, BindingFlags.Public | BindingFlags.Instance)
-                           ?? targetType.GetProperty(ToTitle(key), BindingFlags.Public | BindingFlags.Instance);
+                           ?? targetType.GetProperty(key, BindingFlags.Public | BindingFlags.Instance);
             if (property != null && property.CanWrite)
             {
                 property.SetValue(instance, Convert.ChangeType(value, property.PropertyType));
@@ -160,26 +171,17 @@ public sealed class Hook
         return instance;
     }
 
-    private static Record ConvertObjectToDictionary(object? obj)
+    private static Record ConvertObjectToDictionary(Record dictionary, object? obj)
     {
-        Record dictionary = new Dictionary<string, object>();
         foreach (var property in obj?.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance) ?? [])
         {
             if (!property.CanRead) continue;
             var val = property.GetValue(obj);
             if (val is not null)
             {
-                dictionary[ToSnakeCase(property.Name)] = val;
+                dictionary[property.Name] = val;
             }
         }
-
         return dictionary;
     }
-
-    //hello_word to HelloWorld
-    private static string ToTitle(string s) =>
-        string.Join("", s.Split("_").Select(p => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(p)).ToArray());
-
-    //HelloWorld to hello_word
-    private static string ToSnakeCase(string s) => Regex.Replace(s, "([a-z])([A-Z])", "$1_$2").ToLower();
 }

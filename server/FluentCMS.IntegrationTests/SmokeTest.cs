@@ -108,66 +108,12 @@ public class SmokeTest
         await AddSimpleEntity(entity, field, "", "");
     }
 
-    private async Task AddSimpleEntity(string entity, string field, string lookup, string crossTable)
+    private async Task AddSimpleEntity(string entity, string field, string lookup, string crosstable)
     {
-        var schema = new Schema
-        {
-            Name = entity,
-            Type = SchemaType.Entity,
-            Settings = new Settings
-            {
-                Entity = new Entity
-                {
-                    Name = entity,
-                    TableName = entity,
-                    Title = entity,
-                    DefaultPageSize = 10,
-                    PrimaryKey = "id",
-                    TitleAttribute = field,
-                    Attributes =
-                    [
-                        new Attribute
-                        {
-                            Field = field,
-                            Header = field,
-                            InList = true,
-                            InDetail = true,
-                            DataType = DataType.String
-                        }
-                    ]
-                }
-            }
-        };
-        if (!string.IsNullOrWhiteSpace(lookup))
-        {
-            schema.Settings.Entity.Attributes = schema.Settings.Entity.Attributes.Append(new Attribute
-            {
-                Field = lookup,
-                Options = lookup,
-                Header = lookup,
-                InList = true,
-                InDetail = true,
-                DataType = DataType.Int,
-                Type = DisplayType.lookup,
-            }).ToArray();
-
-        }
-
-        if (!string.IsNullOrWhiteSpace(crossTable))
-        {
-            schema.Settings.Entity.Attributes = schema.Settings.Entity.Attributes.Append(new Attribute
-            {
-                Field = crossTable,
-                Options = crossTable,
-                Header = crossTable,
-                DataType = DataType.Na,
-                Type = DisplayType.crosstable,
-                InDetail = true,
-            }).ToArray();
-
-        }
-
-        var result = await PostWithCookie("/api/schemas/define", schema);
+        var result =
+            await PostWithCookie(
+                $"/api/schemas/simple_entity_define?entity={entity}&field={field}&lookup={lookup}&crosstable={crosstable}",
+                new Dictionary<string, object>());
         result.EnsureSuccessStatusCode();
     }
 

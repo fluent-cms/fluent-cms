@@ -17,7 +17,7 @@ public enum DatabaseProvider
     SqlServer,
 }
 
-public sealed class CmsAppBuilder(WebApplicationBuilder builder,DatabaseProvider databaseProvider, string connectionString)
+public sealed class CmsApp(WebApplicationBuilder builder,DatabaseProvider databaseProvider, string connectionString)
 {
     private readonly HookFactory _hookFactory = new ();
     public void PrintVersion()
@@ -34,10 +34,7 @@ public sealed class CmsAppBuilder(WebApplicationBuilder builder,DatabaseProvider
         Console.WriteLine("*********************************************************");
     }
 
-    public void RegisterHook(string entityName, Occasion occasion, Next next, Delegate func) =>
-        _hookFactory.AddHook(entityName, occasion, next, func);
-
-    public CmsAppBuilder Build()
+    public CmsApp Build()
     {
         InjectDbServices();
         InjectServices();
@@ -102,23 +99,35 @@ public sealed class CmsAppBuilder(WebApplicationBuilder builder,DatabaseProvider
 
 public static class WebApplicationExtensions
 {
-    public static CmsAppBuilder CreatePostgresCmsAppBuilder(this WebApplicationBuilder builder,string connectionString)
+    public static CmsApp AddPostgresCms(this WebApplicationBuilder builder, string connectionString) =>
+        new CmsApp(builder, DatabaseProvider.Postgres, connectionString).Build();
+
+    public static CmsApp AddSqliteCms(this WebApplicationBuilder builder, string connectionString) =>
+        new CmsApp(builder, DatabaseProvider.Sqlite, connectionString).Build();
+
+    public static CmsApp AddSqlServerCms(this WebApplicationBuilder builder, string connectionString) =>
+        new CmsApp(builder, DatabaseProvider.SqlServer, connectionString).Build();
+
+
+    public static IEntityService GetCmsEntityService(this WebApplication app)
     {
-        return new CmsAppBuilder(builder, DatabaseProvider.Postgres, connectionString).Build();
+        using var scope = app.Services.CreateScope();
+        return scope.ServiceProvider.GetRequiredService<IEntityService>(); 
     }
 
-    public static CmsAppBuilder CreateSqliteAppBuilder(this WebApplicationBuilder builder, string connectionString)
+    public static ISchemaService GetCmsSchemaService(this WebApplication app)
     {
-        return new CmsAppBuilder(builder, DatabaseProvider.Sqlite, connectionString).Build();
+        using var scope = app.Services.CreateScope();
+        return scope.ServiceProvider.GetRequiredService<ISchemaService>();
     }
     
-    public static CmsAppBuilder CreateSqlServerAppBuilder(this WebApplicationBuilder builder, string connectionString)
-    {
-        return new CmsAppBuilder(builder, DatabaseProvider.SqlServer, connectionString).Build();
-    }
+     public static HookFactory GetCmsHookFactory(this WebApplication app)
+     {
+         using var scope = app.Services.CreateScope();
+         return scope.ServiceProvider.GetRequiredService<HookFactory>();
+     }
 
-
-    public static async Task UseFluentCmsAsync(this WebApplication app, bool requireAuth)
+    public static async Task UseCmsAsync(this WebApplication app, bool requireAuth)
     {
         app.UseExceptionHandler(app.Environment.IsDevelopment() ? "/error-development" : "/error");
         
@@ -136,10 +145,10 @@ public static class WebApplicationExtensions
             //tell admin panel no need to login
             app.MapGet("/api/manage/info", () => new { Email = "admin@cms.com" });
         }
-
+        
         using var scope = app.Services.CreateScope();
         var schemaService = scope.ServiceProvider.GetRequiredService<ISchemaService>();
-        await schemaService.AddSchemaTable();
-        await schemaService.AddTopMenuBar();
+        await schemaService.EnsureSchemaTable();
+        await schemaService.EnsureTopMenuBar();
     }
 }

@@ -9,9 +9,9 @@ var (databaseProvider, connectionString) = GetProviderAndConnectionString();
 
 var cmsServer = databaseProvider switch
 {
-    "Sqlite" => builder.CreateSqliteAppBuilder(connectionString),
-    "Postgres" => builder.CreatePostgresCmsAppBuilder(connectionString),
-    "SqlServer" =>builder.CreateSqlServerAppBuilder(connectionString),
+    "Sqlite" => builder.AddSqliteCms(connectionString),
+    "Postgres" => builder.AddPostgresCms(connectionString),
+    "SqlServer" =>builder.AddSqlServerCms(connectionString),
     _ => throw new Exception("not support")
 };
 
@@ -29,7 +29,7 @@ if (app.Environment.IsDevelopment())
 }
 app.UseAuthorization();
 await Migrate();
-await app.UseFluentCmsAsync(true);
+await app.UseCmsAsync(true);
 app.MapGroup("/api").MapIdentityApi<IdentityUser>();
 app.MapGet("/api/logout", async (SignInManager<IdentityUser> signInManager) => await signInManager.SignOutAsync());
 

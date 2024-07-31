@@ -5,15 +5,16 @@ namespace FluentCMS.Utils.QueryBuilder;
 
 public class Crosstable
 {
-    public Entity CrossEntity { get; set; } = null!;
-    public Entity TargetEntity { get; set; } = null!;
-    public Attribute FromAttribute { get; set; } = null!;
-    public Attribute TargetAttribute { get; set; } = null!;
+    public Entity CrossEntity { get; set; }
+    public Entity TargetEntity { get; set; }
+    public Attribute FromAttribute { get; set; }
+    public Attribute TargetAttribute { get; set; }
 
     public ColumnDefinition[] GetColumnDefinitions()
     {
         CrossEntity.Attributes = [FromAttribute, TargetAttribute];
         CrossEntity.EnsureDefaultAttribute();
+        CrossEntity.EnsureDeleted();
         return CrossEntity.ColumnDefinitions();
     }
     

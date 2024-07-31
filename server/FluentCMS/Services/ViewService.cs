@@ -24,7 +24,7 @@ public class ViewService(
             cursor.Limit = view.PageSize;
         }
         cursor.Limit += 1;
-        var query = entity.ListQuery(view.Filters,view.Sorts, null, cursor, InvalidParamExceptionFactory.CheckResult(view.LocalAttributes(InListOrDetail.InList)));
+        var query = entity.ListQuery(view.Filters,view.Sorts, null, cursor, CheckResult(view.LocalAttributes(InListOrDetail.InList)));
         var items = await kateQueryExecutor.Many(query);
         
         var hasMore = items.Length == cursor.Limit;
@@ -66,8 +66,10 @@ public class ViewService(
         var view = await ResolvedView(viewName, querystringDictionary);
         var entity = NotNull(view.Entity).ValOrThrow($"entity not exist for {viewName}");
 
-        var query = entity.OneQuery(view.Filters, CheckResult(view.LocalAttributes(InListOrDetail.InDetail)));
-        var item = NotNull(await kateQueryExecutor.One(query)).ValOrThrow("Not find record");
+        var attributes = CheckResult(view.LocalAttributes(InListOrDetail.InDetail));
+        var query = CheckResult(entity.OneQuery(view.Filters, attributes ));
+        var item = NotNull(await kateQueryExecutor.One(query))
+            .ValOrThrow("Not find record");
         await AttachRelatedEntity(view, InListOrDetail.InDetail, [item]);
         return item;
     }

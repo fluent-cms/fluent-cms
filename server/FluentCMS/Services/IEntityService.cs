@@ -8,9 +8,13 @@ namespace FluentCMS.Services;
 public interface IEntityService
 {
     Task<object> List(string entityName,Pagination? pagination, Dictionary<string, StringValues> qs);
+    Task<object> List(string entityName, Filters? filters, Sorts? sorts, Pagination? pagination);
     Task<object> Insert(string entityName, JsonElement item);
+    Task<object> Insert(string entityName, Record item);
     Task<object> Update(string entityName, JsonElement item);
+    Task<object> Update(string entityName, Record item);
     Task<object> Delete(string entityName, JsonElement item);
+    Task<object> Delete(string entityName, Record item);
     Task<object> One(string entityName, string strId);
     Task<ListResult> CrosstableList(string entityName, string strId, string field, bool exclude);
     Task<int> CrosstableSave(string entityName, string strId, string field, JsonElement[] items);
