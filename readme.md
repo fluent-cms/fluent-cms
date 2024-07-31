@@ -44,7 +44,6 @@ rather than hard-coded specifics for each entity. This approach reduces repetiti
    await app.UseCmsAsync(false);
    ```
 5. If everthing is good, when the app starts, when you go to the home page, you should see the empty Admin Panel
-   ![img.png](doc/empty-admin-panel.png)
    Here is a quickstart on how to use the Admin Panel [Quickstart.md](doc%2FQuickstart.md) 
 6. If you want to have a look at how FluentCMS handles one to many, many-to-many relationships, just add the following code
     ```
