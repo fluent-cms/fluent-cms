@@ -6,7 +6,7 @@ Additionally, the performance-critical APIs(use SQLKata/Dapper instead of Entity
 as detailed in [performance-test-fluent-cms-vs-entity-framework.md](doc%2Fpeformance-tests%2Fperformance-test-fluent-cms-vs-entity-framework.md)
 - **Powerful:**  Leveraging its schema-driven architecture, Fluent CMS performs CRUD operations based on schema definitions 
 rather than hard-coded specifics for each entity. This approach reduces repetitive tasks for developers, streamlining the development process.
-- **Lightweight:** The codebase of Fluent CMS remains small, clean, and elegant, thanks to the use of modern tools like Entity Framework, SqlKata, SWR, PrimeReact, and JasonEditor.
+- **Superior ASP.NET Integration:** Fluent CMS provides a generic CRUD framework, allowing you to easily apply your business logic by adding hooks. 
 
 ## Play with Fluent CMS
 1. Live Demo  
@@ -14,42 +14,55 @@ rather than hard-coded specifics for each entity. This approach reduces repetiti
       - Email: `admin@cms.com`
       - Password: `Admin1!`  
    - Public Site : https://fluent-cms-ui.azurewebsites.net/
-2. Docker 
-   1. **Clone the Repository**
+2. Source code
       ```shell
-      git clone https://github.com/fluent-cms/fluent-cms
-      ```
-      - for Postgres go to `fluent-cms/fluent-cms-postgres-docker`
-      - for Sqlite go to `fluent-cms/fluent-cms-sqlite-docker`
-   2. **Bring Up Services**
-      ```shell
-      docker-compose build
-      docker-compose up
-      ```
-   3. **Explore the App**
-       - Admin Panel: http://localhost:8080, use username `admin@cms.com` and password `Admin1!` to login.
-       - Demo Public Site: http://localhost:3000 
-       - Optional, add  `127.0.0.1 fluent-cms-server-sqlite` to the  file `hosts`
-         - for window it is located at `C:\Windows\System32\drivers\etc\hosts`
-         - for mac/linux, it is located at `/etc/hosts`
-3. Source code
-   1. **Clone the Repository**
-      ```shell
-      git clone https://github.com/fluent-cms/fluent-cms
-      ```
-   2. **Start Admin Panel**
-      ```shell
+      git clone https://github.com/fluent-cms/fluent-cms #clone the repository
       cd fluent-cms/server/FluentCMS
       dotnet restore
-      dotnet run
+      dotnet run  # then you can browse admin panel http://localhost:5210, use username `admin@cms.com`, password `Admin1!` to login.   
       ```
-       - Admin Panel: http://localhost:5210, use username `admin@cms.com`, password `Admin1!` to login.   
 ## Quick Start
-For this tutorial, I will walk you though how to build cooking blog website backend APIs from scratch.
-By the end of this tutorials, you have:
-1. An admin panel to manage blog content.
-2. REST APIs for mobile and web clients.    
-With Fluent CMS, there's no need for coding—just some configuration, detailed in [Quickstart.md](doc%2FQuickstart.md) 
+1. Create your own WebApplication.
+2. Add FluentCMS package
+   ```shell
+   dotnet add package FluentCMS
+   # the next command copy compiled Admin Panel code to your wwwroot, 
+   # The frontend code was write in React and Jquery, source code is admin-ui, also in this repo
+   # The following command is for Mac, for windows the directory should be at $(NuGetPackageRoot)fluentcms\1.0.0\staticwebassets
+   # Please change 0.0.3 to the correct version number    
+   cp -a ~/.nuget/packages/fluentcms/0.0.3/staticwebassets wwwroot 
+   ```
+3. Modify Program.cs, add the following line before builder.Build(), the input parameter is the connection string of database.
+   ```
+   //Currently FluentCMS support AddSqliteCms, AddSqlServerCms 
+   builder.AddSqliteCms("Data Source=cms.db").PrintVersion();
+   var app = builder.Build();
+   ```
+4. Add the following line After builder.Build()
+   ```
+   //this function bootstrap router, initialize Fluent CMS schema table
+   await app.UseCmsAsync(false);
+   ```
+5. If everthing is good, when the app starts, when you go to the home page, you should see the empty Admin Panel
+   ![img.png](doc/empty-admin-panel.png)
+   Here is a quickstart on how to use the Admin Panel [Quickstart.md](doc%2FQuickstart.md) 
+6. If you want to have a look at how FluentCMS handles one to many, many-to-many relationships, just add the following code
+    ```
+    var schemaService = app.GetCmsSchemaService();
+    await schemaService.AddOrSaveSimpleEntity("student", "Name", null, null);
+    await schemaService.AddOrSaveSimpleEntity("teacher", "Name", null, null);
+    await schemaService.AddOrSaveSimpleEntity("class", "Name", "teacher", "student");   
+   ```
+   These code created 3 entity, class and teacher has many-to-one relationship. class and student has many-to-many relationship
+7. To Add you own business logic, you can add hook, before or after CRUD. For more hook example, have a look at  [Program.cs](server%2FFluentCMS.App%2FProgram.cs)
+    ```
+   var hooks = app.GetCmsHookFactory();
+   hooks.AddHook("teacher", Occasion.BeforeInsert, Next.Continue, (IDictionary<string,object> payload) =>
+   {
+      payload["Name"] = "Teacher " + payload["Name"];
+    });
+   ```
+8. Source code of this example can be found at  [WebApiExamples](examples%2FWebApiExamples)  
 ## Core Concepts
    - Understanding concepts like Entity, Attributes, View is crucial for using and customizing Fluent CMS.     
    - Detailed in [Concepts.md](doc%2FConcepts.md)

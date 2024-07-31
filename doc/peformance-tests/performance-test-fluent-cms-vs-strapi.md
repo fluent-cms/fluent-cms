@@ -23,10 +23,10 @@ an blogs/post api to compare their performance.
   - Categories
   - Post 
   - Relations: Each post can have multiple authors, and belongs to one category
-  - Fluent CMS Schema: [postgres.sql](..%2F..%2Fserver%2Fexample-schema%2Fpostgres.sql)
-  - Strapi Schema: [strapi_blogs.sql](..%2F..%2Fserver%2Fexample-schema%2Fstrapi_blogs.sql)
+  - Fluent CMS Schema: [postgres.sql](..%2F..%2Fexamples%2Fexample-schema%2Fpostgres.sql)
+  - Strapi Schema: [strapi_blogs.sql](..%2F..%2Fexamples%2Fexample-schema%2Fstrapi_blogs.sql)
   - Indexes: Add an index on posts.published_time for both Fluent CMS and Strapi schemas.
-- Populated 1m posts, 100 category, 10k authors [insert-data-postgres.sql](..%2F..%2Fserver%2Fexample-schema%2Finsert-data-postgres.sql)
+- Populated 1m posts, 100 category, 10k authors [insert-data-postgres.sql](..%2F..%2Fexamples%2Fexample-schema%2Finsert-data-postgres.sql)
 - Both Fluent CMS and Strapi need to provides an latest endpoint.
   - supports pagination, each request retrieve 10 posts, then request the next 10 pages.
   - contains related entities authors and category.
@@ -37,8 +37,8 @@ an blogs/post api to compare their performance.
 **Virtual Users**: 1000
 - **Duration**: 5 minutes
 - **Test Scripts**: 
-  - Fluent CMS [fluent-cms-latest-posts.js](..%2F..%2Fserver%2Fk6_test_scripts%2Ffluent-cms-latest-posts.js)
-  - Strapi [strapi-posts.js](..%2F..%2Fserver%2Fk6_test_scripts%2Fstrapi-posts.js)
+  - Fluent CMS [fluent-cms-latest-posts.js](..%2F..%2Fk6_test_scripts%2Ffluent-cms-latest-posts.js)
+  - Strapi [strapi-posts.js](..%2F..%2Fk6_test_scripts%2Fstrapi-posts.js)
 ### 5. **Data Collection**
 - Fluent CMS
 ```

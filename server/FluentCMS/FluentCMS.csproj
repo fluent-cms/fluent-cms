@@ -37,15 +37,13 @@
     </ItemGroup>
     <ItemGroup>
       <Folder Include="App_Data\" />
+      <Folder Include="Utils\" />
       <Folder Include="wwwroot\files\2024-06\" />
     </ItemGroup>
     <ItemGroup>
       <None Update="cms.db">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
-    </ItemGroup>
-    <ItemGroup>
-      <ProjectReference Include="..\FluentCMS.Utils\FluentCMS.Utils.csproj" />
     </ItemGroup>
     <ItemGroup>
       <_ContentIncludedByDefault Remove="wwwroot\assets\index-562e3a14.js" />
@@ -73,13 +71,12 @@
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
         <PackageId>FluentCMS</PackageId>
-        <Version>0.0.1</Version>
+        <Version>0.0.3</Version>
         <Authors>jaike</Authors>
         <Company>fluent-cms</Company>
-        <Description>A utility package for FluentCMS</Description>
+        <Description>A Framework to build high performance headless CMS </Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageProjectUrl>https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS</PackageProjectUrl>
         <RepositoryUrl>https://github.com/fluent-cms/fluent-cms</RepositoryUrl>
     </PropertyGroup>
-    
 </Project>

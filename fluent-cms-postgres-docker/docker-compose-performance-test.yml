@@ -4,8 +4,8 @@ services:
     container_name: blogs-ef-example-postgres
     image: blogs-ef-example-postgres
     build:
-      context: ../server/
-      dockerfile: BlogEfExample/Dockerfile
+      context: ../examples/
+      dockerfile: ../examples/BlogEfExample/Dockerfile
     environment:
       - Postgres=Host=fluent-cms-db-postgres;Port=5432;Database=fluent-cms;Username=postgres;Password=mysecretpassword
     ports:
