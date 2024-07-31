@@ -1,4 +1,10 @@
 # Fluent CMS
+
+[![GitHub stars](https://img.shields.io/github/stars/fluent-cms/fluent-cms.svg?style=social&label=Star)](https://github.com/fluent-cms/fluent-cms/stargazers)
+
+Welcome to Fluent CMS! If you find it useful, please give it a star ⭐
+
+
 ## Why another CMS
 - **Performance:** Fluent CMS demonstrates exceptional performance, being 100 times faster than Strapi as detailed in the
 [performance-test-fluent-cms-vs-strapi.md](doc%2Fpeformance-tests%2Fperformance-test-fluent-cms-vs-strapi.md).
