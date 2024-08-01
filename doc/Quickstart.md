@@ -12,13 +12,13 @@ With Fluent CMS, there's no need for coding—just some configuration.
 1. Login to Admin Panel
     - Go to Admin Panel https://fluent-cms-admin.azurewebsites.net/ or http://localhost:5210 ,
     - use Email `admin@cms.com`, Password `Admin1!`         
-      ![img.png](screenshots/admin_panel_login.png)
+      ![dmin panel login](screenshots/admin_panel_login.png)
 2. Navigate to Schema Builder
     - click the Menu Item  `Schema Builder`         
-      ![img.png](screenshots/admin_panel_home.png)
+      ![admin_panel_home](screenshots/admin_panel_home.png)
 3. Access the Add Entity Page by
     - click the Menu Item  `Add Entity`      
-   ![img_6.png](img_6.png)
+   ![schema_builder_list](screenshots/schema_builder_list.png)
 4. Fill in the Entity Detail
     - On the Add Entity Page
         - Entity name: `blog`
@@ -27,7 +27,6 @@ With Fluent CMS, there's no need for coding—just some configuration.
         - Title Attribute: `title`
         - Default Page Size: `20`
         - Entity Title : `Blogs`                
-      ![img_7.png](img_7.png)
 ### Add Fields/Attributes
 1. Add attributes to the entity
     - The system will add 3 system fields `id`, `created_at`, `updated_at` automatically.
@@ -36,7 +35,6 @@ With Fluent CMS, there's no need for coding—just some configuration.
         - `published_time`   {Database Type: `Datetime`, Display Type: `dateTime`}
         - `body` {Database Type: `Text`, Display Type: `Editor`}
     - Click the `Update Database` button to save schema and create a table in database.  
-   ![img_8.png](img_8.png)
 ### Add Entity Relationships
    - Add a lookup Attribute `author`
      - Field : `author`
@@ -51,7 +49,7 @@ With Fluent CMS, there's no need for coding—just some configuration.
      - Database Type: `NA`
      - Display Type : `corsstable`
        - Option: `tag`, tag is another entity's name
-       ![img_9.png](img_9.png)
+       ![schema_builder_attributes](screenshots/schema_builder_attributes.png)
    - Click the `Save Schema` button, to create tables in database.
    - Click the `Edit Content` button, to add some data.see [Manage Content](#manage-content-in-admin-panel) 
 ### Add Public API
@@ -71,7 +69,7 @@ Follow the follow steps to define a public API
         - View Name : `lastest-blog`
         - Entity Name : `blogs`
         - Page Size : 10
-    ![img_2.png](img_2.png)
+    ![schema_builder_view_detail](screenshots/schema_builder_view_detail.png)
 2. Fill Sort Detail
     - Click `+ row` button
     - Input the Sort Detail
@@ -83,10 +81,9 @@ Follow the follow steps to define a public API
       - published_time,
       - tags
     - Click `Save Schema` button
-   ![img_4.png](img_4.png)
+   ![schema_builder_view_sorts](screenshots/schema_builder_view_sorts.png)
 3. Test the public API
 -  Click the button `View Public API`
-![img_10.png](img_10.png)
 ## Manage Content in Admin Panel
 ![quickstart-admin-panel.png](diagrams%2Fquickstart-admin-panel.png)
 
@@ -95,12 +92,12 @@ Follow the follow steps to define a public API
    - Go to Admin Panel https://fluent-cms-admin.azurewebsites.net/ or http://localhost:5210 ,
    - use Email `admin@cms.com`, Password `Admin1!`         
 2. Click button `Create New Blogs` 
-![img_14.png](screenshots/admin_panel_entity_list.png "Entity List Page")
+![admin_panel_entity_list](screenshots/admin_panel_entity_list.png "Entity List Page")
 3. Input data
-![img.png](img.png)
+![admin_panel_add_blog](screenshots/admin_panel_add_blog.png)
 4. Click button `Save Blogs`
 
 ### Add Tags
 1. Click the button `Select Tags` to Add Post Related Tag
-![img_1.png](img_1.png)
+![admin_panel_select_tag](screenshots/admin_panel_select_tags.png)
 2. Click the button `Delete Tags` to Delete Tag
