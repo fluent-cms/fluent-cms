@@ -28,7 +28,9 @@ rather than hard-coded specifics for each entity. This approach reduces repetiti
       git clone https://github.com/fluent-cms/fluent-cms #clone the repository
       cd fluent-cms/server/FluentCMS
       dotnet restore
-      dotnet run  # then you can browse admin panel http://localhost:5210, use username `admin@cms.com`, password `Admin1!` to login.   
+      dotnet run
+      # then you can browse admin panel http://localhost:5210,
+      #  use username `admin@cms.com`, password `Admin1!` to login.   
       ```
 ## Add Fluent CMS to your own project
 1. Create your own WebApplication.
@@ -37,7 +39,8 @@ rather than hard-coded specifics for each entity. This approach reduces repetiti
    dotnet add package FluentCMS
    # the next command copy compiled Admin Panel code to your wwwroot, 
    # The frontend code was write in React and Jquery, source code is admin-ui, also in this repo
-   # The following command is for Mac, for windows the directory should be at $(NuGetPackageRoot)fluentcms\1.0.0\staticwebassets
+   # The following command is for Mac,
+   # for windows the directory should be at $(NuGetPackageRoot)fluentcms\1.0.0\staticwebassets
    # Please change 0.0.3 to the correct version number    
    cp -a ~/.nuget/packages/fluentcms/0.0.3/staticwebassets wwwroot 
    ```
