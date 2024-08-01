@@ -1,9 +1,12 @@
 # Fluent CMS
-
 [![GitHub stars](https://img.shields.io/github/stars/fluent-cms/fluent-cms.svg?style=social&label=Star)](https://github.com/fluent-cms/fluent-cms/stargazers)
-
 Welcome to Fluent CMS! If you find it useful, please give it a star ⭐
 
+## What is Fluent CMS
+Fluent CMS is a framework that provides universal CRUD (Create, Read, Update, Delete) APIs and UIs for any entity. It is especially suited for building CMS (Content Management Systems) and managing entities that do not involve complex business logic but are prone to frequent changes. The concept draws inspiration from both WordPress and Strapi:
+
+- **From WordPress**: It allows changes to entity attributes without altering the code, using hook functions to extend functionalities.
+- **From Strapi**: It uses schema definitions to define entities.
 
 ## Why another CMS
 - **Performance:** Fluent CMS demonstrates exceptional performance, being 100 times faster than Strapi as detailed in the
@@ -27,7 +30,7 @@ rather than hard-coded specifics for each entity. This approach reduces repetiti
       dotnet restore
       dotnet run  # then you can browse admin panel http://localhost:5210, use username `admin@cms.com`, password `Admin1!` to login.   
       ```
-## Quick Start
+## Add Fluent CMS to your own project
 1. Create your own WebApplication.
 2. Add FluentCMS package
    ```shell
