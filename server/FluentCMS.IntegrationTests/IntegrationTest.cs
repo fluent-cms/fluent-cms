@@ -11,12 +11,12 @@ using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.IntegrationTests;
 
-public class SmokeTest
+public class IntegrationTest
 {
     private readonly HttpClient _client;
     private readonly CookieHolder _cookieHolder = new();
 
-    public SmokeTest()
+    public IntegrationTest()
     {
         var app = new WebApplicationFactory<Program>();
         _client = app.CreateClient(new WebApplicationFactoryClientOptions

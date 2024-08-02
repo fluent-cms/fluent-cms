@@ -5,15 +5,20 @@ test_sqlite(){
   dotnet test 
 }
 
+remove_container(){
+  local container_name=$1
+   # Remove existing container if it exists
+   if docker ps -a --format '{{.Names}}' | grep -q "^${container_name}$"; then
+     echo "Removing existing container: ${container_name}"
+     docker rm -f "${container_name}"
+   fi 
+}
+
 test_postgres_container() {
   local container_name="fluent-cms-db-postgres"
   local init_sql_path=$1
-  # Remove existing container if it exists
-  if docker ps -a --format '{{.Names}}' | grep -q "^${container_name}$"; then
-    echo "Removing existing container: ${container_name}"
-    docker rm -f "${container_name}"
-  fi
-
+  
+  remove_container $container_name
   local docker_run_command="docker run -d --name $container_name -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=mysecretpassword -e POSTGRES_DB=fluent-cms -p 5432:5432"
   
   # Add volume mapping if init_sql_path is not empty
@@ -21,8 +26,8 @@ test_postgres_container() {
     docker_run_command+=" -v $init_sql_path:/docker-entrypoint-initdb.d/init.sql"
   fi
   docker_run_command+=" postgres:latest"
+  eval "$docker_run_command"
   
-  eval $docker_run_command
   export DatabaseProvider=Postgres
   export Postgres="Host=localhost;Database=fluent-cms;Username=postgres;Password=mysecretpassword"
   dotnet test
@@ -31,12 +36,11 @@ test_postgres_container() {
 test_sqlserver_container(){
   local container_name="fluent-cms-db-sql-edge"
   local password=Admin12345678!
-  if docker ps -a --format '{{.Names}}' | grep -q "^${container_name}$"; then
-    echo "Removing existing container: ${container_name}"
-    docker rm -f "${container_name}"
-  fi
+  remove_container $container_name
+
   docker run --cap-add SYS_PTRACE -e 'ACCEPT_EULA=1' -e "MSSQL_SA_PASSWORD=$password" -p 1433:1433 --name $container_name -d mcr.microsoft.com/azure-sql-edge
   sleep 5
+  
   export DatabaseProvider=SqlServer
   export SqlServer="Server=localhost;Database=cms;User Id=sa;Password=Admin12345678!;TrustServerCertificate=True"
   dotnet test
