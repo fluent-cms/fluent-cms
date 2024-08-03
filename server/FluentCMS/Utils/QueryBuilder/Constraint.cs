@@ -28,21 +28,25 @@ public sealed class Constraint
             Matches.NotEquals => query.WhereNot(field, GetValue()),
             Matches.NotIn => query.WhereNotIn(field, ResolvedValues),
             Matches.In => query.WhereIn(field, ResolvedValues),
-            Matches.Lt => query.Where(field,"<", GetValue()),
-            Matches.Lte => query.Where(field,"<=", GetValue()),
-            Matches.Gt => query.Where(field,">", GetValue()),
-            Matches.Gte => query.Where(field,">=", GetValue()),
-            Matches.DateIs => query.WhereDate(field,GetValue()),
-            Matches.DateIsNot => query.WhereNotDate(field,GetValue()),
-            Matches.DateBefore => query.WhereDate(field,"<",GetValue()),
-            Matches.DateAfter => query.WhereDate(field,">",GetValue()),
-            _ =>  Result.Fail($"{Match} is not support ")
+            Matches.Lt => query.Where(field, "<", GetValue()),
+            Matches.Lte => query.Where(field, "<=", GetValue()),
+            Matches.Gt => query.Where(field, ">", GetValue()),
+            Matches.Gte => query.Where(field, ">=", GetValue()),
+            Matches.DateIs => query.WhereDate(field, GetValue()),
+            Matches.DateIsNot => query.WhereNotDate(field, GetValue()),
+            Matches.DateBefore => query.WhereDate(field, "<", GetValue()),
+            Matches.DateAfter => query.WhereDate(field, ">", GetValue()),
+            Matches.Between => ResolvedValues?.Length == 2
+                ? query.WhereBetween(field, ResolvedValues[0], ResolvedValues[1])
+                : Result.Fail("show provide two values for between"),
+            _ => Result.Fail($"{Match} is not support ")
         };
     }
 }
 
 public static class Matches
 {
+    public const string Between = "between";
     public const string StartsWith = "startsWith";
     public const string Contains = "contains";
     public const string NotContains = "notContains";

@@ -26,6 +26,7 @@
     &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net8.0::FluentCMS.IntegrationTests.SmokeTest.BasicFlow&lt;/TestId&gt;
     &lt;TestId&gt;xUnit::E7EAD0DD-856C-4530-9F62-4B3EFEB15F01::net8.0::FluentCMS.App.Tests.EntityHookTests.TestHooks&lt;/TestId&gt;
     &lt;TestId&gt;xUnit::E7EAD0DD-856C-4530-9F62-4B3EFEB15F01::net8.0::FluentCMS.App.Tests.EntityHookTests&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net8.0::FluentCMS.IntegrationTests.IntegrationTest.BasicFlow&lt;/TestId&gt;
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String>
 	<s:Boolean x:Key="/Default/UnloadedProject/UnloadedProjects/=4212d6a9_002D3046_002D4fb2_002D9dd7_002Dbb065272b105_0023FluentCMS_002EUtils/@EntryIndexedValue">True</s:Boolean>

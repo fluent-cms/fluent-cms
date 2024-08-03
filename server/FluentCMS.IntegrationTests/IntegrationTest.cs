@@ -3,7 +3,9 @@ using System.Text;
 using FluentCMS.Models;
 using FluentCMS.Services;
 using FluentCMS.Utils.DataDefinitionExecutor;
+using FluentCMS.Utils.HttpClientExt;
 using FluentCMS.Utils.QueryBuilder;
+using FluentResults;
 using Newtonsoft.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Newtonsoft.Json.Linq;
@@ -14,8 +16,7 @@ namespace FluentCMS.IntegrationTests;
 public class IntegrationTest
 {
     private readonly HttpClient _client;
-    private readonly CookieHolder _cookieHolder = new();
-
+   
     public IntegrationTest()
     {
         var app = new WebApplicationFactory<Program>();
@@ -36,8 +37,8 @@ public class IntegrationTest
         await AddSimpleData("teacher", "name", "Tom");
         
         await UpdateSimpleData("teacher", 1, "name", "TomUpdate");
-        var teacher = await GetObjectWithCookie("/api/entities/teacher/1");
-        Assert.Equal("TomUpdate", (string)teacher.name);
+        var teacher = await _client.GetObject<dynamic>("/api/entities/teacher/1");
+        Assert.Equal("TomUpdate", (string)teacher.Value.name);
         
         await AddSimpleEntity("student", "name");
         await AddSimpleData("student", "name", "Bob");
@@ -49,16 +50,14 @@ public class IntegrationTest
             { "teacher", 1 }
         });
         await SaveClassStudent();
-        var response = await GetWithCookie("/api/entities/class/1/student?exclude=false");
+        var response = await _client.GetAsync("/api/entities/class/1/student?exclude=false");
         response.EnsureSuccessStatusCode();
-        response = await GetWithCookie("/api/entities/class/1/student?exclude=true");
+        response = await _client.GetAsync("/api/entities/class/1/student?exclude=true");
         response.EnsureSuccessStatusCode();
 
-        var cls = await GetObjectWithCookie("/api/entities/class/1");
-        Assert.Equal(1, (int)cls.teacher_data.id);
+        var cls = await _client.GetObject<dynamic>("/api/entities/class/1");
+        Assert.Equal(1, (int)cls.Value.teacher_data.id);
     }
-
-   
 
     private async Task SaveClassStudent()
     {
@@ -67,8 +66,7 @@ public class IntegrationTest
             id = 1
         };
         var payload = new object[] { item };
-        var res = await PostWithCookie($"/api/entities/class/1/student/save",
-            payload);
+        var res = await _client.PostObject($"/api/entities/class/1/student/save", payload);
         res.EnsureSuccessStatusCode();
 
     }
@@ -84,7 +82,7 @@ public class IntegrationTest
     }
     private async Task UpdateSimpleData(string entity, Dictionary<string, object> payload)
     {
-        var res = await PostWithCookie($"/api/entities/{entity}/update", payload);
+        var res = await _client.PostObject($"/api/entities/{entity}/update", payload);
         res.EnsureSuccessStatusCode();
     }
  
@@ -99,7 +97,7 @@ public class IntegrationTest
 
     private async Task AddSimpleData(string entity, Dictionary<string, object> payload)
     {
-        var res = await PostWithCookie($"/api/entities/{entity}/insert", payload);
+        var res = await _client.PostObject($"/api/entities/{entity}/insert", payload);
         res.EnsureSuccessStatusCode();
     }
 
@@ -111,64 +109,37 @@ public class IntegrationTest
     private async Task AddSimpleEntity(string entity, string field, string lookup, string crosstable)
     {
         var result =
-            await PostWithCookie(
+            await _client.PostObject(
                 $"/api/schemas/simple_entity_define?entity={entity}&field={field}&lookup={lookup}&crosstable={crosstable}",
                 new Dictionary<string, object>());
         result.EnsureSuccessStatusCode();
     }
-
-    private async Task<HttpResponseMessage> PostWithCookie(string uri, object payload)
-    {
-        var message = new HttpRequestMessage(HttpMethod.Post, uri)
-        {
-            Content = Content(payload)
-        };
-        return await _client.SendAsync(_cookieHolder.SetCookie(message));
-    }
-
-    private async Task<dynamic> GetObjectWithCookie(string uri)
-    {
-        var res = await GetWithCookie(uri);
-        res.EnsureSuccessStatusCode();
-        dynamic payload = JObject.Parse(await res.Content.ReadAsStringAsync());
-        return payload;
-    }
-    private async Task<HttpResponseMessage> GetWithCookie(string uri) =>
-        await _client.SendAsync(_cookieHolder.SetCookie(new HttpRequestMessage(HttpMethod.Get, uri)));
 
     private static StringContent Content(object payload) =>
         new(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
 
     private async Task GetTopMenuBar()
     {
-        await Login();
-        var response = await GetWithCookie("/api/schemas/top-menu-bar");
+        var response = await _client.GetAsync("/api/schemas/top-menu-bar");
         response.EnsureSuccessStatusCode();
     }
 
     private async Task GetAllSchema()
     {
-        await Login();
-        var response = await GetWithCookie("/api/schemas");
-        response.EnsureSuccessStatusCode();
-        var schemas = await response.Content.ReadFromJsonAsync<Schema[]>();
-        Assert.True(schemas?.Length > 0);
+        var response = await _client.GetObject<Schema[]>("/api/schemas");
+        Assert.True(response.Value.Length > 0);
     }
-     private async Task Login()
+
+    private async Task Login()
+    {
+        // Arrange
+        var loginData = new
         {
-            // Arrange
-            var loginData = new
-            {
-                email = "admin@cms.com",
-                password = "Admin1!"
-            };
-    
-            var content = Content(loginData);
-            await _client.PostAsync("/api/register", content);
-            // Act
-            var response = await _client.PostAsync("/api/login?useCookies=true", content);
-            // Assert
-            response.EnsureSuccessStatusCode();
-            _cookieHolder.GetCookie(response);
-        }
+            email = "admin@cms.com",
+            password = "Admin1!"
+        };
+
+        await _client.PostObject("/api/register", loginData);
+        await _client.PostAndSaveCookie("/api/login?useCookies=true", loginData);
+    }
 }
