@@ -1,3 +1,4 @@
+using FluentCMS.Utils.Qs;
 using FluentResults;
 using Microsoft.Extensions.Primitives;
 using Microsoft.VisualBasic;
@@ -8,11 +9,6 @@ using System.Collections.Generic;
 
 public sealed class Filter
 {
-    private const string Pre = "f[";
-    private const string End = "][operator]";
-    private const string ConstraintValue = "[constraints][value]";
-    private const string ConstraintMathMode = "[constraints][matchMode]";
-
     private string _fieldName = "";
     public string FieldName
     {
@@ -28,81 +24,53 @@ public sealed class Filter
     {
         Constraints = new List<Constraint>();
     }
-    public static bool Parse(Dictionary<string, StringValues> qs, string key, StringValues val, out Filter filter)
+    public static void Parse(string field, Pair[] pairs , out Filter filter)
     {
-        filter = new Filter();
-        if (!(key.StartsWith(Pre) && key.EndsWith(End)))
-        {
-            return false;
-        }
-        
-        var op = val.FirstOrDefault();
-        if (string.IsNullOrWhiteSpace(op))
-        {
-            return false;
-        }
-        
         filter = new Filter
         {
-            FieldName = key.Substring(Pre.Length, key.Length - Pre.Length - End.Length),
-            Operator = op
+            FieldName = field,
+            Operator = "and",
+            Constraints = [],
         };
-
-        if (!qs.TryGetValue(Pre + filter.FieldName + "]" + ConstraintValue, out var values))
+        foreach (var pair in pairs)
         {
-            return false;
-        }
-
-        if (!qs.TryGetValue(Pre + filter.FieldName + "]" + ConstraintMathMode, out var mods))
-        {
-            return false;
-        }
-
-        if (values.Count != mods.Count)
-        {
-            return false;
-        }
-
-        for (var i = 0; i < values.Count; i++)
-        {
-            var v = values[i];
-            var m = mods[i];
-            if (v is null || m is null)
+            foreach (var pairValue in pair.Values)
             {
-                return false;
+                if (pair.Key == "operator")
+                {
+                    filter.Operator = pair.Values.First();
+                    continue;
+                }
+                
+                filter.Constraints.Add(new Constraint
+                {
+                    Match = pair.Key,
+                    ResolvedValues = [pairValue],
+                });
             }
-            var cons = new Constraint
-            {
-                Value = v,
-                Match = m,
-            };
-            filter.Constraints.Add(cons);
         }
-        return true;
     }
 
-    public Result Apply(Entity entity, Query query)
+    public Result Apply(Entity entity, Query parentQuery)
     {
-        var fieldName = entity.Fullname(FieldName);
-        switch (Operator)
+        var result = Result.Ok();
+        parentQuery.Where(query =>
         {
-            case "or":
-                query.Or();
-                break;
-            case "not":
-                query.Not();
-                break;
-        }
-        foreach (var constraint in Constraints)
-        {
-            var result = constraint.Apply(query,fieldName);
-            if (result.IsFailed)
+            var fieldName = entity.Fullname(FieldName);
+            foreach (var constraint in Constraints)
             {
-                return Result.Fail(result.Errors);
-            }
-        }
+                var res = constraint.Apply(query, fieldName, Operator == "or");
+                if (res.IsFailed)
+                {
+                    result = Result.Fail(res.Errors);
+                    break;
+                }
 
-        return Result.Ok();
+                query = res.Value;
+            }
+            return query;
+        });
+        return result;
     }
 }
 
@@ -111,14 +79,17 @@ public class Filters : List<Filter>
     private const string QuerystringPrefix = "querystring.";
     private const string TokenPrefix = "token.";
     public Filters(){}
-    public Filters(Dictionary<string, StringValues> queryStringDictionary)
+    public Filters(QsDict qsDict)
     {
-        foreach (var pair in queryStringDictionary)
+        foreach (var pair in qsDict.Dict)
         {
-            if (Filter.Parse(queryStringDictionary, pair.Key, pair.Value, out var filter))
+            if (pair.Key == Sorts.SortKey)
             {
-                Add(filter);
+                continue;
             }
+
+            Filter.Parse(pair.Key, pair.Value.ToArray(), out var filter);
+            Add(filter);
         }
     }
 
@@ -193,6 +164,4 @@ public class Filters : List<Filter>
 
         return Result.Ok();
     }
-
-
 }

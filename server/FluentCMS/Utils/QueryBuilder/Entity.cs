@@ -10,6 +10,11 @@ public enum InListOrDetail
 }
 public sealed class Entity
 {
+    public const string DefaultPrimaryKeyFieldName = "id";
+    public const string DeletedFieldName = "deleted";
+    public const string CreatedAtField = "created_at";
+    public const string UpdatedAtField = "updated_at";
+    
     private string _name ="";
     private string _tableName ="";
     private string _primaryKey ="";
@@ -69,30 +74,31 @@ public sealed class Entity
     public void EnsureDefaultAttribute()
     {
         var list = new List<Attribute>();
-        if (FindOneAttribute("id") == null)
+        if (FindOneAttribute(DefaultPrimaryKeyFieldName) == null)
         {
             list.Add(new Attribute
             {
-                Field = "id", Header = "id",InList = true, InDetail = true, IsDefault = true, DataType = DataType.Int,
-                Type = DisplayType.text
+                Field = DefaultPrimaryKeyFieldName, Header = "id",
+                InList = true, InDetail = true, IsDefault = true, 
+                DataType = DataType.Int, Type = DisplayType.text
             });
         }
         
         list.AddRange(Attributes);
 
-        if (FindOneAttribute("created_at") == null)
+        if (FindOneAttribute(CreatedAtField) == null)
         {
             list.Add(new Attribute
             {
-                Field = "created_at", Header = "Created At",InList = true, InDetail = true, IsDefault = true, DataType = DataType.Datetime
+                Field = CreatedAtField, Header = "Created At",InList = true, InDetail = true, IsDefault = true, DataType = DataType.Datetime
             });
         }
 
-        if (FindOneAttribute("updated_at") == null)
+        if (FindOneAttribute(UpdatedAtField) == null)
         {
             list.Add(new Attribute
             {
-                Field = "updated_at", Header = "Updated At", InList = true, InDetail = true, IsDefault = true, DataType = DataType.Datetime
+                Field = UpdatedAtField, Header = "Updated At", InList = true, InDetail = true, IsDefault = true, DataType = DataType.Datetime
             });
         }
         Attributes = list.ToArray();
@@ -100,11 +106,11 @@ public sealed class Entity
 
     public void EnsureDeleted()
     {
-        if (FindOneAttribute("deleted") == null)
+        if (FindOneAttribute(DeletedFieldName) == null)
         {
             Attributes = Attributes.Append(new Attribute
                 {
-                    Field = "deleted", InList = true, InDetail = true, IsDefault = true, DataType = DataType.Int
+                    Field = DeletedFieldName, InList = true, InDetail = true, IsDefault = true, DataType = DataType.Int
                 }
             ).ToArray();
         }
@@ -112,7 +118,7 @@ public sealed class Entity
 
     public void RemoveDeleted()
     {
-        Attributes = Attributes.Where(x => x.Field != "deleted").ToArray();
+        Attributes = Attributes.Where(x => x.Field != DeletedFieldName).ToArray();
     }
 
     public Attribute[] ReferencedAttributes()
@@ -220,7 +226,7 @@ public sealed class Entity
 
     public Query Insert(Record item)
     {
-        //auto increased value
+        //omit auto generated value
         if (PrimaryKeyAttribute().IsDefault)
         {
             item.Remove(PrimaryKey);
@@ -233,7 +239,7 @@ public sealed class Entity
         //to prevent SqlServer 'Cannot update identity column' error 
         if (!item.Remove(PrimaryKey, out var val))
         {
-            return Result.Fail($"Failed to get value for primary key ${PrimaryKey} ");
+            return Result.Fail($"Failed to get value with primary key [${PrimaryKey}]");
         }
         var ret = new Query(TableName).Where(PrimaryKey, val).AsUpdate(item.Keys, item.Values);
         item[PrimaryKey] = val;
@@ -243,9 +249,9 @@ public sealed class Entity
     public Result<Query> DeleteQuery(Record item)
     {
         return item.TryGetValue(PrimaryKey, out var key)
-            ? Result.Ok(new Query(TableName).Where(PrimaryKey, key).AsUpdate(["deleted"], [true]))
-            : Result.Fail($"Failed to get value for primary key ${PrimaryKey} ");
+            ? Result.Ok(new Query(TableName).Where(PrimaryKey, key).AsUpdate([DeletedFieldName], [true]))
+            : Result.Fail($"Failed to get value with primary key [${PrimaryKey}]");
     }
     
-    public Query Basic() =>  new Query(TableName).Where(TableName + ".deleted", false);
+    public Query Basic() =>  new Query(TableName).Where(TableName + $".{DeletedFieldName}", false);
 }

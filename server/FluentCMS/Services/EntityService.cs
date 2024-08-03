@@ -2,6 +2,7 @@ using System.Text.Json;
 using FluentCMS.Utils.HookFactory;
 using Microsoft.Extensions.Primitives;
 using FluentCMS.Utils.KateQueryExecutor;
+using FluentCMS.Utils.Qs;
 using FluentCMS.Utils.QueryBuilder;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
@@ -41,10 +42,13 @@ public sealed class EntityService(
 
     public async Task<object> List(string entityName, Pagination? pagination, Dictionary<string, StringValues> qs)
     {
-        var filters = new Filters(qs);
-        var sorts = CheckResult(Sorts.Parse(qs));
+        var qsDict = new QsDict(qs);
+        
+        var filters = new Filters(qsDict);
+        var sorts = CheckResult(Sorts.Parse(qsDict));
         return await List(entityName, filters, sorts, pagination);
     }
+
 
     public async Task<object> List(string entityName, Filters? filters, Sorts? sorts, Pagination? pagination)
     {

@@ -32,39 +32,24 @@ namespace FluentCMS.Utils.QueryBuilder;
 
     public class Sorts : List<Sort>
     {
-        const string SortFields = "s[field]";
-        const string SortOrders = "s[order]";
+        public const string SortKey = "sort";
 
         public Sorts()
         {
         }
 
-        public static Result<Sorts>  Parse(Dictionary<string, StringValues> queryStringDictionary)
+        public static Result<Sorts>  Parse(Qs.QsDict qsDict)
         {
             var ret = new Sorts();
-            if (!(queryStringDictionary.TryGetValue(SortFields, out var fields) &&
-                  queryStringDictionary.TryGetValue(SortOrders, out var orders) &&
-                  fields.Count == orders.Count))
+                
+            if (!qsDict.Dict.TryGetValue(SortKey, out var fields))
             {
                 return ret;
             }
-
-
-            for (var i = 0; i < fields.Count; i++)
+            ret.AddRange(fields.Select(field => new Sort
             {
-                if (string.IsNullOrWhiteSpace(fields[i]))
-                {
-                    return Result.Fail($"Fail to resolve sorts, not find the {i} field");
-                }
-
-                var sort = new Sort
-                {
-                    FieldName = fields[i]!,
-                    Order = orders[i] == "1" ? SortOrder.Desc : SortOrder.Asc
-                };
-                ret.Add(sort);
-            }
-
+                FieldName = field.Key, Order = field.Values.FirstOrDefault() == "1" ? SortOrder.Asc : SortOrder.Desc,
+            }));
             return ret;
         }
 

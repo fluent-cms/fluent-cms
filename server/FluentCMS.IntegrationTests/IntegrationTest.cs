@@ -59,6 +59,23 @@ public class IntegrationTest
         Assert.Equal(1, (int)cls.Value.teacher_data.id);
     }
 
+    [Fact]
+    public async Task Query()
+    {
+        await Login();
+        await AddSimpleEntity("student","name");
+        for (var i = 0; i < 500; i++)
+        {
+            await AddSimpleData("student", "name", $"student{i}");
+        }
+
+        await AddSimpleData("student", "name", "good-student");
+        await AddSimpleData("student", "name", "good-student");
+        
+        //single query
+        
+    }
+
     private async Task SaveClassStudent()
     {
         var item = new

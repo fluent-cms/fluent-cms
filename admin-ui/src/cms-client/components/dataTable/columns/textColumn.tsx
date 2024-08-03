@@ -5,6 +5,17 @@ export function textColumn({primaryKey, column, titleAttribute}:{
     titleAttribute: string;
     column:  {type :string, field:string, header:any, linkToEntity:string,lookup:any}
 }){
+    var dataType = 'text';
+    switch (column.type){
+        case 'number':
+            dataType = 'numeric';
+            break;
+        case 'datetime':
+        case 'date':
+            dataType = 'date';
+            break;
+    }
+
     const bodyTemplate = (item:any) => {
         let val = item[column.field]
         var dataField = column.field+"_data";
@@ -18,6 +29,5 @@ export function textColumn({primaryKey, column, titleAttribute}:{
             return <>{val}</>
         }
     };
-    return <Column key={column.field} field={column.field} header={column.header} sortable filter body={bodyTemplate}></Column>
+    return <Column dataType={dataType} key={column.field} field={column.field} header={column.header} sortable filter body={bodyTemplate}></Column>
 }
-

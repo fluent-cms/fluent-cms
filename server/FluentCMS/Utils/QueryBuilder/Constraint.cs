@@ -16,8 +16,32 @@ public sealed class Constraint
     {
         return ResolvedValues?.FirstOrDefault() ?? Value;
     }
-    public Result<Query> Apply(Query query, string field)
+    public Result<Query> Apply(Query query, string field, bool or)
     {
+        if (or)
+            return Match switch
+            {
+                Matches.StartsWith => query.OrWhereStarts(field, GetValue()),
+                Matches.Contains => query.OrWhereContains(field, GetValue()),
+                Matches.NotContains => query.OrWhereNotContains(field, GetValue()),
+                Matches.EndsWith => query.OrWhereEnds(field, GetValue()),
+                Matches.EqualsTo => query.OrWhere(field, GetValue()),
+                Matches.NotEquals => query.OrWhereNot(field, GetValue()),
+                Matches.NotIn => query.OrWhereNotIn(field, ResolvedValues),
+                Matches.In => query.OrWhereIn(field, ResolvedValues),
+                Matches.Lt => query.OrWhere(field, "<", GetValue()),
+                Matches.Lte => query.OrWhere(field, "<=", GetValue()),
+                Matches.Gt => query.OrWhere(field, ">", GetValue()),
+                Matches.Gte => query.OrWhere(field, ">=", GetValue()),
+                Matches.DateIs => query.OrWhereDate(field, GetValue()),
+                Matches.DateIsNot => query.OrWhereNotDate(field, GetValue()),
+                Matches.DateBefore => query.OrWhereDate(field, "<", GetValue()),
+                Matches.DateAfter => query.OrWhereDate(field, ">", GetValue()),
+                Matches.Between => ResolvedValues?.Length == 2
+                    ? query.OrWhereBetween(field, ResolvedValues[0], ResolvedValues[1])
+                    : Result.Fail("show provide two values for between"),
+                _ => Result.Fail($"{Match} is not support ")
+            };
         return Match switch
         {
             Matches.StartsWith => query.WhereStarts(field, GetValue()),
