@@ -1,4 +1,4 @@
-# Fluent CMS
+# Fluent CMS - a Universal CRUD (Create, Read, Update, Delete) APIs and UIs framework 
 [![GitHub stars](https://img.shields.io/github/stars/fluent-cms/fluent-cms.svg?style=social&label=Star)](https://github.com/fluent-cms/fluent-cms/stargazers)
 Welcome to Fluent CMS! If you find it useful, please give it a star ⭐
 
