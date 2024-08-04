@@ -1,5 +1,3 @@
-using System.Data;
-using Microsoft.Extensions.Logging;
 using Npgsql;
 
 namespace FluentCMS.Utils.DataDefinitionExecutor;

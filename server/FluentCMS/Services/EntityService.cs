@@ -42,26 +42,32 @@ public sealed class EntityService(
 
     public async Task<object> List(string entityName, Pagination? pagination, Dictionary<string, StringValues> qs)
     {
-        var qsDict = new QsDict(qs);
+        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName));
         
-        var filters = new Filters(qsDict);
+        var qsDict = new QsDict(qs);
+        var filters = CheckResult(Filters.Parse(entity,qsDict));
         var sorts = CheckResult(Sorts.Parse(qsDict));
-        return await List(entityName, filters, sorts, pagination);
+        return await List(entity,filters,sorts , pagination);
     }
-
 
     public async Task<object> List(string entityName, Filters? filters, Sorts? sorts, Pagination? pagination)
     {
         var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName));
+        return await List(entity, filters, sorts, pagination);
+    }
+    
+    private async Task<object> List(Entity entity, Filters? filters, Sorts? sorts, Pagination? pagination)
+    {
         pagination ??= new Pagination
         {
             Limit = entity.DefaultPageSize
         };
+
         filters ??= [];
         sorts ??= [];
-        
 
-        var (res, next) = await hookFactory.ExecuteBeforeQuery(provider, Occasion.BeforeQueryMany, entity.Name, filters,
+        var (res, next) = await hookFactory.ExecuteBeforeQuery(provider, Occasion.BeforeQueryMany, entity.Name, 
+            filters,
             sorts,
             pagination);
         if (next == Next.Exit)

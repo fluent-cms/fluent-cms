@@ -1,5 +1,5 @@
 ﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=3e827c97_002D054b_002D4e51_002D94a6_002D0eb5a814e69d/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="GetDefinitionOfNotExistsTable" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=3e827c97_002D054b_002D4e51_002D94a6_002D0eb5a814e69d/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="GetDefinitionOfNotExistsTable" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
   &lt;TestAncestor&gt;
     &lt;TestId&gt;xUnit::6EDECA16-B67A-4EAA-A296-F21FBDC7561E::net8.0::Utils.Tests.DaoTests.SqliteDaoTests.GetDefinitionOfNotExistsTable&lt;/TestId&gt;
     &lt;TestId&gt;xUnit::6EDECA16-B67A-4EAA-A296-F21FBDC7561E::net8.0::Utils.Tests.DaoTests.SqliteDaoTests.CreateTable&lt;/TestId&gt;
@@ -28,6 +28,11 @@
     &lt;TestId&gt;xUnit::E7EAD0DD-856C-4530-9F62-4B3EFEB15F01::net8.0::FluentCMS.App.Tests.EntityHookTests&lt;/TestId&gt;
     &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net8.0::FluentCMS.IntegrationTests.IntegrationTest.BasicFlow&lt;/TestId&gt;
     &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net8.0::FluentCMS.IntegrationTests.IntegrationTest.Query&lt;/TestId&gt;
+  &lt;/TestAncestor&gt;
+&lt;/SessionState&gt;</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=a367f59a_002Ddc6e_002D4b44_002Db7d4_002D2327ef2a5d48/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="SaveSchemaDefine_Twice" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+  &lt;TestAncestor&gt;
+    &lt;TestId&gt;xUnit::6716711C-BCA9-4ECD-A0F7-0F6B1F25B14C::net8.0::FluentCMS.Tests.Services.SchemaServiceTests.SaveSchemaDefine_Twice&lt;/TestId&gt;
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String>
 	<s:Boolean x:Key="/Default/UnloadedProject/UnloadedProjects/=4212d6a9_002D3046_002D4fb2_002D9dd7_002Dbb065272b105_0023FluentCMS_002EUtils/@EntryIndexedValue">True</s:Boolean>

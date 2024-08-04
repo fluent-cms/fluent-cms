@@ -52,7 +52,7 @@ public class SchemaServiceTests :IAsyncLifetime
     }
   
     [Fact]
-    public async Task SaveEntity_Insert()
+    public async Task SaveSchema_Insert()
     {
         await _schemaService.EnsureSchemaTable();
         await _schemaService.EnsureTopMenuBar();
@@ -61,9 +61,17 @@ public class SchemaServiceTests :IAsyncLifetime
         Assert.NotNull(entity);
         Assert.True(entity.Id > 0);
     }
+    [Fact]
+    public async Task SaveSchemaDefine_Twice()
+    {
+        await _schemaService.EnsureSchemaTable();
+        await _schemaService.EnsureTopMenuBar();
+        var schema = await _schemaService.SaveTableDefine(TestSchema());
+        await _schemaService.SaveTableDefine(schema);
+    }
 
     [Fact]
-    public async Task SaveEntity_Update()
+    public async Task SaveSchema_Update()
     {
         await _schemaService.EnsureSchemaTable();
         await _schemaService.EnsureTopMenuBar();
@@ -112,6 +120,7 @@ public class SchemaServiceTests :IAsyncLifetime
     private static Entity TestEntity() => new Entity
     {
         Name = "Test",
+        TableName = "Test",
         Attributes =
         [
             new Attribute

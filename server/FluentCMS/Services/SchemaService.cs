@@ -112,7 +112,11 @@ public partial class SchemaService(IDefinitionExecutor definitionExecutor, KateQ
 
         if (cols.Length > 0) //if table exists, alter table add columns
         {
-            await definitionExecutor.AlterTableAddColumns(entity.TableName, entity.AddedColumnDefinitions(cols));
+            var columnDefinitions = entity.AddedColumnDefinitions(cols);
+            if (columnDefinitions.Length > 0)
+            {
+                await definitionExecutor.AlterTableAddColumns(entity.TableName, columnDefinitions);
+            }
         }
         else
         {

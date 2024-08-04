@@ -1,16 +1,30 @@
 import {useReducer} from "react";
+import {FilterMatchMode} from "primereact/api";
 
-function createDefaultState(rows:any) {
+function createDefaultState(rows:any, cols:any[]) {
     const defaultState :any= {
         first: 0,
         rows,
+        filters : createDefaultFilter(cols),
     }
-    /*
-    todo: if filters not set, cannot add 2nd rule, maybe it is a prime react bug
-    filters:{
-        title: { operator: 'and', constraints: [{ value: null, matchMode: 'startsWidth' }] }
-    }*/
+
     return defaultState
+}
+
+function createDefaultFilter(cols:any[]) {
+    const getMathMode = (col:any) =>{
+        switch (col.type){
+            case 'number': return FilterMatchMode.EQUALS
+            case 'datetime': return FilterMatchMode.DATE_IS
+            default: return FilterMatchMode.STARTS_WITH
+        }
+    }
+    const filters:any = {}
+
+    cols.forEach(col =>{
+        filters[col.field] = {operator: 'and', constraints: [{ value: null, matchMode: getMathMode(col) }]}
+    });
+    return filters
 }
 
 function reducer(state: any, action: any) {
@@ -26,9 +40,8 @@ function reducer(state: any, action: any) {
     return state
 }
 
-export function useLazyStateHandlers(rows:number) {
-    const [lazyState, dispatch] = useReducer(reducer, createDefaultState(rows))
-
+export function useLazyStateHandlers(rows:number, cols: any[]) {
+    const [lazyState, dispatch] = useReducer(reducer, createDefaultState(rows, cols))
     return {
         lazyState,
         eventHandlers: {

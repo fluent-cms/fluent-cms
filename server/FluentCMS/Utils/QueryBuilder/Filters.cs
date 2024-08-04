@@ -24,14 +24,20 @@ public sealed class Filter
     {
         Constraints = new List<Constraint>();
     }
-    public static void Parse(string field, Pair[] pairs , out Filter filter)
+    public static Result<Filter> Parse(Entity entity, string field, Pair[] pairs)
     {
-        filter = new Filter
+        var filter = new Filter
         {
             FieldName = field,
             Operator = "and",
             Constraints = [],
         };
+        var attribute = entity.FindOneAttribute(field);
+        if (attribute is null)
+        {
+            return Result.Fail($"Fail to parse filter, not found {entity.Name}.{field}");
+        }
+        
         foreach (var pair in pairs)
         {
             foreach (var pairValue in pair.Values)
@@ -45,10 +51,11 @@ public sealed class Filter
                 filter.Constraints.Add(new Constraint
                 {
                     Match = pair.Key,
-                    ResolvedValues = [pairValue],
+                    ResolvedValues = [attribute.CastToDatabaseType(pairValue)],
                 });
             }
         }
+        return filter;
     }
 
     public Result Apply(Entity entity, Query parentQuery)
@@ -79,21 +86,26 @@ public class Filters : List<Filter>
     private const string QuerystringPrefix = "querystring.";
     private const string TokenPrefix = "token.";
     public Filters(){}
-    public Filters(QsDict qsDict)
+    public static Result<Filters> Parse(Entity entity, QsDict qsDict)
     {
+        var ret = new Filters();
         foreach (var pair in qsDict.Dict)
         {
             if (pair.Key == Sorts.SortKey)
             {
                 continue;
             }
-
-            Filter.Parse(pair.Key, pair.Value.ToArray(), out var filter);
-            Add(filter);
+            var result = Filter.Parse(entity, pair.Key, pair.Value.ToArray());
+            if (result.IsFailed)
+            {
+                return Result.Fail(result.Errors);
+            }
+            ret.Add(result.Value);
         }
+        return ret;
     }
 
-    public Result Resolve(Entity entity, Dictionary<string, StringValues>? querystringDictionary,
+    public Result ResolveValues(Entity entity, Dictionary<string, StringValues>? querystringDictionary,
         Dictionary<string, object>? tokenDictionary)
     {
         foreach (var filter in this)

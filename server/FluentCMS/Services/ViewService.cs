@@ -93,7 +93,7 @@ public class ViewService(
         Dictionary<string, StringValues> querystringDictionary)
     {
         var view = await viewCache.GetOrSet(viewName, async () => await schemaService.GetViewByName(viewName));
-        CheckResult(view.Filters?.Resolve(view.Entity!, querystringDictionary, null));
+        CheckResult(view.Filters?.ResolveValues(view.Entity!, querystringDictionary, null));
         return view;
     }
 }
