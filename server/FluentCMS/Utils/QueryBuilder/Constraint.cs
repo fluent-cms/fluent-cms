@@ -2,20 +2,10 @@ using FluentResults;
 using SqlKata;
 
 namespace FluentCMS.Utils.QueryBuilder;
-
-
-
 public sealed class Constraint
 {
     public string Match { get; set; } = "";
     public string Value { get; set; } = "";
-
-    public object[]? ResolvedValues { get; set; }
-
-    private object GetValue()
-    {
-        return ResolvedValues?.FirstOrDefault() ?? Value;
-    }
     public Result<Query> Apply(Query query, string field, bool or)
     {
         if (or)
@@ -65,6 +55,13 @@ public sealed class Constraint
                 : Result.Fail("show provide two values for between"),
             _ => Result.Fail($"{Match} is not support ")
         };
+    }
+
+    public object[]? ResolvedValues { get; set; }
+
+    private object GetValue()
+    {
+        return ResolvedValues?.FirstOrDefault() ?? Value;
     }
 }
 

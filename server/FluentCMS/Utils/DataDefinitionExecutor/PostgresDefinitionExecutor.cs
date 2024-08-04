@@ -12,7 +12,7 @@ public class PostgresDefinitionExecutor(string connectionString, ILogger<Postgre
             "deleted" => "deleted BOOLEAN DEFAULT FALSE",
             "created_at" => "created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
             "updated_at" => "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
-            _ => $"{column.ColumnName} {DataTypeToString(column.DataType)}"
+            _ => $"\"{column.ColumnName}\" {DataTypeToString(column.DataType)}"
         });
         
         var sql= $"CREATE TABLE {tableName} ({string.Join(", ", columnDefinitionStrs)});";
@@ -36,7 +36,7 @@ public class PostgresDefinitionExecutor(string connectionString, ILogger<Postgre
     public async Task AlterTableAddColumns(string tableName, ColumnDefinition[] columnDefinitions)
     {
         var parts = columnDefinitions.Select(x =>
-            $"Alter Table {tableName} ADD COLUMN {x.ColumnName} {DataTypeToString(x.DataType)}"
+            $"Alter Table {tableName} ADD COLUMN \"{x.ColumnName}\" {DataTypeToString(x.DataType)}"
         );
         var sql = string.Join(";", parts.ToArray());
         await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync());
