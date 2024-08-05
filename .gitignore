@@ -1,5 +1,6 @@
 /admin-ui/node_modules
 /ui/node_modules
+/server/FluentCMS.Blog/wwwroot/
 /fluent-cms-postgres-docker/db_data
 /fluent-cms-postgres-docker/db_data_1m
 /fluent-cms-postgres-docker/db_data_1m_back
