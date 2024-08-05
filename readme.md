@@ -17,7 +17,7 @@ Fluent CMS is an open-source content management system designed to streamline we
     
 ## Add Fluent CMS to your own project
 1. Create your own WebApplication.
-2. Add FluentCMS package
+2. Add FluentCMS package    
    The next command copies the compiled Admin Panel code to your wwwroot directory. The frontend code, written in React and jQuery, is available in the admin-ui folder within this repository.     
     For Mac, use the following command. For Windows, the directory should be located at $(NuGetPackageRoot)fluentcms\1.0.0\staticwebassets. Please replace `0.0.4` with the correct version number.  
    
