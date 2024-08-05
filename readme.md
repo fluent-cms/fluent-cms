@@ -1,7 +1,6 @@
 # Fluent CMS - CRUD (Create, Read, Update, Delete) for any entities
 [![GitHub stars](https://img.shields.io/github/stars/fluent-cms/fluent-cms.svg?style=social&label=Star)](https://github.com/fluent-cms/fluent-cms/stargazers)
-Welcome to Fluent CMS! If you find it useful, please give it a star ⭐
-
+Welcome to [Fluent CMS](https://github.com/fluent-cms/fluent-cms) If you find it useful, please give it a star ⭐
 ## What is it
 
 Fluent CMS is an open-source content management system designed to simplify the workflow for web development. 
