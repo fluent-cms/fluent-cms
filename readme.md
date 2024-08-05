@@ -7,7 +7,7 @@ Welcome to Fluent CMS! If you find it useful, please give it a star ⭐
 Fluent CMS is an open-source content management system designed to simplify the workflow for web development. 
 - It provides a set of CRUD(Create, Read, Update, Delete) Restful APIs for any entities based on your configuration.
 - You can add your own logic by registering hook functions before or after access databases.
-- It provides admin panel for you to manage data, the admin panel have a rich set of inputs, test, number, datetime, dropdown, image, image gallery, and rich text editor.
+- It provides admin panel for you to manage data, the admin panel have a rich set of inputs, text, number, datetime, dropdown, image, image gallery, and rich text editor.
 - It provides a schema builder for you to define entity and attributes.
   
 ## Live Demo - A blog website build by Fluent CMS 
