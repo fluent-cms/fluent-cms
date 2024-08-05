@@ -35,5 +35,5 @@
     &lt;TestId&gt;xUnit::6716711C-BCA9-4ECD-A0F7-0F6B1F25B14C::net8.0::FluentCMS.Tests.Services.SchemaServiceTests.SaveSchemaDefine_Twice&lt;/TestId&gt;
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String>
-	<s:Boolean x:Key="/Default/UnloadedProject/UnloadedProjects/=4212d6a9_002D3046_002D4fb2_002D9dd7_002Dbb065272b105_0023FluentCMS_002EUtils/@EntryIndexedValue">True</s:Boolean>
+	
 	</wpf:ResourceDictionary>

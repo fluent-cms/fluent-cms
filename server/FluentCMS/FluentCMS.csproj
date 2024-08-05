@@ -7,6 +7,7 @@
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
         <UserSecretsId>a5afdf68-db24-42a3-bf96-6c4bf027de65</UserSecretsId>
         <IsPackable>true</IsPackable>
+        <OutputType>Library</OutputType>
     </PropertyGroup>
 
     <ItemGroup>
@@ -30,20 +31,8 @@
         <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
         <PackageReference Include="System.Runtime.Caching" Version="8.0.0" />
     </ItemGroup>
-
     <ItemGroup>
-      <Content Include="..\.dockerignore">
-        <Link>.dockerignore</Link>
-      </Content>
-    </ItemGroup>
-    <ItemGroup>
-      <Folder Include="App_Data\" />
       <Folder Include="wwwroot\files\2024-06\" />
-    </ItemGroup>
-    <ItemGroup>
-      <None Update="cms.db">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
     </ItemGroup>
     <ItemGroup>
       <_ContentIncludedByDefault Remove="wwwroot\assets\index-562e3a14.js" />
@@ -65,9 +54,7 @@
       <_ContentIncludedByDefault Remove="wwwroot\assets\quill-600b9110.js" />
       <_ContentIncludedByDefault Remove="wwwroot\assets\quill-6a9ab64a.js" />
     </ItemGroup>
-    <ItemGroup>
-        <InternalsVisibleTo Include="FluentCMS.IntegrationTests" />
-    </ItemGroup>
+   
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
         <PackageId>FluentCMS</PackageId>

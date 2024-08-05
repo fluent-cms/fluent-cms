@@ -41,17 +41,15 @@ public class Crosstable
         };
     }
 
-    public Query Delete(string fromId, Record[] targetItems)
+    public Query Delete(object id, Record[] targetItems)
     {
-        var id = FromAttribute.CastToDatabaseType(fromId);
         var vals = targetItems.Select(x => x[TargetEntity.PrimaryKey]);
         return new Query(CrossEntity.TableName).Where(FromAttribute.Field, id)
             .WhereIn(TargetAttribute.Field, vals).AsUpdate(["deleted"],[true]);
     }
     
-    public Query Insert(string fromId, Record[] targetItems)
+    public Query Insert(object id, Record[] targetItems)
     {
-        var id = FromAttribute.CastToDatabaseType(fromId);
         string[] cols = [FromAttribute.Field, TargetAttribute.Field];
         var vals = targetItems.Select(x =>
         {

@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Attribute",
+  "properties": {
+    "field": {
+      "minLength": 1,
+      "type": "string",
+      "title":"Field",
+      "description": "Field Name"
+    },
+    "header": {
+      "minLength": 1,
+      "type": "string",
+      "title": "Header",
+      "description": "Table Header"
+    },
+    "inList": {
+      "type": "boolean",
+      "title": "In List",
+      "description": "In List Page",
+      "default": true
+    },
+    "inDetail": {
+      "default": true,
+      "type": "boolean",
+      "title": "In Detail",
+      "description": "In Detail Page"
+    },
+    "isDefault": {
+      "type": "boolean",
+      "title": "Is Default",
+      "description": "System Generate"
+    },
+    "dataType":{
+      "type": "string",
+      "title": "Database Type",
+      "description": "Database type",
+      "enum":[
+        "String",
+        "Text",
+        "Int",
+        "Datetime",
+        "NA"
+      ]
+    },
+    "type": {
+      "title": "Display type",
+      "description": "Display type",
+      "type": "string",
+      "enum": [
+        "text",
+        "textarea",
+        "editor",
+
+        "number",
+
+        "datetime",
+        "date",
+
+        "image",
+        "gallery",
+        "file",
+
+        "dropdown",
+        "lookup",
+        "multiselect",
+
+        "crosstable"
+      ]
+    },
+    "options": {
+      "title": "Options",
+      "type": "string",
+      "minLength": 0
+    }
+  }
+}

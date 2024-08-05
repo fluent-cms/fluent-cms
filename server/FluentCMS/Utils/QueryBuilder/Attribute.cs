@@ -62,15 +62,7 @@ public class Attribute
         return string.IsNullOrWhiteSpace(Options) ? Result.Fail($"not find lookup for {FullName()}") : Options;
     }
     
-    public object CastToDatabaseType(string str)
-    {
-        return DataType switch
-        {
-            DataType.Int => int.Parse(str),
-            DataType.Datetime => DateTime.Parse(str),
-            _ => str,
-        };
-    }
+   
 
     public object[] GetValues(Record[] records)
     {

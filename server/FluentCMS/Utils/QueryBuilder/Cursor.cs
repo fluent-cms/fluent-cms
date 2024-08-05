@@ -57,7 +57,7 @@ public sealed class Cursor
     }
 
 
-    private void Apply(Entity entity, Query? query, Sorts? sorts, string cursor, bool forNextPage)
+    private void Apply(Entity entity, Query? query, Sorts? sorts, string cursor, bool forNextPage, Func<Attribute, string, object> cast)
     {
         if (cursor == "" || sorts is null || sorts.Count == 0 || query is null)
         {
@@ -66,7 +66,7 @@ public sealed class Cursor
 
         cursor = Base64UrlEncoder.Decode(cursor);
         var element = JsonSerializer.Deserialize<JsonElement>(cursor);
-        var dict = RecordParser.Parse(element, entity);
+        var dict = RecordParser.Parse(element, entity,cast);
         switch (sorts.Count)
         {
             case 1:
@@ -94,7 +94,7 @@ public sealed class Cursor
         }
     }
 
-    public void Apply(Entity entity, Query? query, Sorts? sorts)
+    public void Apply(Entity entity, Query? query, Sorts? sorts, Func<Attribute, string, object> cast)
     {
         if (query is null)
         {
@@ -102,11 +102,11 @@ public sealed class Cursor
         }
         if (!string.IsNullOrWhiteSpace(Last))
         {
-            Apply(entity, query, sorts, Last, true);
+            Apply(entity, query, sorts, Last, true,cast);
         }
         else if (!string.IsNullOrWhiteSpace(First))
         {
-            Apply(entity, query, sorts, First, false);
+            Apply(entity, query, sorts, First, false,cast);
         }
 
         query.Limit(Limit);

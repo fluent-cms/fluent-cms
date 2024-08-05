@@ -24,7 +24,7 @@ public sealed class Filter
     {
         Constraints = new List<Constraint>();
     }
-    public static Result<Filter> Parse(Entity entity, string field, Pair[] pairs)
+    public static Result<Filter> Parse(Entity entity, string field, Pair[] pairs, Func<Attribute, string, object> cast)
     {
         var filter = new Filter
         {
@@ -51,7 +51,7 @@ public sealed class Filter
                 filter.Constraints.Add(new Constraint
                 {
                     Match = pair.Key,
-                    ResolvedValues = [attribute.CastToDatabaseType(pairValue)],
+                    ResolvedValues = [cast(attribute,pairValue)],
                 });
             }
         }
@@ -86,7 +86,7 @@ public class Filters : List<Filter>
     private const string QuerystringPrefix = "querystring.";
     private const string TokenPrefix = "token.";
     public Filters(){}
-    public static Result<Filters> Parse(Entity entity, QsDict qsDict)
+    public static Result<Filters> Parse(Entity entity, QsDict qsDict, Func<Attribute, string, object> cast)
     {
         var ret = new Filters();
         foreach (var pair in qsDict.Dict)
@@ -95,7 +95,7 @@ public class Filters : List<Filter>
             {
                 continue;
             }
-            var result = Filter.Parse(entity, pair.Key, pair.Value.ToArray());
+            var result = Filter.Parse(entity, pair.Key, pair.Value.ToArray(), cast);
             if (result.IsFailed)
             {
                 return Result.Fail(result.Errors);
@@ -105,7 +105,7 @@ public class Filters : List<Filter>
         return ret;
     }
 
-    public Result ResolveValues(Entity entity, Dictionary<string, StringValues>? querystringDictionary,
+    public Result ResolveValues(Entity entity, Func<Attribute, string, object> cast,  Dictionary<string, StringValues>? querystringDictionary,
         Dictionary<string, object>? tokenDictionary)
     {
         foreach (var filter in this)
@@ -127,7 +127,7 @@ public class Filters : List<Filter>
                 {
                     _ when val.StartsWith(QuerystringPrefix) => ResolveQuerystringPrefix(field, val),
                     _ when val.StartsWith(TokenPrefix) => ResolveTokenPrefix(val),
-                    _ => Result.Ok<object[]>([field.CastToDatabaseType(val)]),
+                    _ => Result.Ok<object[]>([cast(field,val)]),
                 };
                 if (result.IsFailed)
                 {
@@ -147,8 +147,7 @@ public class Filters : List<Filter>
                 return Result.Fail($"Fail to resolve filter: no key {key} in query string");
             }
 
-            return querystringDictionary[key].Select(x =>
-                field.CastToDatabaseType(x!)).ToArray();
+            return querystringDictionary[key].Select(x => cast(field, x!)).ToArray();
         }
 
         Result<object[]> ResolveTokenPrefix(string val)

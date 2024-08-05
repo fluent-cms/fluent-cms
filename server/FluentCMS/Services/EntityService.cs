@@ -1,4 +1,5 @@
 using System.Text.Json;
+using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.HookFactory;
 using Microsoft.Extensions.Primitives;
 using FluentCMS.Utils.KateQueryExecutor;
@@ -10,6 +11,7 @@ namespace FluentCMS.Services;
 using static InvalidParamExceptionFactory;
 
 public sealed class EntityService(
+    IDefinitionExecutor definitionExecutor,
     IServiceProvider provider,
     KateQueryExecutor queryKateQueryExecutor,
     ISchemaService schemaService,
@@ -25,7 +27,7 @@ public sealed class EntityService(
         }
 
         id = (string)ret;
-        var query = entity.ByIdQuery(id, entity.LocalAttributes(InListOrDetail.InDetail));
+        var query = entity.ByIdQuery(CastToDatabaseType(entity.PrimaryKeyAttribute(),id), entity.LocalAttributes(InListOrDetail.InDetail));
         var record = NotNull(await queryKateQueryExecutor.One(query))
             .ValOrThrow($"not find record by [{id}]");
 
@@ -45,7 +47,7 @@ public sealed class EntityService(
         var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName));
         
         var qsDict = new QsDict(qs);
-        var filters = CheckResult(Filters.Parse(entity,qsDict));
+        var filters = CheckResult(Filters.Parse(entity,qsDict,CastToDatabaseType));
         var sorts = CheckResult(Sorts.Parse(qsDict));
         return await List(entity,filters,sorts , pagination);
     }
@@ -77,7 +79,7 @@ public sealed class EntityService(
         }
 
         var attributes = entity.LocalAttributes(InListOrDetail.InList);
-        var query = entity.ListQuery(filters, sorts, pagination, null, attributes);
+        var query = entity.ListQuery(filters, sorts, pagination, null, attributes,CastToDatabaseType);
         var records = await queryKateQueryExecutor.Many(query);
 
         var ret = new ListResult
@@ -102,7 +104,7 @@ public sealed class EntityService(
     public async Task<object> Insert(string entityName, JsonElement ele)
     {
         var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName));
-        var record = RecordParser.Parse(ele, entity);
+        var record = RecordParser.Parse(ele, entity, CastToDatabaseType);
         return await Insert(entity, record);
     }
 
@@ -115,7 +117,7 @@ public sealed class EntityService(
     public async Task<object> Update(string entityName, JsonElement ele)
     {
         var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName));
-        var record = RecordParser.Parse(ele, entity);
+        var record = RecordParser.Parse(ele, entity,CastToDatabaseType);
         return await Update(entity, record);
     }
 
@@ -128,7 +130,7 @@ public sealed class EntityService(
     public async Task<object> Delete(string entityName, JsonElement ele)
     {
         var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName));
-        var record = RecordParser.Parse(ele, entity);
+        var record = RecordParser.Parse(ele, entity,CastToDatabaseType);
         return await Delete(entity, record);
     }
     public async Task<object> Delete(string entityName, Record record)
@@ -146,8 +148,8 @@ public sealed class EntityService(
         var crossTable = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable for ${attributeName}");
 
         var items = elements.Select(ele =>
-            RecordParser.Parse(ele, crossTable.TargetEntity));
-        return await queryKateQueryExecutor.Exec(crossTable.Delete(strId, items.ToArray()));
+            RecordParser.Parse(ele, crossTable.TargetEntity,CastToDatabaseType));
+        return await queryKateQueryExecutor.Exec(crossTable.Delete(CastToDatabaseType(crossTable.FromAttribute,strId), items.ToArray()));
     }
 
     public async Task<int> CrosstableSave(string entityName, string strId, string attributeName, JsonElement[] elements)
@@ -158,8 +160,8 @@ public sealed class EntityService(
         var crossTable = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable for ${attributeName}");
 
         var items = elements.Select(ele =>
-            RecordParser.Parse(ele, crossTable.TargetEntity));
-        return await queryKateQueryExecutor.Exec(crossTable.Insert(strId, items.ToArray()));
+            RecordParser.Parse(ele, crossTable.TargetEntity,CastToDatabaseType));
+        return await queryKateQueryExecutor.Exec(crossTable.Insert(CastToDatabaseType(crossTable.FromAttribute,strId), items.ToArray()));
     }
 
     public async Task<ListResult> CrosstableList(string entityName, string strId, string attributeName, bool exclude)
@@ -169,7 +171,7 @@ public sealed class EntityService(
 
         var crossTable = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable for ${attributeName}");
         var selectAttributes = crossTable.TargetEntity.LocalAttributes(InListOrDetail.InList);
-        var query = crossTable.Many(selectAttributes, exclude, crossTable.FromAttribute.CastToDatabaseType(strId));
+        var query = crossTable.Many(selectAttributes, exclude, CastToDatabaseType(crossTable.FromAttribute,strId));
         return new ListResult
         {
             Items = [..await queryKateQueryExecutor.Many(query)],
@@ -271,5 +273,10 @@ public sealed class EntityService(
 
         var (ret, _) = await hookFactory.ExecuteRecordToObject(provider, Occasion.AfterDelete, entity.Name, record);
         return ret;
+    }
+    
+    private object CastToDatabaseType(Attribute attribute, string str)
+    {
+        return definitionExecutor.CastToDatabaseType(attribute.DataType, str);
     }
 }

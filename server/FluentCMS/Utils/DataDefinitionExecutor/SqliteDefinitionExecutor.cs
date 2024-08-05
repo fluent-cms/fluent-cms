@@ -6,7 +6,16 @@ namespace FluentCMS.Utils.DataDefinitionExecutor;
 
 public sealed class SqliteDefinitionExecutor(string connectionString, ILogger<SqliteDefinitionExecutor> logger) : IDefinitionExecutor
 {
-   public async Task CreateTable(string tableName, ColumnDefinition[] columnDefinitions)
+    public object CastToDatabaseType(DataType dataType, string str)
+    {
+        return dataType switch
+        {
+            DataType.Int => int.Parse(str),
+            _ => str,
+        };
+    }
+
+    public async Task CreateTable(string tableName, ColumnDefinition[] columnDefinitions)
    {
        var columnDefinitionStrs = columnDefinitions.Select(column => column.ColumnName.ToLower() switch
        {
