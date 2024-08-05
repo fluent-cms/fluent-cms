@@ -1,37 +1,21 @@
-# Fluent CMS - a Universal Entity CRUD (Create, Read, Update, Delete) APIs/UIs framework 
+# Fluent CMS - CRUD (Create, Read, Update, Delete) for any entities
 [![GitHub stars](https://img.shields.io/github/stars/fluent-cms/fluent-cms.svg?style=social&label=Star)](https://github.com/fluent-cms/fluent-cms/stargazers)
 Welcome to Fluent CMS! If you find it useful, please give it a star ⭐
 
-## What is Fluent CMS
-Fluent CMS is a framework that provides universal CRUD (Create, Read, Update, Delete) APIs and UIs for any entity. It is especially suited for building CMS (Content Management Systems) and managing entities that do not involve complex business logic but are prone to frequent changes. The concept draws inspiration from both WordPress and Strapi:
+## What is it
 
-- **From WordPress**: It allows changes to entity attributes without altering the code, using hook functions to extend functionalities.
-- **From Strapi**: It uses schema definitions to define entities.
-
-## Why another CMS
-- **Performance:** Fluent CMS demonstrates exceptional performance, being 100 times faster than Strapi as detailed in the
-[performance-test-fluent-cms-vs-strapi.md](doc%2Fpeformance-tests%2Fperformance-test-fluent-cms-vs-strapi.md).
-Additionally, the performance-critical APIs(use SQLKata/Dapper instead of Entity Framework) are 10% faster than manually written APIs using ASP.NET/Entity Framework, 
-as detailed in [performance-test-fluent-cms-vs-entity-framework.md](doc%2Fpeformance-tests%2Fperformance-test-fluent-cms-vs-entity-framework.md)
-- **Powerful:**  Leveraging its schema-driven architecture, Fluent CMS performs CRUD operations based on schema definitions 
-rather than hard-coded specifics for each entity. This approach reduces repetitive tasks for developers, streamlining the development process.
-- **Superior ASP.NET Integration:** Fluent CMS provides a generic CRUD framework, allowing you to easily apply your business logic by adding hooks. 
-
-## Play with Fluent CMS
-1. Live Demo  
+Fluent CMS is an open-source content management system designed to simplify the workflow for web development. 
+- It provides a set of CRUD(Create, Read, Update, Delete) Restful APIs for any entities based on your configuration.
+- You can add your own logic by registering hook functions before or after access databases.
+- It provides admin panel for you to manage data, the admin panel have a rich set of inputs, test, number, datetime, dropdown, image, image gallery, and rich text editor.
+- It provides a schema builder for you to define entity and attributes.
+  
+## Live Demo - A blog website build by Fluent CMS 
    - Admin Panel https://fluent-cms-admin.azurewebsites.net/
       - Email: `admin@cms.com`
       - Password: `Admin1!`  
    - Public Site : https://fluent-cms-ui.azurewebsites.net/
-2. Source code
-      ```shell
-      git clone https://github.com/fluent-cms/fluent-cms #clone the repository
-      cd fluent-cms/server/FluentCMS
-      dotnet restore
-      dotnet run
-      # then you can browse admin panel http://localhost:5210,
-      #  use username `admin@cms.com`, password `Admin1!` to login.   
-      ```
+
 ## Add Fluent CMS to your own project
 1. Create your own WebApplication.
 2. Add FluentCMS package
