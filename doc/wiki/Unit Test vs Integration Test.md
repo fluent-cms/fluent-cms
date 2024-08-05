@@ -37,7 +37,7 @@ public class SchemaServiceTests :IAsyncLifetime{
 ```
 ## Integration Test
 We have two integration Test,  
-- [FluentCMS.IntegrationTests](..%2F..%2Fserver%2FFluentCMS.IntegrationTests) tests a basic workflow of from create schema to data CRUD.
+- [FluentCMS.Blog.Tests](..%2F..%2Fserver%2FFluentCMS.Blog.Tests) tests a basic workflow of from create schema to data CRUD.
 - [FluentCMS.App.Tests](..%2F..%2Fserver%2FFluentCMS.App.Tests) tests how to implement user's own business logic using hook functions.
 
 ### Using Integration Test to Test Multiple Database Platform
@@ -48,7 +48,7 @@ We want fluentCMS works on the following scenarios
 - Postgres with demo database
 - SqlServer with empty database
 
-To keep the test code simple, we use shell scripts [IntegrationTest.sh](..%2F..%2Fserver%2FFluentCMS.IntegrationTests%2FIntegrationTest.sh) to prepare database and system environments variables, maintain only one set of Test code.
+To keep the test code simple, we use shell scripts [IntegrationTest.sh](..%2F..%2Fserver%2FFluentCMS.Blog.Tests%2FIntegrationTest.sh)
 
 For Postgres, the following code run init.sql, which can ensure we are testing against database with default data.
 ```shell
