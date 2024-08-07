@@ -7,7 +7,6 @@ Please have a look at some Core Concepts - [Concepts.md](doc%2FConcepts.md)
 - Admin Panel UI: [admin-panel](..%2Fadmin-panel)
 - Schema Builder: [schema-ui](..%2Fserver%2FFluentCMS%2Fwwwroot%2Fschema-ui)
 ## Server
-- Startup project:  [FluentCMS](..%2Fserver%2FFluentCMS)
 - Tools
   - Asp.net core
   - Entity framework core
