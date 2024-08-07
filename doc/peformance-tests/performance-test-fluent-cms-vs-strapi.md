@@ -23,11 +23,9 @@ an blogs/post api to compare their performance.
   - Categories
   - Post 
   - Relations: Each post can have multiple authors, and belongs to one category
-  - Fluent CMS Schema: 
-  - Strapi Schema: 
   - Indexes: Add an index on posts.published_time for both Fluent CMS and Strapi schemas.
 - Populated 1m posts, 100 category, 10k authors 
-- Both Fluent CMS and Strapi need to provides an latest endpoint.
+- Both Fluent CMS and Strapi provides an latest posts endpoint.
   - supports pagination, each request retrieve 10 posts, then request the next 10 pages.
   - contains related entities authors and category.
 
