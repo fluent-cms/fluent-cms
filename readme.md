@@ -71,5 +71,4 @@ Fluent CMS proves valuable even for non-CMS projects by eliminating the need for
 - Schema Builder: 
   - Code [schema-ui](..%2Fserver%2FFluentCMS%2Fwwwroot%2Fschema-ui)
   - Doc [Schema-Builder-UI](doc%2FDevelopment.md#Schema-Builder-UI)
-- Demo Publish Site:
-  - Code [ui](..%2Fui)
+
