@@ -4,9 +4,8 @@ Please have a look at some Core Concepts - [Concepts.md](doc%2FConcepts.md)
 ## System Overviews
 ![overview.png](diagrams%2Foverview.png)
 - Web Server: [FluentCMS](..%2Fserver%2FFluentCMS)
-- Admin Panel Client: [admin-ui](..%2Fadmin-ui)
+- Admin Panel UI: [admin-panel](..%2Fadmin-panel)
 - Schema Builder: [schema-ui](..%2Fserver%2FFluentCMS%2Fwwwroot%2Fschema-ui)
-- Demo Publish Site: [ui](..%2Fui)
 ## Server
 - Startup project:  [FluentCMS](..%2Fserver%2FFluentCMS)
 - Tools
@@ -91,18 +90,17 @@ The UML diagram describes the interaction between various components for handlin
 8. **Response**:
   - The `Entity Controller` sends the response to the client with the requested data and pagination details.
 ### Databases
-- Fluent CMS supports PostgreSQL and SQLite:
+- Fluent CMS supports SQL SErver, PostgreSQL and SQLite:
   - SQLite: Simplifies the setup of a development environment. Users can clone the repository and start the server with zero configuration.
   - PostgreSQL: Facilitates performance comparison with other CMSs.
 - **Supporting More Databases:**
   - Entity Framework and SqlKata provide an abstraction layer over specific database drivers.
   - To support a new database, implementations of the following interfaces are required
-    - [IDefinitionExecutor.cs](..%2Fserver%2FUtils%2FDataDefinitionExecutor%2FIDefinitionExecutor.cs)
-    - [IKateProvider.cs](..%2Fserver%2FUtils%2FKateQueryExecutor%2FIKateProvider.cs)
-  - Upcoming Support: Plans to add support for MS SQL Server and MySQL/MariaDB.
+    - IDefinitionExecutor.cs
+    - IKateProvider.cs
+  - Upcoming Support: Plans to add support for MySQL/MariaDB.
 
 ## Admin-Panel-UI
-- Startup project:  [admin-ui](..%2Fadmin-ui)
 - Tools
   - React
   - **PrimeReact** UI Library https://primereact.org/

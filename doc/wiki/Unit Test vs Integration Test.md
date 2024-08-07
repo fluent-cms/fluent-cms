@@ -49,14 +49,3 @@ We want fluentCMS works on the following scenarios
 - SqlServer with empty database
 
 To keep the test code simple, we use shell scripts [IntegrationTest.sh](..%2F..%2Fserver%2FFluentCMS.Blog.Tests%2FIntegrationTest.sh)
-
-For Postgres, the following code run init.sql, which can ensure we are testing against database with default data.
-```shell
-  local docker_run_command="docker run -d --name $container_name -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=mysecretpassword -e POSTGRES_DB=fluent-cms -p 5432:5432"
-  # Add volume mapping if init_sql_path is not empty
-  if [ -n "$init_sql_path" ]; then
-    docker_run_command+=" -v $init_sql_path:/docker-entrypoint-initdb.d/init.sql"
-  fi
-  docker_run_command+=" postgres:latest"
-  eval "$docker_run_command"
-```

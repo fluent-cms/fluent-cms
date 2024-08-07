@@ -127,7 +127,7 @@ To manage a many-to-many relationship, a join table (crosstable) is used to link
 
 ### User Interface (UI)
 When creating or editing a post, the authors should be rendered in a table format where users can select or deselect authors for the post.
-![img_1.png](screenshots/admin_panel_crosstable_authors.png)
+![crosstable](screenshots/admin_panel_crosstable_authors.png)
 ## View in Fluent CMS
 
 ### Definition

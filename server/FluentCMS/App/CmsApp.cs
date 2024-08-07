@@ -56,8 +56,8 @@ public sealed class CmsApp(WebApplicationBuilder builder,DatabaseProvider databa
     
     private void InjectServices()
     {
+        builder.Services.AddMemoryCache();
         builder.Services.AddSingleton<HookFactory>(_=> _hookFactory);
-        builder.Services.AddSingleton<MemoryCacheFactory>();
         builder.Services.AddSingleton<KeyValCache<View>>(p =>
             new KeyValCache<View>(p.GetRequiredService<IMemoryCache>(), 30, "view"));
         builder.Services.AddSingleton<LocalFileStore>(p => new LocalFileStore("wwwroot/files"));

@@ -13,7 +13,7 @@ public class BloggingContext : DbContext
     public BloggingContext(DbContextOptions<BloggingContext> options):base(options){}
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-//        optionsBuilder.UseNpgsql("Host=localhost;Database=fluent-cms;Username=postgres;Password=mysecretpassword");
+        optionsBuilder.UseNpgsql("Host=localhost;Database=fluent-cms;Username=postgres;Password=mysecretpassword");
     }
 }
 [Table("authors")]

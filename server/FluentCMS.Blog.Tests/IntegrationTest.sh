@@ -48,7 +48,7 @@ test_sqlserver_container(){
 
 # Exit immediately if a command exits with a non-zero status
 set -e
-#export Logging__LogLevel__Default=Warning
+export Logging__LogLevel__Default=Warning
 export Logging__LogLevel__Microsoft_AspNetCore=Warning
 
 # Sqlite With Default Data 
@@ -56,9 +56,6 @@ db_path=$(pwd)/default.db && rm -f $db_path && cp ../FluentCMS/cms.db "$db_path"
 
 # Sqlite With Empty Data 
 db_path=$(pwd)/temp.db && rm -f "$db_path" && test_sqlite "$db_path"
-
-# Postgres With Default Data
-test_postgres_container "$(pwd)/../../fluent-cms-postgres-docker/init.sql"
 
 # Postgres With Empty Data 
 test_postgres_container ""

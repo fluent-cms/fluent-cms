@@ -8,7 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddDbContext<BloggingContext>(options =>
-    options.UseNpgsql(Environment.GetEnvironmentVariable("Postgres") ?? builder.Configuration.GetConnectionString("Postgres")));
+    options.UseNpgsql(Environment.GetEnvironmentVariable("Postgres") 
+                      ?? builder.Configuration.GetConnectionString("Postgres")));
 
 var app = builder.Build();
 
@@ -20,7 +21,7 @@ app.MapGet("/posts", async (BloggingContext context,[FromQuery] string? last) =>
         ts = JsonSerializer.Deserialize<Cursor>(Decode(last))?.Ts;
     }
 
-    var posts = context.Posts
+    var posts = await context.Posts
         .Where(p => !p.Deleted && (ts == null || p.PublishedAt.ToLocalTime() < ts))
         .OrderByDescending(p => p.PublishedAt)
         .Take(10)
@@ -33,10 +34,10 @@ app.MapGet("/posts", async (BloggingContext context,[FromQuery] string? last) =>
             p.CategoryId,
             p.ThumbnailImage
         })
-        .ToList();
+        .ToListAsync();
     var categoryIds = posts.Select(p => p.CategoryId).Distinct().ToList();
 
-    var categories = context.Categories
+    var categories = await context.Categories
         .Where(c => categoryIds.Contains(c.Id))
         .Select(c => new
         {
@@ -49,11 +50,11 @@ app.MapGet("/posts", async (BloggingContext context,[FromQuery] string? last) =>
             c.UpdatedAt,
             c.Slug
         })
-        .ToList();
+        .ToListAsync();
 
     var postIds = posts.Select(p => p.Id).ToList();
 
-    var authors = (from pa in context.PostAuthors
+    var authors = await (from pa in context.PostAuthors
         join a in context.Authors on pa.AuthorId equals a.Id
         where postIds.Contains(pa.PostId) && !pa.Deleted && !a.Deleted
         select new
@@ -69,10 +70,10 @@ app.MapGet("/posts", async (BloggingContext context,[FromQuery] string? last) =>
                 a.CreatedAt,
                 a.UpdatedAt
             }
-        }).ToList();
+        }).ToListAsync();
 
 
-    var result = posts.Select(p => new
+    var result =  posts.Select(p => new
     {
         p.Id,
         p.Title,

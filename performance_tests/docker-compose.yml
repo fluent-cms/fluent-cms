@@ -1,0 +1,13 @@
+﻿services:
+  fluent-cms-postgres-performance-test:
+    container_name: fluent-cms-postgres-performance-test
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: fluent-cms
+    volumes:
+      - ./db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"

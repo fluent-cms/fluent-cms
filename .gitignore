@@ -1,10 +1,10 @@
-/admin-ui/node_modules
+/admin-panel/node_modules
 /ui/node_modules
 /server/FluentCMS.Blog/wwwroot/
-/fluent-cms-postgres-docker/db_data
-/fluent-cms-postgres-docker/db_data_1m
-/fluent-cms-postgres-docker/db_data_1m_back
-/fluent-cms-postgres-docker/db_data_demo
+/examples/fluent-cms-postgres-docker/db_data
+/examples/fluent-cms-postgres-docker/db_data_1m
+/examples/fluent-cms-postgres-docker/db_data_1m_back
+/examples/fluent-cms-postgres-docker/db_data_demo
 /k8s_deploy/db-app/.terraform/
 /k8s_deploy/db-app/.terraform.lock.hcl
 /k8s_deploy/db-app/terraform.tfstate
