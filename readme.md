@@ -57,9 +57,7 @@ Fluent CMS proves valuable even for non-CMS projects by eliminating the need for
     });
    ```
 9. Source code of this example can be found at  [WebApiExamples](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples)  
-## Core Concepts
-   - Understanding concepts like Entity, Attributes, View is crucial for using and customizing Fluent CMS.     
-   - Detailed in [Concepts.md](doc%2FConcepts.md)
+## We welcome contributions! If you're interested in improving FluentCMS, please read our CONTRIBUTING.md(https://github.com/fluent-cms/fluent-cms/blob/main/CONTRIBUTING.md) guide.
 ## Development
 ![overview.png](doc%2Fdiagrams%2Foverview.png)
 - Web Server: 
