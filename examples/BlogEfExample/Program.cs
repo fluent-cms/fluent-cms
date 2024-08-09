@@ -13,6 +13,62 @@ builder.Services.AddDbContext<BloggingContext>(options =>
 
 var app = builder.Build();
 
+app.MapGet("/posts_join",async (BloggingContext context,[FromQuery] string? last) =>
+{
+    DateTime? ts = null;
+    if (!string.IsNullOrWhiteSpace(last))
+    {
+        ts = JsonSerializer.Deserialize<Cursor>(Decode(last))?.Ts;
+    }
+    var posts = await context.Posts
+       .Where(p => !p.Deleted && (ts == null || p.PublishedAt.ToLocalTime() < ts))
+       .OrderByDescending(p => p.PublishedAt)
+       .Take(10)
+       .Select(p => new
+       {
+           p.Id,
+           p.Title,
+           p.PublishedAt,
+           p.Slug,
+           p.CategoryId,
+           p.ThumbnailImage,
+           CategoryIdData = context.Categories
+               .Where(c => c.Id == p.CategoryId && !c.Deleted)
+               .Select(c => new
+               {
+                   c.Id,
+                   c.Name,
+                   c.ParentCategoryId,
+                   c.FeaturedImage,
+                   c.ThumbnailImage,
+                   c.CreatedAt,
+                   c.UpdatedAt,
+                   c.Slug
+               })
+               .FirstOrDefault(),
+           Authors = context.PostAuthors
+               .Where(ap => ap.PostId == p.Id && !ap.Deleted)
+               .Join(context.Authors,
+                     ap => ap.AuthorId,
+                     a => a.Id,
+                     (ap, a) => new
+                     {
+                         a.Id,
+                         a.Name,
+                         a.Slug,
+                         a.ThumbnailImage,
+                         a.FeaturedImage,
+                         a.CreatedAt,
+                         a.UpdatedAt
+                     })
+               .ToList()
+       })
+       .ToListAsync();
+    var lastItem = new Cursor{Ts = posts.Last().PublishedAt}; 
+    return new { items = posts, last = Encode( JsonSerializer.Serialize(lastItem))};
+
+});
+
 app.MapGet("/posts", async (BloggingContext context,[FromQuery] string? last) =>
 {
     DateTime? ts = null;
