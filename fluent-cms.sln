@@ -1,20 +1,20 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{10BF50D7-F514-4193-8ADE-59A23EB194BE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentCMS", "server\FluentCMS\FluentCMS.csproj", "{D96BB1DD-4E2B-4DFB-B8A0-73854275AB5A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentCMS", "FluentCMS\FluentCMS.csproj", "{D96BB1DD-4E2B-4DFB-B8A0-73854275AB5A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentCMS.Tests", "server\FluentCMS.Tests\FluentCMS.Tests.csproj", "{6716711C-BCA9-4ECD-A0F7-0F6B1F25B14C}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{997F3305-20F9-4C50-A724-BAE2972857C9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentCMS.Blog.Tests", "server\FluentCMS.Blog.Tests\FluentCMS.Blog.Tests.csproj", "{AB78C514-3519-41D1-9234-9E9151B1A548}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentCMS.Tests", "FluentCMS.Tests\FluentCMS.Tests.csproj", "{6716711C-BCA9-4ECD-A0F7-0F6B1F25B14C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentCMS.App", "server\FluentCMS.App\FluentCMS.App.csproj", "{026D0D09-ED38-4244-9417-FF74562C0A9B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentCMS.Blog.Tests", "FluentCMS.Blog.Tests\FluentCMS.Blog.Tests.csproj", "{AB78C514-3519-41D1-9234-9E9151B1A548}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentCMS.App.Tests", "server\FluentCMS.App.Tests\FluentCMS.App.Tests.csproj", "{E7EAD0DD-856C-4530-9F62-4B3EFEB15F01}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentCMS.App", "FluentCMS.App\FluentCMS.App.csproj", "{026D0D09-ED38-4244-9417-FF74562C0A9B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentCMS.Blog", "server\FluentCMS.Blog\FluentCMS.Blog.csproj", "{ADF6D53D-B4EF-46BD-BC3C-D0B5520B87C5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentCMS.App.Tests", "FluentCMS.App.Tests\FluentCMS.App.Tests.csproj", "{E7EAD0DD-856C-4530-9F62-4B3EFEB15F01}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApiExamples", "examples\WebApiExamples\WebApiExamples.csproj", "{23F6E543-242A-4738-A450-C1798E295FF4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentCMS.Blog", "FluentCMS.Blog\FluentCMS.Blog.csproj", "{ADF6D53D-B4EF-46BD-BC3C-D0B5520B87C5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlogEfExample", "examples\BlogEfExample\BlogEfExample.csproj", "{2046DC4C-DDD1-4DB9-882D-89390D85A669}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -54,6 +54,14 @@ Global
 		{ADF6D53D-B4EF-46BD-BC3C-D0B5520B87C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ADF6D53D-B4EF-46BD-BC3C-D0B5520B87C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ADF6D53D-B4EF-46BD-BC3C-D0B5520B87C5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{23F6E543-242A-4738-A450-C1798E295FF4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{23F6E543-242A-4738-A450-C1798E295FF4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{23F6E543-242A-4738-A450-C1798E295FF4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{23F6E543-242A-4738-A450-C1798E295FF4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2046DC4C-DDD1-4DB9-882D-89390D85A669}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2046DC4C-DDD1-4DB9-882D-89390D85A669}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2046DC4C-DDD1-4DB9-882D-89390D85A669}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2046DC4C-DDD1-4DB9-882D-89390D85A669}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{997F3305-20F9-4C50-A724-BAE2972857C9} = {10BF50D7-F514-4193-8ADE-59A23EB194BE}

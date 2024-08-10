@@ -158,7 +158,7 @@ public class Post
 
 }
 
-[Table("author_post_cross")]
+[Table("author_post")]
 public class PostAuthor
 {
     [Key]

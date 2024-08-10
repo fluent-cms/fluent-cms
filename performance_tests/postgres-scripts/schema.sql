@@ -67,7 +67,7 @@ EXECUTE FUNCTION update_updated_at_column();
 create index posts_deleted_published_at_index
     on posts (deleted asc, published_at desc);
 
-CREATE TABLE author_post_cross (
+CREATE TABLE author_post (
                               id SERIAL PRIMARY KEY,
                               post_id INT,
                               author_id INT,
@@ -79,12 +79,18 @@ CREATE TABLE author_post_cross (
 );
 
 CREATE TRIGGER update_post_authors_updated_at
-    BEFORE UPDATE ON author_post_cross
+    BEFORE UPDATE ON author_post
     FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
-create index post_authors_deleted_post_id_index
-    on author_post_cross (deleted asc, post_id desc);
+create index posts_deleted_index
+    on posts (deleted);
+
+create index posts_published_at_index
+    on posts (published_at desc);
+
+create index posts_category_id_index
+    on posts (category_id);
 
 update __schemas set settings = '{"Entity":null,"View":null,"Menu":{"Name":"top-menu-bar","MenuItems":[{"Icon":"pi-check","Label":"Posts","Url":"/entities/post","IsHref":false},{"Icon":"pi-bolt","Label":"Categories","Url":"/entities/category","IsHref":false},{"Icon":"pi-users","Label":"Authors","Url":"/entities/author","IsHref":false},{"Icon":"pi-cog","Label":"Schema Builder","Url":"/schema-ui/list.html","IsHref":true}]}}'
                  where name ='top-menu-bar';
