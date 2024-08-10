@@ -23,7 +23,7 @@ public class Crosstable
         TargetEntity = targetEntity;
         string[] strs = [fromEntity.Name, targetEntity.Name];
         var sorted = strs.OrderBy(x => x).ToArray();
-        var crossEntityName = $"{sorted[0]}_{sorted[1]}_cross";
+        var crossEntityName = $"{sorted[0]}_{sorted[1]}";
         CrossEntity = new Entity
         {
             TableName = crossEntityName,
