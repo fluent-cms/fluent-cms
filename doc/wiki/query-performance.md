@@ -6,7 +6,7 @@ The following tests are based on PostgreSQL. The test data includes:
 - 100,000 categories
 - 10 million post-author relationships
 
-You can find my code at [BlogEfExample](../examples/BlogEfExample) and the test scripts along with data population scripts at [performance_tests](../performance_tests).
+You can find my code at [BlogEfExample]([../examples/BlogEfExample](https://github.com/fluent-cms/fluent-cms/tree/main/examples/BlogEfExample)) and the test scripts along with data population scripts at [performance_tests](https://github.com/fluent-cms/fluent-cms/tree/main/performance_tests).
 
 ## Join vs. Merge Result
 
