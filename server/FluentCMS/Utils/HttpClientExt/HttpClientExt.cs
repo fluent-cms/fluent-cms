@@ -1,11 +1,12 @@
 using System.Text;
 using FluentResults;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace FluentCMS.Utils.HttpClientExt;
 
 public static class HttpClientExt
 {
+    private static  JsonSerializerOptions CaseInsensitiveOption => new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
     public static async Task<Result<T>> GetObject<T>(this HttpClient client,string uri)
     {
         var res = await client.GetAsync(uri);
@@ -14,14 +15,14 @@ public static class HttpClientExt
             return Result.Fail($"Fail to request ${uri}");
         }
         var str = await res.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<T>(str) ?? Result.Fail<T>("failed to parse result");
+        return JsonSerializer.Deserialize<T>(str, CaseInsensitiveOption) ?? Result.Fail<T>("failed to parse result");
     }
     
     public static async Task<Result<T>> PostObject<T>(this HttpClient client, string url, object payload)
     {
         var res = await client.PostAsync(url, Content(payload));
         var str = await res.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<T>(str) ?? Result.Fail<T>("failed to parse result");
+        return JsonSerializer.Deserialize<T>(str,CaseInsensitiveOption) ?? Result.Fail<T>("failed to parse result");
     }
 
     public static async Task<HttpResponseMessage> PostObject(this HttpClient client, string url, object payload)
@@ -37,5 +38,7 @@ public static class HttpClientExt
     }
     
     private static StringContent Content(object payload) =>
-        new(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+        new(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+    
+    
 }

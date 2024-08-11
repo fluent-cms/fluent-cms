@@ -74,7 +74,7 @@ public static class InvalidParamExceptionFactory
     {
         if (result is not null && result.IsFailed)
         {
-            throw new InvalidParamException($"{result.Errors}");
+            throw new InvalidParamException($"{string.Join("\r\n",result.Errors)}");
         }
     }
     
@@ -82,7 +82,7 @@ public static class InvalidParamExceptionFactory
     {
         return result switch
         {
-            { IsFailed: true } => throw new InvalidParamException($"{result.Errors}"),
+            { IsFailed: true } => throw new InvalidParamException($"{string.Join("\r\n",result.Errors)}"),
             _ => result.Value
         };
     }
