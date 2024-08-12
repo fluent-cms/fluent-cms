@@ -2,16 +2,58 @@
 
 ## NoSql saves the trouble of join
 This post if following up my last post [Query Performance](https://github.com/fluent-cms/fluent-cms/blob/main/doc/wiki/query-performance.md)
-The relationships between entities is as follow, author and posts has many to many relationships,  people can co-author posts.
-![entity-relation.png](https://github.com/fluent-cms/fluent-cms/blob/main/doc/wiki/entity-relation.png)
+The relationships between entities is as follow, author and posts has many to many relationships,  people can co-author posts.  
+![entity-relation.png](https://github.com/fluent-cms/fluent-cms/blob/main/doc/wiki/entity-relation.png)   
 If we are lucky, all filter fields, sort fields are  in one table, then the performance of our query is not bad.
-But in reality, we can not avoid the requirements of composing a filter from more than entities. 
-After we join two big table, the performance is bad.  
+But in reality, we can not avoid the requirements of composing a filter from more than one entity. 
+After we join two big tables, the performance goes bad.  
 
-While in NoSql database such as MongoDB, with proper indexes and embed multiple entity to one document, the query performance is manageable even with huge data 
+While in NoSql database such as MongoDB, with proper indexes and embedding multiple entity to one document, the query performance is manageable even with huge data 
 from multiple entities.
 
-I also did a test, I migrate the composed data {post, category, authors) to mongo db, then compared the query performance.
+I did a test, I migrate the composed data {post, category, authors) to mongo db, 
+```json
+{
+"id": 1999999,
+"title": "Post Title 1999999",
+"published_at": "2024-09-02T15:56:28.246573",
+"slug": "post-title-1999999",
+"category_id": 63789,
+"thumbnail_image": "http://example.com/thumbnail/1999999",
+"category_id_data": {
+  "id": 63789,
+  "name": "Category 63789",
+  "parent_category_id": 9,
+  "featured_image": "http://example.com/featured/63789",
+  "thumbnail_image": "http://example.com/thumbnail/63789",
+  "created_at": "2024-08-10T12:22:54.867217",
+  "updated_at": "2024-08-11T10:25:51.059176",
+  "slug": "category-63789"
+},
+"authors": [
+  {
+    "id": 4888670,
+    "name": "Author 4888670",
+    "slug": "author-4888670",
+    "thumbnail_image": "http://example.com/thumbnail/4888670",
+    "featured_image": "http://example.com/featured/4888670",
+    "created_at": "2024-08-10T12:22:08.80861",
+    "updated_at": "2024-08-10T12:22:08.80861",
+    "post_id": 1999999
+  },
+  {
+    "id": 1963811,
+    "name": "Author 1963811",
+    "slug": "author-1963811",
+    "thumbnail_image": "http://example.com/thumbnail/1963811",
+    "featured_image": "http://example.com/featured/1963811",
+    "created_at": "2024-08-10T12:22:08.80861",
+    "updated_at": "2024-08-10T12:22:08.80861",
+    "post_id": 1999999
+  }]
+}
+```
+then compared the query performance. The different is hug. RDBMS's performance is not acceptable.
 PostgresQuery
 ```
 fluent-cms> select * from posts 
@@ -39,8 +81,8 @@ cms> db.posts.find({
 [2024-08-12 08:27:26] 10 rows retrieved starting from 1 in 177 ms (execution: 148 ms, fetching: 29 ms)
 ```
 ## Ensuring data integrity
-MongoDb achieves high query performance by put related entities together, but that makes ensure data integrity difficult.
-An examples is change an author's name, with traditional RDBMS, we can simply update author's name by it's id. 
+MongoDb achieves high query performance by put related entities together as single document, but that makes ensuring data integrity difficult.
+An examples is changing an author's name, with traditional RDBMS, we can simply update author's name by it's id. 
 But with Mongo DB's composited entity structure, update author's name in every document takes too much efforts.
 
 ## Combining RDBMS with NoSQL
