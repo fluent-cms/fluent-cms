@@ -56,17 +56,17 @@ I did a test, I migrate the composed data {post, category, authors) to mongo db,
 then compared the query performance. The different is hug. RDBMS's performance is not acceptable.
 PostgresQuery(I have added index on `posts.published_at desc`, `authors.slug`, `categories.slug`)
 ```
-fluent-cms> select * from posts 
-                       left join author_post ap on posts.id = ap.post_id
-                       left join authors a on a.id = ap.author_id
-                       left join categories c on posts.category_id = c.id
+fluent-cms>  select * from posts 
+                       join author_post ap on posts.id = ap.post_id
+                       join authors a on a.id = ap.author_id
+                       join categories c on posts.category_id = c.id
                    where
                        posts.published_at < '2024-09-02' and 
                        a.slug like 'author-1%' and 
                        c.slug like 'category-9%'
                    order by posts.published_at desc
                    limit 10
-[2024-08-12 08:36:52] 10 rows retrieved starting from 1 in 15 s 510 ms (execution: 15 s 465 ms, fetching: 45 ms)
+[2024-08-12 13:31:50] 10 rows retrieved starting from 1 in 16 s 846 ms (execution: 16 s 651 ms, fetching: 195 ms)
 
 ```
 
