@@ -23,7 +23,7 @@ Fluent CMS proves valuable even for non-CMS projects by eliminating the need for
    
    ```shell
    dotnet add package FluentCMS
-   cp -a ~/.nuget/packages/fluentcms/0.0.3/staticwebassets wwwroot 
+   cp -a ~/.nuget/packages/fluentcms/0.0.4/staticwebassets wwwroot 
    ```
 4. Modify Program.cs, add the following line before builder.Build(), the input parameter is the connection string of database.
    ```
