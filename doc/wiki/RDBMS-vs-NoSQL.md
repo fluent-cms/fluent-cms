@@ -4,7 +4,6 @@
 This post if following up my last post [Query Performance](https://github.com/fluent-cms/fluent-cms/blob/main/doc/wiki/query-performance.md)
 The relationships between entities is as follow, author and posts has many to many relationships,  people can co-author posts.
 ![entity-relation.png](https://github.com/fluent-cms/fluent-cms/blob/main/doc/wiki/entity-relation.png)
-
 If we are lucky, all filter fields, sort fields are  in one table, then the performance of our query is not bad.
 But in reality, we can not avoid the requirements of composing a filter from more than entities. 
 After we join two big table, the performance is bad.  
