@@ -54,7 +54,7 @@ I did a test, I migrate the composed data {post, category, authors) to mongo db,
 }
 ```
 then compared the query performance. The different is hug. RDBMS's performance is not acceptable.
-PostgresQuery
+PostgresQuery(I have added index on `posts.published_at desc`, `authors.slug`, `categories.slug`)
 ```
 fluent-cms> select * from posts 
                        left join author_post ap on posts.id = ap.post_id
