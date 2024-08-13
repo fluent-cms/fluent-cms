@@ -6,7 +6,7 @@ namespace FluentCMS.Utils.HttpClientExt;
 
 public static class HttpClientExt
 {
-    private static  JsonSerializerOptions CaseInsensitiveOption => new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+    private static  JsonSerializerOptions CaseInsensitiveOption => new() { PropertyNameCaseInsensitive = true };
     public static async Task<Result<T>> GetObject<T>(this HttpClient client,string uri)
     {
         var res = await client.GetAsync(uri);

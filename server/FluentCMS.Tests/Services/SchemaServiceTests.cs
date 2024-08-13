@@ -21,7 +21,7 @@ public class SchemaServiceTests :IAsyncLifetime
         var definitionExecutor = new SqliteDefinitionExecutor(connectionString,defineLogger.Object);
         var providerLogger = new Mock<ILogger<SqliteKateProvider>>();
         var sqlite = new SqliteKateProvider(connectionString,providerLogger.Object);
-        var kateQueryExecutor = new KateQueryExecutor(sqlite);
+        var kateQueryExecutor = new KateQueryExecutor(sqlite, 30);
         _schemaService = new SchemaService(definitionExecutor, kateQueryExecutor);
         Batteries.Init();
     }

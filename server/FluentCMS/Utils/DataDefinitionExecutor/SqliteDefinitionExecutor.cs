@@ -15,7 +15,7 @@ public sealed class SqliteDefinitionExecutor(string connectionString, ILogger<Sq
         };
     }
 
-    public async Task CreateTable(string tableName, ColumnDefinition[] columnDefinitions)
+    public async Task CreateTable(string tableName, ColumnDefinition[] columnDefinitions, CancellationToken cancellationToken)
    {
        var columnDefinitionStrs = columnDefinitions.Select(column => column.ColumnName.ToLower() switch
        {
@@ -34,26 +34,26 @@ public sealed class SqliteDefinitionExecutor(string connectionString, ILogger<Sq
             BEGIN 
                 UPDATE {tableName} SET updated_at = (datetime('now','localtime')) WHERE id = OLD.id; 
             END;";
-      await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync());
+      await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(cancellationToken));
    }
 
-   public async Task AlterTableAddColumns(string tableName, ColumnDefinition[] columnDefinitions)
+   public async Task AlterTableAddColumns(string tableName, ColumnDefinition[] columnDefinitions, CancellationToken cancellationToken)
    {
        var parts = columnDefinitions.Select(x =>
            $"Alter Table {tableName} ADD COLUMN {x.ColumnName} {DataTypeToString(x.DataType)}"
        );
        var sql = string.Join(";", parts.ToArray());
-       await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync());
+       await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(cancellationToken));
    }
 
-   public async Task<ColumnDefinition[]> GetColumnDefinitions(string tableName)
+   public async Task<ColumnDefinition[]> GetColumnDefinitions(string tableName,CancellationToken cancellationToken)
    {
       var sql = $"PRAGMA table_info({tableName})";
       return await ExecuteQuery(sql, async command =>
       {
          await using var reader = await command.ExecuteReaderAsync();
          var columnDefinitions = new List<ColumnDefinition>();
-         while (await reader.ReadAsync())
+         while (await reader.ReadAsync(cancellationToken))
          {
             /*cid, name, type, notnull, dflt_value, pk */
             columnDefinitions.Add(new ColumnDefinition

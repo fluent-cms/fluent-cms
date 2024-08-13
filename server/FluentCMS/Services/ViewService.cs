@@ -18,10 +18,11 @@ public class ViewService(
     ) : IViewService
 {
     public async Task<ViewResult> List(string viewName, Cursor cursor,
-        Dictionary<string, StringValues> querystringDictionary 
+        Dictionary<string, StringValues> querystringDictionary ,
+        CancellationToken cancellationToken
         )
     {
-        var view = await ResolvedView(viewName, querystringDictionary);
+        var view = await ResolvedView(viewName, querystringDictionary,cancellationToken);
         var entity = NotNull(view.Entity).ValOrThrow($"entity not exist for {viewName}");
         if (cursor.Limit == 0 || cursor.Limit > view.PageSize)
         {
@@ -30,7 +31,7 @@ public class ViewService(
         cursor.Limit += 1;
         var query = entity.ListQuery(view.Filters, view.Sorts, null, cursor,
             CheckResult(view.LocalAttributes(InListOrDetail.InList)), CastToDatabaseType);
-        var items = await kateQueryExecutor.Many(query);
+        var items = await kateQueryExecutor.Many(query, cancellationToken);
         
         var hasMore = items.Length == cursor.Limit;
         if (hasMore)
@@ -41,7 +42,7 @@ public class ViewService(
         }
 
         var nextCursor = CheckResult(cursor.GetNextCursor(items, view.Sorts, hasMore));
-        await AttachRelatedEntity(view, InListOrDetail.InList, items);
+        await AttachRelatedEntity(view, InListOrDetail.InList, items, cancellationToken);
         
         return new ViewResult
         {
@@ -54,50 +55,51 @@ public class ViewService(
     }
 
 
-    public async Task<Record[]> Many(string viewName, Dictionary<string, StringValues> querystringDictionary)
+    public async Task<Record[]> Many(string viewName, Dictionary<string, StringValues> querystringDictionary, CancellationToken cancellationToken)
     {
-        var view = await ResolvedView(viewName, querystringDictionary);
+        var view = await ResolvedView(viewName, querystringDictionary,cancellationToken);
         var entity = NotNull(view.Entity).ValOrThrow($"entity not exist for {viewName}");
        
         var query = entity.ListQuery(  view.Filters,view.Sorts, new Pagination{Limit = view.PageSize}, null,
             CheckResult(view.LocalAttributes(InListOrDetail.InDetail)),CastToDatabaseType);
-        var items = await kateQueryExecutor.Many(query);
-        await AttachRelatedEntity(view, InListOrDetail.InDetail, items);
+        var items = await kateQueryExecutor.Many(query,cancellationToken);
+        await AttachRelatedEntity(view, InListOrDetail.InDetail, items,cancellationToken);
         return items;
     }
 
-    public async Task<Record> One(string viewName, Dictionary<string, StringValues> querystringDictionary)
+    public async Task<Record> One(string viewName, Dictionary<string, StringValues> querystringDictionary, CancellationToken cancellationToken)
     {
-        var view = await ResolvedView(viewName, querystringDictionary);
+        var view = await ResolvedView(viewName, querystringDictionary,cancellationToken);
         var entity = NotNull(view.Entity).ValOrThrow($"entity not exist for {viewName}");
 
         var attributes = CheckResult(view.LocalAttributes(InListOrDetail.InDetail));
         var query = CheckResult(entity.OneQuery(view.Filters, attributes ));
-        var item = NotNull(await kateQueryExecutor.One(query))
+        var item = NotNull(await kateQueryExecutor.One(query,cancellationToken))
             .ValOrThrow("Not find record");
-        await AttachRelatedEntity(view, InListOrDetail.InDetail, [item]);
+        await AttachRelatedEntity(view, InListOrDetail.InDetail, [item],cancellationToken);
         return item;
     }
     
-    private async Task AttachRelatedEntity(View view, InListOrDetail scope, Record[] items)
+    private async Task AttachRelatedEntity(View view, InListOrDetail scope, Record[] items, CancellationToken cancellationToken)
     {
         foreach (var attribute in CheckResult(view.GetAttributesByType(DisplayType.lookup, scope)))
         {
-            await entityService.AttachLookup(attribute, items,
+            await entityService.AttachLookup(attribute, items,cancellationToken,
                 entity1 => entity1.LocalAttributes(scope));
         }
 
         foreach (var attribute in CheckResult(view.GetAttributesByType(DisplayType.crosstable, scope )))
         {
-            await entityService.AttachCrosstable(attribute, items,
+            await entityService.AttachCrosstable(attribute, items,cancellationToken,
                 entity1 => entity1.LocalAttributes(scope));
         }
     }
     
     private async Task<View> ResolvedView(string viewName,
-        Dictionary<string, StringValues> querystringDictionary)
+        Dictionary<string, StringValues> querystringDictionary, CancellationToken cancellationToken)
     {
-        var view = await viewCache.GetOrSet(viewName, async () => await schemaService.GetViewByName(viewName));
+        var view = await viewCache.GetOrSet(viewName,
+            async () => await schemaService.GetViewByName(viewName, cancellationToken));
         CheckResult(view.Filters?.ResolveValues(view.Entity!, CastToDatabaseType, querystringDictionary, null));
         return view;
     }

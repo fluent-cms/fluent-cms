@@ -13,7 +13,7 @@ public class SqlServerDefinitionExecutor(string connectionString, ILogger<SqlSer
             _ => str,
         };
     }
-    public async Task CreateTable(string tableName, ColumnDefinition[] columnDefinitions)
+    public async Task CreateTable(string tableName, ColumnDefinition[] columnDefinitions, CancellationToken cancellationToken)
     {
         var columnDefinitionStrs = columnDefinitions.Select(column => column.ColumnName.ToLower() switch
         {
@@ -26,7 +26,7 @@ public class SqlServerDefinitionExecutor(string connectionString, ILogger<SqlSer
 
         var sql = $"CREATE TABLE [{tableName}] ({string.Join(", ", columnDefinitionStrs)});";
         
-        await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync());
+        await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(cancellationToken));
         sql = $"""
                CREATE TRIGGER trg_{tableName}_updated_at 
                ON [{tableName}] 
@@ -41,10 +41,10 @@ public class SqlServerDefinitionExecutor(string connectionString, ILogger<SqlSer
                END;
                """;
 
-        await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync());
+        await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(cancellationToken));
     }
 
-    public async Task AlterTableAddColumns(string tableName, ColumnDefinition[] columnDefinitions)
+    public async Task AlterTableAddColumns(string tableName, ColumnDefinition[] columnDefinitions, CancellationToken cancellationToken)
     {
         if (columnDefinitions.Length == 0)
         {
@@ -55,10 +55,10 @@ public class SqlServerDefinitionExecutor(string connectionString, ILogger<SqlSer
             $"ALTER TABLE [{tableName}] ADD [{x.ColumnName}] {DataTypeToString(x.DataType)}"
         );
         var sql = string.Join(";", parts.ToArray());
-        await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync());
+        await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(cancellationToken));
     }
 
-    public async Task<ColumnDefinition[]> GetColumnDefinitions(string tableName)
+    public async Task<ColumnDefinition[]> GetColumnDefinitions(string tableName, CancellationToken cancellationToken)
     {
         var sql = @"
                 SELECT COLUMN_NAME, DATA_TYPE
@@ -68,7 +68,7 @@ public class SqlServerDefinitionExecutor(string connectionString, ILogger<SqlSer
         return await ExecuteQuery(sql, async command =>
         {
             var columnDefinitions = new List<ColumnDefinition>();
-            await using var reader = await command.ExecuteReaderAsync();
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync())
             {
                 columnDefinitions.Add(new ColumnDefinition

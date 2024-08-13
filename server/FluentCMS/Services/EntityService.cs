@@ -17,9 +17,9 @@ public sealed class EntityService(
     ISchemaService schemaService,
     HookFactory hookFactory) : IEntityService
 {
-    public async Task<object> One(string entityName, string id)
+    public async Task<object> One(string entityName, string id, CancellationToken cancellationToken)
     {
-        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName));
+        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,cancellationToken));
         var (ret, next) = await hookFactory.ExecuteStringToObject(provider, Occasion.BeforeQueryOne, entityName, id);
         if (next == Next.Exit)
         {
@@ -28,13 +28,13 @@ public sealed class EntityService(
 
         id = (string)ret;
         var query = entity.ByIdQuery(CastToDatabaseType(entity.PrimaryKeyAttribute(),id), entity.LocalAttributes(InListOrDetail.InDetail));
-        var record = NotNull(await queryKateQueryExecutor.One(query))
+        var record = NotNull(await queryKateQueryExecutor.One(query,cancellationToken))
             .ValOrThrow($"not find record by [{id}]");
 
         foreach (var detailLookupsAttribute in entity.GetAttributesByType(DisplayType.lookup,
                      InListOrDetail.InDetail))
         {
-            await AttachLookup(detailLookupsAttribute, [record],
+            await AttachLookup(detailLookupsAttribute, [record],cancellationToken,
                 lookupEntity => lookupEntity.LocalAttributes(InListOrDetail.InDetail));
         }
 
@@ -42,23 +42,23 @@ public sealed class EntityService(
         return res;
     }
 
-    public async Task<object> List(string entityName, Pagination? pagination, Dictionary<string, StringValues> qs)
+    public async Task<object> List(string entityName, Pagination? pagination, Dictionary<string, StringValues> qs, CancellationToken cancellationToken)
     {
-        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName));
+        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,cancellationToken));
         
         var qsDict = new QsDict(qs);
         var filters = CheckResult(Filters.Parse(entity,qsDict,CastToDatabaseType));
         var sorts = CheckResult(Sorts.Parse(qsDict));
-        return await List(entity,filters,sorts , pagination);
+        return await List(entity,filters,sorts , pagination, cancellationToken);
     }
 
-    public async Task<object> List(string entityName, Filters? filters, Sorts? sorts, Pagination? pagination)
+    public async Task<object> List(string entityName, Filters? filters, Sorts? sorts, Pagination? pagination, CancellationToken cancellationToken)
     {
-        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName));
-        return await List(entity, filters, sorts, pagination);
+        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,cancellationToken));
+        return await List(entity, filters, sorts, pagination,cancellationToken);
     }
     
-    private async Task<object> List(Entity entity, Filters? filters, Sorts? sorts, Pagination? pagination)
+    private async Task<object> List(Entity entity, Filters? filters, Sorts? sorts, Pagination? pagination, CancellationToken cancellationToken)
     {
         pagination ??= new Pagination
         {
@@ -80,7 +80,7 @@ public sealed class EntityService(
 
         var attributes = entity.LocalAttributes(InListOrDetail.InList);
         var query = entity.ListQuery(filters, sorts, pagination, null, attributes,CastToDatabaseType);
-        var records = await queryKateQueryExecutor.Many(query);
+        var records = await queryKateQueryExecutor.Many(query,cancellationToken);
 
         var ret = new ListResult
         {
@@ -91,82 +91,84 @@ public sealed class EntityService(
         {
             foreach (var listLookupsAttribute in entity.GetAttributesByType(DisplayType.lookup, InListOrDetail.InList))
             {
-                await AttachLookup(listLookupsAttribute, records, lookupEntity => lookupEntity.ReferencedAttributes());
+                await AttachLookup(listLookupsAttribute, records, cancellationToken,lookupEntity => lookupEntity.ReferencedAttributes());
             }
 
-            ret.TotalRecords = await queryKateQueryExecutor.Count(entity.CountQuery(filters));
+            ret.TotalRecords = await queryKateQueryExecutor.Count(entity.CountQuery(filters),cancellationToken);
         }
 
         await hookFactory.ExecuteAfterQuery(provider, Occasion.AfterQueryMany, entity.Name, ret);
         return ret;
     }
 
-    public async Task<object> Insert(string entityName, JsonElement ele)
+    public async Task<object> Insert(string entityName, JsonElement ele, CancellationToken cancellationToken)
     {
-        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName));
+        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,cancellationToken));
         var record = RecordParser.Parse(ele, entity, CastToDatabaseType);
-        return await Insert(entity, record);
+        return await Insert(entity, record,cancellationToken);
     }
 
-    public async Task<object> Insert(string entityName, Record record)
+    public async Task<object> Insert(string entityName, Record record, CancellationToken cancellationToken)
     {
-        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName));
-        return await Insert(entity, record);
+        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,cancellationToken));
+        return await Insert(entity, record, cancellationToken);
     }
 
-    public async Task<object> Update(string entityName, JsonElement ele)
+    public async Task<object> Update(string entityName, JsonElement ele, CancellationToken cancellationToken)
     {
-        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName));
+        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,cancellationToken));
         var record = RecordParser.Parse(ele, entity,CastToDatabaseType);
-        return await Update(entity, record);
+        return await Update(entity, record, cancellationToken);
     }
 
-    public async Task<object> Update(string entityName, Record record)
+    public async Task<object> Update(string entityName, Record record, CancellationToken cancellationToken)
     {
-        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName));
-        return await Update(entity, record);
+        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,cancellationToken));
+        return await Update(entity, record, cancellationToken);
     }
 
-    public async Task<object> Delete(string entityName, JsonElement ele)
+    public async Task<object> Delete(string entityName, JsonElement ele, CancellationToken cancellationToken)
     {
-        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName));
+        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,cancellationToken));
         var record = RecordParser.Parse(ele, entity,CastToDatabaseType);
-        return await Delete(entity, record);
+        return await Delete(entity, record,cancellationToken);
     }
-    public async Task<object> Delete(string entityName, Record record)
+    public async Task<object> Delete(string entityName, Record record, CancellationToken cancellationToken)
     {
-        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName));
-        return await Delete(entity, record);
+        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,cancellationToken));
+        return await Delete(entity, record,cancellationToken);
     }
 
     public async Task<int> CrosstableDelete(string entityName, string strId, string attributeName,
-        JsonElement[] elements)
+        JsonElement[] elements, CancellationToken cancellationToken)
     {
-        var attribute = NotNull(await FindAttribute(entityName, attributeName))
+        var attribute = NotNull(await FindAttribute(entityName, attributeName,cancellationToken))
             .ValOrThrow($"not find {attributeName} in {entityName}");
 
         var crossTable = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable for ${attributeName}");
 
         var items = elements.Select(ele =>
             RecordParser.Parse(ele, crossTable.TargetEntity,CastToDatabaseType));
-        return await queryKateQueryExecutor.Exec(crossTable.Delete(CastToDatabaseType(crossTable.FromAttribute,strId), items.ToArray()));
+        var query = crossTable.Delete(CastToDatabaseType(crossTable.FromAttribute, strId), items.ToArray());
+        return await queryKateQueryExecutor.Exec(query, cancellationToken);
     }
 
-    public async Task<int> CrosstableSave(string entityName, string strId, string attributeName, JsonElement[] elements)
+    public async Task<int> CrosstableSave(string entityName, string strId, string attributeName, JsonElement[] elements, CancellationToken cancellationToken)
     {
-        var attribute = NotNull(await FindAttribute(entityName, attributeName))
+        var attribute = NotNull(await FindAttribute(entityName, attributeName,cancellationToken))
             .ValOrThrow($"not find {attributeName} in {entityName}");
 
         var crossTable = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable for ${attributeName}");
 
         var items = elements.Select(ele =>
             RecordParser.Parse(ele, crossTable.TargetEntity,CastToDatabaseType));
-        return await queryKateQueryExecutor.Exec(crossTable.Insert(CastToDatabaseType(crossTable.FromAttribute,strId), items.ToArray()));
+        var query = crossTable.Insert(CastToDatabaseType(crossTable.FromAttribute,strId), items.ToArray());
+        return await queryKateQueryExecutor.Exec(query, cancellationToken);
     }
 
-    public async Task<ListResult> CrosstableList(string entityName, string strId, string attributeName, bool exclude)
+    public async Task<ListResult> CrosstableList(string entityName, string strId, string attributeName, bool exclude, CancellationToken cancellationToken)
     {
-        var attribute = NotNull(await FindAttribute(entityName, attributeName))
+        var attribute = NotNull(await FindAttribute(entityName, attributeName,cancellationToken))
             .ValOrThrow($"not find {attributeName} in {entityName}");
 
         var crossTable = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable for ${attributeName}");
@@ -174,12 +176,12 @@ public sealed class EntityService(
         var query = crossTable.Many(selectAttributes, exclude, CastToDatabaseType(crossTable.FromAttribute,strId));
         return new ListResult
         {
-            Items = [..await queryKateQueryExecutor.Many(query)],
-            TotalRecords = await queryKateQueryExecutor.Count(query)
+            Items = [..await queryKateQueryExecutor.Many(query,cancellationToken)],
+            TotalRecords = await queryKateQueryExecutor.Count(query,cancellationToken)
         };
     }
 
-    public async Task AttachCrosstable(Attribute attribute, Record[] items, Func<Entity, Attribute[]> getFields)
+    public async Task AttachCrosstable(Attribute attribute, Record[] items, CancellationToken cancellationToken,Func<Entity, Attribute[]> getFields)
     {
         //no need to attach, ignore
         var ids = attribute.Parent?.PrimaryKeyAttribute().GetValues(items);
@@ -190,7 +192,7 @@ public sealed class EntityService(
 
         var cross = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable for {attribute.FullName()}");
         var query = cross.Many(getFields(cross.TargetEntity), ids);
-        var targetRecords = await queryKateQueryExecutor.Many(query);
+        var targetRecords = await queryKateQueryExecutor.Many(query,cancellationToken);
         var group = targetRecords.GroupBy(x => x[cross.FromAttribute.Field], x => x);
         foreach (var grouping in group)
         {
@@ -202,7 +204,7 @@ public sealed class EntityService(
         }
     }
 
-    public async Task AttachLookup(Attribute lookupAttribute, Record[] items, Func<Entity, Attribute[]> getFields)
+    public async Task AttachLookup(Attribute lookupAttribute, Record[] items, CancellationToken cancellationToken,Func<Entity, Attribute[]> getFields)
     {
         var lookupEntity = NotNull(lookupAttribute.Lookup)
             .ValOrThrow($"not find lookup entity from {lookupAttribute.FullName()}");
@@ -213,7 +215,7 @@ public sealed class EntityService(
             return;
         }
 
-        var lookupRecords = await queryKateQueryExecutor.Many(manyQuery.Value);
+        var lookupRecords = await queryKateQueryExecutor.Many(manyQuery.Value,cancellationToken);
         foreach (var lookupRecord in lookupRecords)
         {
             var lookupId = lookupRecord[lookupEntity.PrimaryKey];
@@ -225,13 +227,13 @@ public sealed class EntityService(
         }
     }
 
-    private async Task<Attribute?> FindAttribute(string entityName, string attributeName)
+    private async Task<Attribute?> FindAttribute(string entityName, string attributeName, CancellationToken cancellationToken)
     {
-        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName));
+        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName, cancellationToken));
         return entity.FindOneAttribute(attributeName);
     }
 
-    private async Task<object> Update(Entity entity, Record record)
+    private async Task<object> Update(Entity entity, Record record, CancellationToken cancellationToken)
     {
         var (res, next) = await hookFactory.ExecuteRecordToRecord(provider, Occasion.BeforeUpdate, entity.Name, record);
         if (next == Next.Exit)
@@ -240,12 +242,13 @@ public sealed class EntityService(
         }
 
         record = res;
-        await queryKateQueryExecutor.Exec(CheckResult(entity.UpdateQuery(record)));
+        var query = CheckResult(entity.UpdateQuery(record)); 
+        await queryKateQueryExecutor.Exec(query,cancellationToken);
         var (hookRes, _) = await hookFactory.ExecuteRecordToObject(provider, Occasion.AfterUpdate, entity.Name, record);
         return hookRes;
     }
 
-    private async Task<object> Insert(Entity entity, Record record)
+    private async Task<object> Insert(Entity entity, Record record,CancellationToken cancellationToken)
     {
         var (res, next) = await hookFactory.ExecuteRecordToRecord(provider, Occasion.BeforeInsert, entity.Name, record);
         if (next == Next.Exit)
@@ -254,13 +257,14 @@ public sealed class EntityService(
         }
 
         record = res;
-        var id = await queryKateQueryExecutor.Exec(entity.Insert(record));
+        var query = entity.Insert(record);
+        var id = await queryKateQueryExecutor.Exec(query, cancellationToken);
         record[entity.PrimaryKey] = id;
         var (hookRes, _) = await hookFactory.ExecuteRecordToObject(provider, Occasion.AfterInsert, entity.Name, record);
         return hookRes;
     }
 
-    private async Task<object> Delete(Entity entity, Record record)
+    private async Task<object> Delete(Entity entity, Record record, CancellationToken cancellationToken)
     {
         var (res, next) = await hookFactory.ExecuteRecordToRecord(provider, Occasion.BeforeDelete, entity.Name, record);
         if (next == Next.Exit)
@@ -269,7 +273,8 @@ public sealed class EntityService(
         }
 
         record = res;
-        await queryKateQueryExecutor.Exec(CheckResult(entity.DeleteQuery(record)));
+        var query = CheckResult(entity.DeleteQuery(record));
+        await queryKateQueryExecutor.Exec(query, cancellationToken);
 
         var (ret, _) = await hookFactory.ExecuteRecordToObject(provider, Occasion.AfterDelete, entity.Name, record);
         return ret;

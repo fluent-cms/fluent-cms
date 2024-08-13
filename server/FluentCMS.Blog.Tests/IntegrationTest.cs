@@ -1,15 +1,9 @@
-using System.Net.Http.Json;
 using System.Text;
+using System.Text.Json;
 using FluentCMS.Models;
-using FluentCMS.Services;
-using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.HttpClientExt;
-using FluentCMS.Utils.QueryBuilder;
-using FluentResults;
 using Newtonsoft.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Newtonsoft.Json.Linq;
-using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.IntegrationTests;
 
@@ -37,8 +31,8 @@ public class IntegrationTest
         await AddSimpleData("teacher", "name", "Tom");
         
         await UpdateSimpleData("teacher", 1, "name", "TomUpdate");
-        var teacher = await _client.GetObject<dynamic>("/api/entities/teacher/1");
-        Assert.Equal("TomUpdate", (string)teacher.Value.name);
+        var teacher = await _client.GetObject<Dictionary<string, JsonElement>>("/api/entities/teacher/1");
+        Assert.Equal("TomUpdate", teacher.Value["name"].GetString());
         
         await AddSimpleEntity("student", "name");
         await AddSimpleData("student", "name", "Bob");
@@ -55,8 +49,8 @@ public class IntegrationTest
         response = await _client.GetAsync("/api/entities/class/1/student?exclude=true");
         response.EnsureSuccessStatusCode();
 
-        var cls = await _client.GetObject<dynamic>("/api/entities/class/1");
-        Assert.Equal(1, (int)cls.Value.teacher_data.id);
+        var cls = await _client.GetObject<Dictionary<string,JsonElement>>("/api/entities/class/1");
+        Assert.Equal(1, cls.Value["teacher_data"].GetProperty("id").GetInt32());
     }
 
     [Fact]

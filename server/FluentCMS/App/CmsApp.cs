@@ -61,7 +61,8 @@ public sealed class CmsApp(WebApplicationBuilder builder,DatabaseProvider databa
         builder.Services.AddSingleton<KeyValCache<View>>(p =>
             new KeyValCache<View>(p.GetRequiredService<IMemoryCache>(), 30, "view"));
         builder.Services.AddSingleton<LocalFileStore>(p => new LocalFileStore("wwwroot/files"));
-        builder.Services.AddSingleton<KateQueryExecutor>();
+        builder.Services.AddSingleton<KateQueryExecutor>(p =>
+            new KateQueryExecutor(p.GetRequiredService<IKateProvider>(), 30));
         builder.Services.AddScoped<ISchemaService, SchemaService>();
         builder.Services.AddScoped<IEntityService, EntityService >();
         builder.Services.AddScoped<IViewService, ViewService >();
@@ -148,7 +149,7 @@ public static class WebApplicationExtensions
         
         using var scope = app.Services.CreateScope();
         var schemaService = scope.ServiceProvider.GetRequiredService<ISchemaService>();
-        await schemaService.EnsureSchemaTable();
-        await schemaService.EnsureTopMenuBar();
+        await schemaService.EnsureSchemaTable(default);
+        await schemaService.EnsureTopMenuBar(default);
     }
 }

@@ -14,7 +14,7 @@ public class PostgresDefinitionExecutor(string connectionString, ILogger<Postgre
         };
     }
     
-    public async Task CreateTable(string tableName, ColumnDefinition[] columnDefinitions)
+    public async Task CreateTable(string tableName, ColumnDefinition[] columnDefinitions, CancellationToken cancellationToken)
     {
         var columnDefinitionStrs = columnDefinitions.Select(column => column.ColumnName.ToLower() switch
         {
@@ -40,19 +40,19 @@ public class PostgresDefinitionExecutor(string connectionString, ILogger<Postgre
                                 FOR EACH ROW
                 EXECUTE FUNCTION __update_updated_at_column();
                 """;
-        await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync());
+        await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(cancellationToken));
     }
    
-    public async Task AlterTableAddColumns(string tableName, ColumnDefinition[] columnDefinitions)
+    public async Task AlterTableAddColumns(string tableName, ColumnDefinition[] columnDefinitions, CancellationToken cancellationToken)
     {
         var parts = columnDefinitions.Select(x =>
             $"Alter Table {tableName} ADD COLUMN \"{x.ColumnName}\" {DataTypeToString(x.DataType)}"
         );
         var sql = string.Join(";", parts.ToArray());
-        await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync());
+        await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(cancellationToken));
     }
     
-    public async Task<ColumnDefinition[]> GetColumnDefinitions(string tableName)
+    public async Task<ColumnDefinition[]> GetColumnDefinitions(string tableName, CancellationToken cancellationToken)
     {
         var sql = @"SELECT column_name, data_type, character_maximum_length, is_nullable, column_default
                 FROM information_schema.columns
@@ -62,7 +62,7 @@ public class PostgresDefinitionExecutor(string connectionString, ILogger<Postgre
         {
             await using var reader = command.ExecuteReader();
             var columnDefinitions = new List<ColumnDefinition>();
-            while (await reader.ReadAsync())
+            while (await reader.ReadAsync(cancellationToken))
             {
                 columnDefinitions.Add(new ColumnDefinition
                 {

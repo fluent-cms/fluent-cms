@@ -9,7 +9,7 @@ namespace FluentCMS.Services;
 using static InvalidParamExceptionFactory;
 public partial class SchemaService
 {
-    private async Task VerifyIfSchemaIsView(Schema dto)
+    private async Task VerifyIfSchemaIsView(Schema dto, CancellationToken cancellationToken)
     {
         var view = dto.Settings.View;
         if (view is null) //not view, just ignore
@@ -19,7 +19,7 @@ public partial class SchemaService
 
         var entityName = StrNotEmpty(view.EntityName).
             ValOrThrow($"entity name of {view.EntityName} should not be empty");
-        view.Entity = CheckResult(await GetEntityByNameOrDefault(entityName, true));
+        view.Entity = CheckResult(await GetEntityByNameOrDefault(entityName, true,cancellationToken));
         
         foreach (var viewAttributeName in view.AttributeNames??[])
         {
@@ -42,7 +42,7 @@ public partial class SchemaService
         }
     }
     
-    private async Task<Result> InitIfSchemaIsEntity(Schema dto)
+    private async Task<Result> InitIfSchemaIsEntity(Schema dto, CancellationToken cancellationToken)
     {
         var entity = dto.Settings.Entity;
         if (entity is null)//not a entity, ignore
@@ -50,26 +50,26 @@ public partial class SchemaService
             return Result.Ok();
         }
         entity.Init();
-        return await LoadRelated(entity);
+        return await LoadRelated(entity,cancellationToken);
     }
 
-    private async Task VerifyEntity(Schema dto, ColumnDefinition[] cols, Entity entity)
+    private async Task VerifyEntity(Schema dto, ColumnDefinition[] cols, Entity entity, CancellationToken cancellationToken)
     {
         var query = BaseQuery().Where(SchemaColumnName, dto.Name).WhereNot(SchemaColumnId, dto.Id);
-        var existing = await kateQueryExecutor.Count(query);
+        var existing = await kateQueryExecutor.Count(query,cancellationToken);
         True(existing ==0).ThrowNotTrue($"the schema name {dto.Name} exists");
         False(cols.Length > 0 && dto.Id ==0 ).
             ThrowNotFalse($"the table name {entity.TableName} exists");
         
         foreach (var attribute in entity.GetAttributesByType(DisplayType.lookup))
         {
-            await CheckLookup(attribute);
+            await CheckLookup(attribute,cancellationToken);
         }
     }
 
-    private async Task EnsureEntityInTopMenuBar(Entity entity)
+    private async Task EnsureEntityInTopMenuBar(Entity entity, CancellationToken cancellationToken)
     {
-        var menuBarSchema = await GetByIdOrName(SchemaName.TopMenuBar, false);
+        var menuBarSchema = await GetByIdOrName(SchemaName.TopMenuBar, false,cancellationToken);
         var menuBar = menuBarSchema.Settings.Menu;
         if (menuBar is not null)
         {
@@ -86,14 +86,14 @@ public partial class SchemaService
                     }
                 ];
             }
-            await Save(menuBarSchema);
+            await Save(menuBarSchema,cancellationToken);
         }
     }
 
-    private async Task<Result<Entity>> GetEntityByNameOrDefault(string name, bool loadRelated)
+    private async Task<Result<Entity>> GetEntityByNameOrDefault(string name, bool loadRelated, CancellationToken cancellationToken)
     {
         var query = BaseQuery().Where(SchemaColumnName, name).Where(SchemaColumnType, SchemaType.Entity);
-        var item = ParseSchema(await kateQueryExecutor.One(query));
+        var item = ParseSchema(await kateQueryExecutor.One(query,cancellationToken));
 
         var entity = item?.Settings.Entity;
         if (entity is null)
@@ -107,7 +107,7 @@ public partial class SchemaService
             return entity;
         }
 
-        var result = await LoadRelated(entity);
+        var result = await LoadRelated(entity,cancellationToken);
         if (result.IsFailed)
         {
             return Result.Fail(result.Errors);
@@ -116,7 +116,7 @@ public partial class SchemaService
         return entity;
     }
 
-    private async Task<Result> LoadRelated(Entity entity)
+    private async Task<Result> LoadRelated(Entity entity, CancellationToken cancellationToken)
     {
         foreach (var attribute in entity.GetAttributesByType(DisplayType.lookup))
         {
@@ -126,7 +126,7 @@ public partial class SchemaService
                 return Result.Fail(lookupEntityName.Errors);
             }
 
-            var lookup = await GetEntityByNameOrDefault(lookupEntityName.Value, false);
+            var lookup = await GetEntityByNameOrDefault(lookupEntityName.Value, false,cancellationToken);
             if (lookup.IsFailed)
             {
                 return Result.Fail($"not find entity by name {lookupEntityName} for lookup {attribute.FullName()}");
@@ -143,7 +143,7 @@ public partial class SchemaService
                 return Result.Fail(targetEntityName.Errors);
             }
 
-            var targetEntity = await GetEntityByNameOrDefault(targetEntityName.Value, false);
+            var targetEntity = await GetEntityByNameOrDefault(targetEntityName.Value, false,cancellationToken);
             if (targetEntity.IsFailed)
             {
                 return Result.Fail($"not find entity by name {entity.Name} for crosstable {attribute.FullName()}");
@@ -154,27 +154,27 @@ public partial class SchemaService
         return Result.Ok();
     }
 
-    private async Task CreateCrosstable(Entity entity, Utils.QueryBuilder.Attribute attribute)
+    private async Task CreateCrosstable(Entity entity, Utils.QueryBuilder.Attribute attribute,CancellationToken cancellationToken)
     {
         var entityName = CheckResult(attribute.GetCrossEntityName());
-        var targetEntity = CheckResult(await GetEntityByNameOrDefault(entityName, false));
+        var targetEntity = CheckResult(await GetEntityByNameOrDefault(entityName, false,cancellationToken));
         var crossTable = new Crosstable(entity, targetEntity);
-        var columns = await definitionExecutor.GetColumnDefinitions(crossTable.CrossEntity.TableName);
+        var columns = await definitionExecutor.GetColumnDefinitions(crossTable.CrossEntity.TableName, cancellationToken);
         if (columns.Length == 0)
         {
-            await definitionExecutor.CreateTable(crossTable.CrossEntity.TableName, crossTable.GetColumnDefinitions());
+            await definitionExecutor.CreateTable(crossTable.CrossEntity.TableName, crossTable.GetColumnDefinitions(),cancellationToken);
         }
     }
 
-    private async Task CheckLookup(Utils.QueryBuilder.Attribute attribute)
+    private async Task CheckLookup(Utils.QueryBuilder.Attribute attribute, CancellationToken cancellationToken)
     {
         True(attribute.DataType == DataType.Int).ThrowNotTrue("lookup datatype should be int");
         var entityName = CheckResult(attribute.GetLookupEntityName());
-        NotNull(await GetEntityByNameOrDefault(entityName, false))
+        NotNull(await GetEntityByNameOrDefault(entityName, false,cancellationToken))
             .ValOrThrow($"not find entity by name {entityName}");
     }
 
-    private async Task SaveSchema(Schema dto)
+    private async Task SaveSchema(Schema dto, CancellationToken cancellationToken)
     {
         if (dto.Id == 0)
         {
@@ -185,7 +185,7 @@ public partial class SchemaService
                 {SchemaColumnSettings, JsonSerializer.Serialize(dto.Settings)},
             };
             var query = new Query(SchemaTableName).AsInsert(record,true);
-            dto.Id = await kateQueryExecutor.Exec(query);
+            dto.Id = await kateQueryExecutor.Exec(query,cancellationToken);
         }
         else
         {
@@ -195,7 +195,7 @@ public partial class SchemaService
                     [SchemaColumnName, SchemaColumnType, SchemaColumnSettings],
                     [dto.Name, dto.Type, JsonSerializer.Serialize(dto.Settings)]
                 );
-            await kateQueryExecutor.Exec(query);
+            await kateQueryExecutor.Exec(query,cancellationToken);
         }
     }
 
