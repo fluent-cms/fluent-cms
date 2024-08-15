@@ -4,5 +4,5 @@ namespace FluentCMS.Utils.Nosql;
 
 public interface IDao
 {
-    Task Insert(string collectionName, Record[] items);
+    Task Insert(string collectionName, IEnumerable<Record> items);
 }

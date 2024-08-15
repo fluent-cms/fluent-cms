@@ -5,7 +5,7 @@ namespace FluentCMS.Services;
 
 public interface IViewService
 {
-    Task<ViewResult> List(string viewName, Cursor cursor, Dictionary<string, StringValues> querystringDictionary,
+    Task<RecordViewResult> List(string viewName, Cursor cursor, Dictionary<string, StringValues> querystringDictionary,
         CancellationToken cancellationToken);
 
     Task<Record> One(string viewName, Dictionary<string, StringValues> querystringDictionary, CancellationToken cancellationToken);

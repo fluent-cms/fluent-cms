@@ -15,21 +15,23 @@ public sealed class EntityService(
     IServiceProvider provider,
     KateQueryExecutor queryKateQueryExecutor,
     ISchemaService schemaService,
-    HookFactory hookFactory) : IEntityService
+    HookRegistry hookRegistry) : IEntityService
 {
-    public async Task<object> One(string entityName, string id, CancellationToken cancellationToken)
+    public async Task<Record?> One(string entityName, string id, CancellationToken cancellationToken)
     {
         var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,cancellationToken));
-        var (ret, next) = await hookFactory.ExecuteStringToObject(provider, Occasion.BeforeQueryOne, entityName, id);
-        if (next == Next.Exit)
+        var meta = new RecordMeta { EntityName = entityName, Id = id };
+        Record record = new Dictionary<string, object>();
+        var exit = await hookRegistry.ModifyRecord(provider, Occasion.BeforeQueryOne, meta, record);
+        if (exit)
         {
-            return ret;
+            return record;
         }
 
-        id = (string)ret;
-        var query = entity.ByIdQuery(CastToDatabaseType(entity.PrimaryKeyAttribute(),id), entity.LocalAttributes(InListOrDetail.InDetail));
-        var record = NotNull(await queryKateQueryExecutor.One(query,cancellationToken))
-            .ValOrThrow($"not find record by [{id}]");
+        var query = entity.ByIdQuery(CastToDatabaseType(entity.PrimaryKeyAttribute(), meta.Id),
+            entity.LocalAttributes(InListOrDetail.InDetail));
+        record = NotNull(await queryKateQueryExecutor.One(query,cancellationToken))
+            .ValOrThrow($"not find record by [{meta.Id}]");
 
         foreach (var detailLookupsAttribute in entity.GetAttributesByType(DisplayType.lookup,
                      InListOrDetail.InDetail))
@@ -38,28 +40,29 @@ public sealed class EntityService(
                 lookupEntity => lookupEntity.LocalAttributes(InListOrDetail.InDetail));
         }
 
-        var (res, _) = await hookFactory.ExecuteRecordToObject(provider, Occasion.AfterQueryOne, entityName, record);
-        return res;
+        await hookRegistry.ModifyRecord(provider, Occasion.AfterQueryOne, meta, record);
+        return record;
     }
 
-    public async Task<object> List(string entityName, Pagination? pagination, Dictionary<string, StringValues> qs, CancellationToken cancellationToken)
+    public async Task<ListResult?> List(string entityName, Pagination? pagination, Dictionary<string, StringValues> qs, CancellationToken cancellationToken)
     {
         var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,cancellationToken));
-        
         var qsDict = new QsDict(qs);
         var filters = CheckResult(Filters.Parse(entity,qsDict,CastToDatabaseType));
         var sorts = CheckResult(Sorts.Parse(qsDict));
         return await List(entity,filters,sorts , pagination, cancellationToken);
     }
 
-    public async Task<object> List(string entityName, Filters? filters, Sorts? sorts, Pagination? pagination, CancellationToken cancellationToken)
+    public async Task<ListResult?> List(string entityName, Filters? filters, Sorts? sorts, Pagination? pagination, CancellationToken cancellationToken)
     {
         var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,cancellationToken));
         return await List(entity, filters, sorts, pagination,cancellationToken);
     }
     
-    private async Task<object> List(Entity entity, Filters? filters, Sorts? sorts, Pagination? pagination, CancellationToken cancellationToken)
+    private async Task<ListResult?> List(Entity entity, Filters? filters, Sorts? sorts, Pagination? pagination, CancellationToken cancellationToken)
     {
+        var meta = new RecordMeta { EntityName = entity.Name};
+
         pagination ??= new Pagination
         {
             Limit = entity.DefaultPageSize
@@ -68,14 +71,13 @@ public sealed class EntityService(
         filters ??= [];
         sorts ??= [];
 
-        var (res, next) = await hookFactory.ExecuteBeforeQuery(provider, Occasion.BeforeQueryMany, entity.Name, 
+        var exit = await hookRegistry.ModifyQuery(provider, Occasion.BeforeQueryMany, meta, 
             filters,
             sorts,
             pagination);
-        if (next == Next.Exit)
+        if (exit)
         {
-            return NotNull(res)
-                .ValOrThrow($"Before Query Many hook of {entity.Name}, required exit, but the hook return no value");
+            return null;
         }
 
         var attributes = entity.LocalAttributes(InListOrDetail.InList);
@@ -97,43 +99,43 @@ public sealed class EntityService(
             ret.TotalRecords = await queryKateQueryExecutor.Count(entity.CountQuery(filters),cancellationToken);
         }
 
-        await hookFactory.ExecuteAfterQuery(provider, Occasion.AfterQueryMany, entity.Name, ret);
+        await hookRegistry.ModifyListResult(provider, Occasion.AfterQueryMany, entity.Name, ret);
         return ret;
     }
 
-    public async Task<object> Insert(string entityName, JsonElement ele, CancellationToken cancellationToken)
+    public async Task<Record> Insert(string entityName, JsonElement ele, CancellationToken cancellationToken)
     {
         var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,cancellationToken));
         var record = RecordParser.Parse(ele, entity, CastToDatabaseType);
         return await Insert(entity, record,cancellationToken);
     }
 
-    public async Task<object> Insert(string entityName, Record record, CancellationToken cancellationToken)
+    public async Task<Record> Insert(string entityName, Record record, CancellationToken cancellationToken)
     {
         var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,cancellationToken));
         return await Insert(entity, record, cancellationToken);
     }
 
-    public async Task<object> Update(string entityName, JsonElement ele, CancellationToken cancellationToken)
+    public async Task<Record> Update(string entityName, JsonElement ele, CancellationToken cancellationToken)
     {
         var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,cancellationToken));
         var record = RecordParser.Parse(ele, entity,CastToDatabaseType);
         return await Update(entity, record, cancellationToken);
     }
 
-    public async Task<object> Update(string entityName, Record record, CancellationToken cancellationToken)
+    public async Task<Record> Update(string entityName, Record record, CancellationToken cancellationToken)
     {
         var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,cancellationToken));
         return await Update(entity, record, cancellationToken);
     }
 
-    public async Task<object> Delete(string entityName, JsonElement ele, CancellationToken cancellationToken)
+    public async Task<Record> Delete(string entityName, JsonElement ele, CancellationToken cancellationToken)
     {
         var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,cancellationToken));
         var record = RecordParser.Parse(ele, entity,CastToDatabaseType);
         return await Delete(entity, record,cancellationToken);
     }
-    public async Task<object> Delete(string entityName, Record record, CancellationToken cancellationToken)
+    public async Task<Record> Delete(string entityName, Record record, CancellationToken cancellationToken)
     {
         var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,cancellationToken));
         return await Delete(entity, record,cancellationToken);
@@ -233,51 +235,61 @@ public sealed class EntityService(
         return entity.FindOneAttribute(attributeName);
     }
 
-    private async Task<object> Update(Entity entity, Record record, CancellationToken cancellationToken)
+    private async Task<Record> Update(Entity entity, Record record, CancellationToken cancellationToken)
     {
-        var (res, next) = await hookFactory.ExecuteRecordToRecord(provider, Occasion.BeforeUpdate, entity.Name, record);
-        if (next == Next.Exit)
+        if (!record.TryGetValue(entity.PrimaryKey, out var id))
         {
-            return res;
+            throw new InvalidParamException("Can not find id ");
         }
 
-        record = res;
+        var meta = new RecordMeta { EntityName = entity.Name, Id = id?.ToString()??"" };
+        var exit = await hookRegistry.ModifyRecord(provider, Occasion.BeforeUpdate, meta, record);
+        if (exit)
+        {
+            return record;
+        }
+
         var query = CheckResult(entity.UpdateQuery(record)); 
         await queryKateQueryExecutor.Exec(query,cancellationToken);
-        var (hookRes, _) = await hookFactory.ExecuteRecordToObject(provider, Occasion.AfterUpdate, entity.Name, record);
-        return hookRes;
+        await hookRegistry.ModifyRecord(provider, Occasion.AfterUpdate, meta, record);
+        return record;
     }
 
-    private async Task<object> Insert(Entity entity, Record record,CancellationToken cancellationToken)
+    private async Task<Record> Insert(Entity entity, Record record,CancellationToken cancellationToken)
     {
-        var (res, next) = await hookFactory.ExecuteRecordToRecord(provider, Occasion.BeforeInsert, entity.Name, record);
-        if (next == Next.Exit)
+        var meta = new RecordMeta { EntityName = entity.Name};
+        var exit = await hookRegistry.ModifyRecord(provider, Occasion.BeforeInsert, meta, record);
+        if (exit)
         {
-            return res;
+            return record;
         }
 
-        record = res;
         var query = entity.Insert(record);
         var id = await queryKateQueryExecutor.Exec(query, cancellationToken);
         record[entity.PrimaryKey] = id;
-        var (hookRes, _) = await hookFactory.ExecuteRecordToObject(provider, Occasion.AfterInsert, entity.Name, record);
-        return hookRes;
+        meta.Id = id.ToString();
+        await hookRegistry.ModifyRecord(provider, Occasion.AfterInsert, meta, record);
+        return record;
     }
 
-    private async Task<object> Delete(Entity entity, Record record, CancellationToken cancellationToken)
+    private async Task<Record> Delete(Entity entity, Record record, CancellationToken cancellationToken)
     {
-        var (res, next) = await hookFactory.ExecuteRecordToRecord(provider, Occasion.BeforeDelete, entity.Name, record);
-        if (next == Next.Exit)
+        if (!record.TryGetValue(entity.PrimaryKey, out var id))
         {
-            return res;
+            throw new InvalidParamException("Can not find id ");
+        }
+        var meta = new RecordMeta { EntityName = entity.Name, Id = id?.ToString()??"" };
+        var exit = await hookRegistry.ModifyRecord(provider, Occasion.BeforeDelete, meta, record);
+        if (exit)
+        {
+            return record;
         }
 
-        record = res;
         var query = CheckResult(entity.DeleteQuery(record));
         await queryKateQueryExecutor.Exec(query, cancellationToken);
 
-        var (ret, _) = await hookFactory.ExecuteRecordToObject(provider, Occasion.AfterDelete, entity.Name, record);
-        return ret;
+        await hookRegistry.ModifyRecord(provider, Occasion.AfterDelete, meta, record);
+        return record;
     }
     
     private object CastToDatabaseType(Attribute attribute, string str)

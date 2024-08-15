@@ -17,7 +17,7 @@ public class ViewService(
     KeyValCache<View> viewCache
     ) : IViewService
 {
-    public async Task<ViewResult> List(string viewName, Cursor cursor,
+    public async Task<RecordViewResult> List(string viewName, Cursor cursor,
         Dictionary<string, StringValues> querystringDictionary ,
         CancellationToken cancellationToken
         )
@@ -44,7 +44,7 @@ public class ViewService(
         var nextCursor = CheckResult(cursor.GetNextCursor(items, view.Sorts, hasMore));
         await AttachRelatedEntity(view, InListOrDetail.InList, items, cancellationToken);
         
-        return new ViewResult
+        return new RecordViewResult
         {
             Items = items,
             First = nextCursor.First,

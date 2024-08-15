@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Dapper;
+using FluentCMS.Services;
 using FluentCMS.Utils.QueryBuilder;
 
 namespace FluentCMS.Utils.HookFactory;
@@ -19,23 +21,16 @@ public enum Occasion
     AfterDelete
 }
 
-public enum Next
-{
-    Continue,
-    Exit
-}
-
 public sealed class Hook
 {
     public string EntityName { get; init; } = null!;
     public Occasion Occasion { get; init; }
-    public Next Next { get; init; }
     public Delegate Callback { get; init; } = null!;
 
     private string ExceptionPrefix {get => $"Execute Hook Fail [{EntityName} - {Occasion}]: ";}
-    internal async Task ModifyListResult(IServiceProvider provider,  ListResult listResult)
+    internal async Task<bool> ModifyListResult(IServiceProvider provider,  ListResult listResult)
     {
-        var (method, args,_) = PrepareArgument(provider, targetType =>
+        var (method, args) = PrepareArgument(provider, targetType =>
         {
             return targetType switch
             {
@@ -43,12 +38,12 @@ public sealed class Hook
                 _ => throw new HookException($"{ExceptionPrefix}can not resolve type {targetType}")
             };
         });
-        await InvokeMethod(method,  args, null);
+        return await InvokeMethod(method,  args);
     }
 
-    internal async Task<object?> ModifyQuery(IServiceProvider provider, Filters filters, Sorts sorts,Pagination pagination)
+    internal async Task<bool> ModifyQuery(IServiceProvider provider, Filters filters, Sorts sorts,Pagination pagination)
     {
-        var (method, args,_) = PrepareArgument(provider, targetType =>
+        var (method, args) = PrepareArgument(provider, targetType =>
         {
             return targetType switch
             {
@@ -58,39 +53,25 @@ public sealed class Hook
                 _ => throw new HookException($"{ExceptionPrefix}can not resolve type {targetType}")
             };
         });
-        return await InvokeMethod(method,  args, null);
+        return await InvokeMethod(method,  args);
     }
 
-    internal async Task<object> ObjectToObject(IServiceProvider provider, object item)
+    internal async Task<bool> ModifyRecord(IServiceProvider provider,RecordMeta meta, Record record)
     {
-        var (method, args,inputs) = PrepareArgument(provider, targetType =>
+        var (method, args) = PrepareArgument(provider, t =>
         {
-            return item switch
+            return t switch
             {
-                Record objects => targetType == typeof(Record) ? objects : ConvertDictionaryToType(objects, targetType),
-                _ => item
+                _ when t == typeof(RecordMeta) => meta,
+                _ when t == typeof(Record)  => record,
+                _ => throw new HookException($"{ExceptionPrefix}can not resolve type {t}")
             };
         });
 
-        return HookChecker.NotNull(await InvokeMethod(method,  args,inputs.Last()))
-            .ValOrThrow($"{ExceptionPrefix} didn't get result from hook, con not proceed");
+        return await InvokeMethod(method, args);
     }
 
-    internal async Task<Record> RecordToRecord(IServiceProvider provider, Record record)
-    {
-        var (method, args,inputs) = PrepareArgument(provider, t =>
-        {
-            return t == typeof(Record) || t== typeof(Dictionary<string,object>) ? record : ConvertDictionaryToType(record, t);
-        });
-
-        var result = HookChecker.NotNull(await InvokeMethod(method,  args, inputs.Last()))
-            .ValOrThrow($"{ExceptionPrefix} didn't get result from hook, con not proceed");
-        return result is Record or Dictionary<string,object>
-            ? (Record)result
-            : ConvertObjectToDictionary(record,result);
-    }
-
-    private  (MethodInfo, object[], object []) PrepareArgument(IServiceProvider provider, Func<Type, object> getInput)
+    private  (MethodInfo, object[]) PrepareArgument(IServiceProvider provider, Func<Type, object> getInput)
     {
         var method = HookChecker
             .NotNull(Callback.GetType().GetMethod("Invoke"))
@@ -98,14 +79,12 @@ public sealed class Hook
 
         var parameters = method.GetParameters();
         List<object> args = [];
-        List<object> inputs = [];
         foreach (var parameterInfo in parameters)
         {
             var service = provider.GetService(parameterInfo.ParameterType);
             if (service is null)
             {
                 var input = getInput(parameterInfo.ParameterType);
-                inputs.Add(input);
                 args.Add(input);
             }
             else
@@ -113,10 +92,10 @@ public sealed class Hook
                 args.Add(service);
             }
         }
-        return (method, args.ToArray(), inputs.ToArray());
+        return (method, args.ToArray());
     }
 
-    private async Task<object?> InvokeMethod(MethodInfo method, object[] args, object? defaultValue)
+    private async Task<bool> InvokeMethod(MethodInfo method, object[] args)
     {
         var returnType = method.ReturnType;
         var isAsync = returnType == typeof(Task) ||
@@ -129,10 +108,10 @@ public sealed class Hook
 
             if (method.ReturnType == typeof(Task) || method.ReturnType == typeof(void))
             {
-                result = defaultValue;
+                result = false;
             }
 
-            return result;
+            return result is bool ? (bool)result : false;
         }
         catch(Exception ex)
         {
@@ -152,36 +131,5 @@ public sealed class Hook
             .ValOrThrow($"{ExceptionPrefix}Cannot get result property of [{method}]");
         return HookChecker.NotNull(resultProperty.GetValue(task))
             .ValOrThrow($"{ExceptionPrefix}Cannot get result from async hook method[{method}]");
-    }
-
-    private object ConvertDictionaryToType(Record dictionary, Type targetType)
-    {
-        var instance = HookChecker.NotNull(Activator.CreateInstance(targetType))
-            .ValOrThrow($"{ExceptionPrefix}Fail to convert record to {targetType}");
-        foreach (var (key, value) in dictionary)
-        {
-            var property = targetType.GetProperty(key, BindingFlags.Public | BindingFlags.Instance)
-                           ?? targetType.GetProperty(key, BindingFlags.Public | BindingFlags.Instance);
-            if (property != null && property.CanWrite)
-            {
-                property.SetValue(instance, Convert.ChangeType(value, property.PropertyType));
-            }
-        }
-
-        return instance;
-    }
-
-    private static Record ConvertObjectToDictionary(Record dictionary, object? obj)
-    {
-        foreach (var property in obj?.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance) ?? [])
-        {
-            if (!property.CanRead) continue;
-            var val = property.GetValue(obj);
-            if (val is not null)
-            {
-                dictionary[property.Name] = val;
-            }
-        }
-        return dictionary;
     }
 }

@@ -15,7 +15,7 @@ public sealed class MongoDao:IDao
 
     }
 
-    public async Task Insert(string collectionName, Record[] items)
+    public async Task Insert(string collectionName, IEnumerable<Record> items)
     {
         var collection = _mongoDatabase.GetCollection<BsonDocument>(collectionName);
         var docs = items.Select(x => new BsonDocument(x));

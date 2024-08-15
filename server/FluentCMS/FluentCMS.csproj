@@ -11,6 +11,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Confluent.Kafka" Version="2.5.2" />
         <PackageReference Include="FluentMigrator.Runner.Postgres" Version="5.2.0" />
         <PackageReference Include="FluentMigrator.Runner.Sqlite" Version="5.2.0" />
         <PackageReference Include="FluentResults" Version="3.16.0" />
@@ -24,7 +25,6 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.6" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.7" />
         <PackageReference Include="MongoDB.Driver" Version="2.28.0" />
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
         <PackageReference Include="SqlKata" Version="2.4.0" />
         <PackageReference Include="SqlKata.Execution" Version="2.4.0" />

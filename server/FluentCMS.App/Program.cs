@@ -1,7 +1,9 @@
+using System.Collections;
+using System.Text.Json;
 using FluentCMS.App;
 using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.QueryBuilder;
-
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,11 +18,10 @@ builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 
 builder.AddSqliteCms("Data Source=cmsapp.db").PrintVersion();
-
+builder.AddKafkaMessageProducer("localhost:9092");
 var app = builder.Build();
-
 await app.UseCmsAsync(false);
-
+app.RegisterMessageProducerHook();
 var schemaService = app.GetCmsSchemaService();
 var entity = await schemaService.GetEntityByNameOrDefault(TestEntity.EntityName);
 if (entity.IsFailed)
@@ -46,52 +47,43 @@ app.UseHttpsRedirection();
 app.Run();
 
 return;
-void RegisterHooks(HookFactory factory)
+void RegisterHooks(HookRegistry registry)
 {
 
-    factory.AddHook(TestEntity.EntityName, Occasion.BeforeInsert, Next.Continue,
-        (TestEntity test) => { test.TestName += "BeforeInsert"; });
-    factory.AddHook(TestEntity.EntityName, Occasion.AfterInsert, Next.Continue,
-        (TestEntity test) => { test.TestName += "AfterInsert"; });
+    registry.AddHook(TestEntity.EntityName, Occasion.BeforeInsert, 
+        (IDictionary<string,object> test) => { test[TestEntity.FieldName] += "BeforeInsert"; });
+    registry.AddHook(TestEntity.EntityName, Occasion.AfterInsert, 
+        (IDictionary<string,object> test) => { test[TestEntity.FieldName] += "AfterInsert"; });
 
-    factory.AddHook(TestEntity.EntityName, Occasion.BeforeUpdate, Next.Continue,
-        (TestEntity test) => { test.TestName += "BeforeUpdate"; });
+    registry.AddHook(TestEntity.EntityName, Occasion.BeforeUpdate, 
+        (IDictionary<string,object> test) => { test[TestEntity.FieldName] += "BeforeUpdate"; });
 
-    factory.AddHook(TestEntity.EntityName, Occasion.AfterUpdate, Next.Continue,
-        (TestEntity test) => { test.TestName += "AfterUpdate"; });
+    registry.AddHook(TestEntity.EntityName, Occasion.AfterUpdate, 
+        (IDictionary<string,object>test) => { test[TestEntity.FieldName] += "AfterUpdate"; });
 
-    factory.AddHook(TestEntity.EntityName, Occasion.BeforeDelete, Next.Continue,
-        (TestEntity test) => { test.TestName += "BeforeDelete"; });
+    registry.AddHook(TestEntity.EntityName, Occasion.BeforeDelete, 
+        (IDictionary<string,object> test) => { test[TestEntity.FieldName] += "BeforeDelete"; });
 
-    factory.AddHook(TestEntity.EntityName, Occasion.AfterDelete, Next.Continue,
-        (TestEntity test) => { test.TestName += "AfterDelete"; });
+    registry.AddHook(TestEntity.EntityName, Occasion.AfterDelete, 
+        (IDictionary<string,object> test) => { test[TestEntity.FieldName] += "AfterDelete"; });
 
-    factory.AddHook(TestEntity.EntityName, Occasion.BeforeQueryOne, Next.Continue, (string id) =>
+    registry.AddHook(TestEntity.EntityName, Occasion.BeforeQueryOne, (RecordMeta meta) =>
     {
-        if (id == "1000")
+        if (meta.Id == "1000")
         {
             throw new FluentCMS.Services.InvalidParamException("1000");
         }
     });
 
-    factory.AddHook(TestEntity.EntityName, Occasion.AfterQueryOne, Next.Continue,
-        (TestEntity test) => { test.TestName += "AfterQueryOne"; });
-
-    factory.AddHook(TestEntity.EntityName, Occasion.BeforeQueryMany, Next.Continue,
-        (Filters filters, Sorts sorts) =>
+    registry.AddHook(TestEntity.EntityName, Occasion.AfterQueryOne,
+        (IDictionary<string,object> test) =>
         {
-            filters.Add(new Filter
-            {
-                FieldName = TestEntity.FieldName,
-                Constraints =
-                [
-                    new Constraint
-                    {
-                        Match = Matches.Contains,
-                        Value = "BeforeQueryMany"
-                    }
-                ],
-            });
+            test[TestEntity.FieldName] += "AfterQueryOne";
+        });
+
+    registry.AddHook(TestEntity.EntityName, Occasion.BeforeQueryMany, 
+        (Filters _, Sorts sorts) =>
+        {
             sorts.Add(new Sort
             {
                 FieldName = TestEntity.FieldName,
@@ -99,11 +91,12 @@ void RegisterHooks(HookFactory factory)
             });
         });
 
-    factory.AddHook(TestEntity.EntityName, Occasion.AfterQueryMany, Next.Continue, (ListResult result) =>
+    registry.AddHook(TestEntity.EntityName, Occasion.AfterQueryMany, (ListResult result) =>
     {
-        result.Items.Add(new Dictionary<string, object>
+        foreach (var item in result.Items)
         {
-            { TestEntity.FieldName, "AfterQueryMany" }
-        });
+            item[TestEntity.FieldName] +=  " AfterQueryMany";
+        }
+
     });
 }

@@ -5,6 +5,7 @@ using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.LocalFileStore;
+using FluentCMS.Utils.MessageProducer;
 using FluentCMS.Utils.QueryBuilder;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -19,7 +20,7 @@ public enum DatabaseProvider
 
 public sealed class CmsApp(WebApplicationBuilder builder,DatabaseProvider databaseProvider, string connectionString)
 {
-    private readonly HookFactory _hookFactory = new ();
+    private readonly HookRegistry _hookRegistry = new ();
     public void PrintVersion()
     {
         var parts = connectionString.Split(";")
@@ -57,7 +58,7 @@ public sealed class CmsApp(WebApplicationBuilder builder,DatabaseProvider databa
     private void InjectServices()
     {
         builder.Services.AddMemoryCache();
-        builder.Services.AddSingleton<HookFactory>(_=> _hookFactory);
+        builder.Services.AddSingleton<HookRegistry>(_=> _hookRegistry);
         builder.Services.AddSingleton<KeyValCache<View>>(p =>
             new KeyValCache<View>(p.GetRequiredService<IMemoryCache>(), 30, "view"));
         builder.Services.AddSingleton<LocalFileStore>(p => new LocalFileStore("wwwroot/files"));
@@ -109,11 +110,17 @@ public static class WebApplicationExtensions
     public static CmsApp AddSqlServerCms(this WebApplicationBuilder builder, string connectionString) =>
         new CmsApp(builder, DatabaseProvider.SqlServer, connectionString).Build();
 
+    public static void AddKafkaMessageProducer(this WebApplicationBuilder builder, string brokerList)
+    {
+        builder.Services.AddSingleton<IMessageProducer>(p =>
+            new KafkaMessageProducer(brokerList, p.GetRequiredService<ILogger<KafkaMessageProducer>>()));
+        builder.Services.AddSingleton<ProducerHookRegister>();
+    }
 
     public static IEntityService GetCmsEntityService(this WebApplication app)
     {
         using var scope = app.Services.CreateScope();
-        return scope.ServiceProvider.GetRequiredService<IEntityService>(); 
+        return scope.ServiceProvider.GetRequiredService<IEntityService>();
     }
 
     public static ISchemaService GetCmsSchemaService(this WebApplication app)
@@ -121,17 +128,23 @@ public static class WebApplicationExtensions
         using var scope = app.Services.CreateScope();
         return scope.ServiceProvider.GetRequiredService<ISchemaService>();
     }
-    
-     public static HookFactory GetCmsHookFactory(this WebApplication app)
-     {
-         using var scope = app.Services.CreateScope();
-         return scope.ServiceProvider.GetRequiredService<HookFactory>();
-     }
+
+    public static HookRegistry GetCmsHookFactory(this WebApplication app)
+    {
+        using var scope = app.Services.CreateScope();
+        return scope.ServiceProvider.GetRequiredService<HookRegistry>();
+    }
+
+    public static void RegisterMessageProducerHook(this WebApplication app, string entityName = "*")
+    {
+        var producerHookRegister = app.Services.GetRequiredService<ProducerHookRegister>();
+        producerHookRegister.RegisterMessageProducer(entityName);
+    }
 
     public static async Task UseCmsAsync(this WebApplication app, bool requireAuth)
     {
         app.UseExceptionHandler(app.Environment.IsDevelopment() ? "/error-development" : "/error");
-        
+
         app.UseDefaultFiles();
         app.UseStaticFiles();
         app.MapFallbackToFile("index.html");
@@ -146,10 +159,12 @@ public static class WebApplicationExtensions
             //tell admin panel no need to login
             app.MapGet("/api/manage/info", () => new { Email = "admin@cms.com" });
         }
-        
+
+
         using var scope = app.Services.CreateScope();
         var schemaService = scope.ServiceProvider.GetRequiredService<ISchemaService>();
         await schemaService.EnsureSchemaTable(default);
         await schemaService.EnsureTopMenuBar(default);
+
     }
 }
