@@ -72,14 +72,13 @@ app.RegisterMessageProducerHook();
 ## We welcome contributions! 
 If you're interested in improving FluentCMS, please read our [CONTRIBUTING.md](https://github.com/fluent-cms/fluent-cms/blob/main/CONTRIBUTING.md) guide.
 ## Development
-![overview.png](doc%2Fdiagrams%2Foverview.png)
+![overview.png](https://github.com/fluent-cms/fluent-cms/raw/main/doc/diagrams/overview.png)
 - Web Server: 
-  - Code [FluentCMS](..%2Fserver%2FFluentCMS)
-  - Doc [Server](doc%2FDevelopment.md#Server )
+  - Code [FluentCMS](https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS)
+  - Doc [Server](https://github.com/fluent-cms/fluent-cms/blob/main/doc/Development.md#Server )
 - Admin Panel Client:
-  - Code [admin-ui](..%2Fadmin-ui)
-  - Doc [Admin-Panel-UI](doc%2FDevelopment.md#Admin-Panel-UI)
+  - Code [admin-panel](https://github.com/fluent-cms/fluent-cms/tree/main/admin-panel)
+  - Doc [Admin-Panel-UI](https://github.com/fluent-cms/fluent-cms/blob/main/doc/Development.md#Admin-Panel-UI)
 - Schema Builder: 
-  - Code [schema-ui](..%2Fserver%2FFluentCMS%2Fwwwroot%2Fschema-ui)
-  - Doc [Schema-Builder-UI](doc%2FDevelopment.md#Schema-Builder-UI)
-
+  - Code [schema-ui](https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS/wwwroot/schema-ui)
+  - Doc [Schema-Builder-UI](https://github.com/fluent-cms/fluent-cms/blob/main/doc/Development.md#Schema-Builder-UI)

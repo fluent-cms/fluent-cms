@@ -32,10 +32,15 @@
         <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
         <PackageReference Include="System.Runtime.Caching" Version="8.0.0" />
     </ItemGroup>
+
+    <ItemGroup>
+        <None Include="../../readme.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
     <PropertyGroup>
+        <PackageReadmeFile>readme.md</PackageReadmeFile>
         <TargetFramework>net8.0</TargetFramework>
         <PackageId>FluentCMS</PackageId>
-        <Version>0.0.4</Version>
+        <Version>0.0.6</Version>
         <Authors>jaike</Authors>
         <Company>fluent-cms</Company>
         <Description>A Framework to build high performance headless CMS </Description>

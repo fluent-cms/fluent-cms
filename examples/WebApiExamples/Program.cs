@@ -8,7 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.AddSqliteCms("Data Source=cms1.db").PrintVersion();
-    
+//builder.AddKafkaMessageProducer("localhost:9092");    
 var app = builder.Build();
 await app.UseCmsAsync(false);
 var schemaService = app.GetCmsSchemaService();
@@ -17,12 +17,11 @@ await schemaService.AddOrSaveSimpleEntity("teacher", "Name", null, null);
 await schemaService.AddOrSaveSimpleEntity("class", "Name", "teacher", "student");
 
 var hooks = app.GetCmsHookFactory();
-hooks.AddHook("teacher", Occasion.BeforeInsert, Next.Continue, (IDictionary<string,object> payload) =>
+hooks.AddHook("teacher", Occasion.BeforeInsert,(IDictionary<string,object> payload) =>
 {
     payload["Name"] = "Teacher " + payload["Name"];
-
 });
-
+//app.RegisterMessageProducerHook();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
