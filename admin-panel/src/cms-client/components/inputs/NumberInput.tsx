@@ -13,7 +13,9 @@ export function NumberInput(
         id:any
 }) {
     return <InputPanel  {...props} component={ (field:any) =>
+        <><br/>
         <InputNumber id={field.name} value={field.value} className={'w-full'}
                      onValueChange={(e) => field.onChange(e.value)} />
+        </>
     }/>
 }

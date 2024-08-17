@@ -2,23 +2,38 @@ using System.Globalization;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Dapper;
+using FluentCMS.Models;
 using FluentCMS.Services;
 using FluentCMS.Utils.QueryBuilder;
+using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.Utils.HookFactory;
 
 public enum Occasion
 {
+    BeforeDeleteSchema,
+    BeforeSaveSchema,
+    
     BeforeQueryOne,
     AfterQueryOne,
+    
     BeforeQueryMany,
     AfterQueryMany,
+    
     BeforeInsert,
     AfterInsert,
+    
     BeforeUpdate,
     AfterUpdate,
+    
     BeforeDelete,
-    AfterDelete
+    AfterDelete,
+    
+    BeforeAddRelated,
+    AfterAddRelated,
+    
+    BeforeDeleteRelated,
+    AfterDeleteRelated,
 }
 
 public sealed class Hook
@@ -41,6 +56,19 @@ public sealed class Hook
         return await InvokeMethod(method,  args);
     }
 
+    internal async Task<bool> ModifySchema(IServiceProvider provider, Schema schema)
+    {
+        var (method, args) = PrepareArgument(provider, targetType =>
+        {
+            return targetType switch
+            {
+                _ when targetType == typeof(Schema) => schema,
+                _ => throw new HookException($"{ExceptionPrefix}can not resolve type {targetType}")
+            };
+        });
+        return await InvokeMethod(method,  args);
+    }
+    
     internal async Task<bool> ModifyQuery(IServiceProvider provider, Filters filters, Sorts sorts,Pagination pagination)
     {
         var (method, args) = PrepareArgument(provider, targetType =>
@@ -54,6 +82,22 @@ public sealed class Hook
             };
         });
         return await InvokeMethod(method,  args);
+    }
+    
+    internal async Task<bool> ModifyRelatedRecords(IServiceProvider provider,RecordMeta meta, Attribute attribute, Record[] records)
+    {
+        var (method, args) = PrepareArgument(provider, t =>
+        {
+            return t switch
+            {
+                _ when t == typeof(RecordMeta) => meta,
+                _ when t == typeof(Record[])  => records,
+                _ when t == typeof(Attribute)  => attribute,
+                _ => throw new HookException($"{ExceptionPrefix}can not resolve type {t}")
+            };
+        });
+
+        return await InvokeMethod(method, args);
     }
 
     internal async Task<bool> ModifyRecord(IServiceProvider provider,RecordMeta meta, Record record)

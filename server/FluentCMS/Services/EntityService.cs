@@ -17,10 +17,18 @@ public sealed class EntityService(
     ISchemaService schemaService,
     HookRegistry hookRegistry) : IEntityService
 {
-    public async Task<Record?> One(string entityName, string id, CancellationToken cancellationToken)
+    public async Task<Record> OneByAttributes(string entityName, string id, string[] attributes, CancellationToken cancellationToken)
     {
         var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,cancellationToken));
-        var meta = new RecordMeta { EntityName = entityName, Id = id };
+        var idValue = CastToDatabaseType(entity.PrimaryKeyAttribute(), id);
+        var query = entity.ByIdQuery(idValue, entity.LocalAttributes(attributes));
+        return NotNull(await queryKateQueryExecutor.One(query,cancellationToken)).ValOrThrow($"not find record by [{id}]");
+    }
+    
+    public async Task<Record> One(string entityName, string id, CancellationToken cancellationToken)
+    {
+        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,cancellationToken));
+        var meta = new RecordMeta { Entity = entity, Id = id };
         Record record = new Dictionary<string, object>();
         var exit = await hookRegistry.ModifyRecord(provider, Occasion.BeforeQueryOne, meta, record);
         if (exit)
@@ -28,10 +36,9 @@ public sealed class EntityService(
             return record;
         }
 
-        var query = entity.ByIdQuery(CastToDatabaseType(entity.PrimaryKeyAttribute(), meta.Id),
-            entity.LocalAttributes(InListOrDetail.InDetail));
-        record = NotNull(await queryKateQueryExecutor.One(query,cancellationToken))
-            .ValOrThrow($"not find record by [{meta.Id}]");
+        var idValue = CastToDatabaseType(entity.PrimaryKeyAttribute(), meta.Id);
+        var query = entity.ByIdQuery(idValue,entity.LocalAttributes(InListOrDetail.InDetail));
+        record = NotNull(await queryKateQueryExecutor.One(query,cancellationToken)).ValOrThrow($"not find record by [{meta.Id}]");
 
         foreach (var detailLookupsAttribute in entity.GetAttributesByType(DisplayType.lookup,
                      InListOrDetail.InDetail))
@@ -61,8 +68,7 @@ public sealed class EntityService(
     
     private async Task<ListResult?> List(Entity entity, Filters? filters, Sorts? sorts, Pagination? pagination, CancellationToken cancellationToken)
     {
-        var meta = new RecordMeta { EntityName = entity.Name};
-
+        var meta = new RecordMeta { Entity = entity};
         pagination ??= new Pagination
         {
             Limit = entity.DefaultPageSize
@@ -150,12 +156,22 @@ public sealed class EntityService(
         var crossTable = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable for ${attributeName}");
 
         var items = elements.Select(ele =>
-            RecordParser.Parse(ele, crossTable.TargetEntity,CastToDatabaseType));
-        var query = crossTable.Delete(CastToDatabaseType(crossTable.FromAttribute, strId), items.ToArray());
-        return await queryKateQueryExecutor.Exec(query, cancellationToken);
+            RecordParser.Parse(ele, crossTable.TargetEntity,CastToDatabaseType)).ToArray();
+        
+        var meta = new RecordMeta
+        {
+            Entity = attribute.Parent!,
+            Id = strId,
+        };
+
+        await hookRegistry.ModifyRelatedRecords(provider, Occasion.BeforeDeleteRelated, meta, attribute, items);
+        var query = crossTable.Delete(CastToDatabaseType(crossTable.FromAttribute, meta.Id), items);
+        var ret = await queryKateQueryExecutor.Exec(query, cancellationToken);
+        await hookRegistry.ModifyRelatedRecords(provider, Occasion.AfterDeleteRelated, meta, attribute, items);
+        return ret;
     }
 
-    public async Task<int> CrosstableSave(string entityName, string strId, string attributeName, JsonElement[] elements, CancellationToken cancellationToken)
+    public async Task<int> CrosstableAdd(string entityName, string strId, string attributeName, JsonElement[] elements, CancellationToken cancellationToken)
     {
         var attribute = NotNull(await FindAttribute(entityName, attributeName,cancellationToken))
             .ValOrThrow($"not find {attributeName} in {entityName}");
@@ -163,9 +179,17 @@ public sealed class EntityService(
         var crossTable = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable for ${attributeName}");
 
         var items = elements.Select(ele =>
-            RecordParser.Parse(ele, crossTable.TargetEntity,CastToDatabaseType));
-        var query = crossTable.Insert(CastToDatabaseType(crossTable.FromAttribute,strId), items.ToArray());
-        return await queryKateQueryExecutor.Exec(query, cancellationToken);
+            RecordParser.Parse(ele, crossTable.TargetEntity,CastToDatabaseType)).ToArray();
+        var meta = new RecordMeta
+        {
+            Entity = attribute.Parent!,
+            Id = strId,
+        };
+        await hookRegistry.ModifyRelatedRecords(provider, Occasion.BeforeAddRelated, meta, attribute, items);
+        var query = crossTable.Insert(CastToDatabaseType(crossTable.FromAttribute,strId), items);
+        var ret = await queryKateQueryExecutor.Exec(query, cancellationToken);
+        await hookRegistry.ModifyRelatedRecords(provider, Occasion.AfterAddRelated, meta, attribute, items);
+        return ret;
     }
 
     public async Task<ListResult> CrosstableList(string entityName, string strId, string attributeName, bool exclude, CancellationToken cancellationToken)
@@ -242,7 +266,7 @@ public sealed class EntityService(
             throw new InvalidParamException("Can not find id ");
         }
 
-        var meta = new RecordMeta { EntityName = entity.Name, Id = id?.ToString()??"" };
+        var meta = new RecordMeta { Entity = entity, Id = id?.ToString()??"" };
         var exit = await hookRegistry.ModifyRecord(provider, Occasion.BeforeUpdate, meta, record);
         if (exit)
         {
@@ -257,7 +281,7 @@ public sealed class EntityService(
 
     private async Task<Record> Insert(Entity entity, Record record,CancellationToken cancellationToken)
     {
-        var meta = new RecordMeta { EntityName = entity.Name};
+        var meta = new RecordMeta { Entity = entity};
         var exit = await hookRegistry.ModifyRecord(provider, Occasion.BeforeInsert, meta, record);
         if (exit)
         {
@@ -278,7 +302,7 @@ public sealed class EntityService(
         {
             throw new InvalidParamException("Can not find id ");
         }
-        var meta = new RecordMeta { EntityName = entity.Name, Id = id?.ToString()??"" };
+        var meta = new RecordMeta { Entity = entity, Id = id?.ToString()??"" };
         var exit = await hookRegistry.ModifyRecord(provider, Occasion.BeforeDelete, meta, record);
         if (exit)
         {

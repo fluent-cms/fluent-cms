@@ -10,10 +10,11 @@ public enum InListOrDetail
 }
 public sealed class Entity
 {
-    public const string DefaultPrimaryKeyFieldName = "id";
-    public const string DeletedFieldName = "deleted";
-    public const string CreatedAtField = "created_at";
-    public const string UpdatedAtField = "updated_at";
+    private const string DefaultPrimaryKeyFieldName = "id";
+    private const string DeletedFieldName = "deleted";
+    private const string CreatedAtField = "created_at";
+    private const string UpdatedAtField = "updated_at";
+   
     
     private string _name ="";
     private string _tableName ="";
@@ -74,7 +75,7 @@ public sealed class Entity
     public void EnsureDefaultAttribute()
     {
         var list = new List<Attribute>();
-        if (FindOneAttribute(DefaultPrimaryKeyFieldName) == null)
+        if (FindOneAttribute(DefaultPrimaryKeyFieldName) is null)
         {
             list.Add(new Attribute
             {
@@ -86,21 +87,24 @@ public sealed class Entity
         
         list.AddRange(Attributes);
 
-        if (FindOneAttribute(CreatedAtField) == null)
+        if (FindOneAttribute(CreatedAtField) is null)
         {
             list.Add(new Attribute
             {
-                Field = CreatedAtField, Header = "Created At",InList = true, InDetail = true, IsDefault = true, DataType = DataType.Datetime
+                Field = CreatedAtField, Header = "Created At", InList = true, InDetail = true, IsDefault = true,
+                DataType = DataType.Datetime
             });
         }
 
-        if (FindOneAttribute(UpdatedAtField) == null)
+        if (FindOneAttribute(UpdatedAtField) is null)
         {
             list.Add(new Attribute
             {
-                Field = UpdatedAtField, Header = "Updated At", InList = true, InDetail = true, IsDefault = true, DataType = DataType.Datetime
+                Field = UpdatedAtField, Header = "Updated At", InList = true, InDetail = true, IsDefault = true,
+                DataType = DataType.Datetime
             });
         }
+
         Attributes = list.ToArray();
     }
 

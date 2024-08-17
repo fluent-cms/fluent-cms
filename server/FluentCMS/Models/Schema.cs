@@ -5,4 +5,5 @@ public class Schema
     public string Name { get; set; } = "";
     public string Type { get; set; } = "";
     public Settings Settings { get; set; } = null!;
+    public string CreatedBy { get; set; } = "";
 }

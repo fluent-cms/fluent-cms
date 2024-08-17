@@ -8,8 +8,10 @@ public interface ISchemaService
 {
     Task<Schema[]> GetAll(string type,CancellationToken cancellationToken);
     Task<Result<Entity>> GetEntityByNameOrDefault(string name, CancellationToken cancellationToken = default);
-    Task<Schema> GetByIdOrName(string name, bool extend, CancellationToken cancellationToken);
-    Task<Schema?> GetByIdOrNameDefault(string name, CancellationToken cancellationToken);
+    Task<Schema> GetByIdVerify(int id, bool extend, CancellationToken cancellationToken = default);
+    Task<Schema> GetByNameVerify(string name, bool extend, CancellationToken cancellationToken);
+    Task<Schema?> GetByIdDefault(int id, CancellationToken cancellationToken = default);
+    Task<Schema?> GetByNameDefault(string name, CancellationToken cancellationToken = default);
     Task<View> GetViewByName(string name, CancellationToken cancellationToken);
     Task<Entity?> GetTableDefine(string tableName, CancellationToken cancellationToken);
     Task<Schema> SaveTableDefine(Schema schemaDto, CancellationToken cancellationToken);

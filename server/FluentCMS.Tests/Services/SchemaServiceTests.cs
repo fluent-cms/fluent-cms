@@ -1,6 +1,7 @@
 using FluentCMS.Models;
 using FluentCMS.Services;
 using FluentCMS.Utils.DataDefinitionExecutor;
+using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.QueryBuilder;
 using Microsoft.Extensions.Logging;
@@ -19,10 +20,13 @@ public class SchemaServiceTests :IAsyncLifetime
         var connectionString = $"Data Source={_dbFilePath}";
         var defineLogger = new Mock<ILogger<SqliteDefinitionExecutor>>();
         var definitionExecutor = new SqliteDefinitionExecutor(connectionString,defineLogger.Object);
-        var providerLogger = new Mock<ILogger<SqliteKateProvider>>();
-        var sqlite = new SqliteKateProvider(connectionString,providerLogger.Object);
+        var kateProviderLogger = new Mock<ILogger<SqliteKateProvider>>();
+        var sqlite = new SqliteKateProvider(connectionString,kateProviderLogger.Object);
         var kateQueryExecutor = new KateQueryExecutor(sqlite, 30);
-        _schemaService = new SchemaService(definitionExecutor, kateQueryExecutor);
+        var provider = new Mock<IServiceProvider>();
+
+        HookRegistry registry = new();
+        _schemaService = new SchemaService(definitionExecutor, kateQueryExecutor,registry,provider.Object);
         Batteries.Init();
     }
     private void CleanDb()
@@ -47,7 +51,7 @@ public class SchemaServiceTests :IAsyncLifetime
     {
         await _schemaService.EnsureSchemaTable();
         await _schemaService.EnsureTopMenuBar();
-        var menus = await _schemaService.GetByIdOrName(SchemaName.TopMenuBar,false);
+        var menus = await _schemaService.GetByNameVerify(SchemaName.TopMenuBar,false);
         Assert.NotNull(menus);
     }
   
@@ -89,11 +93,11 @@ public class SchemaServiceTests :IAsyncLifetime
         await _schemaService.EnsureSchemaTable();
         await _schemaService.EnsureTopMenuBar();
 
-        var schema = await _schemaService.GetByIdOrNameDefault(TestEntity().Name) ??
+        var schema = await _schemaService.GetByNameDefault(TestEntity().Name) ??
                      await _schemaService.Save(TestSchema());
            
         await _schemaService.Delete(schema.Id);
-        schema = await _schemaService.GetByIdOrNameDefault(TestEntity().Name);
+        schema = await _schemaService.GetByNameDefault(TestEntity().Name);
         Assert.Null(schema);
     }
 

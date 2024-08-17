@@ -2,109 +2,44 @@ using FluentCMS.Models;
 using FluentResults;
 using SqlKata;
 using FluentCMS.Utils.DataDefinitionExecutor;
+using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.QueryBuilder;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
-
 namespace FluentCMS.Services;
 
-using System.Threading.Tasks;
 using static InvalidParamExceptionFactory;
 
-public static class  SchemaType
+
+public sealed partial class SchemaService(
+    IDefinitionExecutor definitionExecutor, 
+    KateQueryExecutor kateQueryExecutor, 
+    HookRegistry hookRegistry, 
+    IServiceProvider provider
+    ) : ISchemaService
 {
-    public const string Menu = "menu";
-    public const string Entity = "entity";
-    public const string View = "view";
-}
-
-public static class SchemaName
-{
-    public const string TopMenuBar = "top-menu-bar";
-}
-public partial class SchemaService(IDefinitionExecutor definitionExecutor, KateQueryExecutor kateQueryExecutor) : ISchemaService
-{
-    private const string SchemaTableName = "__schemas";
-    private const string SchemaColumnId = "id";
-    private const string SchemaColumnName = "name";
-    private const string SchemaColumnType = "type";
-    private const string SchemaColumnSettings = "settings";
-    private const string SchemaColumnDeleted = "deleted";
-
-    private static string[] Fields() => [SchemaColumnId, SchemaColumnName, SchemaColumnType, SchemaColumnSettings];
-
-    private static Query BaseQuery()
-    {
-        return new Query(SchemaTableName).Select(Fields()).Where(SchemaColumnDeleted, false);
-    }
-
-    
-    public async Task<Schema[]> GetAll(string type,CancellationToken cancellationToken = default)
-    {
-        var query = BaseQuery();
-        if (!string.IsNullOrWhiteSpace(type))
-        {
-            query = query.Where(SchemaColumnType, type);
-        }
-        return  ParseSchema(await kateQueryExecutor.Many(query,cancellationToken)); 
-    }
-
-    public async Task<Schema?> GetByIdOrNameDefault(string name, CancellationToken cancellationToken = default)
-    {
-        var query = int.TryParse(name, out var id)
-            ? BaseQuery().Where(SchemaColumnId, id)
-            : BaseQuery().Where(SchemaColumnName, name);
-        return ParseSchema(await kateQueryExecutor.One(query,cancellationToken));
-    }
-
-    public async Task<Schema> GetByIdOrName(string name,bool extend, CancellationToken cancellationToken = default)
-    {
-        var item =  NotNull(await GetByIdOrNameDefault(name,cancellationToken)).
-            ValOrThrow($"Schema [{name}] does not exist");
-        if (extend)
-        {
-            CheckResult(await InitIfSchemaIsEntity(item, cancellationToken));
-        }
-        return item;
-    }
-
     public async Task<Schema> Save(Schema dto, CancellationToken cancellationToken = default)
     {
-        var query = BaseQuery().Where(SchemaColumnName, dto.Name)
-            .WhereNot(SchemaColumnId, dto.Id);
-        var existing = await kateQueryExecutor.Count(query, cancellationToken);
-        True(existing == 0).ThrowNotTrue($"the schema name {dto.Name} exists");
-        await VerifyIfSchemaIsView(dto,cancellationToken);
-        await SaveSchema(dto,cancellationToken);
-        return dto;
+        var exit = await hookRegistry.ModifySchema(provider, Occasion.BeforeSaveSchema, dto);
+        if (exit)
+        {
+            return dto;
+        }
+        return await InternalSave(dto, cancellationToken);
     }
 
-    public async Task<View> GetViewByName(string name, CancellationToken cancellationToken = default)
-    {
-        StrNotEmpty(name).ValOrThrow("view name should not be empty");
-        var query = BaseQuery().Where(SchemaColumnName, name).Where(SchemaColumnType, SchemaType.View);
-        var item = ParseSchema(await kateQueryExecutor.One(query,cancellationToken));
-        item = NotNull(item).ValOrThrow($"didn't find {name}");
-        var view = NotNull(item.Settings.View)
-            .ValOrThrow("invalid view format");
-        var entityName = StrNotEmpty(view.EntityName)
-            .ValOrThrow($"referencing entity was not set for {view}");
-        view.Entity = CheckResult(await GetEntityByNameOrDefault(entityName, cancellationToken));
-        return view;
-    }
-
-    public async Task<Result<Entity>> GetEntityByNameOrDefault(string name, CancellationToken cancellationToken = default)
-    {
-        return await GetEntityByNameOrDefault(name, true,cancellationToken);
-    }
 
     public async Task<Schema> SaveTableDefine(Schema dto, CancellationToken cancellationToken = default)
     {
+        var exit = await hookRegistry.ModifySchema(provider,Occasion.BeforeSaveSchema,dto);
+        if (exit)
+        {
+            return dto;
+        }
         var entity = NotNull(dto.Settings.Entity).ValOrThrow("invalid payload");
         entity.EnsureDefaultAttribute();
         var cols = await definitionExecutor.GetColumnDefinitions(entity.TableName,cancellationToken);
         await VerifyEntity(dto, cols, entity,cancellationToken);
-        
         foreach (var attribute in entity.GetAttributesByType(DisplayType.crosstable))
         {
             await CreateCrosstable(entity, attribute,cancellationToken);
@@ -128,20 +63,88 @@ public partial class SchemaService(IDefinitionExecutor definitionExecutor, KateQ
         await EnsureEntityInTopMenuBar(entity,cancellationToken);
         return await Save(dto,cancellationToken);
     }
+    public async Task<bool> Delete(int id, CancellationToken cancellationToken = default)
+    {
+        var exit = await hookRegistry.ModifySchema(provider,Occasion.BeforeDeleteSchema,new Schema{Id = id});
+        if (exit)
+        {
+            return false;
+        }
+        
+        var query = new Query(SchemaTableName).Where(SchemaColumnId,id).AsUpdate([SchemaColumnDeleted],[1]);
+        await kateQueryExecutor.Exec(query,cancellationToken);
+        return true;
+    }
     
+    public async Task<Schema[]> GetAll(string type,CancellationToken cancellationToken = default)
+    {
+        var query = BaseQuery();
+        if (!string.IsNullOrWhiteSpace(type))
+        {
+            query = query.Where(SchemaColumnType, type);
+        }
+        return  ParseSchema(await kateQueryExecutor.Many(query,cancellationToken)); 
+    }
+
+    public async Task<Schema?> GetByIdDefault(int id, CancellationToken cancellationToken = default)
+    {
+        var query = BaseQuery().Where(SchemaColumnId, id);
+        return ParseSchema(await kateQueryExecutor.One(query, cancellationToken));
+    }
+
+    public async Task<Schema?> GetByNameDefault(string name, CancellationToken cancellationToken = default)
+    {
+        var query =  BaseQuery().Where(SchemaColumnName, name);
+        return ParseSchema(await kateQueryExecutor.One(query,cancellationToken));
+    }
+
+    public async Task<Schema> GetByIdVerify(int id,bool extend, CancellationToken cancellationToken = default)
+    {
+        var item =  NotNull(await GetByIdDefault(id,cancellationToken)).
+            ValOrThrow($"Schema [{id}] does not exist");
+        if (extend)
+        {
+            CheckResult(await InitIfSchemaIsEntity(item, cancellationToken));
+        }
+        return item;
+    }
+    
+    public async Task<Schema> GetByNameVerify(string name,bool extend, CancellationToken cancellationToken = default)
+    {
+        var item =  NotNull(await GetByNameDefault(name,cancellationToken)).
+            ValOrThrow($"Schema [{name}] does not exist");
+        if (extend)
+        {
+            CheckResult(await InitIfSchemaIsEntity(item, cancellationToken));
+        }
+        return item;
+    }
+
+    public async Task<View> GetViewByName(string name, CancellationToken cancellationToken = default)
+    {
+        StrNotEmpty(name).ValOrThrow("view name should not be empty");
+        var query = BaseQuery().Where(SchemaColumnName, name).Where(SchemaColumnType, SchemaType.View);
+        var item = ParseSchema(await kateQueryExecutor.One(query,cancellationToken));
+        item = NotNull(item).ValOrThrow($"didn't find {name}");
+        var view = NotNull(item.Settings.View)
+            .ValOrThrow("invalid view format");
+        var entityName = StrNotEmpty(view.EntityName)
+            .ValOrThrow($"referencing entity was not set for {view}");
+        view.Entity = CheckResult(await GetEntityByNameOrDefault(entityName, cancellationToken));
+        return view;
+    }
+
+    public async Task<Result<Entity>> GetEntityByNameOrDefault(string name, CancellationToken cancellationToken = default)
+    {
+        return await GetEntityByNameOrDefault(name, true,cancellationToken);
+    }
+
     public async Task<Entity?> GetTableDefine(string tableName, CancellationToken cancellationToken = default)
     {
         StrNotEmpty(tableName).ValOrThrow("Table name should not be empty");
         var entity = new Entity { TableName = tableName };
         entity.LoadAttributesByColDefines(await definitionExecutor.GetColumnDefinitions(tableName,cancellationToken));
         return entity;
-    }
-
-    public async Task<bool> Delete(int id, CancellationToken cancellationToken = default)
-    {
-        var query = new Query(SchemaTableName).Where(SchemaColumnId,id).AsUpdate([SchemaColumnDeleted],[1]);
-        await kateQueryExecutor.Exec(query,cancellationToken);
-        return true;
     }
 
     public async Task EnsureTopMenuBar(CancellationToken cancellationToken = default)
@@ -202,6 +205,11 @@ public partial class SchemaService(IDefinitionExecutor definitionExecutor, KateQ
                     Field = SchemaColumnSettings,
                     DataType = DataType.Text,
                 },            
+                new Attribute
+                {
+                    Field = SchemaColumnCreatedBy,
+                    DataType = DataType.String,
+                }
             ]
         };
         entity.EnsureDefaultAttribute();
@@ -211,7 +219,7 @@ public partial class SchemaService(IDefinitionExecutor definitionExecutor, KateQ
 
     public async Task<Schema> AddOrSaveEntity(Entity entity, CancellationToken cancellationToken)
     {
-        var find = await GetByIdOrNameDefault(entity.Name, cancellationToken);
+        var find = await GetByNameDefault(entity.Name, cancellationToken);
         var schema = new Schema
         {
             Name = entity.Name,

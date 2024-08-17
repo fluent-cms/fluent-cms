@@ -74,7 +74,7 @@ async function submit(callback) {
     if (data) {
         alert("submit succeed!");
         if (!id) {
-            window.location.href = `edit.html?schema=${schema}&id=${data.id}`;
+            window.location.href = `edit.html?schema=${schema}&id=${data.name}`;
         }
         $('#errorPanel').text('').hide();
     } else {

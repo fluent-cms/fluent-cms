@@ -1,0 +1,125 @@
+using System.Text.Json.Serialization;
+using FluentCMS.Services;
+using FluentCMS.Utils.Cache;
+using FluentCMS.Utils.DataDefinitionExecutor;
+using FluentCMS.Utils.HookFactory;
+using FluentCMS.Utils.KateQueryExecutor;
+using FluentCMS.Utils.LocalFileStore;
+using FluentCMS.Utils.QueryBuilder;
+using Microsoft.Extensions.Caching.Memory;
+
+namespace FluentCMS.WebAppExt;
+public enum DatabaseProvider
+{
+    Sqlite,
+    Postgres,
+    SqlServer,
+}
+
+public static class Basic
+{
+    public static void AddPostgresCms(this WebApplicationBuilder builder, string connectionString) =>
+        BuildCms(builder, DatabaseProvider.Postgres, connectionString);
+
+    public static void AddSqliteCms(this WebApplicationBuilder builder, string connectionString) =>
+        BuildCms(builder, DatabaseProvider.Sqlite, connectionString);
+
+    public static void AddSqlServerCms(this WebApplicationBuilder builder, string connectionString) =>
+        BuildCms(builder, DatabaseProvider.SqlServer, connectionString);
+    public static void RegisterCmsHook(this WebApplication app, string entityName, Occasion[] occasion,Delegate func)
+    {
+         var registry = app.Services.GetRequiredService<HookRegistry>();
+         registry.AddHooks(entityName, occasion, func);
+    }
+    
+    public static async Task UseCmsAsync(this WebApplication app)
+    {
+        app.UseExceptionHandler(app.Environment.IsDevelopment() ? "/error-development" : "/error");
+
+        app.UseDefaultFiles();
+        app.UseStaticFiles();
+        app.MapFallbackToFile("index.html");
+
+        app.MapControllers();
+        using var scope = app.Services.CreateScope();
+
+        var schemaService = scope.ServiceProvider.GetRequiredService<ISchemaService>();
+        await schemaService.EnsureSchemaTable(default);
+        await schemaService.EnsureTopMenuBar(default);
+    }
+
+    private static void BuildCms(WebApplicationBuilder builder, DatabaseProvider provider, string connectionString )
+    {
+        InitController(builder);
+        InjectDbServices(builder, provider, connectionString);
+        InjectServices(builder);
+        PrintVersion(provider,connectionString);
+    }
+    private static void InitController(WebApplicationBuilder builder)
+    {
+        builder.Services.AddRouting(options =>
+        {
+            options.LowercaseUrls = true;
+        }); 
+        builder.Services.AddControllers().AddJsonOptions(options =>
+        {
+            options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+        });
+    }
+    
+    private static void InjectServices(WebApplicationBuilder builder)
+    {
+        builder.Services.AddMemoryCache();
+        builder.Services.AddSingleton<HookRegistry>(_=> new HookRegistry());
+        builder.Services.AddSingleton<KeyValCache<View>>(p =>
+            new KeyValCache<View>(p.GetRequiredService<IMemoryCache>(), 30, "view"));
+        builder.Services.AddSingleton<LocalFileStore>(p => new LocalFileStore("wwwroot/files"));
+        builder.Services.AddSingleton<KateQueryExecutor>(p =>
+            new KateQueryExecutor(p.GetRequiredService<IKateProvider>(), 30));
+        builder.Services.AddScoped<ISchemaService, SchemaService>();
+        builder.Services.AddScoped<IEntityService, EntityService >();
+        builder.Services.AddScoped<IViewService, ViewService >();
+    }
+
+    private static void InjectDbServices(WebApplicationBuilder builder, DatabaseProvider databaseProvider, string connectionString)
+    {
+        switch (databaseProvider)
+        {
+            case DatabaseProvider.Sqlite:
+                builder.Services.AddSingleton<IKateProvider>(p =>
+                    new SqliteKateProvider(connectionString, p.GetRequiredService<ILogger<SqliteKateProvider>>()));
+                builder.Services.AddSingleton<IDefinitionExecutor>(p =>
+                    new SqliteDefinitionExecutor(connectionString,
+                        p.GetRequiredService<ILogger<SqliteDefinitionExecutor>>()));
+
+                break;
+            case DatabaseProvider.Postgres:
+                builder.Services.AddSingleton<IKateProvider>(p =>
+                    new PostgresKateProvider(connectionString, p.GetRequiredService<ILogger<PostgresKateProvider>>()));
+                builder.Services.AddSingleton<IDefinitionExecutor>(p =>
+                    new PostgresDefinitionExecutor(connectionString,
+                        p.GetRequiredService<ILogger<PostgresDefinitionExecutor>>()));
+                break;
+            case DatabaseProvider.SqlServer:
+                builder.Services.AddSingleton<IKateProvider>(p =>
+                    new SqlServerKateProvider(connectionString, p.GetRequiredService<ILogger<SqlServerKateProvider>>()));
+                builder.Services.AddSingleton<IDefinitionExecutor>(p =>
+                    new SqlServerDefinitionExecutor(connectionString,
+                        p.GetRequiredService<ILogger<SqlServerDefinitionExecutor>>()));
+                break;
+        }
+    }
+    private static void PrintVersion(DatabaseProvider databaseProvider, string connectionString)
+    {
+        var parts = connectionString.Split(";")
+            .Where(x => !x.StartsWith("Password"))
+            .ToArray();
+
+        Console.WriteLine("*********************************************************");
+        Console.WriteLine("Fluent CMS: version 0.1, build Jul21 4pm");
+        Console.WriteLine($"Resolved Database Provider: {databaseProvider}");
+        Console.WriteLine($"Connection String: {string.Join(";", parts)}");
+        Console.WriteLine($"Current Directory: {Directory.GetCurrentDirectory()}");
+        Console.WriteLine("*********************************************************");
+    }
+}

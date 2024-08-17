@@ -20,15 +20,13 @@ public class PeopleService
     {
         dictionary[People.NameFieldName] += s;
     }
-
-  
 }
 
 public class HookRegistryTests
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly HookRegistry _hookRegistry;
-    
+
     public HookRegistryTests()
     {
         var mockServiceProvider = new Mock<IServiceProvider>();
@@ -43,10 +41,7 @@ public class HookRegistryTests
     public async Task TestExecuteAfterQuery()
     {
         var occasion = Occasion.AfterQueryMany;
-        _hookRegistry.AddHook(People.EntityName, occasion, (ListResult res) =>
-        {
-            res.TotalRecords = 100;
-        });
+        _hookRegistry.AddHooks(People.EntityName, [occasion], (ListResult res) => { res.TotalRecords = 100; });
 
         var res = new ListResult
         {
@@ -60,46 +55,43 @@ public class HookRegistryTests
     public async Task TestExecuteBeforeQueryReplace()
     {
         var occasion = Occasion.AfterQueryMany;
-        _hookRegistry.AddHook(People.EntityName,occasion,() =>new People
+        _hookRegistry.AddHooks(People.EntityName, [occasion], () => new People
         {
-            id = 3,Name = People.NameValue
-        } );
+            id = 3, Name = People.NameValue
+        });
 
         var meta = new RecordMeta
         {
-            EntityName = People.EntityName,
+            Entity = new Entity { Name = People.EntityName },
             Id = "3",
         };
         var (filters, sorts, pagination) = (new Filters(), new Sorts(), new Pagination());
-        await _hookRegistry. ModifyQuery(_serviceProvider, occasion, meta, filters, sorts, pagination);
+        await _hookRegistry.ModifyQuery(_serviceProvider, occasion, meta, filters, sorts, pagination);
     }
-
     [Fact]
     public async Task TestModifyQuery()
     {
         var occasion = Occasion.AfterQueryMany;
-        _hookRegistry.AddHook(People.EntityName,occasion, (Filters filters1, Sorts sorts1, Pagination pagination1) =>
-        {
-            filters1.Add(new Filter());
-            sorts1.Add(new Sort());
-            pagination1.Offset = 100;
-        });
-        
+        _hookRegistry.AddHooks(People.EntityName, [occasion],
+            (Filters filters1, Sorts sorts1, Pagination pagination1) =>
+            {
+                filters1.Add(new Filter());
+                sorts1.Add(new Sort());
+                pagination1.Offset = 100;
+            });
+
         var meta = new RecordMeta
         {
-            EntityName = People.EntityName,
+            Entity = new Entity { Name = People.EntityName },
         };
-        
+
         var (filters, sorts, pagination) = (new Filters(), new Sorts(), new Pagination());
-        await _hookRegistry.ModifyQuery(_serviceProvider, occasion,meta, filters, sorts, pagination);
+        await _hookRegistry.ModifyQuery(_serviceProvider, occasion, meta, filters, sorts, pagination);
         Assert.Single(filters);
         Assert.Single(sorts);
-        Assert.Equal(100,pagination.Offset);
+        Assert.Equal(100, pagination.Offset);
 
     }
-   
-
-    
     [Fact]
     public async Task TestModifyRecord()
     {
@@ -109,14 +101,14 @@ public class HookRegistryTests
             [People.NameFieldName] = People.NameValue
         };
 
-        _hookRegistry.AddHook(People.EntityName, Occasion.BeforeInsert, 
-            (PeopleService service, Record record) => service.ModifyRecord(record,"ModifyRecord"));
-        
+        _hookRegistry.AddHooks(People.EntityName, [Occasion.BeforeInsert],
+            (PeopleService service, Record record) => service.ModifyRecord(record, "ModifyRecord"));
+
         var meta = new RecordMeta
         {
-            EntityName = People.EntityName,
+            Entity = new Entity { Name = People.EntityName },
             Id = "1",
-        }; 
+        };
         await _hookRegistry.ModifyRecord(_serviceProvider, Occasion.BeforeInsert, meta, records);
     }
 }

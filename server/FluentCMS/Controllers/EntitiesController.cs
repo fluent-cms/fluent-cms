@@ -44,7 +44,7 @@ public class EntitiesController(IEntityService entityService) : ControllerBase
     public async Task<ActionResult<int>> CrosstableSave(string entityName, string id, string attributeName,
         CancellationToken cancellationToken,
         [FromBody] JsonElement[] items) =>
-        Ok(await entityService.CrosstableSave(entityName, id, attributeName, items, cancellationToken));
+        Ok(await entityService.CrosstableAdd(entityName, id, attributeName, items, cancellationToken));
 
     [HttpGet("{entityName}/{id}/{attributeName}")]
     public async Task<ActionResult<object>> CrosstableList(string entityName, string id, string attributeName,

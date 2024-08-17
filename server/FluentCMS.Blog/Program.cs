@@ -1,43 +1,47 @@
-using FluentCMS.App;
-using FluentCMS.Data;
+using FluentCMS.Blog.Data;
+using FluentCMS.Services;
+using FluentCMS.WebAppExt;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 const string corsPolicyName = "AllowAllOrigins";
 var builder = WebApplication.CreateBuilder(args);
 var (databaseProvider, connectionString) = GetProviderAndConnectionString();
-
-var cmsServer = databaseProvider switch
+switch (databaseProvider)
 {
-    "Sqlite" => builder.AddSqliteCms(connectionString),
-    "Postgres" => builder.AddPostgresCms(connectionString),
-    "SqlServer" =>builder.AddSqlServerCms(connectionString),
-    _ => throw new Exception("not support")
-};
+    case "Sqlite":
+        builder.AddSqliteCms(connectionString);
+        break;
+    case "Postgres":
+        builder.AddPostgresCms(connectionString);
+        break;
+    case "SqlServer":
+        builder.AddSqlServerCms(connectionString);
+        break;
+    default:
+        throw new Exception($"unknown provider {databaseProvider}");
+}    
 
-cmsServer.PrintVersion();
 AddDbContext();
 AddCors();
 
-builder.Services.AddIdentityApiEndpoints<IdentityUser>().AddEntityFrameworkStores<AppDbContext>();
-
+builder.AddCmsAuth<IdentityUser, IdentityRole, AppDbContext>();
 var app = builder.Build();
 app.UseHttpsRedirection();
 if (app.Environment.IsDevelopment())
 {
     app.UseCors(corsPolicyName);
 }
-app.UseAuthorization();
 await Migrate();
-await app.UseCmsAsync(true);
-app.MapGroup("/api").MapIdentityApi<IdentityUser>();
-app.MapGet("/api/logout", async (SignInManager<IdentityUser> signInManager) => await signInManager.SignOutAsync());
-
+await app.UseCmsAsync();
+app.UseCmsAuth<IdentityUser>();
+InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser<IdentityUser>("sadmin@cms.com", "Admin1!", [Roles.Sa]));
+InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser<IdentityUser>("admin@cms.com", "Admin1!", [Roles.Admin]));
 app.Run();
-
-/////////////////////////////////////////////////
 return;
 
+
+/////////////////////////////////////////////////
 (string, string) GetProviderAndConnectionString()
 {
     var provider = builder.Configuration.GetValue<string>("DatabaseProvider");
@@ -79,6 +83,7 @@ async Task Migrate()
     var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await ctx.Database.EnsureCreatedAsync();
 }
+
 
 void AddDbContext()
 {

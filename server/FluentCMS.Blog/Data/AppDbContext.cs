@@ -1,9 +1,8 @@
-using FluentCMS.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace FluentCMS.Data;
+namespace FluentCMS.Blog.Data;
 
 public class AppDbContext: IdentityDbContext <IdentityUser>
 {

@@ -1,20 +1,25 @@
+using FluentCMS.Models;
 using FluentCMS.Utils.QueryBuilder;
+using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.Utils.HookFactory;
 public class HookRegistry
 {
-    private readonly  List<Hook> _hooks= new ();
+    private readonly  List<Hook> _hooks= [];
 
-    public void AddHook(string entityName, Occasion occasion,Delegate func)
+    public void AddHooks(string entityName, Occasion[] occasions, Delegate func)
     {
-        _hooks.Add(new Hook
+        foreach (var occasion in occasions)
         {
-            EntityName = entityName,
-            Occasion = occasion,
-            Callback = func
-        });
+            _hooks.Add(new Hook
+            {
+                EntityName = entityName,
+                Occasion = occasion,
+                Callback = func
+            });
+        }
     }
-    
+
     public async Task ModifyListResult(IServiceProvider provider, Occasion occasion,
         string entityName, ListResult listResult)
     {
@@ -28,11 +33,25 @@ public class HookRegistry
         }
     }
     
+    public async Task<bool> ModifySchema(IServiceProvider provider, Occasion occasion,
+        Schema schema)
+    {
+        var exit = false;
+        foreach (var hook in _hooks.Where(x=>x.Occasion == occasion))
+        {
+            exit = await hook.ModifySchema(provider, schema);
+            if (exit)
+            {
+                break ;
+            }
+        }
+        return exit;
+    }
     public async Task<bool> ModifyQuery(IServiceProvider provider, Occasion occasion,
         RecordMeta meta, Filters filters, Sorts sorts, Pagination pagination)
     {
         var exit = false;
-        foreach (var hook in GetHooks(meta.EntityName, occasion))
+        foreach (var hook in GetHooks(meta.Entity.Name, occasion))
         {
             exit = await hook.ModifyQuery(provider, filters,sorts,pagination);
             if (exit)
@@ -43,11 +62,24 @@ public class HookRegistry
 
         return exit;
     }
+    public async Task<bool> ModifyRelatedRecords(IServiceProvider provider, Occasion occasion, RecordMeta meta, Attribute attribute, Record[] record)
+    {
+        var exit = false;
+        foreach (var hook in GetHooks(meta.Entity.Name, occasion))
+        {
+            exit = await hook.ModifyRelatedRecords(provider,meta, attribute, record);
+            if (exit)
+            {
+                break;
+            }
+        }
 
+        return exit;
+    }
     public async Task<bool> ModifyRecord(IServiceProvider provider, Occasion occasion, RecordMeta meta, Record record)
     {
         var exit = false;
-        foreach (var hook in GetHooks(meta.EntityName, occasion))
+        foreach (var hook in GetHooks(meta.Entity.Name, occasion))
         {
             exit = await hook.ModifyRecord(provider,meta, record);
             if (exit)

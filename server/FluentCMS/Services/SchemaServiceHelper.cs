@@ -7,8 +7,33 @@ using FluentCMS.Utils.QueryBuilder;
 
 namespace FluentCMS.Services;
 using static InvalidParamExceptionFactory;
+public static class  SchemaType
+{
+    public const string Menu = "menu";
+    public const string Entity = "entity";
+    public const string View = "view";
+}
+
+public static class SchemaName
+{
+    public const string TopMenuBar = "top-menu-bar";
+}
 public partial class SchemaService
 {
+    private const string SchemaTableName = "__schemas";
+    private const string SchemaColumnId = "id";
+    private const string SchemaColumnName = "name";
+    private const string SchemaColumnType = "type";
+    private const string SchemaColumnSettings = "settings";
+    private const string SchemaColumnDeleted = "deleted";
+    private const string SchemaColumnCreatedBy = "created_by";
+
+    private static string[] Fields() => [SchemaColumnId, SchemaColumnName, SchemaColumnType, SchemaColumnSettings, SchemaColumnCreatedBy];
+
+    private static Query BaseQuery()
+    {
+        return new Query(SchemaTableName).Select(Fields()).Where(SchemaColumnDeleted, false);
+    }
     private async Task VerifyIfSchemaIsView(Schema dto, CancellationToken cancellationToken)
     {
         var view = dto.Settings.View;
@@ -69,7 +94,7 @@ public partial class SchemaService
 
     private async Task EnsureEntityInTopMenuBar(Entity entity, CancellationToken cancellationToken)
     {
-        var menuBarSchema = await GetByIdOrName(SchemaName.TopMenuBar, false,cancellationToken);
+        var menuBarSchema = await GetByNameVerify(SchemaName.TopMenuBar, false,cancellationToken);
         var menuBar = menuBarSchema.Settings.Menu;
         if (menuBar is not null)
         {
@@ -86,7 +111,7 @@ public partial class SchemaService
                     }
                 ];
             }
-            await Save(menuBarSchema,cancellationToken);
+            await InternalSave(menuBarSchema,cancellationToken);
         }
     }
 
@@ -183,6 +208,7 @@ public partial class SchemaService
                 {SchemaColumnName, dto.Name},
                 {SchemaColumnType, dto.Type},
                 {SchemaColumnSettings, JsonSerializer.Serialize(dto.Settings)},
+                {SchemaColumnCreatedBy, dto.CreatedBy}
             };
             var query = new Query(SchemaTableName).AsInsert(record,true);
             dto.Id = await kateQueryExecutor.Exec(query,cancellationToken);
@@ -192,8 +218,8 @@ public partial class SchemaService
             var query = new Query(SchemaTableName)
                 .Where(SchemaColumnId, dto.Id)
                 .AsUpdate(
-                    [SchemaColumnName, SchemaColumnType, SchemaColumnSettings],
-                    [dto.Name, dto.Type, JsonSerializer.Serialize(dto.Settings)]
+                    [SchemaColumnName, SchemaColumnType, SchemaColumnSettings,SchemaColumnCreatedBy],
+                    [dto.Name, dto.Type, JsonSerializer.Serialize(dto.Settings),dto.CreatedBy]
                 );
             await kateQueryExecutor.Exec(query,cancellationToken);
         }
@@ -223,5 +249,16 @@ public partial class SchemaService
     private static Schema[] ParseSchema(IEnumerable<Record> records)
     {
         return records.Select(x => ParseSchema(x)!).ToArray();
+    }
+    
+    private async Task<Schema> InternalSave(Schema dto, CancellationToken cancellationToken = default)
+    {
+        var query = BaseQuery().Where(SchemaColumnName, dto.Name)
+            .WhereNot(SchemaColumnId, dto.Id);
+        var existing = await kateQueryExecutor.Count(query, cancellationToken);
+        True(existing == 0).ThrowNotTrue($"the schema name {dto.Name} exists");
+        await VerifyIfSchemaIsView(dto, cancellationToken);
+        await SaveSchema(dto, cancellationToken);
+        return dto;
     }
 }

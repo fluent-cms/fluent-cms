@@ -146,7 +146,7 @@ public class IntegrationTest
         // Arrange
         var loginData = new
         {
-            email = "admin@cms.com",
+            email = "sadmin@cms.com",
             password = "Admin1!"
         };
 

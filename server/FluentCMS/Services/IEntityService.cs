@@ -15,9 +15,11 @@ public interface IEntityService
     Task<Record> Update(string entityName, Record item, CancellationToken cancellationToken);
     Task<Record> Delete(string entityName, JsonElement item, CancellationToken cancellationToken);
     Task<Record> Delete(string entityName, Record item, CancellationToken cancellationToken);
-    Task<Record?> One(string entityName, string strId, CancellationToken cancellationToken);
+    Task<Record> One(string entityName, string strId, CancellationToken cancellationToken);
+    Task<Record> OneByAttributes(string entityName, string strId, string[]attributes, CancellationToken cancellationToken =default);
+    
     Task<ListResult> CrosstableList(string entityName, string strId, string field, bool exclude, CancellationToken cancellationToken);
-    Task<int> CrosstableSave(string entityName, string strId, string field, JsonElement[] items, CancellationToken cancellationToken);
+    Task<int> CrosstableAdd(string entityName, string strId, string field, JsonElement[] items, CancellationToken cancellationToken);
     Task<int> CrosstableDelete(string entityName, string strId, string attributeName, JsonElement[] elements, CancellationToken cancellationToken);
     Task AttachLookup(Attribute lookupAttribute, Record[] items, CancellationToken cancellationToken, Func<Entity, Attribute[]> getFields);
     Task AttachCrosstable(Attribute crossTableAttribute, Record[] items, CancellationToken cancellationToken,Func<Entity, Attribute[]> getFields);

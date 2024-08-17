@@ -46,7 +46,7 @@ public class SchemasController(ISchemaService schemaService):ControllerBase
     [HttpGet("{name}")]
     public async Task<ActionResult<Schema>> GetOne(string name, CancellationToken cancellationToken, [FromQuery] bool? extend)
     {
-        return Ok(await schemaService.GetByIdOrName(name, extend?? true, cancellationToken));
+        return Ok(await schemaService.GetByNameVerify(name, extend?? true, cancellationToken));
     }
 
     [HttpDelete("{id}")]
