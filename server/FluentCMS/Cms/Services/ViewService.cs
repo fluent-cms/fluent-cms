@@ -1,3 +1,4 @@
+using FluentCMS.Services;
 using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.QueryBuilder;
 using Microsoft.Extensions.Primitives;
@@ -5,7 +6,7 @@ using FluentCMS.Utils.Cache;
 using FluentCMS.Utils.DataDefinitionExecutor;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
-namespace FluentCMS.Services;
+namespace FluentCMS.Cms.Services;
 
 using static InvalidParamExceptionFactory;
 

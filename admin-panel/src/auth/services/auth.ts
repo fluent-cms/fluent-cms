@@ -17,6 +17,9 @@ export async function register(item:any) {
     return catchResponse(() => axios.post(fullAuthAPIURI(`/register`), item));
 }
 
+export async function changePassword(item:any) {
+    return catchResponse(() => axios.post(fullAuthAPIURI(`/profile/password`), item));
+}
 export async function logout() {
     return catchResponse(() => axios.get(fullAuthAPIURI(`/logout`)));
 }

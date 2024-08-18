@@ -1,4 +1,5 @@
 import {Column} from "primereact/column";
+import {Link} from "react-router-dom";
 
 export function textColumn({primaryKey, column, titleAttribute}:{
     primaryKey: string,
@@ -24,7 +25,7 @@ export function textColumn({primaryKey, column, titleAttribute}:{
         }
 
         if (column.field == titleAttribute){
-            return <a href={`${column.linkToEntity}/${item[primaryKey]}`} >{val}</a>;
+            return <Link to={`${column.linkToEntity}/${item[primaryKey]}`}>{val}</Link>
         }else {
             return <>{val}</>
         }

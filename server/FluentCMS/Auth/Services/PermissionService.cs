@@ -1,11 +1,13 @@
 using System.Security.Claims;
+using FluentCMS.Cms.Services;
 using FluentCMS.Models;
+using FluentCMS.Services;
 using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.QueryBuilder;
 using Microsoft.AspNetCore.Identity;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
-namespace FluentCMS.Services;
+namespace FluentCMS.Auth.Services;
 using static InvalidParamExceptionFactory;
 
 public static class AccessScope
@@ -15,7 +17,9 @@ public static class AccessScope
 }
 
 public class PermissionService<TUser>(
-    IHttpContextAccessor contextAccessor, UserManager<TUser> userManager,
+    IHttpContextAccessor contextAccessor, 
+    SignInManager<TUser> signInManager,
+    UserManager<TUser> userManager,
     ISchemaService schemaService, IEntityService entityService
     ):IPermissionService
     where TUser : IdentityUser, new()
@@ -63,12 +67,12 @@ public class PermissionService<TUser>(
             return;
         }
 
-        if (await CurrentUserHasClaims(AccessScope.FullAccess, meta.Entity.Name))
+        if (CurrentUserHasClaims(AccessScope.FullAccess, meta.Entity.Name))
         {
             return;
         }
 
-        if (!await CurrentUserHasClaims(AccessScope.RestrictedAccess, meta.Entity.Name))
+        if (!CurrentUserHasClaims(AccessScope.RestrictedAccess, meta.Entity.Name))
         {
             throw new InvalidParamException($"You don't have permission to [{meta.Entity.Name}]");
         }
@@ -114,6 +118,8 @@ public class PermissionService<TUser>(
         {
             await userManager.AddClaimAsync(user!, new Claim(AccessScope.RestrictedAccess, schemaName));
         }
+
+        await signInManager.RefreshSignInAsync(user!);
     }
     public void EnsureCreatedByField(Schema schema)
     {
@@ -147,22 +153,13 @@ public class PermissionService<TUser>(
             throw new InvalidParamException("You are not supper admin,  you can only change your own schema");
         }
     }
-    private async Task<bool> CurrentUserHasClaims(string claimType, string value)
+    private  bool CurrentUserHasClaims(string claimType, string value)
     {
         var userClaims = contextAccessor.HttpContext?.User;
         if (userClaims?.Identity?.IsAuthenticated != true)
         {
             return false;
         }
-
-        if (userClaims.Claims.FirstOrDefault(x => x.Value == value && x.Type == claimType) != null)
-        {
-            return true;
-        }
-        
-        //check db incase if user haven't gotten chance to logout and login, 
-        var user = await userManager.GetUserAsync(userClaims);
-        var claims = await userManager.GetClaimsAsync(user!);
-        return claims.FirstOrDefault(x => x.Value == value && x.Type == claimType) != null;
+        return userClaims.Claims.FirstOrDefault(x => x.Value == value && x.Type == claimType) != null;
     }
 }

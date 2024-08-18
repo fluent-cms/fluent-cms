@@ -15,6 +15,9 @@ import {useUserInfo} from "./auth/services/auth";
 import {LoginPage} from "./auth/pages/LoginPage";
 import {RegisterPage} from "./auth/pages/RegisterPage";
 import UserAvatarDropdown from "./auth/components/UserAvatarDropDown";
+import {UserListPage} from "./auth/pages/UserListPage";
+import {UserDetailPage} from "./auth/pages/UserDetailPage";
+import {ChangePasswordPage} from "./auth/pages/ChangePasswordPage";
 setAPIUrlPrefix(configs.apiURL)
 setAssetsBaseURL(configs.assetURL);
 setAuthAPIURL(configs.authAPIURL)
@@ -35,6 +38,9 @@ function App() {
             <TopMenuBar start={start} end={end}/>
             <Routes>
                 <Route path={'/entities/*'} element={<EntityRouter/>}/>
+                <Route path={'/users'} element={<UserListPage/>}/>
+                <Route path={'/users/:id'} element={<UserDetailPage/>}/>
+                <Route path={'/profile/password'} element={<ChangePasswordPage/>}/>
             </Routes>
         </>:<>
             <Routes>

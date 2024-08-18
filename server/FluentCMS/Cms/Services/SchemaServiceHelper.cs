@@ -1,11 +1,12 @@
 using System.Text.Json;
 using FluentCMS.Models;
+using FluentCMS.Services;
 using FluentResults;
 using SqlKata;
 using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.QueryBuilder;
 
-namespace FluentCMS.Services;
+namespace FluentCMS.Cms.Services;
 using static InvalidParamExceptionFactory;
 public static class  SchemaType
 {

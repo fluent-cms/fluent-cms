@@ -1,8 +1,8 @@
 using FluentCMS.Models;
-using FluentCMS.Services;
+using FluentCMS.Cms.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FluentCMS.Controllers;
+namespace FluentCMS.Cms.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class SchemasController(ISchemaService schemaService):ControllerBase

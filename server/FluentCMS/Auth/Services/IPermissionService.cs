@@ -2,7 +2,7 @@ using FluentCMS.Models;
 using FluentCMS.Utils.QueryBuilder;
 using FluentResults;
 
-namespace FluentCMS.Services;
+namespace FluentCMS.Auth.Services;
 
 public interface IPermissionService
 {

@@ -1,5 +1,5 @@
 using FluentCMS.App;
-using FluentCMS.Services;
+using FluentCMS.Cms.Services;
 using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.QueryBuilder;
 using FluentCMS.WebAppExt;

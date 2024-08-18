@@ -1,10 +1,10 @@
 using System.Text.Json;
-using FluentCMS.Services;
+using FluentCMS.Cms.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using FluentCMS.Utils.QueryBuilder;
 
-namespace FluentCMS.Controllers;
+namespace FluentCMS.Cms.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class EntitiesController(IEntityService entityService) : ControllerBase

@@ -61,6 +61,7 @@ export  const LoginPage: React.FC = () => {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             feedback={false}
+                            toggleMask
                         />
                     </div>
                     <div className="p-field">&nbsp;</div>

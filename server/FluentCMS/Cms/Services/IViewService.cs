@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Primitives;
 using FluentCMS.Utils.QueryBuilder;
 
-namespace FluentCMS.Services;
+namespace FluentCMS.Cms.Services;
 
 public interface IViewService
 {

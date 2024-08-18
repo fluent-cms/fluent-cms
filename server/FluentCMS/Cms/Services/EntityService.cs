@@ -1,4 +1,5 @@
 using System.Text.Json;
+using FluentCMS.Services;
 using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.HookFactory;
 using Microsoft.Extensions.Primitives;
@@ -7,7 +8,7 @@ using FluentCMS.Utils.Qs;
 using FluentCMS.Utils.QueryBuilder;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
-namespace FluentCMS.Services;
+namespace FluentCMS.Cms.Services;
 using static InvalidParamExceptionFactory;
 
 public sealed class EntityService(

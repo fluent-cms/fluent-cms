@@ -1,10 +1,10 @@
-using FluentCMS.Services;
+using FluentCMS.Cms.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using FluentCMS.Utils.QueryBuilder;
 
-namespace FluentCMS.Controllers;
+namespace FluentCMS.Cms.Controllers;
 [AllowAnonymous]
 [ApiController]
 [Route("api/[controller]")]

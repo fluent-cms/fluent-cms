@@ -10,7 +10,7 @@ export function InputPanel({data, column,control, className,id, component}: {
     component: any
 }) {
     const defaultValue = data[column.field]
-    /*JK, !id means this is in create mode, node need to wait for data; otherwise have to wait for data ready*/
+    //!id means this is in create mode, node need to wait for data; otherwise have to wait for data ready*/
     return (!id || Object.keys(data).length > 0) && <div className={className}>
         <label id={column.field} htmlFor={column.field}>
             {column.header}

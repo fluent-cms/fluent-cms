@@ -1,4 +1,5 @@
 using FluentCMS.Models;
+using FluentCMS.Services;
 using FluentResults;
 using SqlKata;
 using FluentCMS.Utils.DataDefinitionExecutor;
@@ -6,7 +7,7 @@ using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.QueryBuilder;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
-namespace FluentCMS.Services;
+namespace FluentCMS.Cms.Services;
 
 using static InvalidParamExceptionFactory;
 

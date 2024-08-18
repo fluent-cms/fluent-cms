@@ -2,7 +2,7 @@ using FluentCMS.Models;
 using FluentResults;
 using FluentCMS.Utils.QueryBuilder;
 
-namespace FluentCMS.Services;
+namespace FluentCMS.Cms.Services;
 
 public interface ISchemaService
 {

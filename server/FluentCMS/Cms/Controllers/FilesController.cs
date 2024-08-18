@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using FluentCMS.Utils.LocalFileStore;
 
-namespace FluentCMS.Controllers;
+namespace FluentCMS.Cms.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class FilesController(LocalFileStore store):ControllerBase

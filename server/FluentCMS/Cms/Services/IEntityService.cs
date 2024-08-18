@@ -3,7 +3,7 @@ using Microsoft.Extensions.Primitives;
 using FluentCMS.Utils.QueryBuilder;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
-namespace FluentCMS.Services;
+namespace FluentCMS.Cms.Services;
 
 public interface IEntityService
 {
