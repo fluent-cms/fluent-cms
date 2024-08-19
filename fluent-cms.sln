@@ -16,7 +16,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApiExamples", "examples\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlogEfExample", "examples\BlogEfExample\BlogEfExample.csproj", "{2046DC4C-DDD1-4DB9-882D-89390D85A669}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentCMS.Consumer", "FluentCMS.Consumer\FluentCMS.Consumer.csproj", "{B28C2B85-666C-49A2-B6CF-75B1C3E18E86}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentCMS.Consumer", "server\FluentCMS.Consumer\FluentCMS.Consumer.csproj", "{B28C2B85-666C-49A2-B6CF-75B1C3E18E86}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
