@@ -4,6 +4,7 @@ using FluentResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using FluentCMS.Utils.IdentityExt;
 
 namespace FluentCMS.Auth.Services;
 using static InvalidParamExceptionFactory;
@@ -22,13 +23,10 @@ public  static class Roles
     /// </summary>
     public const string Admin = "admin";
 }
-
-
-
 public class AccountService<TUser, TRole,TCtx>(
     UserManager<TUser> userManager,
     RoleManager<TRole> roleManager,
-    
+    IHttpContextAccessor accessor,
     TCtx context
 ) : IAccountService
     where TUser : IdentityUser, new()
@@ -46,9 +44,9 @@ public class AccountService<TUser, TRole,TCtx>(
     public async Task<UserDto> GetOneUser(string id, CancellationToken cancellationToken)
     {
         var query = from user in context.Users
+            where user.Id == id 
             join userRole in context.UserRoles
                 on user.Id equals userRole.UserId into userRolesGroup
-                where user.Id == id
             from userRole in userRolesGroup.DefaultIfEmpty() // Left join for roles
             join role in context.Roles
                 on userRole.RoleId equals role.Id into rolesGroup
@@ -56,19 +54,23 @@ public class AccountService<TUser, TRole,TCtx>(
             join userClaim in context.UserClaims
                 on user.Id equals userClaim.UserId into userClaimsGroup
             from userClaim in userClaimsGroup.DefaultIfEmpty() // Left join for claims
-            group new { role, userClaim } by user into userGroup
-            select new UserDto
-            {
-                Email = userGroup.Key.Email,
-                Id = userGroup.Key.Id,
-                Roles = userGroup.Select(x => x.role.Name).Where(r => r != null).Distinct().ToArray(),
-                FullAccessEntities = userGroup.Where(x => x.userClaim.ClaimType == AccessScope.FullAccess)
-                    .Select(x => x.userClaim.ClaimValue).Distinct().ToArray(),
-                RestrictedAccessEntities = userGroup.Where(x => x.userClaim.ClaimType == AccessScope.RestrictedAccess)
-                    .Select(x => x.userClaim.ClaimValue).Distinct().ToArray()
-            };
-        var item = await query.FirstOrDefaultAsync(cancellationToken);
-        return NotNull(item).ValOrThrow($"did not find user by id {id}");
+            group new { role, userClaim } by user
+            into userGroup
+            select new { userGroup.Key, Values = userGroup.ToArray() };
+        
+        // use client calculation to support Sqlite
+        var item = NotNull(await query.FirstOrDefaultAsync(cancellationToken))
+            .ValOrThrow($"did not find user by id {id}");
+        return new UserDto
+        {
+            Email = item.Key.Email!,
+            Id = item.Key.Id,
+            Roles = item.Values.Where(x=>x.role is not null).Select(x => x.role.Name!).Distinct().ToArray(),
+            FullAccessEntities = item.Values.Where(x => x.userClaim?.ClaimType == AccessScope.FullAccess)
+                .Select(x => x.userClaim.ClaimValue!).Distinct().ToArray(),
+            RestrictedAccessEntities = item.Values.Where(x => x.userClaim?.ClaimType == AccessScope.RestrictedAccess)
+                .Select(x => x.userClaim.ClaimValue!).Distinct().ToArray(),
+        };
     }
 
     public async Task<UserDto[]> GetUsers(CancellationToken cancellationToken)
@@ -80,14 +82,18 @@ public class AccountService<TUser, TRole,TCtx>(
             join role in context.Roles
                 on userRole.RoleId equals role.Id into rolesGroup
             from role in rolesGroup.DefaultIfEmpty() // Left join for roles
-            group new { role } by user into userGroup
-            select new UserDto
-            {
-                Email = userGroup.Key.Email,
-                Id = userGroup.Key.Id,
-                Roles = userGroup.Select(x => x.role.Name).Where(r => r != null).Distinct().ToArray()
-           };
-        return await query.AsNoTracking().ToArrayAsync(cancellationToken);
+            group new { role } by user
+            into userGroup
+            select new {userGroup.Key, Roles =userGroup.ToArray()};
+        var items = await query.ToArrayAsync(cancellationToken);
+        // use client calculation to support Sqlite
+        var dtos = items.Select(x => new UserDto
+        {
+            Email = x.Key.Email!,
+            Id = x.Key.Id,
+            Roles = x.Roles.Where(x=>x.role is not null).Select(x => x.role.Name).Distinct().ToArray()
+        });
+        return dtos.ToArray();
     }
 
     public async Task<Result> EnsureUser(string email, string password, string[] roles)
@@ -114,26 +120,28 @@ public class AccountService<TUser, TRole,TCtx>(
         var res = await userManager.CreateAsync(user, password);
         if (!res.Succeeded)
         {
-            return Result.Fail(string.Join(",", res.Errors.Select(e=>e.Description)));
+            return Result.Fail(res.ErrorMessage());
         }
 
         res = await userManager.AddToRolesAsync(user, roles);
-        return !res.Succeeded ? Result.Fail(string.Join(",", res.Errors.Select(e => e.Description))) : Result.Ok();
+        return !res.Succeeded ? Result.Fail(res.ErrorMessage()) : Result.Ok();
     }
 
-    public async Task DeleteUser(string id, CancellationToken cancellationToken)
+    public async Task DeleteUser(string id)
     {
+        True(accessor.HttpContext.HasRole(Roles.Sa)).ThrowNotTrue("Only supper admin have permission");
         var user = NotNull(await userManager.Users.FirstOrDefaultAsync(x => x.Id == id))
             .ValOrThrow($"not find user by id {id}");
         var result = await userManager.DeleteAsync(user);
         if (!result.Succeeded)
         {
-            throw new InvalidParamException(IdentityErrMsg(result));
+            throw new InvalidParamException(result.ErrorMessage());
         }
     }
 
-    public async Task SaveUser(UserDto dto, CancellationToken cancellationToken)
+    public async Task SaveUser(UserDto dto)
     {
+        True(accessor.HttpContext.HasRole(Roles.Sa)).ThrowNotTrue("Only supper admin have permission");
         var user = await MustFindUser(dto.Id);
         var claims = await userManager.GetClaimsAsync(user);
         CheckResult(await AssignRole(user, dto.Roles));
@@ -160,7 +168,7 @@ public class AccountService<TUser, TRole,TCtx>(
             var result = await userManager.RemoveClaimsAsync(user, toRemove.Select(x=>new Claim(type, x)));
             if (!result.Succeeded)
             {
-                return Result.Fail(IdentityErrMsg(result));
+                return Result.Fail(result.ErrorMessage());
             }
         }
 
@@ -170,7 +178,7 @@ public class AccountService<TUser, TRole,TCtx>(
             var result = await userManager.AddClaimsAsync(user, toAdd.Select(x=>new Claim(type, x)));
             if (!result.Succeeded)
             {
-                return Result.Fail(IdentityErrMsg(result));
+                return Result.Fail(result.ErrorMessage());
             }
         }
         return Result.Ok();
@@ -190,7 +198,7 @@ public class AccountService<TUser, TRole,TCtx>(
             var result = await userManager.RemoveFromRolesAsync(user, rolesToRemove);
             if (!result.Succeeded)
             {
-                return Result.Fail(IdentityErrMsg(result));
+                return Result.Fail(result.ErrorMessage());
             }
         }
 
@@ -200,7 +208,7 @@ public class AccountService<TUser, TRole,TCtx>(
             var result = await userManager.AddToRolesAsync(user, rolesToAdd);
             if (!result.Succeeded)
             {
-                return Result.Fail(IdentityErrMsg(result));
+                return Result.Fail(result.ErrorMessage());
             }
         }
         return Result.Ok();
@@ -218,12 +226,11 @@ public class AccountService<TUser, TRole,TCtx>(
             var res = await roleManager.CreateAsync(new TRole { Name = roleName });
             if (!res.Succeeded)
             {
-                return Result.Fail(IdentityErrMsg(res));
+                return Result.Fail(res.ErrorMessage());
             }
         }
 
         return Result.Ok();
     }
     
-    private static string IdentityErrMsg(IdentityResult result) =>  string.Join("\r\n", result.Errors.Select(e => e.Description));
 }

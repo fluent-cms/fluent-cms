@@ -16,6 +16,18 @@ export function TopMenuBar({start, end}:{start:any, end:any}) {
             }
         })
     )
+    links.push({
+        icon: 'pi pi-users' ,
+        label: 'Users',
+        command: ()=>{
+            navigate('/users')
+        }
+    });
+    links.push({
+        icon: 'pi pi-cog' ,
+        label: 'Schema Builder',
+        url:'/schema-ui/list.html'
+    });
     return (
         <Menubar model={links} start={start} end={end}/>
     )

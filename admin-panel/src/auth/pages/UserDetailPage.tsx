@@ -47,13 +47,16 @@ export function UserDetailPage() {
 
     }
 
-    const onDelete = async (formData: any) =>{
-        const {error} = await deleteUser(formData);
-        checkError(error, 'Delete Succeed')
-        if (!error){
-            await new Promise(r => setTimeout(r, 500));
-            window.location.href= "/users";
-        }
+    const onDelete = async () =>{
+        confirm('Do you want to delete this user?',async () => {
+            const {error} = await deleteUser(id!);
+            checkError(error, 'Delete Succeed')
+            if (!error) {
+                await new Promise(r => setTimeout(r, 500));
+                window.location.href = "/users";
+
+            }
+        });
     }
 
     return <>

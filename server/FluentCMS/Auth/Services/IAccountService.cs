@@ -18,6 +18,6 @@ public interface IAccountService
     Task<UserDto[]> GetUsers(CancellationToken cancellationToken);
     Task<string[]> GetRoles(CancellationToken cancellationToken);
     Task<Result> EnsureUser(string email, string password, string[] roles);
-    Task DeleteUser(string id, CancellationToken cancellationToken);
-    Task SaveUser(UserDto userDto, CancellationToken cancellationToken);
+    Task DeleteUser(string id);
+    Task SaveUser(UserDto userDto);
 }

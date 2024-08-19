@@ -38,27 +38,23 @@ public static class Auth
         app.UseAuthorization();
         app.MapGroup("/api").MapIdentityApi<TUser>();
         app.MapGet("/api/logout", async (SignInManager<TUser> signInManager) => await signInManager.SignOutAsync());
-//         app.MapPost("/api/changepassword", async (SignInManager<TUser> signInManager) => await UserManager<TUser>);
-        
-
 
         var registry = app.Services.GetRequiredService<HookRegistry>();
         registry.AddHooks("*", [Occasion.BeforeSaveSchema, Occasion.BeforeDeleteSchema],
             async (IPermissionService service, Schema schema) =>
             {
-                service.EnsureCreatedByField(schema);
-                await service.CheckSchemaPermission(schema);
+                await service.HandleSchema(schema);
             });
 
         registry.AddHooks("*",
             [Occasion.BeforeAddRelated, Occasion.BeforeDeleteRelated, Occasion.BeforeDelete, Occasion.BeforeUpdate],
-            async (IPermissionService service, RecordMeta meta) => await service.CheckEntityPermission(meta));
+            async (IPermissionService service, RecordMeta meta) => await service.CheckEntity(meta));
 
         registry.AddHooks("*", [Occasion.BeforeInsert],
             async (IPermissionService service, RecordMeta meta, Record record) =>
             {
                 service.AssignCreatedBy(record);
-                await service.CheckEntityPermission(meta);
+                await service.CheckEntity(meta);
             }
         );
     }

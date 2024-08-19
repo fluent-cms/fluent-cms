@@ -8,4 +8,6 @@ pnpm build
 rm -rf ../server/FluentCMS/wwwroot/assets/
 rsync -azv --progress dist/* ../server/FluentCMS/wwwroot
 rm -rf ../server/FluentCMS.Blog/wwwroot/assets/
-rsync -azv --progress dist/* ../server/FluentCMS/wwwroot
+rsync -azv --progress dist/* ../server/FluentCMS.Blog/wwwroot
+rm -rf ../server/FluentCMS.App/wwwroot/assets/
+rsync -azv --progress dist/* ../server/FluentCMS.App/wwwroot

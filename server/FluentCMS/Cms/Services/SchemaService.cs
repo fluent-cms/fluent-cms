@@ -156,25 +156,16 @@ public sealed partial class SchemaService(
         {
             return;
         }
-        
-        var menuItem = new MenuItem
-        {
-            Label = "Schema Builder",
-            Url = "/schema-ui/list.html",
-            Icon = "pi-cog",
-            IsHref = true
-        };
         var menuBarSchema = new Schema
         {
             Name = SchemaName.TopMenuBar,
             Type = SchemaType.Menu,
-        };
-        menuBarSchema.Settings = new Settings
-        {
-            Menu = new Menu
+            Settings = new Settings
             {
-                Name = SchemaName.TopMenuBar,
-                MenuItems = [menuItem]
+                Menu = new Menu
+                {
+                    Name = SchemaName.TopMenuBar,
+                }
             }
         };
         await SaveSchema(menuBarSchema,cancellationToken);

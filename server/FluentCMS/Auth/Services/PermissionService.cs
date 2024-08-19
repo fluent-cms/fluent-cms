@@ -3,19 +3,18 @@ using FluentCMS.Cms.Services;
 using FluentCMS.Models;
 using FluentCMS.Services;
 using FluentCMS.Utils.DataDefinitionExecutor;
+using FluentCMS.Utils.IdentityExt;
 using FluentCMS.Utils.QueryBuilder;
 using Microsoft.AspNetCore.Identity;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.Auth.Services;
 using static InvalidParamExceptionFactory;
-
 public static class AccessScope
 {
     public const string FullAccess = "FullAccess";
     public const string RestrictedAccess = "RestrictedAccess";
 }
-
 public class PermissionService<TUser>(
     IHttpContextAccessor contextAccessor, 
     SignInManager<TUser> signInManager,
@@ -28,11 +27,9 @@ public class PermissionService<TUser>(
     private const string CreatedBy = "created_by";
     public void AssignCreatedBy(Record record)
     {
-        var currentUserId = MustGetCurrentUserId();
-        record[CreatedBy] = currentUserId;
-    } 
-    
-    public async Task CheckSchemaPermission(Schema schema)
+        record[CreatedBy] = MustGetCurrentUserId();
+    }
+    public async Task HandleSchema(Schema schema)
     {
         var currentUserId = MustGetCurrentUserId();
         if (schema.Id > 0)
@@ -44,11 +41,42 @@ public class PermissionService<TUser>(
         {
             schema.CreatedBy = currentUserId;
         }
-        
+
+        await CheckSchemaPermission(schema, currentUserId);
+        EnsureCreatedByField(schema);
+    }
+    public async Task CheckEntity(RecordMeta meta)
+    {
+        if (contextAccessor.HttpContext.HasRole(Roles.Sa))
+        {
+            return;
+        }
+
+        if (contextAccessor.HttpContext.HasClaims(AccessScope.FullAccess, meta.Entity.Name))
+        {
+            return;
+        }
+
+        if (!contextAccessor.HttpContext.HasClaims(AccessScope.RestrictedAccess, meta.Entity.Name))
+        {
+            throw new InvalidParamException($"You don't have permission to [{meta.Entity.Name}]");
+        }
+
+        var isCreate = string.IsNullOrWhiteSpace(meta.Id);
+        if (!isCreate)
+        {
+            //need to query database to get userId in case client fake data
+            var record = await entityService.OneByAttributes(meta.Entity.Name, meta.Id, [CreatedBy]);
+            True(record.TryGetValue(CreatedBy, out var createdBy) && (string)createdBy == MustGetCurrentUserId())
+                .ThrowNotTrue($"You can only access record created by you, entityName={meta.Entity.Name}, record id={meta.Id}");
+        }
+    }
+    private async Task CheckSchemaPermission(Schema schema, string currentUserId)
+    {
         switch (schema.Type)
         {
             case SchemaType.Menu:
-                True(CurrentUserHasRole(Roles.Sa)).ThrowNotTrue("Only Supper Admin has the permission to modify menu");
+                True(contextAccessor.HttpContext.HasRole(Roles.Sa)).ThrowNotTrue("Only Supper Admin has the permission to modify menu");
                 break;
             case SchemaType.Entity:
                 CheckViewAndEntityPermission(schema,currentUserId);
@@ -58,55 +86,11 @@ public class PermissionService<TUser>(
                 CheckViewAndEntityPermission(schema,currentUserId);
                 break;
         }
-    }
-    
-    public async Task CheckEntityPermission(RecordMeta meta)
-    {
-        if (CurrentUserHasRole(Roles.Sa))
-        {
-            return;
-        }
-
-        if (CurrentUserHasClaims(AccessScope.FullAccess, meta.Entity.Name))
-        {
-            return;
-        }
-
-        if (!CurrentUserHasClaims(AccessScope.RestrictedAccess, meta.Entity.Name))
-        {
-            throw new InvalidParamException($"You don't have permission to [{meta.Entity.Name}]");
-        }
-
-        var isCreate = string.IsNullOrWhiteSpace(meta.Id);
-        if (!isCreate)
-        {
-            //need to query database to get userId in case client fake data
-            var currentUserId = MustGetCurrentUserId();
-            var record = await entityService.OneByAttributes(meta.Entity.Name, meta.Id, [CreatedBy]);
-            True(record.TryGetValue(CreatedBy, out var createdBy) && (string)createdBy == currentUserId)
-                .ThrowNotTrue($"You can only access record created by you, entityName={meta.Entity.Name}, record id={meta.Id}");
-        }
-    }
-
-    private string MustGetCurrentUserId()
-    {
-        var user = contextAccessor.HttpContext?.User;
-        var id = user?.Identity?.IsAuthenticated == true ? user.FindFirstValue(ClaimTypes.NameIdentifier) : null;
-        if (string.IsNullOrWhiteSpace(id))
-        {
-            throw new InvalidParamException("Can not find current user");
-        }
-        return id;
-    }
-
-    private bool CurrentUserHasRole(string role)
-    {
-        return contextAccessor.HttpContext?.User.IsInRole(role) == true;
-    }
+    } 
     private async Task EnsureUserHaveAccess(string schemaName)
     {
         //use have restricted access to the entity data
-        if (CurrentUserHasRole(Roles.Sa))
+        if (contextAccessor.HttpContext.HasRole(Roles.Sa))
         {
             return;
         }
@@ -121,7 +105,7 @@ public class PermissionService<TUser>(
 
         await signInManager.RefreshSignInAsync(user!);
     }
-    public void EnsureCreatedByField(Schema schema)
+    private void EnsureCreatedByField(Schema schema)
     {
         var entity = schema.Settings.Entity;
         if (entity is null) return;
@@ -136,12 +120,12 @@ public class PermissionService<TUser>(
 
     private void CheckViewAndEntityPermission(Schema schema, string currentUserId)
     {
-        if (CurrentUserHasRole(Roles.Sa))
+        if (contextAccessor.HttpContext.HasRole(Roles.Sa))
         {
             return;
         }
 
-        if (!CurrentUserHasRole(Roles.Admin))
+        if (!contextAccessor.HttpContext.HasRole(Roles.Admin))
         {
             throw new InvalidParamException("Only Admin and Super Admin can has this permission");
         }
@@ -153,13 +137,7 @@ public class PermissionService<TUser>(
             throw new InvalidParamException("You are not supper admin,  you can only change your own schema");
         }
     }
-    private  bool CurrentUserHasClaims(string claimType, string value)
-    {
-        var userClaims = contextAccessor.HttpContext?.User;
-        if (userClaims?.Identity?.IsAuthenticated != true)
-        {
-            return false;
-        }
-        return userClaims.Claims.FirstOrDefault(x => x.Value == value && x.Type == claimType) != null;
-    }
+    
+    private string MustGetCurrentUserId() => StrNotEmpty(contextAccessor.HttpContext.GetUserId()).ValOrThrow("not logged int"); 
+  
 }
