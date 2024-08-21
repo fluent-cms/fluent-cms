@@ -18,6 +18,8 @@ import UserAvatarDropdown from "./auth/components/UserAvatarDropDown";
 import {UserListPage} from "./auth/pages/UserListPage";
 import {UserDetailPage} from "./auth/pages/UserDetailPage";
 import {ChangePasswordPage} from "./auth/pages/ChangePasswordPage";
+import {RoleListPage} from "./auth/pages/RoleListPage";
+import {RoleDetailPage} from "./auth/pages/RoleDetailPage";
 setAPIUrlPrefix(configs.apiURL)
 setAssetsBaseURL(configs.assetURL);
 setAuthAPIURL(configs.authAPIURL)
@@ -40,6 +42,8 @@ function App() {
                 <Route path={'/entities/*'} element={<EntityRouter/>}/>
                 <Route path={'/users'} element={<UserListPage/>}/>
                 <Route path={'/users/:id'} element={<UserDetailPage/>}/>
+                <Route path={'/roles'} element={<RoleListPage/>}/>
+                <Route path={'/roles/:name'} element={<RoleDetailPage/>}/>
                 <Route path={'/profile/password'} element={<ChangePasswordPage/>}/>
             </Routes>
         </>:<>
@@ -51,5 +55,4 @@ function App() {
             </>
     );
 }
-
 export default App;

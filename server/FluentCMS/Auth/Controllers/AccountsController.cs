@@ -26,17 +26,33 @@ public class AccountsController(IAccountService accountService) : ControllerBase
         return Ok(await accountService.GetRoles(cancellationToken));
     }
 
+    [HttpPost("roles")]
+    public async Task SaveRoles(RoleDto dto)
+    {
+        await accountService.SaveRole(dto);
+    }
+
+    [HttpDelete("roles/{name}")]
+    public async Task DeleteRole(string name)
+    {
+        await accountService.DeleteRole(name);
+    }
+
+    [HttpGet("roles/{name}")]
+    public async Task<ActionResult<object[]>> GetOneRole(string name)
+    {
+        return Ok(await accountService.GetOneRole(name));
+    }
+
     [HttpDelete("users/{id}")]
-    public async Task<ActionResult<UserDto[]>> DeleteUser(string id)
+    public async Task DeleteUser(string id)
     {
         await accountService.DeleteUser(id);
-        return Ok();
     }
 
     [HttpPost("users")]
-    public async Task<ActionResult<UserDto[]>> SaveUser([FromBody] UserDto dto)
+    public async Task SaveUser([FromBody] UserDto dto)
     {
         await accountService.SaveUser(dto);
-        return Ok();
     }
 }

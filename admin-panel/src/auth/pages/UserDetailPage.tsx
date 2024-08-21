@@ -1,4 +1,4 @@
-import {deleteUser, saveUser, useEntities, useOneUsers, useRoles} from "../services/users";
+import {deleteUser, saveUser, useEntities, useOneUsers, useRoles} from "../services/accounts";
 import {useForm} from "react-hook-form";
 import {useParams} from "react-router-dom";
 import {MultiSelectInput} from "../../cms-client/components/inputs/MultiSelectInput";
@@ -8,7 +8,7 @@ import {useRequestStatus} from "../../cms-client/containers/useFormStatus";
 
 export function UserDetailPage() {
     const {id} = useParams()
-    const {data:user,isLoading:loadingUser, error: errorUser} = useOneUsers(id!);
+    const {data:userData,isLoading:loadingUser, error: errorUser} = useOneUsers(id!);
     const {data:roles, isLoading:loadingRoles, error:errorRoles } = useRoles();
     const {data:entities, isLoading:loadingEntity, error:errorEntities} = useEntities();
     const {checkError, Status, confirm} = useRequestStatus('');
@@ -25,16 +25,14 @@ export function UserDetailPage() {
     const rolesOption = roles.join(',');
     const entitiesOption = entities.map((x: {name:string})=>x.name).join(',');
 
-    ['roles','fullAccessEntities','restrictedAccessEntities'].forEach(x =>{
-        if (Array.isArray(user[x])){
-            if (user[x].length > 0){
-                user[x] =user[x].join(',')
-            } else {
-                delete(user[x]);
-            }
+    const user = {...userData||{}};
+    ['roles','fullAccessEntities','restrictedAccessEntities'].forEach(x => {
+        if (userData[x].length > 0) {
+            user[x] = userData[x].join(',')
+        } else {
+            delete (userData[x]);
         }
-        console.log(x, '=>',user, )
-    })
+    });
 
     const onSubmit = async (formData: any)=>{
         formData.id = id;

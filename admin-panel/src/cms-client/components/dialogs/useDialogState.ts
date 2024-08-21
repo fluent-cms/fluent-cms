@@ -1,7 +1,7 @@
 import {useState} from "react";
 
 
-export function useFormDialogState() {
+export function useDialogState() {
     const [visible,setVisible ] = useState(false)
     return {
         visible,

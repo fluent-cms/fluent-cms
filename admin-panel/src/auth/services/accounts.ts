@@ -30,3 +30,15 @@ export function saveUser(formData:any){
 export function deleteUser(id:string){
     return catchResponse(()=>axios.delete(fullAPIURI(`/accounts/users/${id}`)))
 }
+export  function useOneRole(name:string){
+    let res = useSWR(  !name? null:fullAPIURI(`/accounts/roles/${name}`), fetcher,swrConfig);
+    return {...res, error:decodeError(res.error)}
+}
+
+export function saveRole(payload:any){
+    return catchResponse(()=>axios.post(fullAPIURI(`/accounts/roles`), payload))
+}
+
+export function deleteRole(name:string){
+    return catchResponse(()=>axios.delete(fullAPIURI(`/accounts/roles/${name}`)))
+}

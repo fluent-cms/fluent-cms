@@ -1,5 +1,5 @@
 import {DataTable} from "primereact/datatable";
-import {useUsers} from "../services/users";
+import {useUsers} from "../services/accounts";
 import {Column} from "primereact/column";
 import {Link} from "react-router-dom";
 

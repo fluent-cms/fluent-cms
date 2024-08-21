@@ -91,7 +91,7 @@ public class AccountService<TUser, TRole,TCtx>(
         {
             Email = x.Key.Email!,
             Id = x.Key.Id,
-            Roles = x.Roles.Where(x=>x.role is not null).Select(x => x.role.Name).Distinct().ToArray()
+            Roles = x.Roles.Where(val=>val?.role is not null).Select(val => val.role.Name!).Distinct().ToArray()
         });
         return dtos.ToArray();
     }
@@ -138,6 +138,8 @@ public class AccountService<TUser, TRole,TCtx>(
             throw new InvalidParamException(result.ErrorMessage());
         }
     }
+    
+   
 
     public async Task SaveUser(UserDto dto)
     {
@@ -214,6 +216,78 @@ public class AccountService<TUser, TRole,TCtx>(
         return Result.Ok();
     }
 
+    public async Task<RoleDto> GetOneRole(string name)
+    {
+        var role = NotNull(await roleManager.FindByNameAsync(name))
+            .ValOrThrow($"not find role by id {name}");
+        var claims = await roleManager.GetClaimsAsync(role);
+        return new RoleDto
+        {
+            Name = name,
+            FullAccessEntities = claims.Where(x => x.Type == AccessScope.FullAccess).Select(x => x.Value).ToArray(),
+            RestrictedAccessEntities =
+                claims.Where(x => x.Type == AccessScope.RestrictedAccess).Select(x => x.Value).ToArray(),
+        };
+    }
+    public async Task DeleteRole(string name)
+    {
+        if (name == Roles.Admin || name == Roles.Sa)
+        {
+            throw new InvalidParamException($"can not delete system role `{name}`");
+        }
+        
+        True(accessor.HttpContext.HasRole(Roles.Sa)).ThrowNotTrue("Only supper admin have permission");
+        var role = NotNull(await roleManager.FindByNameAsync(name))
+            .ValOrThrow($"not find role by id {name}");
+        var result = await roleManager.DeleteAsync(role);
+        if (!result.Succeeded)
+        {
+            throw new InvalidParamException(result.ErrorMessage());
+        }
+    }
+
+    public async Task SaveRole(RoleDto roleDto)
+    {
+        True(accessor.HttpContext.HasRole(Roles.Sa)).ThrowNotTrue("Only supper admin have permission");
+        if (string.IsNullOrWhiteSpace(roleDto.Name))
+        {
+            throw new InvalidParamException("Role name can not be null");
+        }
+        CheckResult(await EnsureRoles([roleDto.Name]));
+        var role = await roleManager.FindByNameAsync(roleDto.Name);
+        var claims =await roleManager.GetClaimsAsync(role!);
+        CheckResult(await AddClaimsToRole(role!, claims, AccessScope.FullAccess, roleDto.FullAccessEntities));
+        CheckResult(await AddClaimsToRole(role!, claims, AccessScope.RestrictedAccess, roleDto.RestrictedAccessEntities));
+    }
+
+    private async Task<Result> AddClaimsToRole(TRole role,  IList<Claim> claims, string type, string[]values )
+    {
+        var currentValues = claims.Where(x => x.Type == type).Select(x => x.Value).ToArray();
+        // Calculate roles to be removed and added
+        var toRemove = currentValues.Except(values).ToArray();
+        var toAdd = values.Except(currentValues).ToArray();
+
+        // Remove only the roles that are in currentRoles but not in the new roles
+        foreach (var claim in toRemove.Select(x=>new Claim(type,x)))
+        {
+            var identityResult = await roleManager.RemoveClaimAsync(role, claim);
+            if (!identityResult.Succeeded)
+            {
+                return Result.Fail(identityResult.ErrorMessage());
+            }
+        }
+
+        foreach (var claim in toAdd.Select(x => new Claim(type, x)))
+        {
+            var identityResult = await roleManager.AddClaimAsync(role, claim);
+            if (!identityResult.Succeeded)
+            {
+                return Result.Fail(identityResult.ErrorMessage());
+            }
+        }
+        return Result.Ok();
+    }
+    
     private async Task<Result> EnsureRoles(string[] roles)
     {
         foreach (var roleName in roles)

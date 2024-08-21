@@ -17,6 +17,13 @@ export function TopMenuBar({start, end}:{start:any, end:any}) {
         })
     )
     links.push({
+        icon: 'pi pi-sitemap' ,
+        label: 'Roles',
+        command: ()=>{
+            navigate('/roles')
+        }
+    });
+    links.push({
         icon: 'pi pi-users' ,
         label: 'Users',
         command: ()=>{

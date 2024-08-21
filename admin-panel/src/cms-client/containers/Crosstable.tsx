@@ -1,8 +1,8 @@
 import {deleteSubPageItems, saveSubPageItems, useSubPageData} from "../services/entity";
 import {Button} from "primereact/button";
-import {useFormDialogState} from "../components/dialogs/useFormDialogState";
+import {useDialogState} from "../components/dialogs/useDialogState";
 import {SelectDataTable} from "../components/dataTable/SelectDataTable";
-import {ListDialog} from "../components/dialogs/ListDialog";
+import {SaveDialog} from "../components/dialogs/SaveDialog";
 import {useRequestStatus} from "./useFormStatus";
 import {useSubSchema} from "./useSubSchema";
 import {useLazyStateHandlers} from "./useLazyStateHandlers";
@@ -13,7 +13,7 @@ export function Crosstable({column, data, schema, getFullURL}: {
     schema: any
     getFullURL : (arg:string) =>string
 }) {
-    const {visible, handleShow, handleHide} = useFormDialogState()
+    const {visible, handleShow, handleHide} = useDialogState()
     const {
         id,
         listColumns,
@@ -71,7 +71,7 @@ export function Crosstable({column, data, schema, getFullURL}: {
             eventHandlers={eventHandlers}
             getFullURL={getFullURL}
         />
-        <ListDialog
+        <SaveDialog
             visible={visible}
             handleHide={handleHide}
             handleSave={handleSave}
@@ -87,6 +87,6 @@ export function Crosstable({column, data, schema, getFullURL}: {
                 lazyState={excludedLazyState}
                 eventHandlers={excludedEventHandlers}
             />
-        </ListDialog>
+        </SaveDialog>
     </div>
 }

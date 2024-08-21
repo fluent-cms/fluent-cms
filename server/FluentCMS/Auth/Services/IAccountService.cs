@@ -11,6 +11,12 @@ public sealed class UserDto
     public string[] RestrictedAccessEntities { get; set; } = [];
 }
 
+public sealed class RoleDto
+{
+    public string Name { get; set; } = "";
+    public string[] FullAccessEntities { get; set; } = [];
+    public string[] RestrictedAccessEntities { get; set; } = [];
+}
 
 public interface IAccountService
 {
@@ -20,4 +26,7 @@ public interface IAccountService
     Task<Result> EnsureUser(string email, string password, string[] roles);
     Task DeleteUser(string id);
     Task SaveUser(UserDto userDto);
+    Task<RoleDto> GetOneRole(string id);
+    Task SaveRole(RoleDto roleDto);
+    Task DeleteRole(string name);
 }

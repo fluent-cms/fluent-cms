@@ -14,7 +14,7 @@ export function MultiSelectInput(
     const {column} = props
     return <InputPanel  {...props} component={(field: any) => {
         return <MultiSelect
-            value={field.value?.split(',')}
+            value={field.value?.length > 0 ? field.value?.split(','): []}
             onChange={(e) => {
                 const values = e.value.filter((x: any) => !!x)
                 return field.onChange(values.join(','))
