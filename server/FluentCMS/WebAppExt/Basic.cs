@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using FluentCMS.Auth.Services;
 using FluentCMS.Cms.Services;
 using FluentCMS.Utils.Cache;
 using FluentCMS.Utils.DataDefinitionExecutor;
@@ -79,6 +80,7 @@ public static class Basic
         builder.Services.AddScoped<ISchemaService, SchemaService>();
         builder.Services.AddScoped<IEntityService, EntityService >();
         builder.Services.AddScoped<IViewService, ViewService >();
+        builder.Services.AddScoped<IProfileService, DummyProfileService >();
     }
 
     private static void InjectDbServices(WebApplicationBuilder builder, DatabaseProvider databaseProvider, string connectionString)

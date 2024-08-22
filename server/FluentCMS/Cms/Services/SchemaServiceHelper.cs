@@ -124,7 +124,7 @@ public partial class SchemaService
         var entity = item?.Settings.Entity;
         if (entity is null)
         {
-            return Result.Fail($"Not find entity ${name}");
+            return Result.Fail($"Not find entity {name}");
         }
 
         entity.Init();
