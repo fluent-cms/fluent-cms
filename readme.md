@@ -24,16 +24,18 @@ The example project can be found at  https://github.com/fluent-cms/fluent-cms/tr
    ```
 3. Modify Program.cs, add the following line before builder.Build(), the input parameter is the connection string of database.
    ```
-   builder.AddSqliteCms("Data Source=cms.db").PrintVersion();
+   builder.AddSqliteCms("Data Source=cms.db");
    var app = builder.Build();
    ```
    Currently FluentCMS support AddSqliteCms, AddSqlServerCms, AddPostgresCMS 
 
 4. Add the following line After builder.Build()
    ```
-   await app.UseCmsAsync(false);
+   await app.UseCmsAsync();
    ```
    this function bootstrap router, initialize Fluent CMS schema table
+
+Now you can start web server, the following chapter explains how to build schema and manage data.
 ## Develop a simple educational system use Fluent CMS
 When designing a database schema for a simple educational system, you typically need to create tables for `Teachers`, `Courses`, and `Students`. The relationships between these tables can vary depending on the specific requirements, but a common structure might include the following:
 ### Database Schema
