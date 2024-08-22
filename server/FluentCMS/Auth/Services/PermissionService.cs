@@ -35,15 +35,21 @@ public class PermissionService<TUser>(
         if (schema.Id > 0)
         {
             //read db to make sure the schema is faked by client
-            schema = await schemaService.GetByIdVerify(schema.Id, false);
+            var find = await schemaService.GetByIdAndVerify(schema.Id, false);
+            await CheckSchemaPermission(find, currentUserId);
+            schema.CreatedBy = find.CreatedBy;
         }
         else
         {
+            await CheckSchemaPermission(schema, currentUserId);
             schema.CreatedBy = currentUserId;
         }
 
-        await CheckSchemaPermission(schema, currentUserId);
-        EnsureCreatedByField(schema);
+        if (schema.Type == SchemaType.Entity)
+        {
+            await EnsureUserHaveAccess(schema);
+            EnsureCreatedByField(schema);
+        }
     }
     public async Task CheckEntity(RecordMeta meta)
     {
@@ -80,14 +86,13 @@ public class PermissionService<TUser>(
                 break;
             case SchemaType.Entity:
                 CheckViewAndEntityPermission(schema,currentUserId);
-                await EnsureUserHaveAccess(schema.Name);
                 break;
             case SchemaType.View:
                 CheckViewAndEntityPermission(schema,currentUserId);
                 break;
         }
     } 
-    private async Task EnsureUserHaveAccess(string schemaName)
+    private async Task EnsureUserHaveAccess(Schema schema)
     {
         //use have restricted access to the entity data
         if (contextAccessor.HttpContext.HasRole(Roles.Sa))
@@ -98,9 +103,9 @@ public class PermissionService<TUser>(
         var user = await userManager.GetUserAsync(contextAccessor.HttpContext!.User);
         var claims = await userManager.GetClaimsAsync(user!);
         
-        if (claims.FirstOrDefault(x=>x.Value == schemaName && x.Type is AccessScope.RestrictedAccess or AccessScope.FullAccess) == null)
+        if (claims.FirstOrDefault(x=>x.Value == schema.Name && x.Type is AccessScope.RestrictedAccess or AccessScope.FullAccess) == null)
         {
-            await userManager.AddClaimAsync(user!, new Claim(AccessScope.RestrictedAccess, schemaName));
+            await userManager.AddClaimAsync(user!, new Claim(AccessScope.RestrictedAccess, schema.Name));
         }
 
         await signInManager.RefreshSignInAsync(user!);
@@ -114,6 +119,7 @@ public class PermissionService<TUser>(
         entity.Attributes = entity.Attributes.Append(new Attribute
         {
             Field = CreatedBy,
+            Header = CreatedBy,
             DataType = DataType.String,
         }).ToArray();
     }

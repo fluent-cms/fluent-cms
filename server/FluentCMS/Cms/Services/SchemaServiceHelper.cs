@@ -219,8 +219,8 @@ public partial class SchemaService
             var query = new Query(SchemaTableName)
                 .Where(SchemaColumnId, dto.Id)
                 .AsUpdate(
-                    [SchemaColumnName, SchemaColumnType, SchemaColumnSettings,SchemaColumnCreatedBy],
-                    [dto.Name, dto.Type, JsonSerializer.Serialize(dto.Settings),dto.CreatedBy]
+                    [SchemaColumnName, SchemaColumnType, SchemaColumnSettings],
+                    [dto.Name, dto.Type, JsonSerializer.Serialize(dto.Settings)]
                 );
             await kateQueryExecutor.Exec(query,cancellationToken);
         }
@@ -238,6 +238,7 @@ public partial class SchemaService
             Name = (string)record[SchemaColumnName],
             Type = (string)record[SchemaColumnType],
             Settings = JsonSerializer.Deserialize<Settings>((string)record[SchemaColumnSettings])!,
+            CreatedBy = (string)record[SchemaColumnCreatedBy],
             Id = record[SchemaColumnId] switch
             {
                 int val => val,

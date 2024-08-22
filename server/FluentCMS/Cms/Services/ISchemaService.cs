@@ -8,7 +8,7 @@ public interface ISchemaService
 {
     Task<Schema[]> GetAll(string type,CancellationToken cancellationToken);
     Task<Result<Entity>> GetEntityByNameOrDefault(string name, CancellationToken cancellationToken = default);
-    Task<Schema> GetByIdVerify(int id, bool extend, CancellationToken cancellationToken = default);
+    Task<Schema> GetByIdAndVerify(int id, bool extend, CancellationToken cancellationToken = default);
     Task<Schema> GetByNameVerify(string name, bool extend, CancellationToken cancellationToken);
     Task<Schema?> GetByIdDefault(int id, CancellationToken cancellationToken = default);
     Task<Schema?> GetByNameDefault(string name, CancellationToken cancellationToken = default);

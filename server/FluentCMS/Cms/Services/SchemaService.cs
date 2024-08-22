@@ -99,7 +99,7 @@ public sealed partial class SchemaService(
         return ParseSchema(await kateQueryExecutor.One(query,cancellationToken));
     }
 
-    public async Task<Schema> GetByIdVerify(int id,bool extend, CancellationToken cancellationToken = default)
+    public async Task<Schema> GetByIdAndVerify(int id,bool extend, CancellationToken cancellationToken = default)
     {
         var item =  NotNull(await GetByIdDefault(id,cancellationToken)).
             ValOrThrow($"Schema [{id}] does not exist");

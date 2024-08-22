@@ -69,7 +69,7 @@ export function RoleDetailPage() {
     }
 
     return <>
-        {name !== NewUser && <h2>Editing `{role?.name}`</h2>}
+        {name !== NewUser && <h2>Editing Role `{role?.name}`</h2>}
         <Status/>
         <form onSubmit={handleSubmit(onSubmit)} id="form">
             <div className="formgrid grid">

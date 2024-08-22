@@ -21,7 +21,6 @@ export function MultiSelectInput(
             }}
             options={column.options?.split(',')}
             display="chip"
-            placeholder={"Select " + column.header} maxSelectedLabels={3} className="w-full"/>
+            placeholder={"Select " + column.header} className="w-full"/>
     }}/>
-
 }
