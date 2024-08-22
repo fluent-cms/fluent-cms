@@ -12,7 +12,7 @@ export async function catchResponse(req: any) {
         const res  =await req()
         return {data:res.data}
     } catch (err: any) {
-        return {error: decodeError(err)}
+        return {error: decodeError(err), errorDetail: err.response?.data}
     }
 }
 

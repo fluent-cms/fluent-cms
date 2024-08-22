@@ -1,6 +1,6 @@
 import useSWR from "swr";
-import {fullAPIURI } from "../configs";
-import {decodeError, fetcher, swrConfig} from "./util";
+import {fullAPIURI } from "./configs";
+import {decodeError, fetcher, swrConfig} from "../../services/util";
 
 export function useSchema (schemaName:string){
     let { data,error,isLoading} = useSWR(fullAPIURI(`/schemas/${schemaName}`), fetcher, swrConfig)

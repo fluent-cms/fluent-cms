@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { InputText } from 'primereact/inputtext';
 import { Password } from 'primereact/password';
 import { Button } from 'primereact/button';
 import { Card } from 'primereact/card';
@@ -7,7 +6,7 @@ import { Link } from 'react-router-dom';
 import 'primereact/resources/themes/saga-blue/theme.css';
 import 'primereact/resources/primereact.min.css';
 import 'primeicons/primeicons.css';
-import {changePassword, register} from "../services/auth";
+import {changePassword} from "../services/auth";
 
 export const ChangePasswordPage: React.FC = () => {
     const [oldPassword, setOldPassword] = useState<string>('');
@@ -22,11 +21,10 @@ export const ChangePasswordPage: React.FC = () => {
             return;
         }
         setErrors([]);
-        const {err} = await changePassword({oldPassword, password})
-        console.log(err);
-        if (err){
-            if (err.title){
-                setErrors(err.title.split('\r\n'));
+        const {error} = await changePassword({oldPassword, password})
+        if (error){
+            if (error){
+                setErrors(error.split('\r\n'));
             }else {
                 setErrors(["change password failed"]);
             }

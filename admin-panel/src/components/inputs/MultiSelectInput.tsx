@@ -19,7 +19,7 @@ export function MultiSelectInput(
                 const values = e.value.filter((x: any) => !!x)
                 return field.onChange(values.join(','))
             }}
-            options={column.options.split(',')}
+            options={column.options?.split(',')}
             display="chip"
             placeholder={"Select " + column.header} maxSelectedLabels={3} className="w-full"/>
     }}/>

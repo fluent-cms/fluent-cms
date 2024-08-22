@@ -1,12 +1,12 @@
 import {Link, useParams } from "react-router-dom";
-import {LazyDataTable} from "../components/dataTable/LazyDataTable";
 import {useListData} from "../services/entity";
 import {useLazyStateHandlers} from "../containers/useLazyStateHandlers";
 import {getListColumns, } from "../services/columnUtil";
 import {Button} from "primereact/button";
-import {getFullAssetsURL} from "../configs";
+import {getFullAssetsURL} from "../services/configs";
 import {PageLayout} from "./PageLayout";
-import {FetchingStatus} from "../components/FetchingStatus";
+import {FetchingStatus} from "../../components/FetchingStatus";
+import {LazyDataTable} from "../../components/dataTable/LazyDataTable";
 
 export function DataListPage(){
     const {schemaName} = useParams()

@@ -1,11 +1,11 @@
 import {deleteSubPageItems, saveSubPageItems, useSubPageData} from "../services/entity";
 import {Button} from "primereact/button";
-import {useDialogState} from "../components/dialogs/useDialogState";
-import {SelectDataTable} from "../components/dataTable/SelectDataTable";
-import {SaveDialog} from "../components/dialogs/SaveDialog";
 import {useRequestStatus} from "./useFormStatus";
 import {useSubSchema} from "./useSubSchema";
 import {useLazyStateHandlers} from "./useLazyStateHandlers";
+import {useDialogState} from "../../components/dialogs/useDialogState";
+import {SelectDataTable} from "../../components/dataTable/SelectDataTable";
+import {SaveDialog} from "../../components/dialogs/SaveDialog";
 
 export function Crosstable({column, data, schema, getFullURL}: {
     data: any,

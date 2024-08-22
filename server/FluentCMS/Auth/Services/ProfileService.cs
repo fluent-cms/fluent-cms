@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using FluentCMS.Services;
 using Microsoft.AspNetCore.Identity;
 
@@ -16,6 +17,20 @@ public class ProfileService<TUser>(
     ):IProfileService
 where TUser :IdentityUser, new()
 {
+    public UserDto GetInfo()
+    {
+        
+        var claims = contextAccessor.HttpContext?.User;
+        True(claims?.Identity?.IsAuthenticated == true)
+            .ThrowNotTrue("Not logged in");
+        return new UserDto
+        {
+            Email = claims?.FindFirstValue(ClaimTypes.Email) ?? "",
+            Roles = claims?.FindAll(ClaimTypes.Role).Select(x=>x.Value).ToArray()??[],
+            FullAccessEntities = claims?.FindAll(AccessScope.FullAccess).Select(x=>x.Value).ToArray()??[],
+            RestrictedAccessEntities = claims?.FindAll(AccessScope.RestrictedAccess).Select(x=>x.Value).ToArray()??[],
+        };
+    }
     
     public async Task ChangePassword(ProfileDto dto)
     {
@@ -26,11 +41,11 @@ where TUser :IdentityUser, new()
 
     private async Task<TUser> MustGetCurrentUser()
     {
-        var clainms = contextAccessor.HttpContext?.User;
-        True(clainms?.Identity?.IsAuthenticated == true)
+        var claims = contextAccessor.HttpContext?.User;
+        True(claims?.Identity?.IsAuthenticated == true)
             .ThrowNotTrue("Not logged in");
-        var user =await userManager.GetUserAsync(clainms!);
-        return NotNull(user).ValOrThrow("Not lgged in");
+        var user =await userManager.GetUserAsync(claims!);
+        return NotNull(user).ValOrThrow("Not logged in");
     }
     private static string IdentityErrMsg(IdentityResult result) =>  string.Join("\r\n", result.Errors.Select(e => e.Description));
 

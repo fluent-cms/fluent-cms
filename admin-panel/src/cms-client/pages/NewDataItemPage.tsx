@@ -2,7 +2,7 @@ import {ItemForm} from "../containers/ItemForm";
 import {getLinkToEntity, getWriteColumns} from "../services/columnUtil";
 import {addItem} from "../services/entity";
 import {Button} from "primereact/button";
-import {fileUploadURL, getFullAssetsURL} from "../configs";
+import {fileUploadURL, getFullAssetsURL} from "../services/configs";
 import {useRequestStatus} from "../containers/useFormStatus";
 import {useParams} from "react-router-dom";
 import {PageLayout} from "./PageLayout";

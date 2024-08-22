@@ -8,9 +8,14 @@ namespace FluentCMS.Auth.Controllers;
 public class ProfileController(IProfileService profileService):ControllerBase
 {
     [HttpPost("password")]
-    public async Task<ActionResult<ProfileDto[]>> ChangePassword(ProfileDto dto)
+    public async Task ChangePassword(ProfileDto dto)
     {
         await profileService.ChangePassword(dto);
-        return Ok();
-    } 
+    }
+
+    [HttpGet("info")]
+    public UserDto GetInfo()
+    {
+        return profileService.GetInfo();
+    }
 }

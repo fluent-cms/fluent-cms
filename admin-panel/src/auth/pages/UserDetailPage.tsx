@@ -1,10 +1,10 @@
 import {deleteUser, saveUser, useEntities, useOneUsers, useRoles} from "../services/accounts";
 import {useForm} from "react-hook-form";
 import {useParams} from "react-router-dom";
-import {MultiSelectInput} from "../../cms-client/components/inputs/MultiSelectInput";
 import {Button} from "primereact/button";
-import {FetchingStatus} from "../../cms-client/components/FetchingStatus";
 import {useRequestStatus} from "../../cms-client/containers/useFormStatus";
+import {FetchingStatus} from "../../components/FetchingStatus";
+import {MultiSelectInput} from "../../components/inputs/MultiSelectInput";
 
 export function UserDetailPage() {
     const {id} = useParams()
@@ -27,7 +27,7 @@ export function UserDetailPage() {
 
     const user = {...userData||{}};
     ['roles','fullAccessEntities','restrictedAccessEntities'].forEach(x => {
-        if (userData[x].length > 0) {
+        if (userData[x]?.length > 0) {
             user[x] = userData[x].join(',')
         } else {
             delete (userData[x]);
@@ -36,8 +36,11 @@ export function UserDetailPage() {
 
     const onSubmit = async (formData: any)=>{
         formData.id = id;
+        console.log(formData);
         ['roles','fullAccessEntities','restrictedAccessEntities'].forEach(x =>{
-            formData[x] = formData[x]?.split(',')??[];
+            if (formData[x] && typeof formData[x] === 'string') {
+                formData[x] = formData[x]?.split(',');
+            }
         })
 
         const {error} = await saveUser(formData);

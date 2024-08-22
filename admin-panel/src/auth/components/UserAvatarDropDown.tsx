@@ -2,10 +2,7 @@ import React, {useRef} from 'react';
 import {Avatar} from 'primereact/avatar';
 import {Menu} from 'primereact/menu';
 import CryptoJS from 'crypto-js';
-import useSWR from "swr";
-import {fullAuthAPIURI} from "../config";
-import {fetcher, swrConfig} from "../../cms-client/services/util";
-import {logout} from "../services/auth";
+import {logout, useUserInfo} from "../services/auth";
 import { useNavigate} from "react-router-dom";
 
 const getGravatarUrl = (email: string) => {
@@ -16,7 +13,7 @@ const getGravatarUrl = (email: string) => {
 
 const UserAvatarDropdown = ({email}: { email: string }) => {
     const navigate = useNavigate();
-    const {mutate} = useSWR(fullAuthAPIURI(`/manage/info`), fetcher, swrConfig)
+    const {mutate} = useUserInfo();
 
     const menu = useRef<any>(null);
     const items = [

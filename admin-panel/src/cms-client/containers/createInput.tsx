@@ -1,14 +1,14 @@
-import {TextInput} from "../components/inputs/TextInput";
-import {DropDownInput} from "../components/inputs/DropDownInput";
-import {EditorInput} from "../components/inputs/EditorInput";
-import {FileInput} from "../components/inputs/FileInput";
-import {TextAreaInput} from "../components/inputs/TextAreaInput";
-import {DatetimeInput} from "../components/inputs/DatetimeInput";
-import {MultiSelectInput} from "../components/inputs/MultiSelectInput";
-import {GalleryInput} from "../components/inputs/GalleryInput";
 import {LookupContainer} from "./LookupContainer";
-import {DateInput} from "../components/inputs/DateInput";
-import {NumberInput} from "../components/inputs/NumberInput";
+import {TextInput} from "../../components/inputs/TextInput";
+import {TextAreaInput} from "../../components/inputs/TextAreaInput";
+import {EditorInput} from "../../components/inputs/EditorInput";
+import {NumberInput} from "../../components/inputs/NumberInput";
+import {DatetimeInput} from "../../components/inputs/DatetimeInput";
+import {DateInput} from "../../components/inputs/DateInput";
+import {FileInput} from "../../components/inputs/FileInput";
+import {GalleryInput} from "../../components/inputs/GalleryInput";
+import {DropDownInput} from "../../components/inputs/DropDownInput";
+import {MultiSelectInput} from "../../components/inputs/MultiSelectInput";
 
 export function createInput(props :any) {
     const {type, field} = props.column

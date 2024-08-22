@@ -6,9 +6,9 @@ import {getLinkToEntity, getSubPageColumns, getWriteColumns} from "../services/c
 import {Button} from "primereact/button";
 import {Crosstable} from "../containers/Crosstable";
 import {useRequestStatus} from "../containers/useFormStatus";
-import {fileUploadURL, getFullAssetsURL} from "../configs";
+import {fileUploadURL, getFullAssetsURL} from "../services/configs";
 import {PageLayout} from "./PageLayout";
-import {FetchingStatus} from "../components/FetchingStatus";
+import {FetchingStatus} from "../../components/FetchingStatus";
 
 export function DataItemPage() {
     const {schemaName} = useParams()
@@ -18,7 +18,7 @@ export function DataItemPage() {
 export function DataItemPageComponent({schema}:{schema:any}) {
     const {id} = useParams()
     const {data,error,isLoading}= useItemData(schema.name, id)
-    const {checkError, Status, confirm} = useRequestStatus(schema.name)
+    const {checkError, Status, confirm} = useRequestStatus(schema.name + id)
 
     const uploadUrl = fileUploadURL()
     const columns = getWriteColumns(schema)

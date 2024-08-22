@@ -1,12 +1,11 @@
 import axios from "axios";
-import {catchResponse} from "./util";
 import useSWR from "swr";
-import {fetcher, swrConfig} from "../../cms-client/services/util";
-import {fullAuthAPIURI} from "../config";
+import {catchResponse, fetcher, swrConfig} from "../../services/util";
+import {fullAuthAPIURI} from "./configs";
 
 
 export function useUserInfo() {
-    return useSWR(fullAuthAPIURI(`/manage/info`), fetcher, swrConfig)
+    return useSWR<Profile>(fullAuthAPIURI(`/profile/info`), fetcher, swrConfig)
 }
 
 export async function login(item:any) {

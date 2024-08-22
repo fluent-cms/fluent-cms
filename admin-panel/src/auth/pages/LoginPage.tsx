@@ -7,20 +7,17 @@ import 'primereact/resources/themes/saga-blue/theme.css';
 import 'primereact/resources/primereact.min.css';
 import 'primeicons/primeicons.css';
 import {Link} from "react-router-dom";
-import {login} from "../services/auth";
-import useSWR from "swr";
-import {fullAuthAPIURI} from "../config";
-import {fetcher, swrConfig} from "../../cms-client/services/util";
+import {login, useUserInfo} from "../services/auth";
 
 export  const LoginPage: React.FC = () => {
     const [email, setEmail] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const [error, setError] = useState('');
-    const {mutate} =  useSWR(fullAuthAPIURI(`/manage/info`), fetcher, swrConfig)
+    const {mutate} =  useUserInfo();
 
     const handleLogin =async () => {
         const res = await login({email, password})
-        if (res.err){
+        if (res.error){
             setError("login failed");
         }else {
             await mutate()

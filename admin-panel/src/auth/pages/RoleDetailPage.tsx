@@ -6,11 +6,11 @@ import {
 } from "../services/accounts";
 import {useForm} from "react-hook-form";
 import {useParams} from "react-router-dom";
-import {MultiSelectInput} from "../../cms-client/components/inputs/MultiSelectInput";
 import {Button} from "primereact/button";
-import {FetchingStatus} from "../../cms-client/components/FetchingStatus";
 import {useRequestStatus} from "../../cms-client/containers/useFormStatus";
 import {NewUser} from "./RoleListPage";
+import {MultiSelectInput} from "../../components/inputs/MultiSelectInput";
+import {FetchingStatus} from "../../components/FetchingStatus";
 
 export function RoleDetailPage() {
     const {name} = useParams()

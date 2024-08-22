@@ -1,7 +1,7 @@
 import useSWR, {useSWRConfig} from "swr";
-import {fullAPIURI} from "../configs";
+import {fullAPIURI} from "./configs";
 import axios from "axios";
-import {catchResponse, decodeError, fetcher, swrConfig} from "./util";
+import {catchResponse, decodeError, fetcher, swrConfig} from "../../services/util";
 import {encodeLazyState} from "./lazyState";
 
 

@@ -23,10 +23,10 @@ export const RegisterPage: React.FC = () => {
         }
         setErrors([]);
         // Implement registration logic here
-        const {err} = await register({email, password})
-        if (err){
-            if (err.errors){
-                setErrors( Object.values(err.errors).map((x:any)=>x[0]))
+        const {errorDetail:error} = await register({email, password})
+        if (error){
+            if (error.errors){
+                setErrors(Object.values(error.errors).map((x:any)=>x[0]) )
             }else {
                 setErrors(["register failed"]);
             }
@@ -51,7 +51,7 @@ export const RegisterPage: React.FC = () => {
         <div style={containerStyle}>
             <Card title="Register" className="p-shadow-5" style={cardStyle}>
                 <div className="p-fluid">
-                    {errors.map(error=> (<div className="p-field"> <span className="p-error">{errors}</span> </div>)) }
+                    {errors.map(error=> (<div className="p-field"> <span className="p-error">{error}</span> </div>)) }
                     {success ? (
                         <div className="p-field">
                             <span className="p-message ">

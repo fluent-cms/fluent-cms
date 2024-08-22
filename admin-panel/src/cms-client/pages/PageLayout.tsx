@@ -1,5 +1,5 @@
 import {useSchema} from "../services/schema";
-import {FetchingStatus} from "../components/FetchingStatus";
+import {FetchingStatus} from "../../components/FetchingStatus";
 
 interface PageLayoutProps {
     schemaName:string,
