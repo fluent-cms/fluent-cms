@@ -107,6 +107,7 @@ public partial class SchemaService
                 [
                     ..menuBar.MenuItems, new MenuItem
                     {
+                        Icon = "pi-bolt",
                         Url = link,
                         Label = entity.Title
                     }

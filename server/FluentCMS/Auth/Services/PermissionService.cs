@@ -36,12 +36,12 @@ public class PermissionService<TUser>(
         {
             //read db to make sure the schema is faked by client
             var find = await schemaService.GetByIdAndVerify(schema.Id, false);
-            await CheckSchemaPermission(find, currentUserId);
+            CheckSchemaPermission(find, currentUserId);
             schema.CreatedBy = find.CreatedBy;
         }
         else
         {
-            await CheckSchemaPermission(schema, currentUserId);
+            CheckSchemaPermission(schema, currentUserId);
             schema.CreatedBy = currentUserId;
         }
 
@@ -77,7 +77,7 @@ public class PermissionService<TUser>(
                 .ThrowNotTrue($"You can only access record created by you, entityName={meta.Entity.Name}, record id={meta.Id}");
         }
     }
-    private async Task CheckSchemaPermission(Schema schema, string currentUserId)
+    private void CheckSchemaPermission(Schema schema, string currentUserId)
     {
         switch (schema.Type)
         {

@@ -40,10 +40,10 @@
         <PackageReadmeFile>readme.md</PackageReadmeFile>
         <TargetFramework>net8.0</TargetFramework>
         <PackageId>FluentCMS</PackageId>
-        <Version>0.0.6</Version>
+        <Version>0.1.1</Version>
         <Authors>jaike</Authors>
         <Company>fluent-cms</Company>
-        <Description>A Framework to build high performance headless CMS </Description>
+        <Description>CRUD (Create, Read, Update, Delete) for any entities</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageProjectUrl>https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS</PackageProjectUrl>
         <RepositoryUrl>https://github.com/fluent-cms/fluent-cms</RepositoryUrl>

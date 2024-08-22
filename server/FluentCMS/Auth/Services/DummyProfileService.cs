@@ -13,7 +13,7 @@ public class DummyProfileService: IProfileService
         };
     }
     
-    public async Task ChangePassword(ProfileDto dto)
+    public Task ChangePassword(ProfileDto dto)
     {
         throw new InvalidParamException("Not implemented yet");
     } 

@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Text.Json.Serialization;
 using FluentCMS.Auth.Services;
 using FluentCMS.Cms.Services;
@@ -35,12 +36,15 @@ public static class Basic
     
     public static async Task UseCmsAsync(this WebApplication app)
     {
-        app.UseExceptionHandler(app.Environment.IsDevelopment() ? "/error-development" : "/error");
-
+        if (!Directory.Exists("wwwroot"))
+        {
+            await DownloadAndExtractFilesFromGitHub();
+        }
         app.UseDefaultFiles();
         app.UseStaticFiles();
         app.MapFallbackToFile("index.html");
 
+        app.UseExceptionHandler(app.Environment.IsDevelopment() ? "/error-development" : "/error");
         app.MapControllers();
         using var scope = app.Services.CreateScope();
 
@@ -49,6 +53,35 @@ public static class Basic
         await schemaService.EnsureTopMenuBar(default);
     }
 
+    private static async Task DownloadAndExtractFilesFromGitHub()
+    {
+        const string zipUrl = "https://github.com/fluent-cms/fluent-cms/raw/main/client_release/wwwroot.zip";
+        var tempFile = Path.Combine(Path.GetTempPath(), "wwwroot.zip");
+        var extractPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+        
+
+        using (var httpClient = new HttpClient())
+        {
+            // Download the zip file
+            var response = await httpClient.GetAsync(zipUrl);
+            response.EnsureSuccessStatusCode();
+            await using var fs = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None);
+            await response.Content.CopyToAsync(fs);
+        }
+
+        // Extract the files
+        ZipFile.ExtractToDirectory(tempFile, Path.GetTempPath(), true);
+
+        // Move extracted files to wwwroot
+        var extractedDir = Path.Combine(Path.GetTempPath(), "wwwroot");
+        if (Directory.Exists(extractedDir))
+        {
+            Directory.Move(extractedDir, extractPath);
+        }
+
+        // Clean up the temp file
+        File.Delete(tempFile);
+    }
     private static void BuildCms(WebApplicationBuilder builder, DatabaseProvider provider, string connectionString )
     {
         InitController(builder);
