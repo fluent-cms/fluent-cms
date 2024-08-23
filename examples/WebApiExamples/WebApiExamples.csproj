@@ -1,74 +1,28 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
-
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
-
     <ItemGroup>
-        <PackageReference Include="FluentCMS" Version="0.1.1" />
+        <PackageReference Include="FluentCMS" Version="0.1.3" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.6"/>
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0"/>
     </ItemGroup>
-
     <ItemGroup>
-      <_ContentIncludedByDefault Remove="wwwroot\assets\index-d17698ad.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\index-de14e189.css" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\Inter-italic.var-d1401419.woff2" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\Inter-roman.var-17fe38ab.woff2" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\primeicons-131bc3bf.ttf" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\primeicons-3824be50.woff2" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\primeicons-5e10f102.svg" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\primeicons-90a58d3a.woff" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\primeicons-ce852338.eot" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\quill-794feed1.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\index-BNLh2e8Y.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\index-C4V4BfVX.css" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\index-C56t_YGU.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\Inter-italic.var-C0P-kdXT.woff2" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\Inter-roman.var-e-DsT6iu.woff2" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\primeicons-C6QP2o4f.woff2" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\primeicons-DMOk5skT.eot" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\primeicons-Dr5RGzOO.svg" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\primeicons-MpK4pl85.ttf" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\primeicons-WjwUDZjB.woff" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\quill-C1PHeGBy.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\quill-DstnRzfT.js" />
       <_ContentIncludedByDefault Remove="wwwroot\favicon.ico" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\06e96649.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\0d5d10d9.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\0ec3dab3.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\1077471c.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\130d2e0e.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\16461a33.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\1fb6cec0.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\2897ef47.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\2ae516a8.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\2e64b21a.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\2e64e8cf.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\35236d18.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\359760de.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\390bc67d.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\40eb1ae6.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\4294c7f1.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\43879826.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\4dcb37e2.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\4ecb858a.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\52ed1bf7.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\5376b18f.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\54f1ce0c.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\608341b9.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\61706362.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\6f42f6e1.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\7d5445bc.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\9948b531.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\b9413d5a.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\b98978c5.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\c9ec3f8b.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\d0624b06.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\d177d46f.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\d43c6020.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\d78c448d.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\df30355c.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\df999498.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\e16629c1.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\e344ff85.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\e70a0e47.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\eac53472.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\f9dca969.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-06\fcda39cd.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-07\28a5e28a.png" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-07\4927486c.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-07\53018b50.jpg" />
       <_ContentIncludedByDefault Remove="wwwroot\fluent-cms.png" />
       <_ContentIncludedByDefault Remove="wwwroot\index.html" />
       <_ContentIncludedByDefault Remove="wwwroot\schema-ui\edit.html" />
@@ -90,5 +44,4 @@
       <_ContentIncludedByDefault Remove="wwwroot\schema-ui\list.html" />
       <_ContentIncludedByDefault Remove="wwwroot\schema-ui\styles.css" />
     </ItemGroup>
-
 </Project>

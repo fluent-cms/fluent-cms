@@ -1,6 +1,5 @@
 /admin-panel/node_modules
 /ui/node_modules
-/server/FluentCMS.Blog/wwwroot/
 /examples/fluent-cms-postgres-docker/db_data
 /examples/fluent-cms-postgres-docker/db_data_1m
 /examples/fluent-cms-postgres-docker/db_data_1m_back

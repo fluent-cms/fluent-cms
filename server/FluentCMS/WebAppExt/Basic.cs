@@ -38,7 +38,11 @@ public static class Basic
     {
         if (!Directory.Exists("wwwroot"))
         {
+            Console.WriteLine("wwwroot directory is empty, download fluent-cms client files to wwwroot");
             await DownloadAndExtractFilesFromGitHub();
+            Console.WriteLine("fluent-cms client files was downloaded to wwwroot");
+            Console.WriteLine("please restart the application");
+            Environment.Exit(0);
         }
         app.UseDefaultFiles();
         app.UseStaticFiles();

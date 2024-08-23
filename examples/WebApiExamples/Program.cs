@@ -1,17 +1,52 @@
 using System.Text.RegularExpressions;
+using FluentCMS.Auth.Services;
 using FluentCMS.Services;
 using FluentCMS.Utils.HookFactory;
 using FluentCMS.WebAppExt;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using WebApiExamples;
 
 var builder = WebApplication.CreateBuilder(args);
-
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.AddSqliteCms("Data Source=cms.db");
+
+var connectionString = "Data Source=cms.db";
+builder.AddSqliteCms(connectionString);
+
+//add fluent cms' permission control service 
+builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
+builder.AddCmsAuth<IdentityUser, IdentityRole, AppDbContext>();
+
 var app = builder.Build();
+
+//ensure database is created
+using var scope = app.Services.CreateScope();
+var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+await ctx.Database.EnsureCreatedAsync();
+
+//use fluent cms' CRUD featrue
 await app.UseCmsAsync();
 
-app.RegisterCmsHook("teacher", [Occasion.BeforeInsert, Occasion.BeforeUpdate],(IDictionary<string,object> teacher) =>
+//user fluent permission control feature
+app.UseCmsAuth<IdentityUser>();
+InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]));
+InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]));
+
+app.RegisterCmsHook("teacher", [Occasion.BeforeInsert, Occasion.BeforeUpdate], VerifyTeacher);
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+app.UseHttpsRedirection();
+app.Run();
+
+/////
+
+void  VerifyTeacher(IDictionary<string,object> teacher) 
 {
     var (email, phoneNumber) = ((string)teacher["email"], (string)teacher["phone_number"]);
     if (!IsValidEmail())
@@ -43,13 +78,4 @@ app.RegisterCmsHook("teacher", [Occasion.BeforeInsert, Occasion.BeforeUpdate],(I
         // Return true if the phone number matches the pattern, otherwise false
         return regex.IsMatch(phoneNumber);
     }
-});
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
 }
-app.UseHttpsRedirection();
-app.Run();
