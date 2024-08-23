@@ -66,9 +66,13 @@ public class AccountService<TUser, TRole,TCtx>(
             Email = item.Key.Email!,
             Id = item.Key.Id,
             Roles = item.Values.Where(x=>x.role is not null).Select(x => x.role.Name!).Distinct().ToArray(),
-            FullAccessEntities = item.Values.Where(x => x.userClaim?.ClaimType == AccessScope.FullAccess)
+            ReadWriteEntities = item.Values.Where(x => x.userClaim?.ClaimType == AccessScope.FullAccess)
                 .Select(x => x.userClaim.ClaimValue!).Distinct().ToArray(),
-            RestrictedAccessEntities = item.Values.Where(x => x.userClaim?.ClaimType == AccessScope.RestrictedAccess)
+            RestrictedReadWriteEntities = item.Values.Where(x => x.userClaim?.ClaimType == AccessScope.RestrictedAccess)
+                .Select(x => x.userClaim.ClaimValue!).Distinct().ToArray(),
+            ReadonlyEntities = item.Values.Where(x => x.userClaim?.ClaimType == AccessScope.FullRead)
+                .Select(x => x.userClaim.ClaimValue!).Distinct().ToArray(),
+            RestrictedReadonlyEntities = item.Values.Where(x => x.userClaim?.ClaimType == AccessScope.RestrictedRead)
                 .Select(x => x.userClaim.ClaimValue!).Distinct().ToArray(),
         };
     }
@@ -147,8 +151,10 @@ public class AccountService<TUser, TRole,TCtx>(
         var user = await MustFindUser(dto.Id);
         var claims = await userManager.GetClaimsAsync(user);
         CheckResult(await AssignRole(user, dto.Roles));
-        CheckResult(await AssignClaim(user, claims, AccessScope.FullAccess, dto.FullAccessEntities));
-        CheckResult(await AssignClaim(user, claims, AccessScope.RestrictedAccess, dto.RestrictedAccessEntities));
+        CheckResult(await AssignClaim(user, claims, AccessScope.FullAccess, dto.ReadWriteEntities));
+        CheckResult(await AssignClaim(user, claims, AccessScope.RestrictedAccess, dto.RestrictedReadWriteEntities));
+        CheckResult(await AssignClaim(user, claims, AccessScope.FullRead, dto.ReadonlyEntities));
+        CheckResult(await AssignClaim(user, claims, AccessScope.RestrictedRead, dto.RestrictedReadonlyEntities));
     }
 
     private async Task<TUser> MustFindUser(string id)
@@ -224,9 +230,11 @@ public class AccountService<TUser, TRole,TCtx>(
         return new RoleDto
         {
             Name = name,
-            FullAccessEntities = claims.Where(x => x.Type == AccessScope.FullAccess).Select(x => x.Value).ToArray(),
-            RestrictedAccessEntities =
+            ReadWriteEntities = claims.Where(x => x.Type == AccessScope.FullAccess).Select(x => x.Value).ToArray(),
+            RestrictedReadWriteEntities =
                 claims.Where(x => x.Type == AccessScope.RestrictedAccess).Select(x => x.Value).ToArray(),
+            ReadonlyEntities = claims.Where(x => x.Type == AccessScope.FullRead).Select(x => x.Value).ToArray(),
+            RestrictedReadonlyEntities = claims.Where(x => x.Type == AccessScope.RestrictedRead).Select(x => x.Value).ToArray()
         };
     }
     public async Task DeleteRole(string name)
@@ -256,8 +264,10 @@ public class AccountService<TUser, TRole,TCtx>(
         CheckResult(await EnsureRoles([roleDto.Name]));
         var role = await roleManager.FindByNameAsync(roleDto.Name);
         var claims =await roleManager.GetClaimsAsync(role!);
-        CheckResult(await AddClaimsToRole(role!, claims, AccessScope.FullAccess, roleDto.FullAccessEntities));
-        CheckResult(await AddClaimsToRole(role!, claims, AccessScope.RestrictedAccess, roleDto.RestrictedAccessEntities));
+        CheckResult(await AddClaimsToRole(role!, claims, AccessScope.FullAccess, roleDto.ReadWriteEntities));
+        CheckResult(await AddClaimsToRole(role!, claims, AccessScope.RestrictedAccess, roleDto.RestrictedReadWriteEntities));
+        CheckResult(await AddClaimsToRole(role!, claims, AccessScope.FullRead, roleDto.ReadonlyEntities));
+        CheckResult(await AddClaimsToRole(role!, claims, AccessScope.RestrictedRead, roleDto.RestrictedReadonlyEntities));
     }
 
     private async Task<Result> AddClaimsToRole(TRole role,  IList<Claim> claims, string type, string[]values )

@@ -41,20 +41,20 @@ public static class Auth
 
         var registry = app.Services.GetRequiredService<HookRegistry>();
         registry.AddHooks("*", [Occasion.BeforeSaveSchema, Occasion.BeforeDeleteSchema],
-            async (IPermissionService service, Schema schema) =>
-            {
-                await service.HandleSchema(schema);
-            });
+            async (IPermissionService service, Schema schema) => await service.HandleSchema(schema));
+
+        registry.AddHooks("*", [Occasion.BeforeQueryOne, Occasion.BeforeQueryMany],
+            (IPermissionService service, RecordMeta meta, Filters filters) => service.CheckEntityReadPermission(meta, filters));
 
         registry.AddHooks("*",
             [Occasion.BeforeAddRelated, Occasion.BeforeDeleteRelated, Occasion.BeforeDelete, Occasion.BeforeUpdate],
-            async (IPermissionService service, RecordMeta meta) => await service.CheckEntity(meta));
+            async (IPermissionService service, RecordMeta meta) => await service.CheckEntityAccessPermission(meta));
 
         registry.AddHooks("*", [Occasion.BeforeInsert],
             async (IPermissionService service, RecordMeta meta, Record record) =>
             {
                 service.AssignCreatedBy(record);
-                await service.CheckEntity(meta);
+                await service.CheckEntityAccessPermission(meta);
             }
         );
     }

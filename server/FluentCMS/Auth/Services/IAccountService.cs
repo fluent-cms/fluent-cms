@@ -7,15 +7,19 @@ public sealed class UserDto
     public string Id { get; set; } = "";
     public string Email { get; set; } = "";
     public string[] Roles { get; set; } = [];
-    public string[] FullAccessEntities { get; set; } = [];
-    public string[] RestrictedAccessEntities { get; set; } = [];
+    public string[] ReadWriteEntities { get; set; } = [];
+    public string[] RestrictedReadWriteEntities { get; set; } = [];
+    public string[] ReadonlyEntities { get; set; } = [];
+    public string[] RestrictedReadonlyEntities { get; set; } = [];
 }
 
 public sealed class RoleDto
 {
     public string Name { get; set; } = "";
-    public string[] FullAccessEntities { get; set; } = [];
-    public string[] RestrictedAccessEntities { get; set; } = [];
+    public string[] ReadWriteEntities { get; set; } = [];
+    public string[] RestrictedReadWriteEntities { get; set; } = [];
+    public string[] ReadonlyEntities { get; set; } = [];
+    public string[] RestrictedReadonlyEntities { get; set; } = [];
 }
 
 public interface IAccountService

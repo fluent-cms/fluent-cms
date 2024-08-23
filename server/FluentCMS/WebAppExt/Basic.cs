@@ -151,7 +151,7 @@ public static class Basic
             .ToArray();
 
         Console.WriteLine("*********************************************************");
-        Console.WriteLine("Fluent CMS: version 0.1, build Jul21 4pm");
+        Console.WriteLine("Fluent CMS");
         Console.WriteLine($"Resolved Database Provider: {databaseProvider}");
         Console.WriteLine($"Connection String: {string.Join(";", parts)}");
         Console.WriteLine($"Current Directory: {Directory.GetCurrentDirectory()}");

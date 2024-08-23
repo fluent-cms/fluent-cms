@@ -21,11 +21,11 @@ public class HookRegistry
     }
 
     public async Task ModifyListResult(IServiceProvider provider, Occasion occasion,
-        string entityName, ListResult listResult)
+        RecordMeta meta, ListResult listResult)
     {
-        foreach (var hook in GetHooks(entityName, occasion))
+        foreach (var hook in GetHooks(meta.Entity.Name, occasion))
         {
-            var exit = await hook.ModifyListResult(provider, listResult);
+            var exit = await hook.ModifyListResult(provider,meta, listResult);
             if (exit)
             {
                 break ;
@@ -53,7 +53,7 @@ public class HookRegistry
         var exit = false;
         foreach (var hook in GetHooks(meta.Entity.Name, occasion))
         {
-            exit = await hook.ModifyQuery(provider, filters,sorts,pagination);
+            exit = await hook.ModifyQuery(provider,meta, filters,sorts,pagination);
             if (exit)
             {
                 break ;
@@ -76,6 +76,22 @@ public class HookRegistry
 
         return exit;
     }
+
+    public async Task<bool> ModifyRecordAndFilter(IServiceProvider provider, Occasion occasion, RecordMeta meta, Record record, Filters filters)
+    {
+        var exit = false;
+        foreach (var hook in GetHooks(meta.Entity.Name, occasion))
+        {
+            exit = await hook.ModifyRecordAndFilter(provider, meta, record,filters);
+            if (exit)
+            {
+                break;
+            }
+        }
+
+        return exit;
+    }
+
     public async Task<bool> ModifyRecord(IServiceProvider provider, Occasion occasion, RecordMeta meta, Record record)
     {
         var exit = false;

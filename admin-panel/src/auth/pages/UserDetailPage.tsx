@@ -4,7 +4,9 @@ import {useParams} from "react-router-dom";
 import {Button} from "primereact/button";
 import {useRequestStatus} from "../../cms-client/containers/useFormStatus";
 import {FetchingStatus} from "../../components/FetchingStatus";
-import {MultiSelectInput} from "../../components/inputs/MultiSelectInput";
+import {arrayToCvs, cvsToArray, MultiSelectInput} from "../../components/inputs/MultiSelectInput";
+import { getEntityPermissionColumns} from "../types/Profile";
+
 
 export function UserDetailPage() {
     const {id} = useParams()
@@ -22,30 +24,21 @@ export function UserDetailPage() {
         return <FetchingStatus isLoading={loadingUser || loadingRoles || loadingEntity} error={errorUser || errorRoles || errorEntities}/>
     }
 
+
     const rolesOption = roles.join(',');
     const entitiesOption = entities.map((x: {name:string})=>x.name).join(',');
 
-    const user = {...userData||{}};
-    ['roles','fullAccessEntities','restrictedAccessEntities'].forEach(x => {
-        if (userData[x]?.length > 0) {
-            user[x] = userData[x].join(',')
-        } else {
-            delete (userData[x]);
-        }
-    });
+    const columns = [
+        {field:'roles',header:'Roles',options: rolesOption},
+        ...getEntityPermissionColumns(entitiesOption)
+    ];
 
+    const user = arrayToCvs(userData, columns.map(x=>x.field));
     const onSubmit = async (formData: any)=>{
         formData.id = id;
-        console.log(formData);
-        ['roles','fullAccessEntities','restrictedAccessEntities'].forEach(x =>{
-            if (formData[x] && typeof formData[x] === 'string') {
-                formData[x] = formData[x]?.split(',');
-            }
-        })
-
-        const {error} = await saveUser(formData);
+        var payload = cvsToArray(formData,columns.map(x=>x.field));
+        const {error} = await saveUser(payload);
         checkError(error, 'Save User Succeed')
-
     }
 
     const onDelete = async () =>{
@@ -55,7 +48,6 @@ export function UserDetailPage() {
             if (!error) {
                 await new Promise(r => setTimeout(r, 500));
                 window.location.href = "/users";
-
             }
         });
     }
@@ -65,9 +57,9 @@ export function UserDetailPage() {
         <Status/>
         <form onSubmit={handleSubmit(onSubmit)} id="form">
             <div className="formgrid grid">
-                <MultiSelectInput data={user} column={{field:'roles',header:'Roles',options: rolesOption}} register={register} className={'field col-12  md:col-4'} control={control} id={id}/>
-                <MultiSelectInput data={user} column={{field:'fullAccessEntities',header:'Full Access Entities',options:entitiesOption}} register={register} className={'field col-12  md:col-4'} control={control} id={id}/>
-                <MultiSelectInput data={user} column={{field:'restrictedAccessEntities',header:'Restricted Access Entities',options:entitiesOption}} register={register} className={'field col-12  md:col-4'} control={control} id={id}/>
+                {
+                    columns.map(x => (<MultiSelectInput data={user} column={x} register={register} className={'field col-12  md:col-4'} control={control} id={id}/>))
+                }
             </div>
             <Button type={'submit'} label={"Save User"} icon="pi pi-check" />
             {' '}

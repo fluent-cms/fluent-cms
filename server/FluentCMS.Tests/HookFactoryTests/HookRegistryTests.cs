@@ -47,7 +47,12 @@ public class HookRegistryTests
         {
             TotalRecords = 10,
         };
-        await _hookRegistry.ModifyListResult(_serviceProvider, occasion, People.EntityName, res);
+        var meta = new RecordMeta
+        {
+            Entity = new Entity { Name = People.EntityName },
+            Id = "3",
+        }; 
+        await _hookRegistry.ModifyListResult(_serviceProvider, occasion,meta, res);
         Assert.Equal(100, res.TotalRecords);
     }
 

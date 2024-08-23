@@ -2,6 +2,7 @@ import {Menubar} from 'primereact/menubar';
 import React from "react";
 import {useTopMenuBar} from "../services/menu";
 import { useNavigate} from "react-router-dom";
+import {Profile} from "../types/Profile";
 
 
 const entityPrefix = '/entities/'
@@ -18,13 +19,15 @@ export function TopMenuBar({start, end, profile}:{start:any, end:any, profile: P
         }
 
         const entityName = x.url.substring(entityPrefix.length);
-        console.log({entityName});
-        return profile.fullAccessEntities.includes(entityName) || profile.restrictedAccessEntities.includes(entityName);
+        return profile.readWriteEntities.includes(entityName)
+            || profile.restrictedReadWriteEntities.includes(entityName)
+            || profile.readonlyEntities.includes(entityName)
+            || profile.restrictedReadonlyEntities.includes(entityName);
     })
 
     const links = items.map((x: any)=> x.isHref ? x :(
         {
-            icon: 'pi ' + x.icon,
+            icon: 'pi ' + (x.icon === ''?'pi-bolt':x.icon),
             label:x.label,
             command: ()=>{
                 navigate(x.url)

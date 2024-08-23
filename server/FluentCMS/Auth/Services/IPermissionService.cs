@@ -6,7 +6,8 @@ namespace FluentCMS.Auth.Services;
 
 public interface IPermissionService
 {
-    Task CheckEntity(RecordMeta meta);
+    void CheckEntityReadPermission(RecordMeta meta, Filters filters);
+    Task CheckEntityAccessPermission(RecordMeta meta);
     void AssignCreatedBy(Record record);
     Task HandleSchema(Schema schema);
 }

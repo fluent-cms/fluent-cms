@@ -22,7 +22,7 @@ public sealed class EntityService(
     {
         var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,cancellationToken));
         var idValue = CastToDatabaseType(entity.PrimaryKeyAttribute(), id);
-        var query = entity.ByIdQuery(idValue, entity.LocalAttributes(attributes));
+        var query = entity.ByIdQuery(idValue, entity.LocalAttributes(attributes),null);
         return NotNull(await queryKateQueryExecutor.One(query,cancellationToken)).ValOrThrow($"not find record by [{id}]");
     }
     
@@ -31,14 +31,15 @@ public sealed class EntityService(
         var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,cancellationToken));
         var meta = new RecordMeta { Entity = entity, Id = id };
         Record record = new Dictionary<string, object>();
-        var exit = await hookRegistry.ModifyRecord(provider, Occasion.BeforeQueryOne, meta, record);
+        var filters = new Filters();
+        var exit = await hookRegistry.ModifyRecordAndFilter(provider, Occasion.BeforeQueryOne, meta, record,filters);
         if (exit)
         {
             return record;
         }
 
         var idValue = CastToDatabaseType(entity.PrimaryKeyAttribute(), meta.Id);
-        var query = entity.ByIdQuery(idValue,entity.LocalAttributes(InListOrDetail.InDetail));
+        var query = entity.ByIdQuery(idValue,entity.LocalAttributes(InListOrDetail.InDetail),filters);
         record = NotNull(await queryKateQueryExecutor.One(query,cancellationToken)).ValOrThrow($"not find record by [{meta.Id}]");
 
         foreach (var detailLookupsAttribute in entity.GetAttributesByType(DisplayType.lookup,
@@ -106,7 +107,7 @@ public sealed class EntityService(
             ret.TotalRecords = await queryKateQueryExecutor.Count(entity.CountQuery(filters),cancellationToken);
         }
 
-        await hookRegistry.ModifyListResult(provider, Occasion.AfterQueryMany, entity.Name, ret);
+        await hookRegistry.ModifyListResult(provider, Occasion.AfterQueryMany, meta, ret);
         return ret;
     }
 
@@ -165,7 +166,11 @@ public sealed class EntityService(
             Id = strId,
         };
 
-        await hookRegistry.ModifyRelatedRecords(provider, Occasion.BeforeDeleteRelated, meta, attribute, items);
+        var exit = await hookRegistry.ModifyRelatedRecords(provider, Occasion.BeforeDeleteRelated, meta, attribute, items);
+        if (exit)
+        {
+            return 0;
+        }
         var query = crossTable.Delete(CastToDatabaseType(crossTable.FromAttribute, meta.Id), items);
         var ret = await queryKateQueryExecutor.Exec(query, cancellationToken);
         await hookRegistry.ModifyRelatedRecords(provider, Occasion.AfterDeleteRelated, meta, attribute, items);
@@ -186,7 +191,11 @@ public sealed class EntityService(
             Entity = attribute.Parent!,
             Id = strId,
         };
-        await hookRegistry.ModifyRelatedRecords(provider, Occasion.BeforeAddRelated, meta, attribute, items);
+        var exit = await hookRegistry.ModifyRelatedRecords(provider, Occasion.BeforeAddRelated, meta, attribute, items);
+        if (exit)
+        {
+            return 0;
+        }
         var query = crossTable.Insert(CastToDatabaseType(crossTable.FromAttribute,strId), items);
         var ret = await queryKateQueryExecutor.Exec(query, cancellationToken);
         await hookRegistry.ModifyRelatedRecords(provider, Occasion.AfterAddRelated, meta, attribute, items);

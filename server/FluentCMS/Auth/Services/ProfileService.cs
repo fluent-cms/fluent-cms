@@ -27,8 +27,10 @@ where TUser :IdentityUser, new()
         {
             Email = claims?.FindFirstValue(ClaimTypes.Email) ?? "",
             Roles = claims?.FindAll(ClaimTypes.Role).Select(x=>x.Value).ToArray()??[],
-            FullAccessEntities = claims?.FindAll(AccessScope.FullAccess).Select(x=>x.Value).ToArray()??[],
-            RestrictedAccessEntities = claims?.FindAll(AccessScope.RestrictedAccess).Select(x=>x.Value).ToArray()??[],
+            ReadWriteEntities = claims?.FindAll(AccessScope.FullAccess).Select(x=>x.Value).ToArray()??[],
+            RestrictedReadWriteEntities = claims?.FindAll(AccessScope.RestrictedAccess).Select(x=>x.Value).ToArray()??[],
+            ReadonlyEntities = claims?.FindAll(AccessScope.FullRead).Select(x=>x.Value).ToArray()??[],
+            RestrictedReadonlyEntities = claims?.FindAll(AccessScope.RestrictedRead).Select(x=>x.Value).ToArray()??[],
         };
     }
     

@@ -2,6 +2,7 @@ import axios from "axios";
 import useSWR from "swr";
 import {catchResponse, fetcher, swrConfig} from "../../services/util";
 import {fullAuthAPIURI} from "./configs";
+import {Profile} from "../types/Profile";
 
 
 export function useUserInfo() {

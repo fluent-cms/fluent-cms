@@ -193,10 +193,12 @@ public sealed class Entity
         return query;
     }
     
-    public Query ByIdQuery(object id, Attribute[]attributes)
+    public Query ByIdQuery(object id, Attribute[]attributes, Filters? filters)
     {
-        return Basic().Where(PrimaryKey, id)
+        var query = Basic().Where(PrimaryKey, id)
             .Select(attributes.Select(x=>x.FullName()));
+        filters?.Apply(this,query);
+        return query;
     }
 
     public Query ListQuery(Filters? filters, Sorts? sorts, Pagination? pagination, Cursor? cursor,

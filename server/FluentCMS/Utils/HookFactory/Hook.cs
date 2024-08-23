@@ -43,13 +43,14 @@ public sealed class Hook
     public Delegate Callback { get; init; } = null!;
 
     private string ExceptionPrefix {get => $"Execute Hook Fail [{EntityName} - {Occasion}]: ";}
-    internal async Task<bool> ModifyListResult(IServiceProvider provider,  ListResult listResult)
+    internal async Task<bool> ModifyListResult(IServiceProvider provider,RecordMeta meta,  ListResult listResult)
     {
         var (method, args) = PrepareArgument(provider, targetType =>
         {
             return targetType switch
             {
                 _ when targetType == typeof(ListResult) => listResult,
+                _ when targetType == typeof(RecordMeta) => meta,
                 _ => throw new HookException($"{ExceptionPrefix}can not resolve type {targetType}")
             };
         });
@@ -69,7 +70,7 @@ public sealed class Hook
         return await InvokeMethod(method,  args);
     }
     
-    internal async Task<bool> ModifyQuery(IServiceProvider provider, Filters filters, Sorts sorts,Pagination pagination)
+    internal async Task<bool> ModifyQuery(IServiceProvider provider, RecordMeta meta, Filters filters, Sorts sorts,Pagination pagination)
     {
         var (method, args) = PrepareArgument(provider, targetType =>
         {
@@ -78,6 +79,7 @@ public sealed class Hook
                 _ when targetType == typeof(Filters) => filters,
                 _ when targetType == typeof(Sorts) => sorts,
                 _ when targetType == typeof(Pagination) => pagination,
+                _ when targetType == typeof(RecordMeta) => meta,
                 _ => throw new HookException($"{ExceptionPrefix}can not resolve type {targetType}")
             };
         });
@@ -93,6 +95,21 @@ public sealed class Hook
                 _ when t == typeof(RecordMeta) => meta,
                 _ when t == typeof(Record[])  => records,
                 _ when t == typeof(Attribute)  => attribute,
+                _ => throw new HookException($"{ExceptionPrefix}can not resolve type {t}")
+            };
+        });
+
+        return await InvokeMethod(method, args);
+    }
+    internal async Task<bool> ModifyRecordAndFilter(IServiceProvider provider,RecordMeta meta, Record record, Filters filters)
+    {
+        var (method, args) = PrepareArgument(provider, t =>
+        {
+            return t switch
+            {
+                _ when t == typeof(RecordMeta) => meta,
+                _ when t == typeof(Record)  => record,
+                _ when t == typeof(Filters)  => filters,
                 _ => throw new HookException($"{ExceptionPrefix}can not resolve type {t}")
             };
         });

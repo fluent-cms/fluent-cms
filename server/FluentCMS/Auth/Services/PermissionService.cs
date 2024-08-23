@@ -14,6 +14,8 @@ public static class AccessScope
 {
     public const string FullAccess = "FullAccess";
     public const string RestrictedAccess = "RestrictedAccess";
+    public const string FullRead = "FullRead";
+    public const string RestrictedRead = "RestrictedRead";
 }
 public class PermissionService<TUser>(
     IHttpContextAccessor contextAccessor, 
@@ -51,7 +53,37 @@ public class PermissionService<TUser>(
             EnsureCreatedByField(schema);
         }
     }
-    public async Task CheckEntity(RecordMeta meta)
+
+    public  void CheckEntityReadPermission(RecordMeta meta, Filters filters)
+    {
+         if (contextAccessor.HttpContext.HasRole(Roles.Sa))
+         {
+             return;
+         }
+ 
+         if (contextAccessor.HttpContext.HasClaims(AccessScope.FullAccess, meta.Entity.Name)|| contextAccessor.HttpContext.HasClaims(AccessScope.FullRead,meta.Entity.Name))
+         {
+             return;
+         }
+         
+         if (!(contextAccessor.HttpContext.HasClaims(AccessScope.RestrictedAccess, meta.Entity.Name)
+               || contextAccessor.HttpContext.HasClaims(AccessScope.RestrictedRead, meta.Entity.Name)))
+         {
+             throw new InvalidParamException($"You don't have permission to read [{meta.Entity.Name}]");
+         }
+         
+         filters.Add(new Filter
+         {
+             FieldName = CreatedBy ,
+             Constraints = [new Constraint
+             {
+                 Match = Matches.EqualsTo,
+                 Value = MustGetCurrentUserId(),
+             }],
+         });
+       
+    }
+    public async Task CheckEntityAccessPermission(RecordMeta meta)
     {
         if (contextAccessor.HttpContext.HasRole(Roles.Sa))
         {
@@ -65,7 +97,7 @@ public class PermissionService<TUser>(
 
         if (!contextAccessor.HttpContext.HasClaims(AccessScope.RestrictedAccess, meta.Entity.Name))
         {
-            throw new InvalidParamException($"You don't have permission to [{meta.Entity.Name}]");
+            throw new InvalidParamException($"You don't have permission to save [{meta.Entity.Name}]");
         }
 
         var isCreate = string.IsNullOrWhiteSpace(meta.Id);
