@@ -132,7 +132,50 @@ app.RegisterCmsHook("teacher", [Occasion.BeforeInsert, Occasion.BeforeUpdate],(I
     }
 }
 ```
-## Permissions
+## Permissions Control
+
+Fluent CMS's permission control module is decoupled from the Content Management module, allowing you to implement your own permission logic or forgo permission control entirely.
+
+The built-in permission control in Fluent CMS offers four privilege types for each entity:
+- **ReadWrite**: Full access to read and write.
+- **RestrictedReadWrite**: Users can only modify records they have created.
+- **Readonly**: View-only access.
+- **RestrictedReadonly**: Users can only view records they have created.
+
+Additionally, Fluent CMS supports custom roles, where a user's privileges are a combination of their individual entity privileges and the privileges assigned to their role.
+
+To enable fluentCMS' build-in permission control feature, add the following line to builder.
+```
+//add fluent cms' permission control service 
+builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
+builder.AddCmsAuth<IdentityUser, IdentityRole, AppDbContext>();
+```
+And add the follow line after app was built
+```
+//user fluent permission control feature
+app.UseCmsAuth<IdentityUser>();
+InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]));
+InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]));
+```
+Behind the scene, fluentCMS leverage the hook mechanism. 
+```
+        requiredService.AddHooks("*", new Occasion[4]
+        {
+          Occasion.BeforeAddRelated,
+          Occasion.BeforeDeleteRelated,
+          Occasion.BeforeDelete,
+          Occasion.BeforeUpdate
+        }, (Delegate) (async (service, meta) => await service.CheckEntityAccessPermission(meta)));
+        requiredService.AddHooks("*", new Occasion[1]
+        {
+          Occasion.BeforeInsert
+        }, (Delegate) (async (service, meta, record) =>
+        {
+          service.AssignCreatedBy(record);
+          await service.CheckEntityAccessPermission(meta);
+        }));
+```
+
 
 ## Produce Events to Kafka
 The producing event functionality is implemented by adding hook functions behind the scene,  to enable this functionality, you need add two line of code,
