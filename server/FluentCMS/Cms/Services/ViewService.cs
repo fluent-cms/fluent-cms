@@ -4,6 +4,7 @@ using FluentCMS.Utils.QueryBuilder;
 using Microsoft.Extensions.Primitives;
 using FluentCMS.Utils.Cache;
 using FluentCMS.Utils.DataDefinitionExecutor;
+using FluentCMS.Utils.HookFactory;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.Cms.Services;
@@ -15,13 +16,14 @@ public class ViewService(
     KateQueryExecutor kateQueryExecutor, 
     ISchemaService schemaService, 
     IEntityService entityService,
-    KeyValCache<View> viewCache
+    KeyValCache<View> viewCache,
+    IServiceProvider provider,
+    HookRegistry hookRegistry
     ) : IViewService
 {
     public async Task<RecordViewResult> List(string viewName, Cursor cursor,
-        Dictionary<string, StringValues> querystringDictionary ,
-        CancellationToken cancellationToken
-        )
+        Dictionary<string, StringValues> querystringDictionary, 
+        bool omitHook, CancellationToken cancellationToken)
     {
         var view = await ResolvedView(viewName, querystringDictionary,cancellationToken);
         var entity = NotNull(view.Entity).ValOrThrow($"entity not exist for {viewName}");
@@ -30,21 +32,44 @@ public class ViewService(
             cursor.Limit = view.PageSize;
         }
         cursor.Limit += 1;
+
+        if (!omitHook)
+        {
+            var meta = new ViewMeta
+            {
+                View = view
+            };
+            var hookResult = new HookReturn();
+            var exits = await hookRegistry.Trigger(provider, Occasion.BeforeQueryView, meta, new HookParameter(), hookResult);
+            if (exits)
+            {
+                return BuildRecrodViewResult(hookResult.Records, cursor, view.Sorts);
+            }
+        }
+
         var query = entity.ListQuery(view.Filters, view.Sorts, null, cursor,
             CheckResult(view.LocalAttributes(InListOrDetail.InList)), CastToDatabaseType);
         var items = await kateQueryExecutor.Many(query, cancellationToken);
-        
+        var results = BuildRecrodViewResult(items, cursor, view.Sorts);
+        if (results.Items is not null && results.Items.Length > 0)
+        {
+            await AttachRelatedEntity(view, InListOrDetail.InList, results.Items, cancellationToken);
+        }
+        return results;
+    }
+
+    RecordViewResult BuildRecrodViewResult(Record[] items, Cursor cursor, Sorts? sorts)
+    {
         var hasMore = items.Length == cursor.Limit;
         if (hasMore)
         {
             items = cursor.First != ""
-                ? items.Skip(1).Take(items.Length -1).ToArray()
-                : items.Take(items.Length -1).ToArray();
+                ? items.Skip(1).Take(items.Length - 1).ToArray()
+                : items.Take(items.Length - 1).ToArray();
         }
 
-        var nextCursor = CheckResult(cursor.GetNextCursor(items, view.Sorts, hasMore));
-        await AttachRelatedEntity(view, InListOrDetail.InList, items, cancellationToken);
-        
+        var nextCursor = CheckResult(cursor.GetNextCursor(items, sorts, hasMore));
+
         return new RecordViewResult
         {
             Items = items,
@@ -54,8 +79,7 @@ public class ViewService(
             HasNext = !string.IsNullOrWhiteSpace(nextCursor.Last)
         };
     }
-
-
+    
     public async Task<Record[]> Many(string viewName, Dictionary<string, StringValues> querystringDictionary, CancellationToken cancellationToken)
     {
         var view = await ResolvedView(viewName, querystringDictionary,cancellationToken);
@@ -101,7 +125,7 @@ public class ViewService(
     {
         var view = await viewCache.GetOrSet(viewName,
             async () => await schemaService.GetViewByName(viewName, cancellationToken));
-        CheckResult(view.Filters?.ResolveValues(view.Entity!, CastToDatabaseType, querystringDictionary, null));
+        CheckResult(view.Filters?.ResolveValues(view.Entity!, CastToDatabaseType, querystringDictionary));
         return view;
     }
     private object CastToDatabaseType(Attribute attribute, string str)

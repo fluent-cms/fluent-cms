@@ -179,25 +179,25 @@ public sealed class Entity
     {
         return Attributes.FirstOrDefault(x => x.Field == name);
     }
-    public Result<Query> OneQuery(Filters? filters, Attribute[]attributes)
+
+    public Result<Query> OneQuery(Filters? filters, Attribute[] attributes)
     {
-        var query = Basic().Select(attributes.Select(x=>x.FullName()));
-        if (filters is not null)
+        var query = Basic().Select(attributes.Select(x => x.FullName()));
+        var result = query.ApplyFilters(filters); //filters.Apply(this, query);
+        if (result.IsFailed)
         {
-            var result = filters.Apply(this, query);
-            if (result.IsFailed)
-            {
-                return Result.Fail(result.Errors);
-            }
+            return Result.Fail(result.Errors);
         }
+
         return query;
     }
-    
+
     public Query ByIdQuery(object id, Attribute[]attributes, Filters? filters)
     {
         var query = Basic().Where(PrimaryKey, id)
             .Select(attributes.Select(x=>x.FullName()));
-        filters?.Apply(this,query);
+        query.ApplyFilters(filters);
+//        filters?.Apply(this,query);
         return query;
     }
 
@@ -208,14 +208,14 @@ public sealed class Entity
         pagination?.Apply(query);
         cursor?.Apply(this, query, sorts, cast);
         sorts?.Apply(this, query);
-        filters?.Apply(this, query);
+        query.ApplyFilters(filters);
         return query;
     }
 
     public Query CountQuery(Filters? filters)
     {
         var query = Basic();
-        filters?.Apply(this, query);
+        query.ApplyFilters(filters);
         return query;
     }
 

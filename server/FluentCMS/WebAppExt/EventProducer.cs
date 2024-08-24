@@ -1,4 +1,7 @@
+using FluentCMS.Utils.HookFactory;
+using FluentCMS.Utils.Message;
 using FluentCMS.Utils.MessageProducer;
+using FluentCMS.Utils.QueryBuilder;
 
 namespace FluentCMS.WebAppExt;
 
@@ -8,12 +11,24 @@ public static class EventProducer
     {
         builder.Services.AddSingleton<IMessageProducer>(p =>
             new KafkaMessageProducer(brokerList, p.GetRequiredService<ILogger<KafkaMessageProducer>>()));
-        builder.Services.AddSingleton<ProducerHookRegister>();
     }
     
     public static void RegisterMessageProducerHook(this WebApplication app, string entityName = "*")
     {
-        var producerHookRegister = app.Services.GetRequiredService<ProducerHookRegister>();
-        producerHookRegister.RegisterMessageProducer(entityName);
+        var registry = app.Services.GetRequiredService<HookRegistry>();
+        var messageProducer = app.Services.GetRequiredService<IMessageProducer>();
+        registry.AddHooks(entityName, [Occasion.AfterInsert], (EntityMeta meta,Record record) =>
+        {
+            messageProducer.ProduceRecord(Topics.EntityCreated, meta, record);
+        });
+        
+        registry.AddHooks(entityName, [Occasion.AfterUpdate], (EntityMeta meta,Record record) =>
+        {
+            messageProducer.ProduceRecord(Topics.EntityUpdated, meta, record);
+        });
+        registry.AddHooks(entityName, [Occasion.AfterDelete], (EntityMeta meta,Record record) =>
+        {
+            messageProducer.ProduceRecord(Topics.EntityDeleted, meta, record);
+        });
     } 
 }

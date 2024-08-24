@@ -21,7 +21,7 @@ public sealed partial class SchemaService(
 {
     public async Task<Schema> Save(Schema dto, CancellationToken cancellationToken = default)
     {
-        var exit = await hookRegistry.ModifySchema(provider, Occasion.BeforeSaveSchema, dto);
+        var exit = await hookRegistry.Trigger(provider, Occasion.BeforeSaveSchema, new SchemaMeta{Schema = dto});
         if (exit)
         {
             return dto;
@@ -32,7 +32,7 @@ public sealed partial class SchemaService(
 
     public async Task<Schema> SaveTableDefine(Schema dto, CancellationToken cancellationToken = default)
     {
-        var exit = await hookRegistry.ModifySchema(provider,Occasion.BeforeSaveSchema,dto);
+        var exit = await hookRegistry.Trigger(provider,Occasion.BeforeSaveSchema, new SchemaMeta{Schema = dto});
         if (exit)
         {
             return dto;
@@ -66,7 +66,7 @@ public sealed partial class SchemaService(
     }
     public async Task<bool> Delete(int id, CancellationToken cancellationToken = default)
     {
-        var exit = await hookRegistry.ModifySchema(provider,Occasion.BeforeDeleteSchema,new Schema{Id = id});
+        var exit = await hookRegistry.Trigger(provider,Occasion.BeforeDeleteSchema,new SchemaMeta{Id = id});
         if (exit)
         {
             return false;

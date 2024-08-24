@@ -44,14 +44,14 @@ public static class Auth
             async (IPermissionService service, Schema schema) => await service.HandleSchema(schema));
 
         registry.AddHooks("*", [Occasion.BeforeQueryOne, Occasion.BeforeQueryMany],
-            (IPermissionService service, RecordMeta meta, Filters filters) => service.CheckEntityReadPermission(meta, filters));
+            (IPermissionService service, EntityMeta meta, Filters filters) => service.CheckEntityReadPermission(meta, filters));
 
         registry.AddHooks("*",
             [Occasion.BeforeAddRelated, Occasion.BeforeDeleteRelated, Occasion.BeforeDelete, Occasion.BeforeUpdate],
-            async (IPermissionService service, RecordMeta meta) => await service.CheckEntityAccessPermission(meta));
+            async (IPermissionService service, EntityMeta meta) => await service.CheckEntityAccessPermission(meta));
 
         registry.AddHooks("*", [Occasion.BeforeInsert],
-            async (IPermissionService service, RecordMeta meta, Record record) =>
+            async (IPermissionService service, EntityMeta meta, Record record) =>
             {
                 service.AssignCreatedBy(record);
                 await service.CheckEntityAccessPermission(meta);

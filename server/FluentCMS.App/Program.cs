@@ -69,7 +69,7 @@ void RegisterHooks()
     app.RegisterCmsHook(TestEntity.EntityName, [Occasion.AfterDelete], 
         (IDictionary<string,object> test) => { test[TestEntity.FieldName] += "AfterDelete"; });
 
-    app.RegisterCmsHook(TestEntity.EntityName, [Occasion.BeforeQueryOne], (RecordMeta meta) =>
+    app.RegisterCmsHook(TestEntity.EntityName, [Occasion.BeforeQueryOne], (EntityMeta meta) =>
     {
         if (meta.Id == "1000")
         {

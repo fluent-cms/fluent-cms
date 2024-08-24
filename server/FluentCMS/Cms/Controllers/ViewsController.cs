@@ -12,10 +12,10 @@ public class ViewsController(IViewService viewService) : ControllerBase
 {
     [HttpGet("{viewName}")]
     public async Task<ActionResult<ListResult>> Get(string viewName, CancellationToken cancellationToken,
-        [FromQuery] Cursor cursor)
+        [FromQuery] Cursor cursor, [FromQuery] bool omitHook)
     {
         var queryDictionary = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
-        var res = await viewService.List(viewName, cursor, queryDictionary, cancellationToken);
+        var res = await viewService.List(viewName, cursor, queryDictionary,omitHook, cancellationToken);
         return Ok( res);
    
     }

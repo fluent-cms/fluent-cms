@@ -13,14 +13,12 @@ public sealed class View
     
     [JsonIgnore]
     public Entity? Entity { get; set; }
-    
-    public Sorts? Sorts { get; set; }
-    public Filters? Filters { get; set; }
+
+    public Sorts Sorts { get; set; } = [];
+    public Filters Filters { get; set; } = [];
 
     public View()
     {
-        Sorts = new Sorts();
-        Filters = new Filters();
     }
 
     public Result<Attribute[]> LocalAttributes(InListOrDetail inListOrDetail)

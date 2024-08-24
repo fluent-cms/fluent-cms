@@ -3,6 +3,7 @@ using FluentCMS.Cms.Services;
 using FluentCMS.Models;
 using FluentCMS.Services;
 using FluentCMS.Utils.DataDefinitionExecutor;
+using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.IdentityExt;
 using FluentCMS.Utils.QueryBuilder;
 using Microsoft.AspNetCore.Identity;
@@ -54,7 +55,7 @@ public class PermissionService<TUser>(
         }
     }
 
-    public  void CheckEntityReadPermission(RecordMeta meta, Filters filters)
+    public  void CheckEntityReadPermission(EntityMeta meta, Filters filters)
     {
          if (contextAccessor.HttpContext.HasRole(Roles.Sa))
          {
@@ -83,7 +84,7 @@ public class PermissionService<TUser>(
          });
        
     }
-    public async Task CheckEntityAccessPermission(RecordMeta meta)
+    public async Task CheckEntityAccessPermission(EntityMeta meta)
     {
         if (contextAccessor.HttpContext.HasRole(Roles.Sa))
         {

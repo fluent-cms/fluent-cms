@@ -1,9 +1,5 @@
-using System.Globalization;
 using System.Reflection;
-using System.Text.RegularExpressions;
-using Dapper;
 using FluentCMS.Models;
-using FluentCMS.Services;
 using FluentCMS.Utils.QueryBuilder;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
@@ -34,101 +30,42 @@ public enum Occasion
     
     BeforeDeleteRelated,
     AfterDeleteRelated,
+    
+    BeforeQueryView,
 }
 
 public sealed class Hook
 {
-    public string EntityName { get; init; } = null!;
+    public string SchemaName { get; init; } = null!;
     public Occasion Occasion { get; init; }
     public Delegate Callback { get; init; } = null!;
 
-    private string ExceptionPrefix {get => $"Execute Hook Fail [{EntityName} - {Occasion}]: ";}
-    internal async Task<bool> ModifyListResult(IServiceProvider provider,RecordMeta meta,  ListResult listResult)
-    {
-        var (method, args) = PrepareArgument(provider, targetType =>
-        {
-            return targetType switch
-            {
-                _ when targetType == typeof(ListResult) => listResult,
-                _ when targetType == typeof(RecordMeta) => meta,
-                _ => throw new HookException($"{ExceptionPrefix}can not resolve type {targetType}")
-            };
-        });
-        return await InvokeMethod(method,  args);
-    }
+    private string ExceptionPrefix => $"Execute Hook Fail [{SchemaName} - {Occasion}]: ";
 
-    internal async Task<bool> ModifySchema(IServiceProvider provider, Schema schema)
-    {
-        var (method, args) = PrepareArgument(provider, targetType =>
-        {
-            return targetType switch
-            {
-                _ when targetType == typeof(Schema) => schema,
-                _ => throw new HookException($"{ExceptionPrefix}can not resolve type {targetType}")
-            };
-        });
-        return await InvokeMethod(method,  args);
-    }
-    
-    internal async Task<bool> ModifyQuery(IServiceProvider provider, RecordMeta meta, Filters filters, Sorts sorts,Pagination pagination)
-    {
-        var (method, args) = PrepareArgument(provider, targetType =>
-        {
-            return targetType switch
-            {
-                _ when targetType == typeof(Filters) => filters,
-                _ when targetType == typeof(Sorts) => sorts,
-                _ when targetType == typeof(Pagination) => pagination,
-                _ when targetType == typeof(RecordMeta) => meta,
-                _ => throw new HookException($"{ExceptionPrefix}can not resolve type {targetType}")
-            };
-        });
-        return await InvokeMethod(method,  args);
-    }
-    
-    internal async Task<bool> ModifyRelatedRecords(IServiceProvider provider,RecordMeta meta, Attribute attribute, Record[] records)
+    internal async Task<bool> Trigger(IServiceProvider provider,
+        EntityMeta? meta, ViewMeta? viewMeta, SchemaMeta? schemaMeta,
+        HookParameter parameter, HookReturn? hookReturn)
     {
         var (method, args) = PrepareArgument(provider, t =>
         {
             return t switch
             {
-                _ when t == typeof(RecordMeta) => meta,
-                _ when t == typeof(Record[])  => records,
-                _ when t == typeof(Attribute)  => attribute,
+                _ when t == typeof(EntityMeta) && meta is not null=> meta,
+                _ when t == typeof(ViewMeta) && viewMeta is not null=> viewMeta,
+                _ when t == typeof(SchemaMeta) && schemaMeta is not null=> schemaMeta,
+                
+                _ when t == typeof(Filters) && parameter.Filters is not null=> parameter.Filters,
+                _ when t == typeof(Sorts) && parameter.Sorts is not null=> parameter.Sorts,
+                _ when t == typeof(Pagination) && parameter.Pagination is not null=> parameter.Pagination,
+                _ when t == typeof(IList<Record>)  && parameter.Records is not null=> parameter.Records,
+                _ when t == typeof(Attribute)  && parameter.Attribute is not null=> parameter.Attribute,
+                _ when t == typeof(Record) && parameter.Record is not null  => parameter.Record,
+                _ when t == typeof(Schema) && parameter.Schema is not null  => parameter.Schema,
+                
+                _ when t == typeof(HookReturn) && hookReturn is not null => hookReturn,
                 _ => throw new HookException($"{ExceptionPrefix}can not resolve type {t}")
             };
         });
-
-        return await InvokeMethod(method, args);
-    }
-    internal async Task<bool> ModifyRecordAndFilter(IServiceProvider provider,RecordMeta meta, Record record, Filters filters)
-    {
-        var (method, args) = PrepareArgument(provider, t =>
-        {
-            return t switch
-            {
-                _ when t == typeof(RecordMeta) => meta,
-                _ when t == typeof(Record)  => record,
-                _ when t == typeof(Filters)  => filters,
-                _ => throw new HookException($"{ExceptionPrefix}can not resolve type {t}")
-            };
-        });
-
-        return await InvokeMethod(method, args);
-    }
-
-    internal async Task<bool> ModifyRecord(IServiceProvider provider,RecordMeta meta, Record record)
-    {
-        var (method, args) = PrepareArgument(provider, t =>
-        {
-            return t switch
-            {
-                _ when t == typeof(RecordMeta) => meta,
-                _ when t == typeof(Record)  => record,
-                _ => throw new HookException($"{ExceptionPrefix}can not resolve type {t}")
-            };
-        });
-
         return await InvokeMethod(method, args);
     }
 

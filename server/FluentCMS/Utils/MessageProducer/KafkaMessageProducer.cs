@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Confluent.Kafka;
+using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.Message;
-using FluentCMS.Utils.QueryBuilder;
 
 namespace FluentCMS.Utils.MessageProducer;
 
@@ -17,7 +17,7 @@ public sealed class KafkaMessageProducer:IMessageProducer, IDisposable
         _logger = logger;
     }
     
-    public async Task ProduceRecord(string topic, RecordMeta meta, Record record)
+    public async Task ProduceRecord(string topic, EntityMeta meta, Record record)
     {
         var message = new RecordMessage { EntityName = meta.Entity.Name, Id = meta.Id, Data = record };
         await _producer.ProduceAsync(topic,

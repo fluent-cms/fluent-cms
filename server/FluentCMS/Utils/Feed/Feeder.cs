@@ -8,7 +8,7 @@ using MongoDB.Bson;
 
 namespace FluentCMS.Utils.Feed;
 
-public class Feeder(IDao dao,ILogger<Feeder> logger, string collectionName, string url)
+public class Feeder(INosqlDao nosqlDao,ILogger<Feeder> logger, string collectionName, string url)
 {
     private readonly HttpClient _client = new();
 
@@ -51,7 +51,7 @@ public class Feeder(IDao dao,ILogger<Feeder> logger, string collectionName, stri
             logger.LogInformation($"succeed to download feed from {fullUrl}");
 
             var items = requestResult.Value.Items!.Select(x => x.ToDictionary());
-            await dao.Insert(collectionName ,items);
+            await nosqlDao.Insert(collectionName ,items);
             return requestResult;
         }
     }
