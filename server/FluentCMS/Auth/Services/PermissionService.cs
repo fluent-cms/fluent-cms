@@ -32,26 +32,33 @@ public class PermissionService<TUser>(
     {
         record[CreatedBy] = MustGetCurrentUserId();
     }
-    public async Task HandleSchema(Schema schema)
+
+    public async Task HandleDeleteSchema(SchemaMeta schemaMeta)
     {
         var currentUserId = MustGetCurrentUserId();
+        var find = await schemaService.GetByIdAndVerify(schemaMeta.Id, false);
+        await CheckSchemaPermission(find, currentUserId);
+    }
+
+    public async Task HandleSaveSchema(SchemaMeta schemaMeta)
+    {
+        var currentUserId = MustGetCurrentUserId();
+        var schema = InvalidParamExceptionFactory.NotNull(schemaMeta.Schema).ValOrThrow("no schema from schema meta");
+        //edit
         if (schema.Id > 0)
         {
-            //read db to make sure the schema is faked by client
-            var find = await schemaService.GetByIdAndVerify(schema.Id, false);
-            CheckSchemaPermission(find, currentUserId);
-            schema.CreatedBy = find.CreatedBy;
+            await CheckSchemaPermission(schema, currentUserId);
         }
+        //create
         else
         {
-            CheckSchemaPermission(schema, currentUserId);
+            await CheckSchemaPermission(schema, currentUserId);
             schema.CreatedBy = currentUserId;
-        }
-
-        if (schema.Type == SchemaType.Entity)
-        {
-            await EnsureUserHaveAccess(schema);
-            EnsureCreatedByField(schema);
+            if (schema.Type == SchemaType.Entity)
+            {
+                await EnsureUserHaveAccess(schema);
+                EnsureCreatedByField(schema);
+            }
         }
     }
 
@@ -110,7 +117,7 @@ public class PermissionService<TUser>(
                 .ThrowNotTrue($"You can only access record created by you, entityName={meta.Entity.Name}, record id={meta.Id}");
         }
     }
-    private void CheckSchemaPermission(Schema schema, string currentUserId)
+    private async Task CheckSchemaPermission(Schema schema, string currentUserId)
     {
         switch (schema.Type)
         {
@@ -118,10 +125,10 @@ public class PermissionService<TUser>(
                 True(contextAccessor.HttpContext.HasRole(Roles.Sa)).ThrowNotTrue("Only Supper Admin has the permission to modify menu");
                 break;
             case SchemaType.Entity:
-                CheckViewAndEntityPermission(schema,currentUserId);
+                await CheckViewAndEntityPermission(schema,currentUserId);
                 break;
             case SchemaType.View:
-                CheckViewAndEntityPermission(schema,currentUserId);
+                await CheckViewAndEntityPermission(schema,currentUserId);
                 break;
         }
     } 
@@ -157,7 +164,7 @@ public class PermissionService<TUser>(
         }).ToArray();
     }
 
-    private void CheckViewAndEntityPermission(Schema schema, string currentUserId)
+    private async Task CheckViewAndEntityPermission(Schema schema, string currentUserId)
     {
         if (contextAccessor.HttpContext.HasRole(Roles.Sa))
         {
@@ -171,9 +178,14 @@ public class PermissionService<TUser>(
 
         //modifying schema, make sure admin can only modify his own schema
         var isUpdate = schema.Id > 0;
-        if (isUpdate && schema.CreatedBy != currentUserId)
+        
+        if (isUpdate )
         {
-            throw new InvalidParamException("You are not supper admin,  you can only change your own schema");
+            var find = await schemaService.GetByIdAndVerify(schema.Id, false);
+            if (find.CreatedBy != currentUserId)
+            {
+                throw new InvalidParamException("You are not supper admin,  you can only change your own schema");
+            }
         }
     }
     

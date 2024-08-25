@@ -1,4 +1,4 @@
-namespace FluentCMS.Utils.Message;
+namespace FluentCMS.Utils.EventStreaming;
 
 public class RecordMessage
 {

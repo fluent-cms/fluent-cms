@@ -5,14 +5,16 @@ using MongoDB.Driver;
 
 namespace FluentCMS.Utils.Nosql;
 
+public record MongoConfig(string ConnectionString, string DatabaseName);
+
 public sealed class MongoNosqlDao:INosqlDao 
 {
     private readonly IMongoDatabase _mongoDatabase ;
 
-    public MongoNosqlDao(string connectionString, string database)
+    public MongoNosqlDao(MongoConfig config)
     {
-        var client = new MongoClient(connectionString);
-        _mongoDatabase = client.GetDatabase(database);
+        var client = new MongoClient(config.ConnectionString);
+        _mongoDatabase = client.GetDatabase(config.DatabaseName);
 
     }
 

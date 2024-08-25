@@ -4,7 +4,6 @@ using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.QueryBuilder;
 using FluentCMS.WebAppExt;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -16,11 +15,11 @@ builder.Services.AddScoped<TestService>();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 
-builder.AddSqliteCms("Data Source=cmsapp.db");
+builder.AddSqliteCms("Data Source=cms.db");
 builder.AddKafkaMessageProducer("localhost:9092");
 var app = builder.Build();
 await app.UseCmsAsync();
-app.RegisterMessageProducerHook();
+app.RegisterMessageProducerHook("post");
 
 using var scope = app.Services.CreateScope();
 

@@ -10,6 +10,7 @@ public class DummyProfileService: IProfileService
         {
             Email = "sadmin@cms.com",
             Roles = [Roles.Sa],
+            AllowedMenus = [UserDto.MenuSchemaBuilder]
         };
     }
     

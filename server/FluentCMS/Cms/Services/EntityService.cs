@@ -79,7 +79,6 @@ public sealed class EntityService(
 
         filters ??= [];
         sorts ??= [];
-        CheckResult(filters.ResolveValues(entity, CastToDatabaseType, null));
 
         var hookData = new HookParameter
         {

@@ -1,16 +1,15 @@
 using System.Text.Json;
 using Confluent.Kafka;
 using FluentCMS.Utils.HookFactory;
-using FluentCMS.Utils.Message;
 
-namespace FluentCMS.Utils.MessageProducer;
+namespace FluentCMS.Utils.EventStreaming;
 
-public sealed class KafkaMessageProducer:IMessageProducer, IDisposable
+public sealed class KafkaProducer:IProducer, IDisposable
 {
     private readonly IProducer<string, string> _producer;
-    private readonly ILogger<KafkaMessageProducer> _logger;
+    private readonly ILogger<KafkaProducer> _logger;
 
-    public KafkaMessageProducer(string brokerList, ILogger<KafkaMessageProducer> logger)
+    public KafkaProducer(string brokerList, ILogger<KafkaProducer> logger)
     {
         var config = new ProducerConfig { BootstrapServers = brokerList };
         _producer = new ProducerBuilder<string, string>(config).Build();

@@ -1,8 +1,8 @@
 using FluentCMS.Utils.HookFactory;
 
-namespace FluentCMS.Utils.MessageProducer;
+namespace FluentCMS.Utils.EventStreaming;
 
-public interface IMessageProducer
+public interface IProducer
 {
     Task ProduceRecord(string topic, EntityMeta meta, Record record);
 }

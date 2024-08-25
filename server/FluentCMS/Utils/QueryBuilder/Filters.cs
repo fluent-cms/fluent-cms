@@ -96,7 +96,7 @@ public class Filters : List<Filter>
                 var val = filterConstraint.Value;
                 if (string.IsNullOrWhiteSpace(val))
                 {
-                    return Result.Fail($"Fail to resolve Filter, value not set for field{field.Field}");
+                    return Result.Fail($"Fail to resolve Filter, value not set for field {field.Field}");
                 }
 
                 var result = val switch

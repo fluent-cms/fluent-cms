@@ -2,7 +2,7 @@ import {Menubar} from 'primereact/menubar';
 import React from "react";
 import {useTopMenuBar} from "../services/menu";
 import { useNavigate} from "react-router-dom";
-import {Profile} from "../types/Profile";
+import {MenuRoles, MenuSchemaBuilder, MenuUsers, Profile} from "../types/Profile";
 
 
 const entityPrefix = '/entities/'
@@ -33,29 +33,36 @@ export function TopMenuBar({start, end, profile}:{start:any, end:any, profile: P
                 navigate(x.url)
             }
         })
-    )
+    );
 
-    if (profile.roles.includes('admin') || profile.roles.includes('sa')) {
-        links.push({
+    [
+        {
+            key: MenuRoles,
             icon: 'pi pi-sitemap',
             label: 'Roles',
             command: () => {
                 navigate('/roles')
             }
-        });
-        links.push({
+        },
+        {
+            key: MenuUsers,
             icon: 'pi pi-users',
             label: 'Users',
             command: () => {
                 navigate('/users')
             }
-        });
-        links.push({
+        },
+        {
+            key: MenuSchemaBuilder,
             icon: 'pi pi-cog',
             label: 'Schema Builder',
             url: '/schema-ui/list.html'
-        });
-    }
+        }
+    ].forEach(x=>{
+        if (profile.allowedMenus.includes(x.key)){
+            links.push(x)
+        }
+    });
     return (
         <Menubar model={links} start={start} end={end}/>
     )

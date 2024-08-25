@@ -61,6 +61,7 @@ public sealed class Hook
                 _ when t == typeof(Attribute)  && parameter.Attribute is not null=> parameter.Attribute,
                 _ when t == typeof(Record) && parameter.Record is not null  => parameter.Record,
                 _ when t == typeof(Schema) && parameter.Schema is not null  => parameter.Schema,
+                _ when t == typeof(ListResult) && parameter.ListResult is not null  => parameter.ListResult,
                 
                 _ when t == typeof(HookReturn) && hookReturn is not null => hookReturn,
                 _ => throw new HookException($"{ExceptionPrefix}can not resolve type {t}")

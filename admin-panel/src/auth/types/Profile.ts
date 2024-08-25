@@ -6,7 +6,12 @@ export type Profile = {
     restrictedReadWriteEntities:string[] ;
     readonlyEntities: string[];
     restrictedReadonlyEntities: string[];
+    allowedMenus: string[];
 };
+
+export const  MenuSchemaBuilder = "menu_schema_builder";
+export const  MenuUsers = "menu_users";
+export const  MenuRoles = "menu_roles";
 
 export function getEntityPermissionColumns(entitiesOption :string){
     return [

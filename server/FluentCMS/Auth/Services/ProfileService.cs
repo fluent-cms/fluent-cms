@@ -23,7 +23,7 @@ where TUser :IdentityUser, new()
         var claims = contextAccessor.HttpContext?.User;
         True(claims?.Identity?.IsAuthenticated == true)
             .ThrowNotTrue("Not logged in");
-        return new UserDto
+        var ret =new UserDto
         {
             Email = claims?.FindFirstValue(ClaimTypes.Email) ?? "",
             Roles = claims?.FindAll(ClaimTypes.Role).Select(x=>x.Value).ToArray()??[],
@@ -32,6 +32,11 @@ where TUser :IdentityUser, new()
             ReadonlyEntities = claims?.FindAll(AccessScope.FullRead).Select(x=>x.Value).ToArray()??[],
             RestrictedReadonlyEntities = claims?.FindAll(AccessScope.RestrictedRead).Select(x=>x.Value).ToArray()??[],
         };
+        if (ret.Roles.Contains(Roles.Sa) || ret.Roles.Contains(Roles.Admin))
+        {
+            ret.AllowedMenus = [UserDto.MenuUsers, UserDto.MenuRoles, UserDto.MenuSchemaBuilder];
+        }
+        return ret;
     }
     
     public async Task ChangePassword(ProfileDto dto)

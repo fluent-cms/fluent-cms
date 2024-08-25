@@ -7,10 +7,9 @@ namespace FluentCMS.WebAppExt;
 
 public static class MongoViewExt
 {
-    public static void AddMongoView(this WebApplicationBuilder builder, string connectionString, string database)
+    public static void AddMongoView(this WebApplicationBuilder builder, MongoConfig config)
     {
-        builder.Services.AddSingleton<INosqlDao>(p =>
-            new MongoNosqlDao(connectionString, database));
+        builder.Services.AddSingleton<INosqlDao>(p => new MongoNosqlDao(config));
     }
 
     public static void RegisterMongoViewHook(this WebApplication app, string entityName = "*")

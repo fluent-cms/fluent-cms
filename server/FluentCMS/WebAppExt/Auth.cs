@@ -40,9 +40,13 @@ public static class Auth
         app.MapGet("/api/logout", async (SignInManager<TUser> signInManager) => await signInManager.SignOutAsync());
 
         var registry = app.Services.GetRequiredService<HookRegistry>();
-        registry.AddHooks("*", [Occasion.BeforeSaveSchema, Occasion.BeforeDeleteSchema],
-            async (IPermissionService service, Schema schema) => await service.HandleSchema(schema));
+        
+        registry.AddHooks("*", [Occasion.BeforeSaveSchema],
+            async (IPermissionService service, SchemaMeta meta) => await service.HandleSaveSchema(meta));
 
+        registry.AddHooks("*", [Occasion.BeforeDeleteSchema],
+            async (IPermissionService service, SchemaMeta meta) => await service.HandleDeleteSchema(meta));
+        
         registry.AddHooks("*", [Occasion.BeforeQueryOne, Occasion.BeforeQueryMany],
             (IPermissionService service, EntityMeta meta, Filters filters) => service.CheckEntityReadPermission(meta, filters));
 

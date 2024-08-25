@@ -1,5 +1,6 @@
 namespace FluentCMS.Auth.Services;
 
+
 public interface IProfileService
 {
     UserDto GetInfo();
