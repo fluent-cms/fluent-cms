@@ -4,5 +4,5 @@ namespace FluentCMS.Utils.EventStreaming;
 
 public interface IProducer
 {
-    Task ProduceRecord(string topic, EntityMeta meta, Record record);
+    Task ProduceRecord(string topic, string operation, EntityMeta meta, Record record);
 }

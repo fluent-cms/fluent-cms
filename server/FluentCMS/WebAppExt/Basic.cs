@@ -91,7 +91,7 @@ public static class Basic
         InitController(builder);
         InjectDbServices(builder, provider, connectionString);
         InjectServices(builder);
-        PrintVersion(provider,connectionString);
+        PrintVersion(provider,connectionString, builder.Environment.EnvironmentName);
     }
     private static void InitController(WebApplicationBuilder builder)
     {
@@ -148,14 +148,14 @@ public static class Basic
                 break;
         }
     }
-    private static void PrintVersion(DatabaseProvider databaseProvider, string connectionString)
+    private static void PrintVersion(DatabaseProvider databaseProvider, string connectionString, string environment)
     {
         var parts = connectionString.Split(";")
             .Where(x => !x.StartsWith("Password"))
             .ToArray();
 
         Console.WriteLine("*********************************************************");
-        Console.WriteLine("Fluent CMS");
+        Console.WriteLine($"Fluent CMS, {environment}");
         Console.WriteLine($"Resolved Database Provider: {databaseProvider}");
         Console.WriteLine($"Connection String: {string.Join(";", parts)}");
         Console.WriteLine($"Current Directory: {Directory.GetCurrentDirectory()}");

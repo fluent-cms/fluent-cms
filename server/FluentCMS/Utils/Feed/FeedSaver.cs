@@ -14,15 +14,15 @@ public class FeedSaver(INosqlDao nosqlDao,ILogger<FeedSaver> logger)
     private readonly HttpClient _client = new();
 
 
-    public async Task GetData(FeedConfig config,string id)
+    public async Task SaveData(FeedConfig config,string id)
     {
         var result = await Call();
         if (result.IsFailed)
         {
             logger.LogError(string.Join("\r\n", result.Errors));
         }
-        
         return;
+        
         async Task<Result> Call()
         {
             var fullUrl = $"{config.Url}?id={id}";
@@ -35,7 +35,7 @@ public class FeedSaver(INosqlDao nosqlDao,ILogger<FeedSaver> logger)
             var item = requestResult.Value.ToDictionary();
             try
             {
-                await nosqlDao.Insert(config.CollectionName, [item]);
+                await nosqlDao.Upsert(config.CollectionName,id,item);
                 return Result.Ok();
             }
             catch (Exception e)
@@ -85,7 +85,7 @@ public class FeedSaver(INosqlDao nosqlDao,ILogger<FeedSaver> logger)
             var items = requestResult.Value.Items!.Select(x => x.ToDictionary());
             try
             {
-                await nosqlDao.Insert(config.CollectionName ,items);
+                await nosqlDao.BatchInsert(config.CollectionName ,items);
                 return requestResult;
             }
             catch (Exception e)

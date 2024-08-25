@@ -17,8 +17,22 @@ public sealed class MongoNosqlDao:INosqlDao
         _mongoDatabase = client.GetDatabase(config.DatabaseName);
 
     }
-
-    public async Task Insert(string collectionName, IEnumerable<Record> items)
+    public async Task Delete(string collectionName, string id)
+    {
+        var filter = Builders<BsonDocument>.Filter.Eq("id", id);
+        var collection = _mongoDatabase.GetCollection<BsonDocument>(collectionName);
+        await collection.DeleteOneAsync(filter);
+    }
+    
+    public async Task Upsert(string collectionName, string id, Record item)
+    {
+        var filter = Builders<BsonDocument>.Filter.Eq("id", id);
+        item["id"] = id;
+        var collection = _mongoDatabase.GetCollection<BsonDocument>(collectionName);
+        await collection.ReplaceOneAsync(filter, new BsonDocument(item), new ReplaceOptions{IsUpsert = true});
+    }
+    
+    public async Task BatchInsert(string collectionName, IEnumerable<Record> items)
     {
         var collection = _mongoDatabase.GetCollection<BsonDocument>(collectionName);
         var docs = items.Select(x => new BsonDocument(x));

@@ -22,6 +22,7 @@ public static class MongoConsumerExt
             new NosqlConsumerService(
                 p.GetService<IConsumer>()!,
                 p.GetService<FeedSaver>()!,
+                p.GetService<INosqlDao>()!,
                 dictionary,
                 p.GetService<ILogger<NosqlConsumerService>>()!
             )

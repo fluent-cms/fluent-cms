@@ -11,17 +11,18 @@ public class KafkaConsumer(KafkaConfig config): IConsumer
 
     public void Subscribe()
     {
-        _consumer.Subscribe(Topics.EntityUpdated);
-        _consumer.Subscribe(Topics.EntityCreated);
-        _consumer.Subscribe(Topics.EntityDeleted);
+        _consumer.Subscribe(new []{Topics.EntityCreated, Topics.EntityUpdated, Topics.EntityDeleted});
     }
 
-    public (string,RecordMessage?) Consume(CancellationToken cancellationToken)
+    public async Task<RecordMessage?> Consume(CancellationToken cancellationToken)
     {
-        var consumeResult = _consumer.Consume(cancellationToken);
-        var msg = JsonSerializer.Deserialize<RecordMessage>(consumeResult.Message.Value);
-        return (consumeResult.Topic, msg);
+        return await Task.Run(() =>
+        {
+            var consumeResult = _consumer.Consume(cancellationToken);
+            return JsonSerializer.Deserialize<RecordMessage>(consumeResult.Message.Value);
+        });
     }
+
 
     public void Dispose()
     {

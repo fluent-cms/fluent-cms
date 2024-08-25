@@ -13,6 +13,5 @@
 
     <ItemGroup>
       <ProjectReference Include="..\FluentCMS\FluentCMS.csproj" />
-      <ProjectReference Include="FluentCMS\FluentCMS.csproj" />
     </ItemGroup>
 </Project>

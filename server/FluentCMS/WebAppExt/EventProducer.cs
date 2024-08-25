@@ -18,16 +18,16 @@ public static class EventProducer
         var messageProducer = app.Services.GetRequiredService<IProducer>();
         registry.AddHooks(entityName, [Occasion.AfterInsert], (EntityMeta meta,Record record) =>
         {
-            messageProducer.ProduceRecord(Topics.EntityCreated, meta, record);
+            messageProducer.ProduceRecord(Topics.EntityCreated,Operations.Create, meta, record);
         });
         
         registry.AddHooks(entityName, [Occasion.AfterUpdate], (EntityMeta meta,Record record) =>
         {
-            messageProducer.ProduceRecord(Topics.EntityUpdated, meta, record);
+            messageProducer.ProduceRecord(Topics.EntityUpdated, Operations.Update,meta, record);
         });
         registry.AddHooks(entityName, [Occasion.AfterDelete], (EntityMeta meta,Record record) =>
         {
-            messageProducer.ProduceRecord(Topics.EntityDeleted, meta, record);
+            messageProducer.ProduceRecord(Topics.EntityDeleted, Operations.Delete,meta, record);
         });
     } 
 }
