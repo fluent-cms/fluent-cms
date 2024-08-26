@@ -16,15 +16,10 @@ public static class MongoViewExt
     {
         var hookRegistry = app.Services.GetRequiredService<HookRegistry>();
         hookRegistry.AddHooks(entityName,[Occasion.BeforeQueryView], 
-            async (INosqlDao dao, View view, IList<Record> records, Cursor cursor) =>
+            async (INosqlDao dao, ViewMeta meta, HookReturn hookReturn, Cursor cursor) =>
             {
-                var queryResult = await dao.Query(view.Name, view.Filters, view.Sorts, cursor);
-                InvalidParamExceptionFactory.CheckResult(queryResult);
-                foreach (var dictionary in queryResult.Value)
-                {
-                    records.Add(dictionary);
-                }
-                return false;
+                hookReturn.Records =InvalidParamExceptionFactory.CheckResult( await dao.Query(meta.View.Entity!.Name, meta.View.Filters, meta.View.Sorts, cursor) );
+                return true;
             });
     }
 }

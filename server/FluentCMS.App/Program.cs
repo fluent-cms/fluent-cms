@@ -1,6 +1,7 @@
 using FluentCMS.App;
 using FluentCMS.Cms.Services;
 using FluentCMS.Utils.HookFactory;
+using FluentCMS.Utils.Nosql;
 using FluentCMS.Utils.QueryBuilder;
 using FluentCMS.WebAppExt;
 
@@ -15,11 +16,16 @@ builder.Services.AddScoped<TestService>();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 
+var mongoConfig = builder.Configuration.GetRequiredSection("MongoConfig").Get<MongoConfig>()!;
 builder.AddSqliteCms("Data Source=cms.db");
 builder.AddKafkaMessageProducer("localhost:9092");
+builder.AddMongoView(mongoConfig);
+
 var app = builder.Build();
 await app.UseCmsAsync();
+
 app.RegisterMessageProducerHook("post");
+app.RegisterMongoViewHook("latest-posts");
 
 using var scope = app.Services.CreateScope();
 

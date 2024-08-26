@@ -54,15 +54,23 @@ public sealed class Hook
                 _ when t == typeof(ViewMeta) && viewMeta is not null=> viewMeta,
                 _ when t == typeof(SchemaMeta) && schemaMeta is not null=> schemaMeta,
                 
+                //list or view
                 _ when t == typeof(Filters) && parameter.Filters is not null=> parameter.Filters,
                 _ when t == typeof(Sorts) && parameter.Sorts is not null=> parameter.Sorts,
                 _ when t == typeof(Pagination) && parameter.Pagination is not null=> parameter.Pagination,
-                _ when t == typeof(IList<Record>)  && parameter.Records is not null=> parameter.Records,
+                _ when t == typeof(Cursor) && parameter.Cursor is not null=> parameter.Cursor,
+                
+                //cross table
                 _ when t == typeof(Attribute)  && parameter.Attribute is not null=> parameter.Attribute,
+                _ when t == typeof(IList<Record>)  && parameter.Records is not null=> parameter.Records,
+                
+                //crud query One
                 _ when t == typeof(Record) && parameter.Record is not null  => parameter.Record,
-                _ when t == typeof(Schema) && parameter.Schema is not null  => parameter.Schema,
+                
+                //list
                 _ when t == typeof(ListResult) && parameter.ListResult is not null  => parameter.ListResult,
                 
+                //view or before queryOne
                 _ when t == typeof(HookReturn) && hookReturn is not null => hookReturn,
                 _ => throw new HookException($"{ExceptionPrefix}can not resolve type {t}")
             };

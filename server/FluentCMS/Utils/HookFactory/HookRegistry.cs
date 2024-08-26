@@ -8,6 +8,7 @@ public sealed class HookParameter
     public Filters? Filters { get; init; }
     public Sorts? Sorts { get; init; }
     public Pagination? Pagination { get; init; }
+    public Cursor? Cursor { get; init; }
     public IList<Record>? Records { get; init; } 
     public Record? Record { get; init; }
     public Attribute? Attribute { get; init; }

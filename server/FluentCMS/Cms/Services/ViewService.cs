@@ -39,8 +39,13 @@ public class ViewService(
             {
                 View = view
             };
+            var hookParam = new HookParameter
+            {
+                Cursor = cursor
+            };
+            
             var hookResult = new HookReturn();
-            var exits = await hookRegistry.Trigger(provider, Occasion.BeforeQueryView, meta, new HookParameter(), hookResult);
+            var exits = await hookRegistry.Trigger(provider, Occasion.BeforeQueryView, meta, hookParam, hookResult);
             if (exits)
             {
                 return BuildRecrodViewResult(hookResult.Records, cursor, view.Sorts);
