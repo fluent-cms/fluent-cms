@@ -16,56 +16,55 @@ public class ViewService(
     KateQueryExecutor kateQueryExecutor, 
     ISchemaService schemaService, 
     IEntityService entityService,
-    KeyValCache<View> viewCache,
+    ImmutableCache<View> viewCache,
     IServiceProvider provider,
     HookRegistry hookRegistry
     ) : IViewService
 {
     public async Task<RecordViewResult> List(string viewName, Cursor cursor,
-        Dictionary<string, StringValues> querystringDictionary, 
-        bool omitHook, CancellationToken cancellationToken)
+        Dictionary<string, StringValues> querystringDictionary, CancellationToken cancellationToken)
     {
-        var view = await ResolvedView(viewName, querystringDictionary,cancellationToken);
+        var view = await GetView(viewName, cancellationToken);
         var entity = NotNull(view.Entity).ValOrThrow($"entity not exist for {viewName}");
-        if (cursor.Limit == 0 || cursor.Limit > view.PageSize)
-        {
-            cursor.Limit = view.PageSize;
-        }
-        cursor.Limit += 1;
 
-        if (!omitHook)
+        //get extra record to check if it's the last page
+        var pagination = new Pagination
         {
-            var meta = new ViewMeta
-            {
-                View = view
-            };
-            var hookParam = new HookParameter
-            {
-                Cursor = cursor
-            };
-            
-            var hookResult = new HookReturn();
-            var exits = await hookRegistry.Trigger(provider, Occasion.BeforeQueryView, meta, hookParam, hookResult);
-            if (exits)
-            {
-                return BuildRecrodViewResult(hookResult.Records, cursor, view.Sorts);
-            }
+            Limit = view.PageSize + 1
+        };
+
+        CheckResult(view.Filters.ResolveValues(view.Entity!, CastToDatabaseType, querystringDictionary));
+        var hookParam = new HookParameter
+        {
+            Filters = view.Filters,
+            Sorts = view.Sorts,
+            Cursor = cursor,
+            Pagination = pagination
+        };
+
+        var hookResult = new HookReturn();
+        var exits = await hookRegistry.Trigger(provider, Occasion.BeforeQueryView, new ViewMeta(viewName, entity.Name),
+            hookParam, hookResult);
+        if (exits)
+        {
+            return BuildRecordViewResult(hookResult.Records, cursor,pagination, view.Sorts);
         }
 
-        var query = entity.ListQuery(view.Filters, view.Sorts, null, cursor,
-            CheckResult(view.LocalAttributes(InListOrDetail.InList)), CastToDatabaseType);
+        var attributes = CheckResult(view.LocalAttributes(InListOrDetail.InList));
+        var query = CheckResult(entity.ListQuery(view.Filters, view.Sorts, pagination, cursor,attributes,CastToDatabaseType));
         var items = await kateQueryExecutor.Many(query, cancellationToken);
-        var results = BuildRecrodViewResult(items, cursor, view.Sorts);
+        var results = BuildRecordViewResult(items, cursor,pagination, view.Sorts);
         if (results.Items is not null && results.Items.Length > 0)
         {
             await AttachRelatedEntity(view, InListOrDetail.InList, results.Items, cancellationToken);
         }
+
         return results;
     }
 
-    RecordViewResult BuildRecrodViewResult(Record[] items, Cursor cursor, Sorts? sorts)
+    RecordViewResult BuildRecordViewResult(Record[] items, Cursor cursor, Pagination pagination, Sorts? sorts)
     {
-        var hasMore = items.Length == cursor.Limit;
+        var hasMore = items.Length == pagination.Limit;
         if (hasMore)
         {
             items = cursor.First != ""
@@ -87,11 +86,12 @@ public class ViewService(
     
     public async Task<Record[]> Many(string viewName, Dictionary<string, StringValues> querystringDictionary, CancellationToken cancellationToken)
     {
-        var view = await ResolvedView(viewName, querystringDictionary,cancellationToken);
+        var view = await GetView(viewName, cancellationToken);
         var entity = NotNull(view.Entity).ValOrThrow($"entity not exist for {viewName}");
-       
-        var query = entity.ListQuery(  view.Filters,view.Sorts, new Pagination{Limit = view.PageSize}, null,
-            CheckResult(view.LocalAttributes(InListOrDetail.InDetail)),CastToDatabaseType);
+        
+        CheckResult(view.Filters.ResolveValues(view.Entity!, CastToDatabaseType, querystringDictionary));
+        var query = CheckResult(entity.ListQuery(  view.Filters,view.Sorts, new Pagination{Limit = view.PageSize}, null,
+            CheckResult(view.LocalAttributes(InListOrDetail.InDetail)),CastToDatabaseType));
         var items = await kateQueryExecutor.Many(query,cancellationToken);
         await AttachRelatedEntity(view, InListOrDetail.InDetail, items,cancellationToken);
         return items;
@@ -99,10 +99,12 @@ public class ViewService(
 
     public async Task<Record> One(string viewName, Dictionary<string, StringValues> querystringDictionary, CancellationToken cancellationToken)
     {
-        var view = await ResolvedView(viewName, querystringDictionary,cancellationToken);
+        var view = await GetView(viewName, cancellationToken);
         var entity = NotNull(view.Entity).ValOrThrow($"entity not exist for {viewName}");
 
         var attributes = CheckResult(view.LocalAttributes(InListOrDetail.InDetail));
+        
+        CheckResult(view.Filters.ResolveValues(view.Entity!, CastToDatabaseType, querystringDictionary));
         var query = CheckResult(entity.OneQuery(view.Filters, attributes ));
         var item = NotNull(await kateQueryExecutor.One(query,cancellationToken))
             .ValOrThrow("Not find record");
@@ -125,14 +127,13 @@ public class ViewService(
         }
     }
     
-    private async Task<View> ResolvedView(string viewName,
-        Dictionary<string, StringValues> querystringDictionary, CancellationToken cancellationToken)
+    private async Task<View> GetView(string viewName, CancellationToken cancellationToken)
     {
         var view = await viewCache.GetOrSet(viewName,
             async () => await schemaService.GetViewByName(viewName, cancellationToken));
-        CheckResult(view.Filters?.ResolveValues(view.Entity!, CastToDatabaseType, querystringDictionary));
         return view;
     }
+    
     private object CastToDatabaseType(Attribute attribute, string str)
     {
         return definitionExecutor.CastToDatabaseType(attribute.DataType, str);

@@ -42,7 +42,7 @@ public static class Auth
         var registry = app.Services.GetRequiredService<HookRegistry>();
         
         registry.AddHooks("*", [Occasion.BeforeSaveSchema],
-            async (IPermissionService service, SchemaMeta meta) => await service.HandleSaveSchema(meta));
+            async (IPermissionService service, Schema schema) => await service.HandleSaveSchema(schema));
 
         registry.AddHooks("*", [Occasion.BeforeDeleteSchema],
             async (IPermissionService service, SchemaMeta meta) => await service.HandleDeleteSchema(meta));

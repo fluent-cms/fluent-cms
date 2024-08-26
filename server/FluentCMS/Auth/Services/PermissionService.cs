@@ -36,14 +36,13 @@ public class PermissionService<TUser>(
     public async Task HandleDeleteSchema(SchemaMeta schemaMeta)
     {
         var currentUserId = MustGetCurrentUserId();
-        var find = await schemaService.GetByIdAndVerify(schemaMeta.Id, false);
+        var find = await schemaService.GetByIdAndVerify(schemaMeta.SchemaId, false);
         await CheckSchemaPermission(find, currentUserId);
     }
 
-    public async Task HandleSaveSchema(SchemaMeta schemaMeta)
+    public async Task HandleSaveSchema(Schema schema)
     {
         var currentUserId = MustGetCurrentUserId();
-        var schema = InvalidParamExceptionFactory.NotNull(schemaMeta.Schema).ValOrThrow("no schema from schema meta");
         //edit
         if (schema.Id > 0)
         {
@@ -69,15 +68,16 @@ public class PermissionService<TUser>(
              return;
          }
  
-         if (contextAccessor.HttpContext.HasClaims(AccessScope.FullAccess, meta.Entity.Name)|| contextAccessor.HttpContext.HasClaims(AccessScope.FullRead,meta.Entity.Name))
+         if (contextAccessor.HttpContext.HasClaims(AccessScope.FullAccess, meta.EntityName)
+             || contextAccessor.HttpContext.HasClaims(AccessScope.FullRead,meta.EntityName))
          {
              return;
          }
          
-         if (!(contextAccessor.HttpContext.HasClaims(AccessScope.RestrictedAccess, meta.Entity.Name)
-               || contextAccessor.HttpContext.HasClaims(AccessScope.RestrictedRead, meta.Entity.Name)))
+         if (!(contextAccessor.HttpContext.HasClaims(AccessScope.RestrictedAccess, meta.EntityName)
+               || contextAccessor.HttpContext.HasClaims(AccessScope.RestrictedRead, meta.EntityName)))
          {
-             throw new InvalidParamException($"You don't have permission to read [{meta.Entity.Name}]");
+             throw new InvalidParamException($"You don't have permission to read [{meta.EntityName}]");
          }
          
          filters.Add(new Filter
@@ -98,23 +98,23 @@ public class PermissionService<TUser>(
             return;
         }
 
-        if (contextAccessor.HttpContext.HasClaims(AccessScope.FullAccess, meta.Entity.Name))
+        if (contextAccessor.HttpContext.HasClaims(AccessScope.FullAccess, meta.EntityName))
         {
             return;
         }
 
-        if (!contextAccessor.HttpContext.HasClaims(AccessScope.RestrictedAccess, meta.Entity.Name))
+        if (!contextAccessor.HttpContext.HasClaims(AccessScope.RestrictedAccess, meta.EntityName))
         {
-            throw new InvalidParamException($"You don't have permission to save [{meta.Entity.Name}]");
+            throw new InvalidParamException($"You don't have permission to save [{meta.EntityName}]");
         }
 
-        var isCreate = string.IsNullOrWhiteSpace(meta.Id);
+        var isCreate = string.IsNullOrWhiteSpace(meta.RecordId);
         if (!isCreate)
         {
             //need to query database to get userId in case client fake data
-            var record = await entityService.OneByAttributes(meta.Entity.Name, meta.Id, [CreatedBy]);
+            var record = await entityService.OneByAttributes(meta.EntityName, meta.RecordId, [CreatedBy]);
             True(record.TryGetValue(CreatedBy, out var createdBy) && (string)createdBy == MustGetCurrentUserId())
-                .ThrowNotTrue($"You can only access record created by you, entityName={meta.Entity.Name}, record id={meta.Id}");
+                .ThrowNotTrue($"You can only access record created by you, entityName={meta.EntityName}, record id={meta.RecordId}");
         }
     }
     private async Task CheckSchemaPermission(Schema schema, string currentUserId)

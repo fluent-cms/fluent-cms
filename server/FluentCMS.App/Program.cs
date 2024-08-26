@@ -25,7 +25,7 @@ var app = builder.Build();
 await app.UseCmsAsync();
 
 app.RegisterMessageProducerHook("post");
-app.RegisterMongoViewHook("latest-posts");
+//app.RegisterMongoViewHook("latest-posts");
 
 using var scope = app.Services.CreateScope();
 
@@ -76,7 +76,7 @@ void RegisterHooks()
 
     app.RegisterCmsHook(TestEntity.EntityName, [Occasion.BeforeQueryOne], (EntityMeta meta) =>
     {
-        if (meta.Id == "1000")
+        if (meta.RecordId == "1000")
         {
             throw new FluentCMS.Services.InvalidParamException("1000");
         }

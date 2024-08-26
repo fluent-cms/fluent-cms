@@ -201,13 +201,21 @@ public sealed class Entity
         return query;
     }
 
-    public Query ListQuery(Filters? filters, Sorts? sorts, Pagination? pagination, Cursor? cursor,
+    public Result<Query> ListQuery(Filters? filters, Sorts? sorts, Pagination? pagination, Cursor? cursor,
         Attribute[] attributes, Func<Attribute, string, object> cast)
     {
         var query = Basic().Select(attributes.Select(x => x.FullName()));
-        pagination?.Apply(query);
-        cursor?.Apply(this, query, sorts, cast);
-        sorts?.Apply(this, query);
+        if (cursor is not null)
+        {
+            var recordResult = cursor.DecodeRecord(this, cast);
+            if (recordResult.IsFailed) return Result.Fail(recordResult.Errors);
+
+            var cursorResult = query.ApplyCursor(sorts, recordResult.Value, cursor.IsForward);
+            if (cursorResult.IsFailed) return Result.Fail(recordResult.Errors);
+        }
+
+        query.ApplyPagination(pagination);
+        query.ApplySorts(sorts);
         query.ApplyFilters(filters);
         return query;
     }

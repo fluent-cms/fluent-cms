@@ -5,6 +5,35 @@ namespace FluentCMS.Utils.QueryBuilder;
 
 public static class QueryExt
 {
+    public static void ApplyPagination(this Query query, Pagination? pagination)
+    {
+        if (pagination is null)
+        {
+            return;
+        }
+
+        query.Offset(pagination.Offset).Limit(pagination.Limit);
+    }
+    public static void ApplySorts(this Query query, Sorts? sorts)
+    {
+        if (sorts is null)
+        {
+            return;
+        }
+
+        foreach (var sort in sorts)
+        {
+            if (sort.Order == SortOrder.Desc)
+            {
+                query.OrderByDesc(sort.FieldName);
+            }
+            else
+            {
+                query.OrderBy(sort.FieldName);
+            }
+        }
+    }
+
     public static Result ApplyFilters(this Query query, Filters? filters)
     {
         var result = Result.Ok();
@@ -28,10 +57,11 @@ public static class QueryExt
                 return q;
             });
         }
+
         return result;
     }
 
-    public static Result<Query> ApplyAndConstraint(this Query query, string field, string match, object[] values)
+    private static Result<Query> ApplyAndConstraint(this Query query, string field, string match, object[] values)
     {
         return match switch
         {
@@ -58,7 +88,7 @@ public static class QueryExt
         };
     }
 
-    public static Result<Query> ApplyOrConstraint(this Query query, string field, string match, object[] values)
+    private static Result<Query> ApplyOrConstraint(this Query query, string field, string match, object[] values)
     {
         return match switch
         {
@@ -83,5 +113,46 @@ public static class QueryExt
                 : Result.Fail("show provide two values for between"),
             _ => Result.Fail($"{match} is not support ")
         };
+    }
+
+    public static Result ApplyCursor(this Query? query, Sorts? sorts, Record? record, bool forward)
+    {
+        if (query is null || record is null) return Result.Ok();
+        return sorts?.Count switch
+        {
+            0 => Result.Fail("Sorts was not provided, can not perform cursor filter"),
+            1 => HandleOneField(),
+            2 => HandleTwoFields(),
+            _=> Result.Fail("More than two field in sorts is not supported")
+        };
+
+        Result HandleOneField()
+        {
+            var sort = sorts[0];
+            query.Where(sort.FieldName, GetCompareOperator(sort), record[sort.FieldName]);
+            return Result.Ok();
+        }
+
+        Result HandleTwoFields()
+        {
+            var first = sorts.First();
+            var last = sorts.Last();
+            query.Where(q =>
+            {
+                q.Where(first.FieldName, GetCompareOperator(first), record[first.FieldName]);
+                q.Or();
+                q.Where(first.FieldName, record[first.FieldName]);
+                q.Where(last.FieldName, GetCompareOperator(last), record[last.FieldName]);
+                return q;
+            });
+            return Result.Ok();
+        }
+        
+        string GetCompareOperator(Sort s)
+        {
+            return   forward ? s.Order == SortOrder.Asc ? ">" : "<":
+                s.Order == SortOrder.Asc ? "<" : ">";
+        }
+        
     }
 }

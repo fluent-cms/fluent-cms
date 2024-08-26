@@ -1,7 +1,5 @@
 using System.Text.Json.Serialization;
 using FluentResults;
-using Microsoft.Extensions.Primitives;
-using SqlKata;
 
 namespace FluentCMS.Utils.QueryBuilder;
     public enum SortOrder
@@ -23,11 +21,7 @@ namespace FluentCMS.Utils.QueryBuilder;
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public SortOrder Order { get; set; }
 
-        public string GetCompareOperator(bool forNextPage)
-        {
-            return   forNextPage ? Order == SortOrder.Asc ? ">" : "<":
-                Order == SortOrder.Asc ? "<" : ">";
-        }
+       
     }
 
     public class Sorts : List<Sort>
@@ -51,25 +45,5 @@ namespace FluentCMS.Utils.QueryBuilder;
                 FieldName = field.Key, Order = field.Values.FirstOrDefault() == "1" ? SortOrder.Asc : SortOrder.Desc,
             }));
             return ret;
-        }
-
-        public void Apply(Entity entity, Query? query)
-        {
-            if (query is null)
-            {
-                return;
-            }
-
-            foreach (var sort in this)
-            {
-                if (sort.Order == SortOrder.Desc)
-                {
-                    query.OrderByDesc(entity.Fullname(sort.FieldName));
-                }
-                else
-                {
-                    query.OrderBy(entity.Fullname(sort.FieldName));
-                }
-            }
         }
     }

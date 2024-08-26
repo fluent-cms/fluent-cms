@@ -11,5 +11,5 @@ public interface IPermissionService
     Task CheckEntityAccessPermission(EntityMeta meta);
     void AssignCreatedBy(Record record);
     Task HandleDeleteSchema(SchemaMeta schemaMeta);
-    Task HandleSaveSchema(SchemaMeta schemaMeta);
+    Task HandleSaveSchema(Schema schema);
 }

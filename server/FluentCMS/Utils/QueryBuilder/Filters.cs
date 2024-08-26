@@ -62,7 +62,6 @@ public sealed class Filter
 public class Filters : List<Filter>
 {
     private const string QuerystringPrefix = "querystring.";
-    public Filters(){}
     public static Result<Filters> Parse(Entity entity, QsDict qsDict, Func<Attribute, string, object> cast)
     {
         var ret = new Filters();

@@ -47,11 +47,8 @@ public class HookRegistryTests
         {
             TotalRecords = 10,
         };
-        var meta = new EntityMeta
-        {
-            Entity = new Entity { Name = People.EntityName },
-            Id = "3",
-        }; 
+        var meta = new EntityMeta(People.EntityName, "3");
+         
         await _hookRegistry.Trigger(_serviceProvider, occasion,meta, new HookParameter{ListResult = res});
         Assert.Equal(100, res.TotalRecords);
     }
@@ -64,12 +61,8 @@ public class HookRegistryTests
         {
             id = 3, Name = People.NameValue
         });
+        var meta = new EntityMeta(People.EntityName, "3");
 
-        var meta = new EntityMeta
-        {
-            Entity = new Entity { Name = People.EntityName },
-            Id = "3",
-        };
         var (filters, sorts, pagination) = (new Filters(), new Sorts(), new Pagination());
         var hookData = new HookParameter
         {
@@ -90,12 +83,7 @@ public class HookRegistryTests
                 sorts1.Add(new Sort());
                 pagination1.Offset = 100;
             });
-
-        var meta = new EntityMeta
-        {
-            Entity = new Entity { Name = People.EntityName },
-        };
-
+        var meta = new EntityMeta(People.EntityName );
         var (filters, sorts, pagination) = (new Filters(), new Sorts(), new Pagination());
         var hookData = new HookParameter
         {
@@ -121,11 +109,7 @@ public class HookRegistryTests
         _hookRegistry.AddHooks(People.EntityName, [Occasion.BeforeInsert],
             (PeopleService service, Record record) => service.ModifyRecord(record, "ModifyRecord"));
 
-        var meta = new EntityMeta
-        {
-            Entity = new Entity { Name = People.EntityName },
-            Id = "1",
-        };
+        var meta = new EntityMeta(People.EntityName, "1");
         await _hookRegistry.Trigger(_serviceProvider, Occasion.BeforeInsert, meta, new HookParameter{Record = records});
     }
 }

@@ -15,7 +15,7 @@ public class ViewsController(IViewService viewService) : ControllerBase
         [FromQuery] Cursor cursor, [FromQuery] bool omitHook)
     {
         var queryDictionary = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
-        var res = await viewService.List(viewName, cursor, queryDictionary,omitHook, cancellationToken);
+        var res = await viewService.List(viewName, cursor, queryDictionary,cancellationToken);
         return Ok( res);
    
     }

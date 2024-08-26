@@ -1,21 +1,6 @@
 using FluentCMS.Models;
-using FluentCMS.Utils.QueryBuilder;
-using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.Utils.HookFactory;
-public sealed class HookParameter
-{
-    public Filters? Filters { get; init; }
-    public Sorts? Sorts { get; init; }
-    public Pagination? Pagination { get; init; }
-    public Cursor? Cursor { get; init; }
-    public IList<Record>? Records { get; init; } 
-    public Record? Record { get; init; }
-    public Attribute? Attribute { get; init; }
-    public Schema? Schema { get; init; }
-    public ListResult? ListResult { get; init; }
-}
-
 public class HookRegistry
 {
     private readonly  List<Hook> _hooks= [];
@@ -33,12 +18,12 @@ public class HookRegistry
         }
     }
 
-    public async Task<bool> Trigger(IServiceProvider provider, Occasion occasion, SchemaMeta schema)
+    public async Task<bool> Trigger(IServiceProvider provider, Occasion occasion, SchemaMeta meta, Schema? schema)
     {
         var exit = false;
         foreach (var hook in _hooks.Where(x=>x.Occasion == occasion))
         {
-            exit = await hook.Trigger(provider,null, null,schema, new HookParameter(),null);
+            exit = await hook.Trigger(provider,null, null,meta, new HookParameter{Schema = schema},null);
             if (exit)
             {
                 break ;
@@ -50,7 +35,7 @@ public class HookRegistry
     public async Task<bool> Trigger(IServiceProvider provider, Occasion occasion, ViewMeta meta, HookParameter hookParameter, HookReturn? hookReturn = null)
     {
         var exit = false;
-        foreach (var hook in GetHooks(meta.View.Name,occasion))
+        foreach (var hook in GetHooks(meta.ViewName,occasion))
         {
             exit = await hook.Trigger(provider,null,meta, null,hookParameter, hookReturn);
             if (exit)
@@ -64,7 +49,7 @@ public class HookRegistry
     public async Task<bool> Trigger(IServiceProvider provider, Occasion occasion, EntityMeta meta, HookParameter hookParameter, HookReturn? hookReturn = null)
     {
         var exit = false;
-        foreach (var hook in GetHooks(meta.Entity.Name, occasion))
+        foreach (var hook in GetHooks(meta.EntityName, occasion))
         {
             exit = await hook.Trigger(provider,meta,null,null, hookParameter,hookReturn);
             if (exit)

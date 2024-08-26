@@ -109,8 +109,8 @@ public static class Basic
     {
         builder.Services.AddMemoryCache();
         builder.Services.AddSingleton<HookRegistry>(_=> new HookRegistry());
-        builder.Services.AddSingleton<KeyValCache<View>>(p =>
-            new KeyValCache<View>(p.GetRequiredService<IMemoryCache>(), 30, "view"));
+        builder.Services.AddSingleton<ImmutableCache<View>>(p =>
+            new ImmutableCache<View>(p.GetRequiredService<IMemoryCache>(), 30, "view"));
         builder.Services.AddSingleton<LocalFileStore>(p => new LocalFileStore("wwwroot/files"));
         builder.Services.AddSingleton<KateQueryExecutor>(p =>
             new KateQueryExecutor(p.GetRequiredService<IKateProvider>(), 30));
