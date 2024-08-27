@@ -10,8 +10,18 @@ public sealed class Cursor
     public string First { get; set; } = "";
     public string Last { get; set; } = "";
 
-    public bool IsEmpty => string.IsNullOrWhiteSpace(First) && string.IsNullOrWhiteSpace(Last);
-    public bool IsForward => !string.IsNullOrWhiteSpace(Last) || string.IsNullOrWhiteSpace(First);
+    public Record? BoundaryItem { get; set; }
+
+    public object? BoundaryValue(string fld) => BoundaryItem?[fld];
+    private bool IsEmpty => string.IsNullOrWhiteSpace(First) && string.IsNullOrWhiteSpace(Last);
+    private bool IsForward => !string.IsNullOrWhiteSpace(Last) || string.IsNullOrWhiteSpace(First);
+    
+    public string GetCompareOperator(Sort s)
+    {
+        return  IsForward ? s.Order == SortOrder.Asc ? ">" : "<":
+            s.Order == SortOrder.Asc ? "<" : ">";
+    }
+
     public Result<Cursor> GetNextCursor(Record[] items, Sorts? sorts, bool hasMore)
     {
         if (sorts is null)
@@ -56,17 +66,20 @@ public sealed class Cursor
         return Base64UrlEncoder.Encode(cursor);
     }
 
-    public Result<Record> DecodeRecord(Entity entity, Func<Attribute, string, object> cast)
+    public Result ResolveBoundaryItem(Entity entity, Func<Attribute, string, object> cast)
     {
-        if (IsEmpty)
+        if (IsEmpty) return Result.Ok();
+        try
         {
+            var recordStr = IsForward ? Last : First;
+            recordStr = Base64UrlEncoder.Decode(recordStr);
+            var element = JsonSerializer.Deserialize<JsonElement>(recordStr);
+            BoundaryItem = RecordParser.Parse(element, entity, cast);
             return Result.Ok();
         }
-        
-        var recordStr = IsForward ? Last : First;
-        recordStr = Base64UrlEncoder.Decode(recordStr);
-        var element = JsonSerializer.Deserialize<JsonElement>(recordStr);
-        var dict = RecordParser.Parse(element, entity,cast);
-        return Result.Ok(dict);
+        catch (Exception e)
+        {
+            return Result.Fail(e.Message);
+        }
     }
 }

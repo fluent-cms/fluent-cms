@@ -115,9 +115,9 @@ public static class QueryExt
         };
     }
 
-    public static Result ApplyCursor(this Query? query, Sorts? sorts, Record? record, bool forward)
+    public static Result ApplyCursor(this Query? query,  Cursor? cursor,Sorts? sorts)
     {
-        if (query is null || record is null) return Result.Ok();
+        if (query is null || cursor?.BoundaryItem is null) return Result.Ok();
         return sorts?.Count switch
         {
             0 => Result.Fail("Sorts was not provided, can not perform cursor filter"),
@@ -128,31 +128,32 @@ public static class QueryExt
 
         Result HandleOneField()
         {
-            var sort = sorts[0];
-            query.Where(sort.FieldName, GetCompareOperator(sort), record[sort.FieldName]);
+            ApplyCompare(query,sorts[0]);
             return Result.Ok();
         }
 
         Result HandleTwoFields()
         {
-            var first = sorts.First();
-            var last = sorts.Last();
+            var (first,last) = (sorts.First(),sorts.Last());
             query.Where(q =>
             {
-                q.Where(first.FieldName, GetCompareOperator(first), record[first.FieldName]);
+                ApplyCompare(q, first);
                 q.Or();
-                q.Where(first.FieldName, record[first.FieldName]);
-                q.Where(last.FieldName, GetCompareOperator(last), record[last.FieldName]);
+                ApplyEq(q, first);
+                ApplyCompare(q, last);
                 return q;
             });
             return Result.Ok();
         }
-        
-        string GetCompareOperator(Sort s)
+
+        void ApplyEq(Query q, Sort sort)
         {
-            return   forward ? s.Order == SortOrder.Asc ? ">" : "<":
-                s.Order == SortOrder.Asc ? "<" : ">";
+            q.Where(sort.FieldName, cursor.BoundaryValue(sort.FieldName));
         }
-        
+        void ApplyCompare(Query q, Sort sort)
+        {
+            q.Where(sort.FieldName, cursor.GetCompareOperator(sort), cursor.BoundaryValue(sort.FieldName));
+        }
+
     }
 }

@@ -197,7 +197,6 @@ public sealed class Entity
         var query = Basic().Where(PrimaryKey, id)
             .Select(attributes.Select(x=>x.FullName()));
         query.ApplyFilters(filters);
-//        filters?.Apply(this,query);
         return query;
     }
 
@@ -205,15 +204,10 @@ public sealed class Entity
         Attribute[] attributes, Func<Attribute, string, object> cast)
     {
         var query = Basic().Select(attributes.Select(x => x.FullName()));
-        if (cursor is not null)
-        {
-            var recordResult = cursor.DecodeRecord(this, cast);
-            if (recordResult.IsFailed) return Result.Fail(recordResult.Errors);
-
-            var cursorResult = query.ApplyCursor(sorts, recordResult.Value, cursor.IsForward);
-            if (cursorResult.IsFailed) return Result.Fail(recordResult.Errors);
-        }
-
+        
+        var cursorResult = query.ApplyCursor(cursor, sorts);
+        if (cursorResult.IsFailed) return Result.Fail(cursorResult.Errors);
+        
         query.ApplyPagination(pagination);
         query.ApplySorts(sorts);
         query.ApplyFilters(filters);

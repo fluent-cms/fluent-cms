@@ -19,6 +19,11 @@ public sealed partial class SchemaService(
     IServiceProvider provider
     ) : ISchemaService
 {
+    public object CastToDatabaseType(Attribute attribute, string str)
+    {
+        return definitionExecutor.CastToDatabaseType(attribute.DataType, str);
+    }
+    
     public async Task<Schema> Save(Schema dto, CancellationToken cancellationToken = default)
     {
         var exit = await hookRegistry.Trigger(provider, Occasion.BeforeSaveSchema, new SchemaMeta(dto.Id), dto);

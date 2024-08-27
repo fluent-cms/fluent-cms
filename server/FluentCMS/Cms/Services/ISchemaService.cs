@@ -1,11 +1,14 @@
 using FluentCMS.Models;
 using FluentResults;
 using FluentCMS.Utils.QueryBuilder;
+using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.Cms.Services;
 
 public interface ISchemaService
 {
+
+    object CastToDatabaseType(Attribute attribute, string str);
     Task<Schema[]> GetAll(string type,CancellationToken cancellationToken);
     Task<Result<Entity>> GetEntityByNameOrDefault(string name, CancellationToken cancellationToken = default);
     Task<Schema> GetByIdAndVerify(int id, bool extend, CancellationToken cancellationToken = default);

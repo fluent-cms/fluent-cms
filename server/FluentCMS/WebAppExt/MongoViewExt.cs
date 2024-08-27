@@ -9,17 +9,48 @@ public static class MongoViewExt
 {
     public static void AddMongoView(this WebApplicationBuilder builder, MongoConfig config)
     {
-        builder.Services.AddSingleton<INosqlDao>(p => new MongoNosqlDao(config));
+        builder.Services.AddSingleton<INosqlDao>(p => new MongoDao(config, p.GetRequiredService<ILogger<MongoDao>>()));
     }
 
-    public static void RegisterMongoViewHook(this WebApplication app, string entityName = "*")
+    public static void RegisterMongoViewHook(this WebApplication app, string viewName = "*")
     {
         var hookRegistry = app.Services.GetRequiredService<HookRegistry>();
-        hookRegistry.AddHooks(entityName,[Occasion.BeforeQueryView], 
-            async (INosqlDao dao, ViewMeta meta,Filters filters,Sorts sorts, Cursor cursor, HookReturn hookReturn ) =>
+        hookRegistry.AddHooks(
+            viewName, 
+            [Occasion.BeforeQueryView],
+            async (INosqlDao dao, ViewMeta meta, 
+                Filters filters, Sorts sorts, Cursor cursor, Pagination pagination,
+                HookReturn hookReturn) =>
             {
-                hookReturn.Records =InvalidParamExceptionFactory.CheckResult( await dao.Query(meta.EntityName, filters, sorts, cursor) );
+                var res = await dao.Query(meta.EntityName, filters, sorts, cursor, pagination);
+                hookReturn.Records = InvalidParamExceptionFactory.CheckResult(res);
                 return true;
-            });
+            }
+        );
+        
+        hookRegistry.AddHooks(
+            viewName, 
+            [Occasion.BeforeQueryManyView],
+            async (INosqlDao dao, ViewMeta meta, Filters filters, HookReturn hookReturn) =>
+            {
+                hookReturn.Records =
+                    InvalidParamExceptionFactory.CheckResult(await dao.Query(meta.EntityName, filters));
+                return true;
+            }
+        );
+        
+        hookRegistry.AddHooks(
+            viewName, 
+            [Occasion.BeforeQueryOneView],
+            async (INosqlDao dao, ViewMeta meta, Filters filters,HookReturn hookReturn) =>
+            {
+                var records = InvalidParamExceptionFactory.CheckResult(await dao.Query(meta.EntityName, filters));
+                if (records.Length > 0)
+                {
+                    hookReturn.Record = records[0];
+                }
+                return true;
+            }
+        );
     }
 }

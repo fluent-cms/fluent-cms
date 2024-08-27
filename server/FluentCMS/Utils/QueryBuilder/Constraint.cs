@@ -1,9 +1,12 @@
+using System.Text.Json.Serialization;
+
 namespace FluentCMS.Utils.QueryBuilder;
 
 public sealed class Constraint
 {
     public string Match { get; set; } = "";
     public string Value { get; set; } = "";
+    [JsonIgnore]
     public object[] ResolvedValues { get; set; } = [];
 }
 

@@ -31,6 +31,8 @@ public enum Occasion
     AfterDeleteRelated,
     
     BeforeQueryView,
+    BeforeQueryOneView,
+    BeforeQueryManyView,
 }
 
 public sealed class Hook

@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using FluentCMS.Utils.Qs;
 using FluentResults;
 using Microsoft.Extensions.Primitives;
@@ -17,11 +18,13 @@ public sealed class Filter
 
     public List<Constraint> Constraints { get; set; }
 
+    public bool OmitFail { get; set; }
     public Filter()
     {
         Constraints = new List<Constraint>();
     }
 
+    [JsonIgnore]
     public bool IsOr => Operator == "or";
     
     public static Result<Filter> Parse(Entity entity, string field, Pair[] pairs, Func<Attribute, string, object> cast)
@@ -61,7 +64,7 @@ public sealed class Filter
 
 public class Filters : List<Filter>
 {
-    private const string QuerystringPrefix = "querystring.";
+    private const string QuerystringPrefix = "qs.";
     public static Result<Filters> Parse(Entity entity, QsDict qsDict, Func<Attribute, string, object> cast)
     {
         var ret = new Filters();
@@ -83,8 +86,9 @@ public class Filters : List<Filter>
 
     public Result ResolveValues(Entity entity, Func<Attribute, string, object> cast,  Dictionary<string, StringValues>? querystringDictionary)
     {
-        foreach (var filter in this)
+        for (var i = Count -1; i >= 0; i -- )
         {
+            var filter = this[i];
             var field = entity.FindOneAttribute(filter.FieldName);
             if (field is null)
             {
@@ -105,10 +109,20 @@ public class Filters : List<Filter>
                 };
                 if (result.IsFailed)
                 {
-                    return Result.Fail(result.Errors);
+                    if (filter.OmitFail)
+                    {
+                        RemoveAt(i);
+                    }
+                    else
+                    {
+                        return Result.Fail(result.Errors);
+                    }
+                }
+                else
+                {
+                    filterConstraint.ResolvedValues = result.Value;
                 }
 
-                filterConstraint.ResolvedValues = result.Value;
             }
         }
         return Result.Ok();
@@ -116,12 +130,12 @@ public class Filters : List<Filter>
         Result<object[]> ResolveQuerystringPrefix(Attribute field, string val)
         {
             var key = val[QuerystringPrefix.Length..];
-            if (querystringDictionary is null)
+            if (querystringDictionary is null||!querystringDictionary.TryGetValue(key, out var vals))
             {
                 return Result.Fail($"Fail to resolve filter: no key {key} in query string");
             }
-
-            return querystringDictionary[key].Select(x => cast(field, x!)).ToArray();
+            return vals.Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => cast(field, x!)).ToArray();
         }
     }
 }

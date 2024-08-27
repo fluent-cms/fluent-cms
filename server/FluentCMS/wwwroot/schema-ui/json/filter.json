@@ -9,8 +9,13 @@
     },
     "operator": {
       "type": "string",
-      "title": "Logical Operator",
-      "enum": ["and","not","or"]
+      "title": "Selection Mode",
+      "description": "and - match all constraint, or - match any constraint",
+      "enum": ["and","or"]
+    },
+    "omitFail":{
+      "type":"boolean",
+      "title": "Omit if resolve value fail"
     },
     "constraints": {
       "title": "Constraints",

@@ -15,7 +15,7 @@ public static class MongoConsumerExt
         IDictionary<string, FeedConfig> dictionary
     )
     {
-        builder.Services.AddSingleton<INosqlDao>(p => new MongoNosqlDao(mongoConfig));
+        builder.Services.AddSingleton<INosqlDao>(p => new MongoDao(mongoConfig, p.GetRequiredService<ILogger<MongoDao>>()));
         builder.Services.AddSingleton<FeedSaver>();
         builder.Services.AddSingleton<IConsumer>(p => new KafkaConsumer(kafkaConfig));
         builder.Services.AddHostedService<NosqlConsumerService>(p =>
