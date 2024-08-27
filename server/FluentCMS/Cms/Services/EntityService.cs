@@ -162,7 +162,7 @@ public sealed class EntityService(
         var attribute = NotNull(await FindAttribute(entityName, attributeName,cancellationToken))
             .ValOrThrow($"not find {attributeName} in {entityName}");
 
-        var crossTable = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable for ${attributeName}");
+        var crossTable = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable of {attributeName}");
 
         var items = elements.Select(ele =>
             RecordParser.Parse(ele, crossTable.TargetEntity, schemaService.CastToDatabaseType)).ToArray();
@@ -194,7 +194,7 @@ public sealed class EntityService(
         var attribute = NotNull(await FindAttribute(entityName, attributeName,cancellationToken))
             .ValOrThrow($"not find {attributeName} in {entityName}");
 
-        var crossTable = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable for ${attributeName}");
+        var crossTable = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable of {attributeName}");
 
         var items = elements.Select(ele =>
             RecordParser.Parse(ele, crossTable.TargetEntity, schemaService.CastToDatabaseType)).ToArray();
@@ -225,7 +225,7 @@ public sealed class EntityService(
         var attribute = NotNull(await FindAttribute(entityName, attributeName,cancellationToken))
             .ValOrThrow($"not find {attributeName} in {entityName}");
 
-        var crossTable = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable for ${attributeName}");
+        var crossTable = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable of {attributeName}");
         var selectAttributes = crossTable.TargetEntity.LocalAttributes(InListOrDetail.InList);
         var query = crossTable.Many(selectAttributes, exclude,  schemaService.CastToDatabaseType(crossTable.FromAttribute,strId));
         return new ListResult
@@ -244,7 +244,7 @@ public sealed class EntityService(
             return;
         }
 
-        var cross = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable for {attribute.FullName()}");
+        var cross = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable of {attribute.FullName()}");
         var query = cross.Many(getFields(cross.TargetEntity), ids);
         var targetRecords = await queryKateQueryExecutor.Many(query,cancellationToken);
         var group = targetRecords.GroupBy(x => x[cross.FromAttribute.Field], x => x);

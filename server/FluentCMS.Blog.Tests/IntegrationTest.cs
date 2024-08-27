@@ -11,6 +11,11 @@ public class IntegrationTest
 {
     private readonly HttpClient _client;
    
+    private const string Tutor = "tutor";
+    private const string Leaner = "leaner";
+    private const string Class = "class";
+    private const string Name = "name";
+    
     public IntegrationTest()
     {
         var app = new WebApplicationFactory<Program>();
@@ -27,44 +32,44 @@ public class IntegrationTest
         await Login();
         await GetTopMenuBar();
         await GetAllSchema();
-        await AddSimpleEntity("teacher", "name");
-        await AddSimpleData("teacher", "name", "Tom");
+        await AddSimpleEntity(Tutor, Name);
+        await AddSimpleData(Tutor, Name, "Tom");
         
-        await UpdateSimpleData("teacher", 1, "name", "TomUpdate");
-        var teacher = await _client.GetObject<Dictionary<string, JsonElement>>("/api/entities/teacher/1");
-        Assert.Equal("TomUpdate", teacher.Value["name"].GetString());
+        await UpdateSimpleData( Tutor, 1, Name, "TomUpdate");
+        var tutor = await _client.GetObject<Dictionary<string, JsonElement>>($"/api/entities/{Tutor}/1");
+        Assert.Equal("TomUpdate", tutor.Value[Name].GetString());
         
-        await AddSimpleEntity("student", "name");
-        await AddSimpleData("student", "name", "Bob");
+        await AddSimpleEntity(Leaner, Name);
+        await AddSimpleData(Leaner, Name, "Bob");
 
-        await AddSimpleEntity("class", "name", "teacher", "student");
-        await AddSimpleData("class", new Dictionary<string, object>
+        await AddSimpleEntity(Class, Name, Tutor, Leaner);
+        await AddSimpleData(Class, new Dictionary<string, object>
         {
-            { "name", "math" },
-            { "teacher", 1 }
+            { Name, "math" },
+            { Tutor, 1 }
         });
         await SaveClassStudent();
-        var response = await _client.GetAsync("/api/entities/class/1/student?exclude=false");
+        var response = await _client.GetAsync($"/api/entities/{Class}/1/{Leaner}?exclude=false");
         response.EnsureSuccessStatusCode();
-        response = await _client.GetAsync("/api/entities/class/1/student?exclude=true");
+        response = await _client.GetAsync($"/api/entities/{Class}/1/{Leaner}?exclude=true");
         response.EnsureSuccessStatusCode();
 
-        var cls = await _client.GetObject<Dictionary<string,JsonElement>>("/api/entities/class/1");
-        Assert.Equal(1, cls.Value["teacher_data"].GetProperty("id").GetInt32());
+        var cls = await _client.GetObject<Dictionary<string,JsonElement>>($"/api/entities/{Class}/1");
+        Assert.Equal(1, cls.Value[$"{Tutor}_data"].GetProperty("id").GetInt32());
     }
 
     [Fact]
     public async Task Query()
     {
         await Login();
-        await AddSimpleEntity("student","name");
+        await AddSimpleEntity(Leaner,Name);
         for (var i = 0; i < 500; i++)
         {
-            await AddSimpleData("student", "name", $"student{i}");
+            await AddSimpleData(Leaner, Name, $"student{i}");
         }
 
-        await AddSimpleData("student", "name", "good-student");
-        await AddSimpleData("student", "name", "good-student");
+        await AddSimpleData(Leaner, Name, "good-student");
+        await AddSimpleData(Leaner, Name, "good-student");
         
         //single query
         
@@ -77,7 +82,7 @@ public class IntegrationTest
             id = 1
         };
         var payload = new object[] { item };
-        var res = await _client.PostObject($"/api/entities/class/1/student/save", payload);
+        var res = await _client.PostObject($"/api/entities/{Class}/1/{Leaner}/save", payload);
         res.EnsureSuccessStatusCode();
 
     }
@@ -125,9 +130,6 @@ public class IntegrationTest
                 new Dictionary<string, object>());
         result.EnsureSuccessStatusCode();
     }
-
-    private static StringContent Content(object payload) =>
-        new(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
 
     private async Task GetTopMenuBar()
     {

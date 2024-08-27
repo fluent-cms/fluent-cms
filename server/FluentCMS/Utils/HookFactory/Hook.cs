@@ -1,4 +1,5 @@
 using System.Reflection;
+using FluentCMS.Models;
 using FluentCMS.Utils.QueryBuilder;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
@@ -55,6 +56,8 @@ public sealed class Hook
                 _ when t == typeof(ViewMeta) && viewMeta is not null=> viewMeta,
                 _ when t == typeof(SchemaMeta) && schemaMeta is not null=> schemaMeta,
                 
+                //schema
+                _ when t == typeof(Schema) && parameter.Schema is not null=> parameter.Schema,
                 //list or view
                 _ when t == typeof(Filters) && parameter.Filters is not null=> parameter.Filters,
                 _ when t == typeof(Sorts) && parameter.Sorts is not null=> parameter.Sorts,
