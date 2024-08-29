@@ -74,7 +74,7 @@ void RegisterHooks()
     app.RegisterCmsHook(TestEntity.EntityName, [Occasion.AfterDelete], 
         (IDictionary<string,object> test) => { test[TestEntity.FieldName] += "AfterDelete"; });
 
-    app.RegisterCmsHook(TestEntity.EntityName, [Occasion.BeforeQueryOne], (EntityMeta meta) =>
+    app.RegisterCmsHook(TestEntity.EntityName, [Occasion.BeforeReadOne], (EntityMeta meta) =>
     {
         if (meta.RecordId == "1000")
         {
@@ -82,13 +82,13 @@ void RegisterHooks()
         }
     });
 
-    app.RegisterCmsHook(TestEntity.EntityName, [Occasion.AfterQueryOne],
+    app.RegisterCmsHook(TestEntity.EntityName, [Occasion.AfterReadOne],
         (IDictionary<string,object> test) =>
         {
             test[TestEntity.FieldName] += "AfterQueryOne";
         });
 
-    app.RegisterCmsHook(TestEntity.EntityName, [Occasion.BeforeQueryMany], 
+    app.RegisterCmsHook(TestEntity.EntityName, [Occasion.BeforeReadList], 
         (Filters _, Sorts sorts) =>
         {
             sorts.Add(new Sort
@@ -98,7 +98,7 @@ void RegisterHooks()
             });
         });
 
-    app.RegisterCmsHook(TestEntity.EntityName, [Occasion.AfterQueryMany], (ListResult result) =>
+    app.RegisterCmsHook(TestEntity.EntityName, [Occasion.AfterReadList], (ListResult result) =>
     {
         foreach (var item in result.Items)
         {

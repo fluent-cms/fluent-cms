@@ -1,4 +1,4 @@
-using FluentCMS.Models;
+using FluentCMS.Cms.Models;
 using FluentCMS.Utils.QueryBuilder;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
@@ -27,9 +27,9 @@ public class HookReturn
     public Record[] Records { get; set; } = [];
 }
 
-//metas are immutable, changes in hook function are ignroed
+//metas are immutable, changes in hook function are ignored
 public record EntityMeta(string EntityName, string RecordId ="");
 
 public record SchemaMeta(int SchemaId);
 
-public record ViewMeta(string ViewName, string EntityName, string RecordId ="");
+public record QueryMeta(string QueryName, string EntityName);

@@ -7,7 +7,7 @@ public class Pagination
     public int Offset { get; set; }
     public int Limit { get; set; }
 
-    public void Apply(Query? query)
+    public void Apply(SqlKata.Query? query)
     {
        query?.Offset(Offset)?.Limit(Limit);
     }

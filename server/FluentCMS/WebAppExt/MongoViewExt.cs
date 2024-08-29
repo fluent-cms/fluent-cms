@@ -17,8 +17,8 @@ public static class MongoViewExt
         var hookRegistry = app.Services.GetRequiredService<HookRegistry>();
         hookRegistry.AddHooks(
             viewName, 
-            [Occasion.BeforeQueryView],
-            async (INosqlDao dao, ViewMeta meta, 
+            [Occasion.BeforeQueryList],
+            async (INosqlDao dao, QueryMeta meta, 
                 Filters filters, Sorts sorts, Cursor cursor, Pagination pagination,
                 HookReturn hookReturn) =>
             {
@@ -30,8 +30,8 @@ public static class MongoViewExt
         
         hookRegistry.AddHooks(
             viewName, 
-            [Occasion.BeforeQueryManyView],
-            async (INosqlDao dao, ViewMeta meta, Filters filters, HookReturn hookReturn) =>
+            [Occasion.BeforeQueryMany],
+            async (INosqlDao dao, QueryMeta meta, Filters filters, HookReturn hookReturn) =>
             {
                 hookReturn.Records =
                     InvalidParamExceptionFactory.CheckResult(await dao.Query(meta.EntityName, filters));
@@ -41,8 +41,8 @@ public static class MongoViewExt
         
         hookRegistry.AddHooks(
             viewName, 
-            [Occasion.BeforeQueryOneView],
-            async (INosqlDao dao, ViewMeta meta, Filters filters,HookReturn hookReturn) =>
+            [Occasion.BeforeQueryOne],
+            async (INosqlDao dao, QueryMeta meta, Filters filters,HookReturn hookReturn) =>
             {
                 var records = InvalidParamExceptionFactory.CheckResult(await dao.Query(meta.EntityName, filters));
                 if (records.Length > 0)

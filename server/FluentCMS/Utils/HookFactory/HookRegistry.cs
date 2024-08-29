@@ -1,4 +1,4 @@
-using FluentCMS.Models;
+using FluentCMS.Cms.Models;
 using FluentCMS.Utils.QueryBuilder;
 
 namespace FluentCMS.Utils.HookFactory;
@@ -33,11 +33,11 @@ public class HookRegistry
         return exit;
     }
     
-    public async Task<bool> Trigger(IServiceProvider provider, Occasion occasion, View view, HookParameter hookParameter, HookReturn? hookReturn = null)
+    public async Task<bool> Trigger(IServiceProvider provider, Occasion occasion, Query query, HookParameter hookParameter, HookReturn? hookReturn = null)
     {
         var exit = false;
-        var meta = new ViewMeta(view.Name, view.EntityName);
-        foreach (var hook in GetHooks(meta.ViewName,occasion))
+        var meta = new QueryMeta(query.Name, query.EntityName);
+        foreach (var hook in GetHooks(meta.QueryName,occasion))
         {
             exit = await hook.Trigger(provider,null,meta, null,hookParameter, hookReturn);
             if (exit)

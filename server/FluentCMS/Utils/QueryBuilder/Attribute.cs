@@ -29,10 +29,14 @@ public class Attribute
     public string Options { get; set; } = "";
 
     [JsonIgnore]
+    public bool IsLocalAttribute => Type != DisplayType.crosstable;
+    [JsonIgnore]
     public Entity? Parent { get; set; }
     // not input in json designer, 
     public Crosstable? Crosstable { get; set; } 
     public Entity? Lookup { get; set; }
+
+    [JsonIgnore] public Attribute[]? Children { get; set; } 
     public Attribute()
     {
     }
@@ -81,5 +85,40 @@ public class Attribute
             }
         }
         return string.Join(" ", components);
+    }
+}
+
+public static class AttributeNodeHelper
+{
+    public static Attribute? FindOneAttribute(this Attribute[]?  arr, string name)
+    {
+        return arr?.FirstOrDefault(x => x.Field == name);
+    }
+    public static Attribute[] GetLocalAttributes(this Attribute[]? arr)
+    {
+        return arr?.Where(x => x.IsLocalAttribute).ToArray()??[];
+    }
+    public static Attribute[] GetLocalAttributes(this Attribute[]? arr, InListOrDetail listOrDetail)
+    {
+        return arr?.Where(x =>
+                x.Type != DisplayType.crosstable &&
+                (listOrDetail == InListOrDetail.InList ? x.InList : x.InDetail))
+            .ToArray()??[];
+    }
+
+    public static Attribute[] GetLocalAttributes(this Attribute[]? arr, string[] attributes)
+    {
+        return arr?.Where(x => x.Type != DisplayType.crosstable && attributes.Contains(x.Field)).ToArray()??[];
+    }
+
+    public static Attribute[] GetAttributesByType(this Attribute[]? arr, DisplayType displayType)
+    {
+        return arr?.Where(x => x.Type == displayType).ToArray()??[];
+    }
+
+    public static Attribute[] GetAttributesByType(this Attribute[]? arr, DisplayType type, InListOrDetail listOrDetail)
+    {
+        return arr?.Where(x => x.Type == type && (listOrDetail == InListOrDetail.InList ? x.InList : x.InDetail))
+            .ToArray()??[];
     }
 }

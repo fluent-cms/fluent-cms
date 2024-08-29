@@ -1,0 +1,42 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+.navbar {
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    margin-bottom: 20px;
+}
+.table-wrapper {
+    overflow-x: auto;
+}
+td pre {
+    white-space: pre-wrap;
+    margin: 0;
+    padding: 5px;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+}
+.header {
+    width: 100%;
+    position:sticky;
+    top:0;
+    z-index: 1000;
+}
+
+.navbar-nav .border-item {
+    padding-right: 10px;
+    margin-right: 10px;
+}
+
+.navbar-nav .border-item:last-child {
+    border-right: none;
+    margin-right: 0;
+    padding-right: 0;
+}
+.form-check-input {
+    width: 1.5em;
+    height: 1.5em;
+    margin-top: 0.5em;
+    margin-left: 0.5em;
+}

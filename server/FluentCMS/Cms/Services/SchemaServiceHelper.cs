@@ -1,10 +1,13 @@
 using System.Text.Json;
-using FluentCMS.Models;
+using FluentCMS.Cms.Models;
 using FluentCMS.Services;
 using FluentResults;
-using SqlKata;
 using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.QueryBuilder;
+using GraphQLParser;
+using GraphQLParser.AST;
+using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
+using Query = FluentCMS.Utils.QueryBuilder.Query;
 
 namespace FluentCMS.Cms.Services;
 using static InvalidParamExceptionFactory;
@@ -12,7 +15,7 @@ public static class  SchemaType
 {
     public const string Menu = "menu";
     public const string Entity = "entity";
-    public const string View = "view";
+    public const string Query = "query";
 }
 
 public static class SchemaName
@@ -31,13 +34,94 @@ public partial class SchemaService
 
     private static string[] Fields() => [SchemaColumnId, SchemaColumnName, SchemaColumnType, SchemaColumnSettings, SchemaColumnCreatedBy];
 
-    private static Query BaseQuery()
+    private static SqlKata.Query BaseQuery()
     {
-        return new Query(SchemaTableName).Select(Fields()).Where(SchemaColumnDeleted, false);
+        return new SqlKata.Query(SchemaTableName).Select(Fields()).Where(SchemaColumnDeleted, false);
     }
+
+    private async Task<Result> InitViewSelection(Query query, CancellationToken cancellationToken)
+    {
+        GraphQLDocument document = Parser.Parse(query.SelectionSet);
+        List<Attribute> fieldNodes = new();
+
+        foreach (var definition in document.Definitions)
+        {
+            if (definition is not GraphQLOperationDefinition operation)
+                return Result.Fail("invalid selection definition, definition is not operation");
+            var nodeResult = await SelectionSetToNode(operation.SelectionSet, query.Entity!, cancellationToken);
+            if (nodeResult.IsFailed)
+            {
+                return Result.Fail(nodeResult.Errors);
+            }
+            fieldNodes.AddRange(nodeResult.Value);
+        }
+
+        query.Selection = fieldNodes.ToArray();
+        return Result.Ok();
+    }
+
+    private async Task<Result<Attribute[]>> SelectionSetToNode(GraphQLSelectionSet? selectionSet, Entity entity,
+        CancellationToken cancellationToken)
+    {
+        if (selectionSet == null) return new Result<Attribute[]>();
+
+        List<Attribute> attributes = new();
+        foreach (var selection in selectionSet.Selections)
+        {
+            if (selection is not GraphQLField field) continue;
+            var fldName = field.Name.StringValue;
+            var attribute = entity.Attributes.FindOneAttribute(fldName);
+            if (attribute is null) return Result.Fail($"can not find {fldName} in {entity.Name}");
+            switch (attribute.Type)
+            {
+                case DisplayType.crosstable:
+                    if (attribute.Crosstable is null)
+                    {
+                        var res = await LoadCrosstable(entity,attribute, cancellationToken);
+                        if (res.IsFailed)
+                        {
+                            return Result.Fail(res.Errors);
+                        }
+                    }
+                    var crossTableChildren =
+                        await SelectionSetToNode(field.SelectionSet, attribute.Crosstable!.TargetEntity, cancellationToken);
+                    if (crossTableChildren.IsFailed)
+                    {
+                        return Result.Fail(crossTableChildren.Errors);
+                    }
+
+                    attribute.Children = crossTableChildren.Value;
+                    break;
+                case DisplayType.lookup:
+                    if (attribute.Lookup is null)
+                    {
+                        var res = await LoadLookup(attribute, cancellationToken);
+                        if (res.IsFailed)
+                        {
+                            return Result.Fail(res.Errors);
+                        }
+                    }
+
+                    var children =
+                        await SelectionSetToNode(field.SelectionSet, attribute.Lookup!, cancellationToken);
+                    if (children.IsFailed)
+                    {
+                        return Result.Fail(children.Errors);
+                    }
+
+                    attribute.Children = children.Value;
+                    break;
+            }
+
+            attributes.Add(attribute);
+        }
+
+        return attributes.ToArray();
+    }
+
     private async Task VerifyIfSchemaIsView(Schema dto, CancellationToken cancellationToken)
     {
-        var view = dto.Settings.View;
+        var view = dto.Settings.Query;
         if (view is null) //not view, just ignore
         {
             return;
@@ -46,26 +130,22 @@ public partial class SchemaService
         var entityName = StrNotEmpty(view.EntityName).
             ValOrThrow($"entity name of {view.EntityName} should not be empty");
         view.Entity = CheckResult(await GetEntityByNameOrDefault(entityName, true,cancellationToken));
+        CheckResult(await InitViewSelection(view, cancellationToken));
         
-        foreach (var viewAttributeName in view.AttributeNames??[])
-        {
-            NotNull(view.Entity.FindOneAttribute(viewAttributeName))
-                .ValOrThrow($"not find attribute {viewAttributeName} of enity {entityName}");
-        }
-
-        var listAttributes = CheckResult(view.LocalAttributes(InListOrDetail.InList));
-        foreach (var viewSort in view.Sorts??[])
+        var listAttributes = view.Selection.GetLocalAttributes();
+        foreach (var viewSort in view.Sorts)
         {
             var find = listAttributes.FirstOrDefault(x=>x.Field == viewSort.FieldName);
             NotNull(find).ValOrThrow($"sort field {viewSort.FieldName} should in list attributes");
         }
 
-        var attr = view.Entity.LocalAttributes();
-        foreach (var viewFilter in view.Filters??[])
+        var attr = view.Entity.Attributes.GetLocalAttributes();
+        foreach (var viewFilter in view.Filters)
         {
             var find = attr.FirstOrDefault(x => x.Field == viewFilter.FieldName);
             NotNull(find).ValOrThrow($"filter field {viewFilter.FieldName} should in entity's attribute list");
         }
+
     }
     
     private async Task<Result> InitIfSchemaIsEntity(Schema dto, CancellationToken cancellationToken)
@@ -87,7 +167,7 @@ public partial class SchemaService
         False(cols.Length > 0 && dto.Id ==0 ).
             ThrowNotFalse($"the table name {entity.TableName} exists");
         
-        foreach (var attribute in entity.GetAttributesByType(DisplayType.lookup))
+        foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.lookup))
         {
             await CheckLookup(attribute,cancellationToken);
         }
@@ -143,45 +223,64 @@ public partial class SchemaService
         return entity;
     }
 
-    private async Task<Result> LoadRelated(Entity entity, CancellationToken cancellationToken)
+    private async Task<Result> LoadLookup(Attribute attribute,CancellationToken cancellationToken)
     {
-        foreach (var attribute in entity.GetAttributesByType(DisplayType.lookup))
+        var lookupEntityName = attribute.GetLookupEntityName();
+        if (lookupEntityName.IsFailed)
         {
-            var lookupEntityName = attribute.GetLookupEntityName();
-            if (lookupEntityName.IsFailed)
-            {
-                return Result.Fail(lookupEntityName.Errors);
-            }
-
-            var lookup = await GetEntityByNameOrDefault(lookupEntityName.Value, false,cancellationToken);
-            if (lookup.IsFailed)
-            {
-                return Result.Fail($"not find entity by name {lookupEntityName} for lookup {attribute.FullName()}");
-            }
-
-            attribute.Lookup = lookup.Value;
+            return Result.Fail(lookupEntityName.Errors);
         }
 
-        foreach (var attribute in entity.GetAttributesByType(DisplayType.crosstable))
+        var lookup = await GetEntityByNameOrDefault(lookupEntityName.Value, false, cancellationToken);
+        if (lookup.IsFailed)
         {
-            var targetEntityName = attribute.GetCrossEntityName();
-            if (targetEntityName.IsFailed)
-            {
-                return Result.Fail(targetEntityName.Errors);
-            }
+            return Result.Fail($"not find entity by name {lookupEntityName} for lookup {attribute.FullName()}");
+        }
+        attribute.Lookup = lookup.Value;
+        return Result.Ok();
+    }
 
-            var targetEntity = await GetEntityByNameOrDefault(targetEntityName.Value, false,cancellationToken);
-            if (targetEntity.IsFailed)
-            {
-                return Result.Fail($"not find entity by name {entity.Name} for crosstable {attribute.FullName()}");
-            }
+    private async Task<Result> LoadCrosstable(Entity sourceEntity, Attribute attribute, CancellationToken cancellationToken)
+    {
+        var targetEntityName = attribute.GetCrossEntityName();
+        if (targetEntityName.IsFailed)
+        {
+            return Result.Fail(targetEntityName.Errors);
+        }
 
-            attribute.Crosstable = new Crosstable(entity, targetEntity.Value);
+        var targetEntity = await GetEntityByNameOrDefault(targetEntityName.Value, false, cancellationToken);
+        if (targetEntity.IsFailed)
+        {
+            return Result.Fail($"not find entity by name {targetEntityName} for crosstable {attribute.FullName()}");
+        }
+        attribute.Crosstable = new Crosstable(sourceEntity, targetEntity.Value);
+        return Result.Ok();
+
+    }
+
+    private async Task<Result> LoadRelated(Entity entity, CancellationToken cancellationToken)
+    {
+        foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.lookup))
+        {
+            var res = await LoadLookup(attribute, cancellationToken);
+            if (res.IsFailed)
+            {
+                return Result.Fail(res.Errors);
+            }
+        }
+
+        foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.crosstable))
+        {
+            var res = await LoadCrosstable(entity,attribute, cancellationToken);
+            if (res.IsFailed)
+            {
+                return Result.Fail(res.Errors);
+            }
         }
         return Result.Ok();
     }
 
-    private async Task CreateCrosstable(Entity entity, Utils.QueryBuilder.Attribute attribute,CancellationToken cancellationToken)
+    private async Task CreateCrosstable(Entity entity, Attribute attribute,CancellationToken cancellationToken)
     {
         var entityName = CheckResult(attribute.GetCrossEntityName());
         var targetEntity = CheckResult(await GetEntityByNameOrDefault(entityName, false,cancellationToken));
@@ -193,7 +292,7 @@ public partial class SchemaService
         }
     }
 
-    private async Task CheckLookup(Utils.QueryBuilder.Attribute attribute, CancellationToken cancellationToken)
+    private async Task CheckLookup(Attribute attribute, CancellationToken cancellationToken)
     {
         True(attribute.DataType == DataType.Int).ThrowNotTrue("lookup datatype should be int");
         var entityName = CheckResult(attribute.GetLookupEntityName());
@@ -212,12 +311,12 @@ public partial class SchemaService
                 {SchemaColumnSettings, JsonSerializer.Serialize(dto.Settings)},
                 {SchemaColumnCreatedBy, dto.CreatedBy}
             };
-            var query = new Query(SchemaTableName).AsInsert(record,true);
+            var query = new SqlKata.Query(SchemaTableName).AsInsert(record,true);
             dto.Id = await kateQueryExecutor.Exec(query,cancellationToken);
         }
         else
         {
-            var query = new Query(SchemaTableName)
+            var query = new SqlKata.Query(SchemaTableName)
                 .Where(SchemaColumnId, dto.Id)
                 .AsUpdate(
                     [SchemaColumnName, SchemaColumnType, SchemaColumnSettings],

@@ -1,5 +1,5 @@
 using FluentCMS.Cms.Services;
-using FluentCMS.Models;
+using FluentCMS.Cms.Models;
 using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.KateQueryExecutor;

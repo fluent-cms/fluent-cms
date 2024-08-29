@@ -1,5 +1,5 @@
 using FluentCMS.Auth.Services;
-using FluentCMS.Models;
+using FluentCMS.Cms.Models;
 using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.QueryBuilder;
 using FluentResults;
@@ -47,7 +47,7 @@ public static class Auth
         registry.AddHooks("*", [Occasion.BeforeDeleteSchema],
             async (IPermissionService service, SchemaMeta meta) => await service.HandleDeleteSchema(meta));
         
-        registry.AddHooks("*", [Occasion.BeforeQueryOne, Occasion.BeforeQueryMany],
+        registry.AddHooks("*", [Occasion.BeforeReadOne, Occasion.BeforeReadList],
             (IPermissionService service, EntityMeta meta, Filters filters) => service.CheckEntityReadPermission(meta, filters));
 
         registry.AddHooks("*",

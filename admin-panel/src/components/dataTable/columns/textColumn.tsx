@@ -19,9 +19,8 @@ export function textColumn({primaryKey, column, titleAttribute}:{
 
     const bodyTemplate = (item:any) => {
         let val = item[column.field]
-        var dataField = column.field+"_data";
-        if (column.type === "lookup" && item[dataField]){
-            val = item[dataField][column.lookup.titleAttribute]
+        if (column.type === "lookup" && val){
+            val = val[column.lookup.titleAttribute]
         }
 
         if (column.field == titleAttribute){

@@ -41,14 +41,14 @@ public class Crosstable
         };
     }
 
-    public Query Delete(object id, Record[] targetItems)
+    public SqlKata.Query Delete(object id, Record[] targetItems)
     {
         var vals = targetItems.Select(x => x[TargetEntity.PrimaryKey]);
-        return new Query(CrossEntity.TableName).Where(FromAttribute.Field, id)
+        return new SqlKata.Query(CrossEntity.TableName).Where(FromAttribute.Field, id)
             .WhereIn(TargetAttribute.Field, vals).AsUpdate(["deleted"],[true]);
     }
     
-    public Query Insert(object id, Record[] targetItems)
+    public SqlKata.Query Insert(object id, Record[] targetItems)
     {
         string[] cols = [FromAttribute.Field, TargetAttribute.Field];
         var vals = targetItems.Select(x =>
@@ -56,9 +56,9 @@ public class Crosstable
             return new object[]{id, x[TargetEntity.PrimaryKey]};
         });
 
-        return new Query(CrossEntity.TableName).AsInsert(cols, vals);
+        return new SqlKata.Query(CrossEntity.TableName).AsInsert(cols, vals);
     }
-     private Query Base(Attribute[] selectAttributes)
+     private SqlKata.Query Base(Attribute[] selectAttributes)
      {
           var lstFields = selectAttributes.Select(x => x.FullName()).ToList();
           lstFields.Add(FromAttribute.FullName());
@@ -66,10 +66,10 @@ public class Crosstable
           return qry;
      }
 
-     public Query Many(Attribute[] selectAttributes, bool exclude, object id)
+     public SqlKata.Query Many(Attribute[] selectAttributes, bool exclude, object id)
      {
          var baseQuery = Base(selectAttributes);
-         var (a, b) = (TargetEntity.PrimaryKeyAttribute().FullName(), TargetAttribute.FullName());
+         var (a, b) = (TargetEntity.PrimaryKeyAttribute.FullName(), TargetAttribute.FullName());
          if (exclude)
          {
              baseQuery.LeftJoin(CrossEntity.TableName,
@@ -88,10 +88,10 @@ public class Crosstable
          return baseQuery;
      }
 
-     public Query Many(Attribute[] selectAttributes, object[] ids)
+     public SqlKata.Query Many(Attribute[] selectAttributes, object[] ids)
      {
          var baseQuery = Base(selectAttributes);
-         var (a, b) = (TargetEntity.PrimaryKeyAttribute().FullName(), TargetAttribute.FullName());
+         var (a, b) = (TargetEntity.PrimaryKeyAttribute.FullName(), TargetAttribute.FullName());
          baseQuery.Join(CrossEntity.TableName, a, b)
              .WhereIn(FromAttribute.FullName(), ids)
              .Where(CrossEntity.Fullname("deleted"), false);

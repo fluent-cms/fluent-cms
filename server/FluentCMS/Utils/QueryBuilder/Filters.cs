@@ -35,7 +35,7 @@ public sealed class Filter
             Operator = "and",
             Constraints = [],
         };
-        var attribute = entity.FindOneAttribute(field);
+        var attribute = entity.Attributes.FindOneAttribute(field);
         if (attribute is null)
         {
             return Result.Fail($"Fail to parse filter, not found {entity.Name}.{field}");
@@ -89,7 +89,7 @@ public class Filters : List<Filter>
         for (var i = Count -1; i >= 0; i -- )
         {
             var filter = this[i];
-            var field = entity.FindOneAttribute(filter.FieldName);
+            var field = entity.Attributes.FindOneAttribute(filter.FieldName);
             if (field is null)
             {
                 return Result.Fail($"Fail to resolve filter: no field ${filter.FieldName} in ${entity.Name}");

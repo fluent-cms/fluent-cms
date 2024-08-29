@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Entity",
+  "type": "object",
+  "required": ["name","tableName","primaryKey","titleAttribute","defaultPageSize","title","attributes"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Entity Name",
+      "minLength": 1
+    },
+
+    "title": {
+      "minLength": 1,
+      "type": "string",
+      "title": "Entity's Display Title",
+      "description": "Shows in page header bar"
+    },
+    "defaultPageSize": {
+      "type": "number",
+      "title": "Default Page Size",
+      "default": 20,
+      "description": "Default Page Size for pagination"
+    },
+    "tableName": {
+      "type": "string",
+      "title": "Table Name",
+      "minLength": 1,
+      "description": "Database table to store the entity"
+    },
+    "primaryKey": {
+      "type": "string",
+      "default": "id",
+      "title": "Primary Key",
+      "minLength": 1,
+      "description": "identify the record"
+    },
+    "titleAttribute": {
+      "minLength": 1,
+      "type": "string",
+      "title": "Title Attribute",
+      "description": "such as name, title, and subject"
+    },
+
+    "attributes": {
+      "title": "Attributes",
+      "description": "Attributes of entity, including database table fields and customized attribute",
+      "type": "array",
+      "format": "table",
+      "minItems": 1,
+      "id": "fields",
+      "items": {
+        "$ref": "attribute.json"
+      }
+    }
+  }
+}
+     

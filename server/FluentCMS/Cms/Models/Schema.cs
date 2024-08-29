@@ -1,4 +1,4 @@
-namespace FluentCMS.Models;
+namespace FluentCMS.Cms.Models;
 public class Schema
 {
     public int Id { get; set; } 

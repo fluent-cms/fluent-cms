@@ -16,6 +16,7 @@
         <PackageReference Include="FluentMigrator.Runner.Postgres" Version="5.2.0" />
         <PackageReference Include="FluentMigrator.Runner.Sqlite" Version="5.2.0" />
         <PackageReference Include="FluentResults" Version="3.16.0" />
+        <PackageReference Include="GraphQL-Parser" Version="9.5.0" />
         <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.8" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.6" />
         <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="8.0.6" />

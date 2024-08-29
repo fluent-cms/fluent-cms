@@ -1,4 +1,4 @@
-using FluentCMS.Models;
+using FluentCMS.Cms.Models;
 using FluentCMS.Cms.Services;
 using Microsoft.AspNetCore.Mvc;
 

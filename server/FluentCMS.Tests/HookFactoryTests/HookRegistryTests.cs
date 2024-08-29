@@ -40,7 +40,7 @@ public class HookRegistryTests
     [Fact]
     public async Task TestExecuteAfterQuery()
     {
-        var occasion = Occasion.AfterQueryMany;
+        var occasion = Occasion.AfterReadList;
         _hookRegistry.AddHooks(People.EntityName, [occasion], (ListResult res) => { res.TotalRecords = 100; });
 
         var res = new ListResult
@@ -56,7 +56,7 @@ public class HookRegistryTests
     [Fact]
     public async Task TestExecuteBeforeQueryReplace()
     {
-        var occasion = Occasion.AfterQueryMany;
+        var occasion = Occasion.AfterReadList;
         _hookRegistry.AddHooks(People.EntityName, [occasion], () => new People
         {
             id = 3, Name = People.NameValue
@@ -75,7 +75,7 @@ public class HookRegistryTests
     [Fact]
     public async Task TestModifyQuery()
     {
-        var occasion = Occasion.AfterQueryMany;
+        var occasion = Occasion.AfterReadList;
         _hookRegistry.AddHooks(People.EntityName, [occasion],
             (Filters filters1, Sorts sorts1, Pagination pagination1) =>
             {

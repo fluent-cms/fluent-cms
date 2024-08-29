@@ -1,0 +1,21 @@
+{
+  "type": "object",
+  "title": "Constraint",
+  "properties": {
+    "match": {
+      "type": "string",
+      "title": "Match",
+      "enum": [ 
+        "startsWith","contains","notContains", "endsWith",
+        "equals","notEquals",
+        "in", "notIn", 
+        "lt", "lte", "gt", "gte","between",
+        "dataIs", "dateIsNot","dateBefore","dateAfter"
+      ]
+    },
+    "value": {
+      "type": "string",
+      "title":"Value"
+    }
+  }
+}

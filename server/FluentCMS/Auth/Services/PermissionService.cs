@@ -1,6 +1,6 @@
 using System.Security.Claims;
 using FluentCMS.Cms.Services;
-using FluentCMS.Models;
+using FluentCMS.Cms.Models;
 using FluentCMS.Services;
 using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.HookFactory;
@@ -125,10 +125,10 @@ public class PermissionService<TUser>(
                 True(contextAccessor.HttpContext.HasRole(Roles.Sa)).ThrowNotTrue("Only Supper Admin has the permission to modify menu");
                 break;
             case SchemaType.Entity:
-                await CheckViewAndEntityPermission(schema,currentUserId);
+                await CheckQueryAndEntityPermission(schema,currentUserId);
                 break;
-            case SchemaType.View:
-                await CheckViewAndEntityPermission(schema,currentUserId);
+            case SchemaType.Query:
+                await CheckQueryAndEntityPermission(schema,currentUserId);
                 break;
         }
     } 
@@ -154,7 +154,7 @@ public class PermissionService<TUser>(
     {
         var entity = schema.Settings.Entity;
         if (entity is null) return;
-        if (schema.Settings.Entity?.FindOneAttribute(CreatedBy) is not null) return;
+        if (schema.Settings.Entity?.Attributes.FindOneAttribute(CreatedBy) is not null) return;
 
         entity.Attributes = entity.Attributes.Append(new Attribute
         {
@@ -164,7 +164,7 @@ public class PermissionService<TUser>(
         }).ToArray();
     }
 
-    private async Task CheckViewAndEntityPermission(Schema schema, string currentUserId)
+    private async Task CheckQueryAndEntityPermission(Schema schema, string currentUserId)
     {
         if (contextAccessor.HttpContext.HasRole(Roles.Sa))
         {

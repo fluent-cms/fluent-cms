@@ -8,11 +8,11 @@ namespace FluentCMS.Cms.Services;
 
 using static InvalidParamExceptionFactory;
 
-public class ViewService(
+public class QueryService(
     KateQueryExecutor kateQueryExecutor,
     ISchemaService schemaService,
     IEntityService entityService,
-    ImmutableCache<View> viewCache,
+    ImmutableCache<Query> viewCache,
     IServiceProvider provider,
     HookRegistry hookRegistry
 ) : IViewService
@@ -25,13 +25,13 @@ public class ViewService(
         CheckResult(view.Filters.ResolveValues(view.Entity!,  schemaService.CastToDatabaseType, querystringDictionary));
         CheckResult(cursor.ResolveBoundaryItem(view.Entity!, schemaService.CastToDatabaseType));
         var pagination = new Pagination { Limit = view.PageSize + 1 }; //get extra record to check if it's the last page
-        var (exit, hookResult) = await TriggerHook(Occasion.BeforeQueryView, view, view.Filters, view.Sorts, cursor, pagination);
+        var (exit, hookResult) = await TriggerHook(Occasion.BeforeQueryList, view, view.Filters, view.Sorts, cursor, pagination);
         if (exit)
         {
             return BuildRecordViewResult(hookResult.Records, cursor, pagination, view.Sorts);
         }
 
-        var attributes = CheckResult(view.LocalAttributes(InListOrDetail.InList));
+        var attributes = view.Selection.GetLocalAttributes();
         var query = CheckResult(view.Entity!.ListQuery(view.Filters, view.Sorts, pagination, cursor, attributes,
             schemaService.CastToDatabaseType));
         var items = await kateQueryExecutor.Many(query, cancellationToken);
@@ -39,7 +39,7 @@ public class ViewService(
         if (results.Items is not null && results.Items.Length > 0)
         {
             //here use result.Items instead of items, because result.Items omit last record
-            await AttachRelatedEntity(view, InListOrDetail.InList, results.Items, cancellationToken);
+            await entityService.AttachRelatedEntity(view.Selection, results.Items, cancellationToken);
         }
 
         return results;
@@ -51,18 +51,18 @@ public class ViewService(
         var view = await GetView(viewName, cancellationToken);
         CheckResult(view.Filters.ResolveValues(view.Entity!,  schemaService.CastToDatabaseType, querystringDictionary));
 
-        var (exit, hookResult) = await TriggerHook(Occasion.BeforeQueryManyView,view, view.Filters);
+        var (exit, hookResult) = await TriggerHook(Occasion.BeforeQueryMany,view, view.Filters);
         if (exit)
         {
             return hookResult.Records;
         }
 
-        var attributes = CheckResult(view.LocalAttributes(InListOrDetail.InDetail));
+        var attributes = view.Selection.GetLocalAttributes();
         var pagination = new Pagination { Limit = view.PageSize };
         var query = CheckResult(view.Entity!.ListQuery(view.Filters, null, pagination, null, attributes,
             schemaService.CastToDatabaseType));
         var items = await kateQueryExecutor.Many(query, cancellationToken);
-        await AttachRelatedEntity(view, InListOrDetail.InDetail, items, cancellationToken);
+        await entityService.AttachRelatedEntity(view.Selection, items, cancellationToken);
         return items;
     }
 
@@ -71,46 +71,29 @@ public class ViewService(
     {
         var view = await GetView(viewName, cancellationToken);
         CheckResult(view.Filters.ResolveValues(view.Entity!,  schemaService.CastToDatabaseType, querystringDictionary));
-        var (exit, hookResult) = await TriggerHook(Occasion.BeforeQueryOneView,view, view.Filters);
+        var (exit, hookResult) = await TriggerHook(Occasion.BeforeQueryOne,view, view.Filters);
         if (exit)
         {
             return hookResult.Record;
         }
 
-        var attributes = CheckResult(view.LocalAttributes(InListOrDetail.InDetail));
-        var query = CheckResult(view.Entity!.OneQuery(view.Filters, attributes));
+        var query = CheckResult(view.Entity!.OneQuery(view.Filters, view.Selection.GetLocalAttributes()));
         var item = NotNull(await kateQueryExecutor.One(query, cancellationToken)).ValOrThrow("Not find record");
-        await AttachRelatedEntity(view, InListOrDetail.InDetail, [item], cancellationToken);
+        await entityService.AttachRelatedEntity(view.Selection, [item], cancellationToken);
         return item;
     }
 
-    private async Task<(bool, HookReturn)> TriggerHook(Occasion occasion,View view, Filters filters, Sorts? sorts = null,
+    private async Task<(bool, HookReturn)> TriggerHook(Occasion occasion,Query query, Filters filters, Sorts? sorts = null,
         Cursor? cursor = null, Pagination? pagination = null)
     {
         var hookParam = new HookParameter
             { Filters = filters, Sorts = sorts, Cursor = cursor, Pagination = pagination };
         var hookReturn = new HookReturn();
-        var exit = await hookRegistry.Trigger(provider, occasion, view, hookParam, hookReturn);
+        var exit = await hookRegistry.Trigger(provider, occasion, query, hookParam, hookReturn);
         return (exit, hookReturn);
     }
 
-    private async Task AttachRelatedEntity(View view, InListOrDetail scope, Record[] items,
-        CancellationToken cancellationToken)
-    {
-        foreach (var attribute in CheckResult(view.GetAttributesByType(DisplayType.lookup, scope)))
-        {
-            await entityService.AttachLookup(attribute, items, cancellationToken,
-                entity1 => entity1.LocalAttributes(scope));
-        }
-
-        foreach (var attribute in CheckResult(view.GetAttributesByType(DisplayType.crosstable, scope)))
-        {
-            await entityService.AttachCrosstable(attribute, items, cancellationToken,
-                entity1 => entity1.LocalAttributes(scope));
-        }
-    }
-
-    private async Task<View> GetView(string viewName, CancellationToken cancellationToken)
+    private async Task<Query> GetView(string viewName, CancellationToken cancellationToken)
     {
         var view = await viewCache.GetOrSet(viewName,
             async () => await schemaService.GetViewByName(viewName, cancellationToken));

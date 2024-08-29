@@ -1,11 +1,11 @@
 
 using FluentCMS.Utils.QueryBuilder;
 
-namespace FluentCMS.Models;
+namespace FluentCMS.Cms.Models;
 
 public class Settings
 {
     public Entity? Entity { get; set; }
-    public View? View { get; set; }
+    public Query? Query { get; set; }
     public Menu? Menu { get; set; }
 }

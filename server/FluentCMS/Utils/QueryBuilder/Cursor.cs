@@ -1,7 +1,6 @@
 using System.Text.Json;
 using FluentCMS.Utils.Base64Url;
 using FluentResults;
-using SqlKata;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
@@ -74,7 +73,12 @@ public sealed class Cursor
             var recordStr = IsForward ? Last : First;
             recordStr = Base64UrlEncoder.Decode(recordStr);
             var element = JsonSerializer.Deserialize<JsonElement>(recordStr);
-            BoundaryItem = RecordParser.Parse(element, entity, cast);
+            var parseRes = RecordParser.Parse(element, entity, cast);
+            if (parseRes.IsFailed)
+            {
+                return Result.Fail(parseRes.Errors);
+            }
+            BoundaryItem = parseRes.Value;
             return Result.Ok();
         }
         catch (Exception e)

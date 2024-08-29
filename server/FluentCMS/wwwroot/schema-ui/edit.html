@@ -17,7 +17,7 @@
     <script src="js/repo.js"></script>
     <script src="js/edit.js"></script>
     <script src="js/entity.js"></script>
-    <script src="js/view.js"></script>
+    <script src="js/query.js"></script>
     <script src="js/menu.js"></script>
     <script>
         JSONEditor.defaults.theme = 'bootstrap5';
@@ -32,7 +32,7 @@
             <div class="navbar-nav">
                 <a class="nav-item nav-link border-item" href="./list.html">All Schemas</a>
                 <a class="nav-item nav-link border-item" href="./list.html?schema=entity">Entities</a>
-                <a class="nav-item nav-link border-item" href="./list.html?schema=view">Views</a>
+                <a class="nav-item nav-link border-item" href="./list.html?schema=query">Queries</a>
                 <a class="nav-item nav-link border-item" href="./edit.html?schema=menu&id=top-menu-bar">MenuItems</a>
                 <a class="nav-item nav-link border-item" href="/">Admin Panel</a>
             </div>
@@ -51,17 +51,18 @@
                     <button id='saveEntity' class="btn btn-primary">Save Schema Not Update Database</button>
                 </span>
             </span>
-            <span id="viewActions" hidden>
-                <button id='saveView' class="btn btn-primary">Save View</button>
-                <button id='viewAPI' class="btn btn-primary">View Public API</button>
+            <span id="queryActions" hidden>
+                <button id='saveQuery' class="btn btn-primary">Save Query</button>
+                <button id='visitAPI' class="btn btn-primary">Visit Public API</button>
             </span>
             <span id="menuActions" hidden>
                 <button id='saveMenu' class="btn btn-primary">Save Menu</button>
             </span>
+            <div id="errorPanel" class="alert alert-danger" role="alert" style="display: none;">
+                An error has occurred. Please try again.
+            </div>
         </div>
-        <div id="errorPanel" class="alert alert-danger" role="alert" style="display: none;">
-            An error has occurred. Please try again.
-        </div>
+      
         <div class='column col-md-12' id='editor_holder'></div>
 </body>
 </html>

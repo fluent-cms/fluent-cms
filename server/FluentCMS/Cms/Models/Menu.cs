@@ -1,4 +1,4 @@
-namespace FluentCMS.Models;
+namespace FluentCMS.Cms.Models;
 
 public sealed class Menu
 {

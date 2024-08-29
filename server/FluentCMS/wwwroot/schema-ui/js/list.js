@@ -1,11 +1,11 @@
 $(document).ready(function() {
     const searchParams = new URLSearchParams(window.location.search);
     const schema = searchParams.get("schema");
-    if (schema === "view") {
+    if (schema === "query") {
         $('#addEntity').prop('hidden', true);
     }
     if (schema === "entity") {
-        $('#addView').prop('hidden', true);
+        $('#addQuery').prop('hidden', true);
     }
     async function deleteSchema(e) {
         if (confirm("Do you want to delete schema: " + e.getAttribute('data-name'))) {

@@ -5,7 +5,7 @@ namespace FluentCMS.Utils.QueryBuilder;
 
 public static class QueryExt
 {
-    public static void ApplyPagination(this Query query, Pagination? pagination)
+    public static void ApplyPagination(this SqlKata.Query query, Pagination? pagination)
     {
         if (pagination is null)
         {
@@ -14,7 +14,7 @@ public static class QueryExt
 
         query.Offset(pagination.Offset).Limit(pagination.Limit);
     }
-    public static void ApplySorts(this Query query, Sorts? sorts)
+    public static void ApplySorts(this SqlKata.Query query, Sorts? sorts)
     {
         if (sorts is null)
         {
@@ -34,7 +34,7 @@ public static class QueryExt
         }
     }
 
-    public static Result ApplyFilters(this Query query, Filters? filters)
+    public static Result ApplyFilters(this SqlKata.Query query, Filters? filters)
     {
         var result = Result.Ok();
         if (filters is null) return result;
@@ -61,7 +61,7 @@ public static class QueryExt
         return result;
     }
 
-    private static Result<Query> ApplyAndConstraint(this Query query, string field, string match, object[] values)
+    private static Result<SqlKata.Query> ApplyAndConstraint(this SqlKata.Query query, string field, string match, object[] values)
     {
         return match switch
         {
@@ -88,7 +88,7 @@ public static class QueryExt
         };
     }
 
-    private static Result<Query> ApplyOrConstraint(this Query query, string field, string match, object[] values)
+    private static Result<SqlKata.Query> ApplyOrConstraint(this SqlKata.Query query, string field, string match, object[] values)
     {
         return match switch
         {
@@ -115,7 +115,7 @@ public static class QueryExt
         };
     }
 
-    public static Result ApplyCursor(this Query? query,  Cursor? cursor,Sorts? sorts)
+    public static Result ApplyCursor(this SqlKata.Query? query,  Cursor? cursor,Sorts? sorts)
     {
         if (query is null || cursor?.BoundaryItem is null) return Result.Ok();
         return sorts?.Count switch
@@ -146,11 +146,11 @@ public static class QueryExt
             return Result.Ok();
         }
 
-        void ApplyEq(Query q, Sort sort)
+        void ApplyEq(SqlKata.Query q, Sort sort)
         {
             q.Where(sort.FieldName, cursor.BoundaryValue(sort.FieldName));
         }
-        void ApplyCompare(Query q, Sort sort)
+        void ApplyCompare(SqlKata.Query q, Sort sort)
         {
             q.Where(sort.FieldName, cursor.GetCompareOperator(sort), cursor.BoundaryValue(sort.FieldName));
         }

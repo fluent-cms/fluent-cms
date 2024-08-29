@@ -1,5 +1,5 @@
 using System.Reflection;
-using FluentCMS.Models;
+using FluentCMS.Cms.Models;
 using FluentCMS.Utils.QueryBuilder;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
@@ -9,43 +9,43 @@ public enum Occasion
 {
     BeforeDeleteSchema,
     BeforeSaveSchema,
-    
-    BeforeQueryOne,
-    AfterQueryOne,
-    
-    BeforeQueryMany,
-    AfterQueryMany,
-    
+
     BeforeInsert,
     AfterInsert,
-    
+
+    BeforeReadOne,
+    AfterReadOne,
+
+    BeforeReadList,
+    AfterReadList,
+
     BeforeUpdate,
     AfterUpdate,
-    
+
     BeforeDelete,
     AfterDelete,
-    
+
     BeforeAddRelated,
     AfterAddRelated,
-    
+
     BeforeDeleteRelated,
     AfterDeleteRelated,
-    
-    BeforeQueryView,
-    BeforeQueryOneView,
-    BeforeQueryManyView,
+
+    BeforeQueryList,
+    BeforeQueryOne,
+    BeforeQueryMany,
 }
 
 public sealed class Hook
 {
-    public string SchemaName { get; init; } = null!;
+    public string SchemaName { get; init; } = "";
     public Occasion Occasion { get; init; }
     public Delegate Callback { get; init; } = null!;
 
     private string ExceptionPrefix => $"Execute Hook Fail [{SchemaName} - {Occasion}]: ";
 
     internal async Task<bool> Trigger(IServiceProvider provider,
-        EntityMeta? meta, ViewMeta? viewMeta, SchemaMeta? schemaMeta,
+        EntityMeta? meta, QueryMeta? viewMeta, SchemaMeta? schemaMeta,
         HookParameter parameter, HookReturn? hookReturn)
     {
         var (method, args) = PrepareArgument(provider, t =>
@@ -53,7 +53,7 @@ public sealed class Hook
             return t switch
             {
                 _ when t == typeof(EntityMeta) && meta is not null=> meta,
-                _ when t == typeof(ViewMeta) && viewMeta is not null=> viewMeta,
+                _ when t == typeof(QueryMeta) && viewMeta is not null=> viewMeta,
                 _ when t == typeof(SchemaMeta) && schemaMeta is not null=> schemaMeta,
                 
                 //schema

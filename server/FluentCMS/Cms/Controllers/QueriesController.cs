@@ -8,7 +8,7 @@ namespace FluentCMS.Cms.Controllers;
 [AllowAnonymous]
 [ApiController]
 [Route("api/[controller]")]
-public class ViewsController(IViewService viewService) : ControllerBase
+public class QueriesController(IViewService viewService) : ControllerBase
 {
     [HttpGet("{viewName}")]
     public async Task<ActionResult<ListResult>> Get(string viewName, CancellationToken cancellationToken,

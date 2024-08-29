@@ -1,8 +1,6 @@
-using System.Text;
 using System.Text.Json;
-using FluentCMS.Models;
+using FluentCMS.Cms.Models;
 using FluentCMS.Utils.HttpClientExt;
-using Newtonsoft.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace FluentCMS.IntegrationTests;

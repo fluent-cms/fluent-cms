@@ -1,4 +1,4 @@
-using FluentCMS.Models;
+using FluentCMS.Cms.Models;
 using FluentResults;
 using FluentCMS.Utils.QueryBuilder;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
@@ -15,7 +15,7 @@ public interface ISchemaService
     Task<Schema> GetByNameVerify(string name, bool extend, CancellationToken cancellationToken);
     Task<Schema?> GetByIdDefault(int id, CancellationToken cancellationToken = default);
     Task<Schema?> GetByNameDefault(string name, CancellationToken cancellationToken = default);
-    Task<View> GetViewByName(string name, CancellationToken cancellationToken);
+    Task<Query> GetViewByName(string name, CancellationToken cancellationToken);
     Task<Entity?> GetTableDefine(string tableName, CancellationToken cancellationToken);
     Task<Schema> SaveTableDefine(Schema schemaDto, CancellationToken cancellationToken);
     Task<Schema> Save(Schema schema, CancellationToken cancellationToken);

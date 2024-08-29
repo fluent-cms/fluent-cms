@@ -11,16 +11,20 @@ export function LookupInput(props: {
     items: any[]
     id:any
 }) {
-    return  <InputPanel  {...props} component={ (field:any) =>
-        <Dropdown
+    const {items,column} = props;
+    return  <InputPanel  {...props} component={ (field:any) => {
+        return <Dropdown
             id={field.name}
-            value={field.value}
-            options={props.items}
+            value={field.value ? field.value[column.lookup.primaryKey] : null}
+            options={items}
             focusInputRef={field.ref}
-            onChange={(e) => field.onChange(e.value)}
+            onChange={(e) => {
+                field.onChange({[column.lookup.primaryKey]:e.value})
+            }}
             className={'w-full'}
-            optionValue={props.column.lookup.primaryKey}
-            optionLabel={props.column.lookup.titleAttribute}
+            optionValue={column.lookup.primaryKey}
+            optionLabel={column.lookup.titleAttribute}
         />
+    }
     }/>
 }

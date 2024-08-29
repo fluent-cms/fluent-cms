@@ -7,13 +7,13 @@ export VITE_REACT_APP_AUTH_API_URL='/api'
 pnpm build
 rm -rf ../server/FluentCMS/wwwroot/assets/
 rsync -azv --progress dist/* ../server/FluentCMS/wwwroot
-poshd ../server/FluentCMS/wwwroot
+pushd ../server/FluentCMS/wwwroot
 git add .
 popd
 
 rm -rf ../server/FluentCMS.Blog/wwwroot/assets/
 rsync -azv --progress dist/* ../server/FluentCMS.Blog/wwwroot
-poshd ../server/FluentCMS.Blog/wwwroot
+pushd ../server/FluentCMS.Blog/wwwroot
 git add .
 popd
 

@@ -1,6 +1,5 @@
 using System.Text.Json;
 using FluentCMS.Services;
-using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.HookFactory;
 using Microsoft.Extensions.Primitives;
 using FluentCMS.Utils.KateQueryExecutor;
@@ -20,8 +19,8 @@ public sealed class EntityService(
     public async Task<Record> OneByAttributes(string entityName, string id, string[] attributes, CancellationToken cancellationToken)
     {
         var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,cancellationToken));
-        var idValue = schemaService.CastToDatabaseType(entity.PrimaryKeyAttribute(), id);
-        var query = entity.ByIdQuery(idValue, entity.LocalAttributes(attributes),null);
+        var idValue = schemaService.CastToDatabaseType(entity.PrimaryKeyAttribute, id);
+        var query = entity.ByIdQuery(idValue, entity.Attributes.GetLocalAttributes(attributes),null);
         return NotNull(await queryKateQueryExecutor.One(query,cancellationToken)).ValOrThrow($"not find record by [{id}]");
     }
     
@@ -32,24 +31,23 @@ public sealed class EntityService(
         var hookReturn = new HookReturn();
         var filters = new Filters();
         var hookParam = new HookParameter{Filters= filters};
-        var exit = await hookRegistry.Trigger(provider, Occasion.BeforeQueryOne, meta, hookParam, hookReturn);
+        var exit = await hookRegistry.Trigger(provider, Occasion.BeforeReadOne, meta, hookParam, hookReturn);
         if (exit)
         {
             return hookReturn.Record;
         }
 
-        var idValue = schemaService.CastToDatabaseType(entity.PrimaryKeyAttribute(), id);
-        var query = entity.ByIdQuery(idValue,entity.LocalAttributes(InListOrDetail.InDetail),filters);
+        var idValue = schemaService.CastToDatabaseType(entity.PrimaryKeyAttribute, id);
+        var query = entity.ByIdQuery(idValue,entity.Attributes.GetLocalAttributes(InListOrDetail.InDetail),filters);
         var record = NotNull(await queryKateQueryExecutor.One(query,cancellationToken)).ValOrThrow($"not find record by [{id}]");
 
-        foreach (var detailLookupsAttribute in entity.GetAttributesByType(DisplayType.lookup,
-                     InListOrDetail.InDetail))
+        foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.lookup,InListOrDetail.InDetail))
         {
-            await AttachLookup(detailLookupsAttribute, [record],cancellationToken,
-                lookupEntity => lookupEntity.LocalAttributes(InListOrDetail.InDetail));
+            attribute.Children = [attribute.Lookup!.PrimaryKeyAttribute, attribute.Lookup.DisplayTitleAttribute];
+            await AttachLookup(attribute, [record],cancellationToken);
         }
 
-        await hookRegistry.Trigger(provider, Occasion.AfterQueryOne, meta, new HookParameter{Record = record});
+        await hookRegistry.Trigger(provider, Occasion.AfterReadOne, meta, new HookParameter{Record = record});
         return record;
     }
 
@@ -85,13 +83,13 @@ public sealed class EntityService(
             Sorts = sorts,
             Pagination = pagination
         };
-        var exit = await hookRegistry.Trigger(provider, Occasion.BeforeQueryMany, meta, hookData);
+        var exit = await hookRegistry.Trigger(provider, Occasion.BeforeReadList, meta, hookData);
         if (exit)
         {
             return null;
         }
 
-        var attributes = entity.LocalAttributes(InListOrDetail.InList);
+        var attributes = entity.Attributes.GetLocalAttributes(InListOrDetail.InList);
         var query = CheckResult(entity.ListQuery(filters, sorts, pagination, null, attributes,schemaService.CastToDatabaseType));
         var records = await queryKateQueryExecutor.Many(query,cancellationToken);
 
@@ -102,26 +100,25 @@ public sealed class EntityService(
 
         if (records.Length > 0)
         {
-            foreach (var listLookupsAttribute in entity.GetAttributesByType(DisplayType.lookup, InListOrDetail.InList))
+            foreach (var listLookupsAttribute in entity.Attributes.GetAttributesByType(DisplayType.lookup, InListOrDetail.InList))
             {
-                await AttachLookup(listLookupsAttribute, records, cancellationToken,lookupEntity => lookupEntity.ReferencedAttributes());
+                listLookupsAttribute.Children = [listLookupsAttribute.Lookup!.PrimaryKeyAttribute,listLookupsAttribute.Lookup!.DisplayTitleAttribute];
+                await AttachLookup(listLookupsAttribute, records, cancellationToken);
             }
-
             ret.TotalRecords = await queryKateQueryExecutor.Count(entity.CountQuery(filters),cancellationToken);
         }
-
         hookData = new HookParameter
         {
             ListResult = ret
         };
-        await hookRegistry.Trigger(provider, Occasion.AfterQueryMany, meta, hookData);
+        await hookRegistry.Trigger(provider, Occasion.AfterReadList, meta, hookData);
         return ret;
     }
 
     public async Task<Record> Insert(string entityName, JsonElement ele, CancellationToken cancellationToken)
     {
         var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,cancellationToken));
-        var record = RecordParser.Parse(ele, entity, schemaService.CastToDatabaseType);
+        var record = CheckResult(RecordParser.Parse(ele, entity, schemaService.CastToDatabaseType));
         return await Insert(entity, record,cancellationToken);
     }
 
@@ -134,7 +131,7 @@ public sealed class EntityService(
     public async Task<Record> Update(string entityName, JsonElement ele, CancellationToken cancellationToken)
     {
         var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,cancellationToken));
-        var record = RecordParser.Parse(ele, entity, schemaService.CastToDatabaseType);
+        var record = CheckResult(RecordParser.Parse(ele, entity, schemaService.CastToDatabaseType));
         return await Update(entity, record, cancellationToken);
     }
 
@@ -147,7 +144,7 @@ public sealed class EntityService(
     public async Task<Record> Delete(string entityName, JsonElement ele, CancellationToken cancellationToken)
     {
         var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,cancellationToken));
-        var record = RecordParser.Parse(ele, entity, schemaService.CastToDatabaseType);
+        var record = CheckResult(RecordParser.Parse(ele, entity, schemaService.CastToDatabaseType));
         return await Delete(entity, record,cancellationToken);
     }
     public async Task<Record> Delete(string entityName, Record record, CancellationToken cancellationToken)
@@ -165,7 +162,7 @@ public sealed class EntityService(
         var crossTable = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable of {attributeName}");
 
         var items = elements.Select(ele =>
-            RecordParser.Parse(ele, crossTable.TargetEntity, schemaService.CastToDatabaseType)).ToArray();
+            CheckResult(RecordParser.Parse(ele, crossTable.TargetEntity, schemaService.CastToDatabaseType))).ToArray();
 
         var meta = new EntityMeta(entityName, strId);
         var hookData = new HookParameter
@@ -197,7 +194,7 @@ public sealed class EntityService(
         var crossTable = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable of {attributeName}");
 
         var items = elements.Select(ele =>
-            RecordParser.Parse(ele, crossTable.TargetEntity, schemaService.CastToDatabaseType)).ToArray();
+            CheckResult(RecordParser.Parse(ele, crossTable.TargetEntity, schemaService.CastToDatabaseType))).ToArray();
         var meta = new EntityMeta(entityName, strId);
         var hookData = new HookParameter
         {
@@ -226,7 +223,7 @@ public sealed class EntityService(
             .ValOrThrow($"not find {attributeName} in {entityName}");
 
         var crossTable = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable of {attributeName}");
-        var selectAttributes = crossTable.TargetEntity.LocalAttributes(InListOrDetail.InList);
+        var selectAttributes = crossTable.TargetEntity.Attributes.GetLocalAttributes(InListOrDetail.InList);
         var query = crossTable.Many(selectAttributes, exclude,  schemaService.CastToDatabaseType(crossTable.FromAttribute,strId));
         return new ListResult
         {
@@ -235,18 +232,43 @@ public sealed class EntityService(
         };
     }
 
-    public async Task AttachCrosstable(Attribute attribute, Record[] items, CancellationToken cancellationToken,Func<Entity, Attribute[]> getFields)
+    public async Task AttachRelatedEntity(Attribute[]? attributes, Record[] items, CancellationToken cancellationToken)
+    {
+        if (attributes is null)
+        {
+            return;
+        }
+        
+        foreach (var attribute in attributes.GetAttributesByType(DisplayType.lookup))
+        {
+            await AttachLookup(attribute, items, cancellationToken);
+        }
+
+        foreach (var attribute in attributes.GetAttributesByType(DisplayType.crosstable))
+        {
+            await AttachCrosstable(attribute, items, cancellationToken);
+        }
+    }
+
+    private async Task AttachCrosstable(Attribute attribute, Record[] items, CancellationToken cancellationToken)
     {
         //no need to attach, ignore
-        var ids = attribute.Parent?.PrimaryKeyAttribute().GetValues(items);
+        var ids = attribute.Parent?.PrimaryKeyAttribute.GetValues(items);
         if (ids is null || ids.Length == 0)
         {
             return;
         }
 
         var cross = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable of {attribute.FullName()}");
-        var query = cross.Many(getFields(cross.TargetEntity), ids);
+        var fields = attribute.Children.GetLocalAttributes();
+        if (fields.Length == 0)
+        {
+            fields = cross.TargetEntity.Attributes.GetLocalAttributes();
+        }
+        
+        var query = cross.Many(fields, ids);
         var targetRecords = await queryKateQueryExecutor.Many(query,cancellationToken);
+        await AttachRelatedEntity(attribute.Children, targetRecords, cancellationToken);
         var group = targetRecords.GroupBy(x => x[cross.FromAttribute.Field], x => x);
         foreach (var grouping in group)
         {
@@ -258,25 +280,40 @@ public sealed class EntityService(
         }
     }
 
-    public async Task AttachLookup(Attribute lookupAttribute, Record[] items, CancellationToken cancellationToken,Func<Entity, Attribute[]> getFields)
+    private async Task AttachLookup(Attribute attribute, Record[] items, CancellationToken cancellationToken)
     {
-        var lookupEntity = NotNull(lookupAttribute.Lookup)
-            .ValOrThrow($"not find lookup entity from {lookupAttribute.FullName()}");
+        var lookupEntity = NotNull(attribute.Lookup)
+            .ValOrThrow($"not find lookup entity from {attribute.FullName()}");
 
-        var manyQuery = lookupEntity.ManyQuery(lookupAttribute.GetValues(items), getFields(lookupEntity));
+        var children = attribute.Children?.GetLocalAttributes()??[];
+        if (children.Length == 0)
+        {
+            children = lookupEntity.Attributes.GetLocalAttributes();
+        }
+
+        if (children.FindOneAttribute(lookupEntity.PrimaryKey) == null)
+        {
+            children = [..children, lookupEntity.PrimaryKeyAttribute];
+        }
+        
+        var manyQuery = lookupEntity.ManyQuery(attribute.GetValues(items), children);
         if (manyQuery.IsFailed)
         {
             return;
         }
 
-        var lookupRecords = await queryKateQueryExecutor.Many(manyQuery.Value,cancellationToken);
-        foreach (var lookupRecord in lookupRecords)
+        var targetRecords = await queryKateQueryExecutor.Many(manyQuery.Value,cancellationToken);
+        await AttachRelatedEntity(attribute.Children, targetRecords, cancellationToken);
+ 
+        //here attach related
+        
+        foreach (var lookupRecord in targetRecords)
         {
             var lookupId = lookupRecord[lookupEntity.PrimaryKey];
             foreach (var item in items.Where(local =>
-                         local[lookupAttribute.Field] is not null && local[lookupAttribute.Field].Equals(lookupId)))
+                         local[attribute.Field] is not null && local[attribute.Field].Equals(lookupId)))
             {
-                item[lookupAttribute.Field + "_data"] = lookupRecord;
+                item[attribute.Field] = lookupRecord;
             }
         }
     }
@@ -284,7 +321,7 @@ public sealed class EntityService(
     private async Task<Attribute?> FindAttribute(string entityName, string attributeName, CancellationToken cancellationToken)
     {
         var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName, cancellationToken));
-        return entity.FindOneAttribute(attributeName);
+        return entity.Attributes.FindOneAttribute(attributeName);
     }
 
     private async Task<Record> Update(Entity entity, Record record, CancellationToken cancellationToken)

@@ -1,12 +1,13 @@
-using FluentCMS.Models;
+using FluentCMS.Cms.Models;
 using FluentCMS.Services;
 using FluentResults;
-using SqlKata;
 using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.QueryBuilder;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
+using Query = FluentCMS.Utils.QueryBuilder.Query;
+
 namespace FluentCMS.Cms.Services;
 
 using static InvalidParamExceptionFactory;
@@ -43,10 +44,11 @@ public sealed partial class SchemaService(
             return dto;
         }
         var entity = NotNull(dto.Settings.Entity).ValOrThrow("invalid payload");
+        entity.Init();
         entity.EnsureDefaultAttribute();
         var cols = await definitionExecutor.GetColumnDefinitions(entity.TableName,cancellationToken);
         await VerifyEntity(dto, cols, entity,cancellationToken);
-        foreach (var attribute in entity.GetAttributesByType(DisplayType.crosstable))
+        foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.crosstable))
         {
             await CreateCrosstable(entity, attribute,cancellationToken);
         }
@@ -77,7 +79,7 @@ public sealed partial class SchemaService(
             return false;
         }
         
-        var query = new Query(SchemaTableName).Where(SchemaColumnId,id).AsUpdate([SchemaColumnDeleted],[1]);
+        var query = new SqlKata.Query(SchemaTableName).Where(SchemaColumnId,id).AsUpdate([SchemaColumnDeleted],[1]);
         await kateQueryExecutor.Exec(query,cancellationToken);
         return true;
     }
@@ -126,20 +128,21 @@ public sealed partial class SchemaService(
         return item;
     }
 
-    public async Task<View> GetViewByName(string name, CancellationToken cancellationToken = default)
+    public async Task<Query> GetViewByName(string name, CancellationToken cancellationToken = default)
     {
         StrNotEmpty(name).ValOrThrow("view name should not be empty");
-        var query = BaseQuery().Where(SchemaColumnName, name).Where(SchemaColumnType, SchemaType.View);
+        var query = BaseQuery().Where(SchemaColumnName, name).Where(SchemaColumnType, SchemaType.Query);
         var item = ParseSchema(await kateQueryExecutor.One(query,cancellationToken));
         item = NotNull(item).ValOrThrow($"didn't find {name}");
-        var view = NotNull(item.Settings.View)
+        var view = NotNull(item.Settings.Query)
             .ValOrThrow("invalid view format");
         var entityName = StrNotEmpty(view.EntityName)
             .ValOrThrow($"referencing entity was not set for {view}");
         view.Entity = CheckResult(await GetEntityByNameOrDefault(entityName, cancellationToken));
+        CheckResult(await InitViewSelection(view, cancellationToken));
         return view;
     }
-
+    
     public async Task<Result<Entity>> GetEntityByNameOrDefault(string name, CancellationToken cancellationToken = default)
     {
         return await GetEntityByNameOrDefault(name, true,cancellationToken);
