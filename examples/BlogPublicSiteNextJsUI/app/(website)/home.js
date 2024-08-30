@@ -10,7 +10,7 @@ export default function Post({ posts }) {
           <div className="grid gap-10 md:grid-cols-2 lg:gap-10 ">
             {posts.slice(0, 2).map(post => (
               <PostList
-                key={post._id}
+                key={post.id}
                 post={post}
                 aspect="landscape"
                 preloadImage={true}

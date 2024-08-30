@@ -24,7 +24,7 @@ export default function AuthorCard({ author }) {
               About {author.name}
             </h3>
           </div>
-          <div>{author.bio}</div>
+          <div dangerouslySetInnerHTML={{ __html: author.bio }} />
           <div className="mt-3">
             <Link
               href={`/author/${author.slug}`}

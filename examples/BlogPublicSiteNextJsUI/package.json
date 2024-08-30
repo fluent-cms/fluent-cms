@@ -47,6 +47,8 @@
     "typescript": "^5.3.3"
   },
   "devDependencies": {
+    "@types/node": "22.5.1",
+    "@types/react": "18.3.5",
     "autoprefixer": "^10.4.17",
     "eslint": "^8.56.0",
     "eslint-config-next": "^14.1.0",
