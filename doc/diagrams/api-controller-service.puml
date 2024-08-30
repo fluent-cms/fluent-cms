@@ -11,13 +11,13 @@ Container(public_site, "Public Site", "next.js")
 Container_Boundary(controllers, "Controllers") {
    Component(schemaController, "Schema Controller", "", "Schema CURD")
    Component(entityController, "Entity Controller", "", "Entity CURD")
-   Component(viewController, "View Controller", "", "APIs for public sites")
+   Component(viewController, "Query Controller", "", "APIs for public sites")
 }
 
 Container_Boundary(services, "Services") {
    Component(schemaService, "Schema Service", "", "Schema CURD")
    Component(entityService, "Entity Service", "", "Entity CURD")
-   Component(viewService, "View Services", "", "APIs for public sites")
+   Component(viewService, "Query Service", "", "APIs for public sites")
 }
 
 ContainerDb(db, "Database", "", "schema and content")

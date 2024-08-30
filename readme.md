@@ -9,14 +9,14 @@ Fluent CMS is an open-source content management system designed to streamline we
 - **Performance:** The system is designed with performance in mind, boasting speeds 100 times faster than Strapi (details in the [performance vs Strapi](https://github.com/fluent-cms/fluent-cms/blob/main/doc%2Fpeformance-tests%2Fperformance-test-fluent-cms-vs-strapi.md) test). It is also as faster than manually written APIs using Entity Framework (details in the [performance vs EF](https://github.com/fluent-cms/fluent-cms/blob/main/doc%2Fpeformance-tests%2Fperformance-test-fluent-cms-vs-entity-framework.md) test).
 - **Easily Extensible** The system can automatically generate `EntityCreated`, `EntityUpdated`, and `EntityDeleted` events and publish them to an event broker (such as Kafka). This makes it simple to extend functionality, such as adding consumers for OpenSearch, Elasticsearch, or document databases. 
 ## Live Demo - A blog website based on Fluent CMS 
-   source code [FluentCMS.Blog](server%2FFluentCMS.Blog)
+   source code [FluentCMS.Blog](https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS.Blog)
    - Admin Panel https://fluent-cms-admin.azurewebsites.net/
       - Email: `admin@cms.com`
       - Password: `Admin1!`  
    - Public Site : https://fluent-cms-ui.azurewebsites.net/
     
 ## Add Fluent CMS to your own project
-The example project can be found at  https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples
+The example project can be found at [An Example Project Using Nuget](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).
 1. Create your own Asp.net Core WebApplication.
 2. Add FluentCMS package    
    ```shell
@@ -27,49 +27,49 @@ The example project can be found at  https://github.com/fluent-cms/fluent-cms/tr
    builder.AddSqliteCms("Data Source=cms.db");
    var app = builder.Build();
    ```
-   Currently FluentCMS support AddSqliteCms, AddSqlServerCms, AddPostgresCMS 
+   Currently FluentCMS support `AddSqliteCms`, `AddSqlServerCms`, `AddPostgresCMS`.
 
 4. Add the following line After builder.Build()
    ```
    await app.UseCmsAsync();
    ```
    this function bootstrap router, initialize Fluent CMS schema table
+Now that the web server is up and running, the next chapter will guide you through building the schema and managing data.
 
-Now you can start web server, the following chapter explains how to build schema and manage data.
 ## Develop a simple educational system use Fluent CMS
-When designing a database schema for a simple educational system, you typically need to create tables for `Teachers`, `Courses`, and `Students`. The relationships between these tables can vary depending on the specific requirements, but a common structure might include the following:
+When designing a database schema for a simple educational system, you typically need to create tables for `Teachers`, `Courses`, and `Students`. 
 ### Database Schema
 #### 1. **Teachers Table**
 This table stores information about the teachers.
 
-| Column Name     | Data Type  | Description                 |
-|-----------------|------------|-----------------------------|
-| `TeacherId`     | `INT`      | Primary Key, unique ID for each teacher. |
-| `FirstName`     | `VARCHAR`  | Teacher's first name.        |
-| `LastName`      | `VARCHAR`  | Teacher's last name.         |
-| `Email`         | `VARCHAR`  | Teacher's email address.     |
-| `PhoneNumber`   | `VARCHAR`  | Teacher's contact number.    |
+| Column Name   | Data Type  | Description                 |
+|---------------|------------|-----------------------------|
+| `Id`          | `INT`      | Primary Key, unique ID for each teacher. |
+| `FirstName`   | `VARCHAR`  | Teacher's first name.        |
+| `LastName`    | `VARCHAR`  | Teacher's last name.         |
+| `Email`       | `VARCHAR`  | Teacher's email address.     |
+| `PhoneNumber` | `VARCHAR`  | Teacher's contact number.    |
 
 #### 2. **Courses Table**
 This table stores information about the courses.
 
-| Column Name     | Data Type  | Description                   |
-|-----------------|------------|-------------------------------|
-| `CourseId`      | `INT`      | Primary Key, unique ID for each course. |
-| `CourseName`    | `VARCHAR`  | Name of the course.            |
-| `Description`   | `TEXT`     | Brief description of the course. |
-| `TeacherId`     | `INT`      | Foreign Key, references `TeacherId` in the `Teachers` table. |
+| Column Name   | Data Type  | Description                   |
+|---------------|------------|-------------------------------|
+| `Id`          | `INT`      | Primary Key, unique ID for each course. |
+| `CourseName`  | `VARCHAR`  | Name of the course.            |
+| `Description` | `TEXT`     | Brief description of the course. |
+| `TeacherId`   | `INT`      | Foreign Key, references `TeacherId` in the `Teachers` table. |
 
 #### 3. **Students Table**
 This table stores information about the students.
 
-| Column Name     | Data Type  | Description                   |
-|-----------------|------------|-------------------------------|
-| `StudentId`     | `INT`      | Primary Key, unique ID for each student. |
-| `FirstName`     | `VARCHAR`  | Student's first name.         |
-| `LastName`      | `VARCHAR`  | Student's last name.          |
-| `Email`         | `VARCHAR`  | Student's email address.      |
-| `EnrollmentDate`| `DATE`     | Date when the student enrolled. |
+| Column Name      | Data Type  | Description                   |
+|------------------|------------|-------------------------------|
+| `Id`             | `INT`      | Primary Key, unique ID for each student. |
+| `FirstName`      | `VARCHAR`  | Student's first name.         |
+| `LastName`       | `VARCHAR`  | Student's last name.          |
+| `Email`          | `VARCHAR`  | Student's email address.      |
+| `EnrollmentDate` | `DATE`     | Date when the student enrolled. |
 
 #### 4. **Enrollments Table (Junction Table)**
 This table manages the many-to-many relationship between `Students` and `Courses`, since a student can enroll in multiple courses, and a course can have multiple students.
@@ -84,37 +84,44 @@ This table manages the many-to-many relationship between `Students` and `Courses
 - **Teachers to Courses**: One-to-Many (A teacher can teach multiple courses, but a course is taught by only one teacher).
 - **Students to Courses**: Many-to-Many (A student can enroll in multiple courses, and each course can have multiple students).
 ### Build Schema use Fluent CMS Schema builder
-After start your asp.net core application, you can a  menu item `Schema Builder` in the application's home page.
-1. You can add entity `teacher`, `student` in schema builder UI
-2. When you add entity `course`, after add basic attributes `name` and `description`, you can add relationships
-   - add attribute `teacher`, with the following settings
-   ```json
-     {
-        "DataType": "Int",
-        "Field": "teacher",
-        "Header": "Teacher",
-        "InList": true,
-        "InDetail": true,
-        "IsDefault": false,
-        "Type": "lookup",
-        "Options": "teacher"
-      }
-   ```
-   - add attribute `students`, with the following settings
-   
+After starting your ASP.NET Core application, you will find a menu item labeled "Schema Builder" on the application's home page.
+
+In the Schema Builder UI, you can add entities such as "Teacher" and "Student."
+
+When adding the "Course" entity, start by adding basic attributes like "Name" and "Description." You can then define relationships by adding attributes as follows:
+
+1. **Teacher Attribute:**  
+   Configure it with the following settings:
    ```json
    {
-        "DataType": "Na",
-        "Field": "students",
-        "Header": "Students",
-        "InList": false,
-        "InDetail": true,
-        "IsDefault": false,
-        "Type": "crosstable",
-        "Options": "student"
+      "DataType": "Int",
+      "Field": "teacher",
+      "Header": "Teacher",
+      "InList": true,
+      "InDetail": true,
+      "IsDefault": false,
+      "Type": "lookup",
+      "Options": "teacher"
    }
    ```
-Now the minimal value product is ready to use.
+
+2. **Students Attribute:**  
+   Configure it with these settings:
+   ```json
+   {
+      "DataType": "Na",
+      "Field": "students",
+      "Header": "Students",
+      "InList": false,
+      "InDetail": true,
+      "IsDefault": false,
+      "Type": "crosstable",
+      "Options": "student"
+   }
+   ```
+
+With these configurations, your minimal viable product is ready to use.
+
 ## Extent functionality by add Hook functions
 You need to add your own Business logic, for examples, you want to verify if the email and phone number of entity `teacher` is valid.
 you can register a cook function before insert or update teacher
@@ -158,23 +165,6 @@ InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("sadmin@cms.com
 InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]));
 ```
 Behind the scene, fluentCMS leverage the hook mechanism. 
-```
-        requiredService.AddHooks("*", new Occasion[4]
-        {
-          Occasion.BeforeAddRelated,
-          Occasion.BeforeDeleteRelated,
-          Occasion.BeforeDelete,
-          Occasion.BeforeUpdate
-        }, (Delegate) (async (service, meta) => await service.CheckEntityAccessPermission(meta)));
-        requiredService.AddHooks("*", new Occasion[1]
-        {
-          Occasion.BeforeInsert
-        }, (Delegate) (async (service, meta, record) =>
-        {
-          service.AssignCreatedBy(record);
-          await service.CheckEntityAccessPermission(meta);
-        }));
-```
 ## Design Query
 Here’s a text-based layout representation of the web page of the course introduction page.
 
@@ -202,20 +192,20 @@ The data comes from several entities,
 - material
 - course_material  
 
+Fluent CMS offers `Query` APIs to meet the following needs, similar to GraphQL queries:
 
-It's no convenient to use FluentCMS Entity CRUD Rest APIs to implement Frontend Web Page like that 
-- Frontend have to make too many API calls.
-- Some sensitive information exposes from Frontend, like teacher's phone number
-- Entity CRUD Api give user too much flexibility, it might make resource-intensive database query so it's not suitable to serve public .
+1. **Single API Call:** Allows the frontend to retrieve all related data with just one API call.
+2. **Protection of Sensitive Information:** Prevents sensitive data, like the teacher's phone number, from being exposed to the frontend.
+3. **Performance:** Reduces resource-intensive database queries, making it more suitable for public access.
 
-Fluent CMS provides `Query` APIs to address above requirements. The concept is like GraphQL Query.  
-Go to `Schema Builder` > `Queries` to edit query.  
+To create or edit a query, navigate to `Schema Builder` > `Queries`.
+
 A query has 3 parts
 ### Selection Set
-in below examples, main entity is `course`
+In the examples below, the main entity is `course`:
 - `teacher` is a `lookup` attribute of `course`.  
-- `skills` is a `crosstable` attributes of teacher
-- `materials` is a `crosstable` attributes of `course`
+- `skills` is a `crosstable` attributes of `teacher`.`
+- `materials` is a `crosstable` attributes of `course`.
 ```
 {
     name, 
@@ -237,11 +227,10 @@ in below examples, main entity is `course`
 }
 ```
 ### Sorts
-Fluent CMS are using cursor based pagination, unlike graphQL allow both cursor-base pagination and offset-based pagination, 
-because offset-based pagination is not stable and not suited for large dataset, 
-detail in [this link](https://dev.to/pragativerma18/unlocking-the-power-of-api-pagination-best-practices-and-strategies-4b49)
+FluentCMS uses cursor-based pagination, unlike GraphQL, which supports both cursor- and offset-based pagination. 
+Offset-based pagination is less stable and unsuitable for large datasets.  
 
-Cursor-based pagination retrieve the next page after the last cursor. Fluent CMS calculate cursor and retrieve next page based on sorts,    
+Cursor-based pagination retrieves the next page based on the last cursor. FluentCMS calculates the cursor and sorts data as shown below:   
 
 ```json
 {
@@ -255,9 +244,11 @@ Cursor-based pagination retrieve the next page after the last cursor. Fluent CMS
 
 ```
 ### Filter
-To prevent the frontend from triggering resource-intensive database queries, the Query API should expose as few parameters to the frontend as possible.  
-In below filter definition, `qs.id` means query try to resolve id from querySting key `id`.
-So the Sql correspond to API call `/api/queries/<query-name>/one?id=3`  is
+To prevent resource-intensive queries from the frontend, limit the number of exposed parameters.
+In the filter definition below, `qs.id` tries to resolve the ID from the query string parameter `id`. 
+The `qs.` prefix indicates that the value should be fetched from the query string, with the part after `qs.` representing the key of the query string parameter.
+
+For example, the API call /api/queries/<query-name>/one?id=3 corresponds to the SQL query:
 `select * from courses where level='advanced' and id=3`
 ```json
 {
@@ -284,18 +275,17 @@ So the Sql correspond to API call `/api/queries/<query-name>/one?id=3`  is
         }
       ]
     }
+  ]
 }
 ```
-### List,One,Many
-Each query definition corresponds to 3 end point
-- /api/queries/<query-name>
-- /api/queries/<query-name>/one
-- /api/queries/<query-name>/many
+### Query Endpoints
+Each query definition corresponds to three endpoints:
 
-#### Pagination Result:  /api/queries/<query-name>
-It returns below response, 
-- to view next page, call `/api/queries/<query-name>?last=***`  
-- to view previous page, call `/api/queries/<query-name>?first=***`
+####  List: `/api/queries/<query-name>` - retrieves a paginated list
+- To view next page: `/api/queries/<query-name>?last=***`  
+- To view previous page: `/api/queries/<query-name>?first=***`
+
+Example response:
 ```json
 {
 "items": [],
@@ -305,16 +295,17 @@ It returns below response,
 "hasNext": true
 }
 ```
-#### Single Record:  /api/queries/<query-name>/one
-return the first record, example endpoint  `/api/queries/<query-name>/one?id=***`
+#### Single Record:  /api/queries/<query-name>/one - Returns the first record
+Example: `/api/queries/<query-name>/one?id=***`
 
-#### Many Record:  /api/queries/<query-name>/one
-Return multiple records by allowing the frontend to call the API with specific values, 
-for example: `/api/queries/<query-name>/one?id=1&id=2&id=3`. 
-If the client provides more values than the allowed page size, only the first 'page size' records will be returned.
+#### Multiple Record:  /api/queries/<query-name>/many
+- Returns multiple records based on specified values.
+Example: `/api/queries/<query-name>/one?id=1&id=2&id=3`. 
 
-### View Cache One minute
-view setting are cached in memory for one minute. 
+If the number of IDs exceeds the allowed page size, only the first set of records will be returned.
+### Cache Settings: 
+- Query Settings are cached in memory for 1 minutes.
+- Query Result are not cached because caching large data to memory is tricky and I intend implement stand alone cache module. 
 
 ## Produce Events to Kafka
 The producing event functionality is implemented by adding hook functions behind the scene,  to enable this functionality, you need add two line of code,
@@ -329,13 +320,32 @@ app.RegisterMessageProducerHook();
 ```
 ## We welcome contributions! 
 If you're interested in improving FluentCMS, please read our [CONTRIBUTING.md](https://github.com/fluent-cms/fluent-cms/blob/main/CONTRIBUTING.md) guide.
+
 ## Development
-- Web Server: 
-  - Code [FluentCMS](https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS)
-  - Doc [Server](https://github.com/fluent-cms/fluent-cms/blob/main/doc/Development.md#Server )
-- Admin Panel Client:
-  - Code [admin-panel](https://github.com/fluent-cms/fluent-cms/tree/main/admin-panel)
-  - Doc [Admin-Panel-UI](https://github.com/fluent-cms/fluent-cms/blob/main/doc/Development.md#Admin-Panel-UI)
-- Schema Builder: 
-  - Code [schema-ui](https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS/wwwroot/schema-ui)
-  - Doc [Schema-Builder-UI](https://github.com/fluent-cms/fluent-cms/blob/main/doc/Development.md#Schema-Builder-UI)
+### System Overviews
+![System Overview](https://raw.githubusercontent.com/fluent-cms/fluent-cms/main/doc/diagrams/overview.png)
+- [**Backend Server**](https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS)
+- [**Admin Panel UI**](https://github.com/fluent-cms/fluent-cms/tree/main/admin-panel)
+- [**Schema Builder**](https://github.com/fluent-cms/fluent-cms/tree/main/schema-ui)
+- [**Demo Next.js Public Site**](https://github.com/fluent-cms/fluent-cms/tree/main/examples/BlogPublicSiteNextJsUI)
+
+### Web Server
+- **Tools**:
+    - **ASP.NET Core**
+    - **SqlKata**: [SqlKata](https://sqlkata.com/)
+
+![API Controller Service](https://raw.githubusercontent.com/fluent-cms/fluent-cms/main/doc/diagrams/api-controller-service.png)
+
+### Admin Panel UI
+- **Tools**:
+    - **React**
+    - **PrimeReact**: [PrimeReact UI Library](https://primereact.org/)
+    - **SWR**: [Data Fetching/State Management](https://swr.vercel.app/)
+
+![Admin Panel Sequence](https://raw.githubusercontent.com/fluent-cms/fluent-cms/main/doc/diagrams/admin-panel-sequence.png)
+
+### Schema Builder UI
+- **Tools**:
+    - **jsoneditor**: [JSON Editor](https://github.com/json-editor/json-editor)
+
+![Schema Builder Sequence](https://raw.githubusercontent.com/fluent-cms/fluent-cms/main/doc/diagrams/schema-builder-sequence.png)

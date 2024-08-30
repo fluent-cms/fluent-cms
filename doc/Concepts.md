@@ -1,4 +1,4 @@
-## Entity in Fluent CMS
+## Entity 
 
 ### Definition
 
@@ -15,7 +15,9 @@ Entities have attributes that define their properties or characteristics. These 
 ### Entities and Database Tables
 - Direct Mapping: Often, each entity maps directly to a single database table. For example, a User entity might correspond directly to a Users table in the database.
 - Shared Tables: In some cases, multiple entities might be stored in a single table. This is achieved using a discriminator column to distinguish between different entities.
-## Attributes in Fluent CMS
+
+
+## Attributes
 
 ### Overview
 
@@ -128,25 +130,25 @@ To manage a many-to-many relationship, a join table (crosstable) is used to link
 ### User Interface (UI)
 When creating or editing a post, the authors should be rendered in a table format where users can select or deselect authors for the post.
 ![crosstable](screenshots/admin_panel_crosstable_authors.png)
-## View in Fluent CMS
+## Query
 
 ### Definition
 
-In Fluent CMS, a **view** is a structured representation of an entity that serves as a public API endpoint. Views are designed to present data from entities while adhering to **performance** and **security** considerations.
+In Fluent CMS, a **Query** is a structured representation of an entity that serves as a public API endpoint. Quries are designed to present data from entities while adhering to **performance** and **security** considerations.
 
-### Key Characteristics of a View
+### Key Characteristics of a Query
 
-1. **Entity Reference**: Each view references a specific entity. This means the data displayed in the view is derived from the referenced entity's attributes and relationships.
+1. **Entity Reference**: Each query references a specific entity. This means the data displayed in the query is derived from the referenced entity's attributes and relationships.
 
-2. **Public API Correspondence**: A view corresponds to a public API endpoint. This endpoint is designed to handle requests efficiently and securely, protecting against potential threats such as DDoS attacks.
+2. **Public API Correspondence**: A query corresponds to a public API endpoint. This endpoint is designed to handle requests efficiently and securely, protecting against potential threats such as DDoS attacks.
 
-3. **Limited Query Parameters**: To protect the system from DDoS attacks, the API endpoint associated with a view accepts a limited set of query parameters. This restriction ensures that only necessary data is processed, reducing the risk of overloading the server.
+3. **Limited Query Parameters**: To protect the system from DDoS attacks, the API endpoint associated with a query accepts a limited set of query parameters. This restriction ensures that only necessary data is processed, reducing the risk of overloading the server.
 
-4. **Predefined Order**: Views have a predefined order, usually defined with consideration of the table indexes to optimize query performance. This ensures that data retrieval is efficient and fast.
+4. **Predefined Order**: Query have a predefined order, usually defined with consideration of the table indexes to optimize query performance. This ensures that data retrieval is efficient and fast.
 
-5. **Predefined Filters**: Views come with predefined filters that can accept dynamic parameters from the URL query string. These filters hide the details of the filter fields and operators from the user, providing a simplified and secure way to query data.
+5. **Predefined Filters**: Query come with predefined filters that can accept dynamic parameters from the URL query string. These filters hide the details of the filter fields and operators from the user, providing a simplified and secure way to query data.
 
-6. **No Pagination**: Views do not implement traditional pagination using SQL's `OFFSET`. Instead, they use a more efficient method for handling large datasets. For example, instead of:
+6. **No Pagination**: Query do not implement traditional pagination using SQL's `OFFSET`. Instead, they use a more efficient method for handling large datasets. For example, instead of:
    ```sql
    SELECT * FROM posts ORDER BY publish_time OFFSET 1000
    ```
@@ -156,15 +158,15 @@ In Fluent CMS, a **view** is a structured representation of an entity that serve
    ```
    This approach reduces the cost and inefficiency associated with large offsets in SQL queries.
 
-### Example: Implementing a View for Posts
+### Example: Implementing a Query for Posts
 
 #### Entity Reference
 
-The view references the `Posts` entity.
+The query references the `Posts` entity.
 
 #### Public API Endpoint
 
-The view corresponds to an API endpoint, such as `/api/views/latest-posts`.
+The query corresponds to an API endpoint, such as `/api/queries/latest-posts`.
 
 #### Limited Query Parameters
 
@@ -173,14 +175,14 @@ The API endpoint accepts limited query parameters to ensure efficient processing
 
 #### Predefined Order
 
-The view orders posts by their `publish_time`, considering the table index on this column for efficient retrieval:
+The query orders posts by their `publish_time`, considering the table index on this column for efficient retrieval:
 ```sql
 SELECT * FROM posts ORDER BY publish_time DESC
 ```
 
 #### Efficient Data Retrieval
 
-Instead of using `OFFSET` for pagination, the view retrieves data based on a specific condition, such as `publish_time`:
+Instead of using `OFFSET` for pagination, the query retrieves data based on a specific condition, such as `publish_time`:
 ```sql
 SELECT * FROM posts WHERE publish_time < ? ORDER BY publish_time DESC
 ```
@@ -217,8 +219,8 @@ Filters combine multiple constraints and specify attributes (fields) to filter d
 ```
 
 - **fieldName**: Specifies the database column or attribute name.
-- **operator**: Specifies how multiple constraints within the filter should be logically combined (`AND`, `OR`, `NOT`).
 - **constraints**: Array of constraints, where each constraint corresponds to a condition on the specified `fieldName`.
+- **operator**: For `and`, all constraints must be met; for `or`, any matching constraint is acceptable.
 
 ### SQL Translation Example
 

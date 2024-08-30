@@ -11,7 +11,10 @@ System(admin_panel, "Admin Panel", "react")
 System(public_site, "Public Site", "next.js")
 System(backend_server, "Backend Server", "aps.net core")
 
-ContainerDb(db, "Database", "Postgres", "schema and content")
+ContainerDb(db, "Database", "RDBMS", "schema and content")
+ContainerDb(nosql, "NoSQl", "Nosql", "")
+ContainerDb(elasticSearch, "Elastic Search", "Elastic Search", "")
+Container(kafka, "Kafka", "Kafka", "")
 
 
 Rel(end_user, public_site, "browse", "Http")
@@ -23,4 +26,7 @@ Rel(public_site, backend_server, "browse", "rest")
 Rel(schema_builder, backend_server, "browse", "rest")
 
 Rel(backend_server, db, "access", "ef/sqlkata")
+Rel(backend_server, nosql, "access", "")
+Rel(backend_server, elasticSearch, "access", "")
+Rel(backend_server, kafka, "access", "")
 @enduml
