@@ -86,7 +86,7 @@ public class PermissionService<TUser>(
              Constraints = [new Constraint
              {
                  Match = Matches.EqualsTo,
-                 Value = MustGetCurrentUserId(),
+                 ResolvedValues = [MustGetCurrentUserId()],
              }],
          });
        

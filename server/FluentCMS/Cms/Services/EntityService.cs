@@ -19,7 +19,7 @@ public sealed class EntityService(
     public async Task<Record> OneByAttributes(string entityName, string id, string[] attributes, CancellationToken cancellationToken)
     {
         var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,cancellationToken));
-        var idValue = schemaService.CastToDatabaseType(entity.PrimaryKeyAttribute, id);
+        var idValue = schemaService.CastToDatabaseType(entity.PrimaryKeyAttribute(), id);
         var query = entity.ByIdQuery(idValue, entity.Attributes.GetLocalAttributes(attributes),null);
         return NotNull(await queryKateQueryExecutor.One(query,cancellationToken)).ValOrThrow($"not find record by [{id}]");
     }
@@ -37,13 +37,13 @@ public sealed class EntityService(
             return hookReturn.Record;
         }
 
-        var idValue = schemaService.CastToDatabaseType(entity.PrimaryKeyAttribute, id);
+        var idValue = schemaService.CastToDatabaseType(entity.PrimaryKeyAttribute(), id);
         var query = entity.ByIdQuery(idValue,entity.Attributes.GetLocalAttributes(InListOrDetail.InDetail),filters);
         var record = NotNull(await queryKateQueryExecutor.One(query,cancellationToken)).ValOrThrow($"not find record by [{id}]");
 
         foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.lookup,InListOrDetail.InDetail))
         {
-            attribute.Children = [attribute.Lookup!.PrimaryKeyAttribute, attribute.Lookup.DisplayTitleAttribute];
+            attribute.Children = [attribute.Lookup!.PrimaryKeyAttribute(), attribute.Lookup.DisplayTitleAttribute()];
             await AttachLookup(attribute, [record],cancellationToken);
         }
 
@@ -102,7 +102,7 @@ public sealed class EntityService(
         {
             foreach (var listLookupsAttribute in entity.Attributes.GetAttributesByType(DisplayType.lookup, InListOrDetail.InList))
             {
-                listLookupsAttribute.Children = [listLookupsAttribute.Lookup!.PrimaryKeyAttribute,listLookupsAttribute.Lookup!.DisplayTitleAttribute];
+                listLookupsAttribute.Children = [listLookupsAttribute.Lookup!.PrimaryKeyAttribute(),listLookupsAttribute.Lookup!.DisplayTitleAttribute()];
                 await AttachLookup(listLookupsAttribute, records, cancellationToken);
             }
             ret.TotalRecords = await queryKateQueryExecutor.Count(entity.CountQuery(filters),cancellationToken);
@@ -253,7 +253,7 @@ public sealed class EntityService(
     private async Task AttachCrosstable(Attribute attribute, Record[] items, CancellationToken cancellationToken)
     {
         //no need to attach, ignore
-        var ids = attribute.Parent?.PrimaryKeyAttribute.GetValues(items);
+        var ids = attribute.Parent?.PrimaryKeyAttribute().GetValues(items);
         if (ids is null || ids.Length == 0)
         {
             return;
@@ -293,7 +293,7 @@ public sealed class EntityService(
 
         if (children.FindOneAttribute(lookupEntity.PrimaryKey) == null)
         {
-            children = [..children, lookupEntity.PrimaryKeyAttribute];
+            children = [..children, lookupEntity.PrimaryKeyAttribute()];
         }
         
         var manyQuery = lookupEntity.ManyQuery(attribute.GetValues(items), children);
@@ -304,8 +304,6 @@ public sealed class EntityService(
 
         var targetRecords = await queryKateQueryExecutor.Many(manyQuery.Value,cancellationToken);
         await AttachRelatedEntity(attribute.Children, targetRecords, cancellationToken);
- 
-        //here attach related
         
         foreach (var lookupRecord in targetRecords)
         {

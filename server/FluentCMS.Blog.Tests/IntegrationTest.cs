@@ -41,10 +41,11 @@ public class IntegrationTest
         await AddSimpleData(Leaner, Name, "Bob");
 
         await AddSimpleEntity(Class, Name, Tutor, Leaner);
+
         await AddSimpleData(Class, new Dictionary<string, object>
         {
             { Name, "math" },
-            { Tutor, 1 }
+            { Tutor, new {id=1}}
         });
         await SaveClassStudent();
         var response = await _client.GetAsync($"/api/entities/{Class}/1/{Leaner}?exclude=false");
@@ -53,7 +54,7 @@ public class IntegrationTest
         response.EnsureSuccessStatusCode();
 
         var cls = await _client.GetObject<Dictionary<string,JsonElement>>($"/api/entities/{Class}/1");
-        Assert.Equal(1, cls.Value[$"{Tutor}_data"].GetProperty("id").GetInt32());
+        Assert.Equal(1, cls.Value[Tutor].GetProperty("id").GetInt32());
     }
 
     [Fact]

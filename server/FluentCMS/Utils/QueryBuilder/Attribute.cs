@@ -66,8 +66,6 @@ public class Attribute
         return string.IsNullOrWhiteSpace(Options) ? Result.Fail($"not find lookup for {FullName()}") : Options;
     }
     
-   
-
     public object[] GetValues(Record[] records)
     {
         return records.Where(x=>x.ContainsKey(Field)).Select(x => x[Field]).Distinct().Where(x => x != null).ToArray();

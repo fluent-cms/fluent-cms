@@ -52,8 +52,9 @@ public sealed class Entity
 
     public Attribute[] Attributes { get; set; } = [];
 
-    [JsonIgnore] public Attribute PrimaryKeyAttribute => Attributes.First(x => x.Field == PrimaryKey);
-    [JsonIgnore] public Attribute DisplayTitleAttribute => Attributes.First(x => x.Field == TitleAttribute);
+    public Attribute PrimaryKeyAttribute() => Attributes.First(x => x.Field == PrimaryKey);
+    public Attribute DisplayTitleAttribute() => Attributes.First(x => x.Field == TitleAttribute);
+    public Attribute DeleteAttribute() => new Attribute { Parent = this, Field = "deleted"};
 
     public void Init()
     {
@@ -61,10 +62,6 @@ public sealed class Entity
         {
             attribute.Parent = this;
         }
-    }
-    public string Fullname(string fieldName)
-    {
-        return TableName + "." + fieldName;
     }
 
     public Result<SqlKata.Query> OneQuery(Filters? filters, Attribute[] attributes)
@@ -123,7 +120,7 @@ public sealed class Entity
     public SqlKata.Query Insert(Record item)
     {
         //omit auto generated value
-        if (PrimaryKeyAttribute.IsDefault)
+        if (PrimaryKeyAttribute().IsDefault)
         {
             item.Remove(PrimaryKey);
         }

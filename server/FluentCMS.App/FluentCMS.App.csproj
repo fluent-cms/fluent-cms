@@ -18,13 +18,6 @@
     <ItemGroup>
         <InternalsVisibleTo Include="FluentCMS.App.Tests" />
     </ItemGroup>
-
-    <ItemGroup>
-        <Content Include="..\FluentCMS\wwwroot\**\*">
-            <Link>wwwroot\%(RecursiveDir)%(Filename)%(Extension)</Link>
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-    </ItemGroup>
     <ItemGroup>
       <Folder Include="wwwroot\" />
     </ItemGroup> 

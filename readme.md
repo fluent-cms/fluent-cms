@@ -175,7 +175,146 @@ Behind the scene, fluentCMS leverage the hook mechanism.
           await service.CheckEntityAccessPermission(meta);
         }));
 ```
+## Design Query
+Here’s a text-based layout representation of the web page of the course introduction page.
 
+---
+**Introduction to Web Development**  
+**Description:**
+This course provides an overview of web development...  
+**Teacher: John Doe**
+
+- **Skills:**
+    - C++ (3 years)
+    - C# (5 years)
+    - HTML (7 years)
+    - Database (4 years)
+
+**Materials:**
+- [Week 1: Introduction to HTML](file:///2024-08/75dd9a00.txt)
+- [HTML Basics](https://www.youtube.com/watch?v=salY_Sm6mv4&pp=ygULaHRtbCBiYXNpY3M%3D)
+---
+The data comes from several entities, 
+- course
+- teacher
+- skills
+- teacher_skill
+- material
+- course_material  
+
+
+It's no convenient to use FluentCMS Entity CRUD Rest APIs to implement Frontend Web Page like that 
+- Frontend have to make too many API calls.
+- Some sensitive information exposes from Frontend, like teacher's phone number
+- Entity CRUD Api give user too much flexibility, it might make resource-intensive database query so it's not suitable to serve public .
+
+Fluent CMS provides `Query` APIs to address above requirements. The concept is like GraphQL Query.  
+Go to `Schema Builder` > `Queries` to edit query.  
+A query has 3 parts
+### Selection Set
+in below examples, main entity is `course`
+- `teacher` is a `lookup` attribute of `course`.  
+- `skills` is a `crosstable` attributes of teacher
+- `materials` is a `crosstable` attributes of `course`
+```
+{
+    name, 
+    id, 
+    description,
+    teacher{
+        firstname, 
+        lastname, 
+        skills{
+            name, 
+            years
+        }
+    },
+    materials{
+        name,
+        link, 
+        file
+    }
+}
+```
+### Sorts
+Fluent CMS are using cursor based pagination, unlike graphQL allow both cursor-base pagination and offset-based pagination, 
+because offset-based pagination is not stable and not suited for large dataset, 
+detail in [this link](https://dev.to/pragativerma18/unlocking-the-power-of-api-pagination-best-practices-and-strategies-4b49)
+
+Cursor-based pagination retrieve the next page after the last cursor. Fluent CMS calculate cursor and retrieve next page based on sorts,    
+
+```json
+{
+  "sorts": [
+    {
+      "fieldName": "id",
+      "order": "Desc"
+    }
+  ]
+}
+
+```
+### Filter
+To prevent the frontend from triggering resource-intensive database queries, the Query API should expose as few parameters to the frontend as possible.  
+In below filter definition, `qs.id` means query try to resolve id from querySting key `id`.
+So the Sql correspond to API call `/api/queries/<query-name>/one?id=3`  is
+`select * from courses where level='advanced' and id=3`
+```json
+{
+  "filters": [
+    {
+      "fieldName": "level",
+      "operator": "and",
+      "omitFail": false,
+      "constraints": [
+        {
+          "match": "in",
+          "value": "advanced"
+        }
+      ]
+    },
+    {
+      "fieldName": "id",
+      "operator": "and",
+      "omitFail": true,
+      "constraints": [
+        {
+          "match": "in",
+          "value": "qs.id"
+        }
+      ]
+    }
+}
+```
+### List,One,Many
+Each query definition corresponds to 3 end point
+- /api/queries/<query-name>
+- /api/queries/<query-name>/one
+- /api/queries/<query-name>/many
+
+#### Pagination Result:  /api/queries/<query-name>
+It returns below response, 
+- to view next page, call `/api/queries/<query-name>?last=***`  
+- to view previous page, call `/api/queries/<query-name>?first=***`
+```json
+{
+"items": [],
+"first": "",
+"hasPrevious": false,
+"last": "eyJpZCI6M30",
+"hasNext": true
+}
+```
+#### Single Record:  /api/queries/<query-name>/one
+return the first record, example endpoint  `/api/queries/<query-name>/one?id=***`
+
+#### Many Record:  /api/queries/<query-name>/one
+Return multiple records by allowing the frontend to call the API with specific values, 
+for example: `/api/queries/<query-name>/one?id=1&id=2&id=3`. 
+If the client provides more values than the allowed page size, only the first 'page size' records will be returned.
+
+### View Cache One minute
+view setting are cached in memory for one minute. 
 
 ## Produce Events to Kafka
 The producing event functionality is implemented by adding hook functions behind the scene,  to enable this functionality, you need add two line of code,

@@ -26,12 +26,12 @@ The diagram illustrates the API server related the following components:
 2. **Controllers**:
   - `Schema Controller`: Manages schema CRUD operations.
   - `Entity Controller`: Manages entity CRUD operations.
-  - `View Controller`: Provides APIs for public site interactions.
+  - `Query Controller`: Provides APIs for public site interactions.
 
 3. **Services**:
   - `Schema Service`: Handles business logic for schema CRUD operations.
   - `Entity Service`: Handles business logic for entity CRUD operations.
-  - `View Service`: Handles business logic for public site APIs.
+  - `Query Service`: Handles business logic for public site APIs.
 
 4. **Database**:
   - Uses Database for storing schema and content.
@@ -47,8 +47,8 @@ The diagram illustrates the API server related the following components:
   - The `Entity Controller` forwards these requests to the `Entity Service`, which interacts with the database using SqlKate.
 
 3. **Public Site Interactions**:
-  - The `Public Site` sends requests to the `View Controller`.
-  - The `View Controller` forwards these requests to the `View Service`, which also interacts with the database using SqlKate.
+  - The `Public Site` sends requests to the `Query Controller`.
+  - The `Query Controller` forwards these requests to the `Query Service`, which also interacts with the database using SqlKate.
 
 
 ### Query Builder 
@@ -164,7 +164,7 @@ The UML diagram describes the interaction between various components for handlin
 #### Schema Types
 
 1. **Entity**: Represents a Fluent CMS entity.
-2. **View**: Represents a Fluent CMS value.
+2. **Query**: Represents a Fluent CMS query.
 3. **Menu**: Represents the menus the Admin Panel, for example `top-menu-bar`.
 
 #### Sequence Diagram

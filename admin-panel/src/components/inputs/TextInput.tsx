@@ -11,8 +11,13 @@ export function TextInput(
     control:any
         id:any
 }) {
-    return <InputPanel  {...props} component={ (field:any) =>
-        <InputText id={field.name} value={field.value} className={' w-full'} onChange={(e) => field.onChange(e.target.value)} />
+    return <InputPanel  {...props} component={(field: any) =>
+        <InputText
+            id={field.name}
+            value={field.value ?? ''}
+            className={' w-full'}
+            onChange={(e) => {
+                field.onChange(e.target.value)
+            }}/>
     }/>
-
 }

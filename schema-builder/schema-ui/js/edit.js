@@ -22,7 +22,7 @@ function loadEditor() {
         disable_array_delete_last_row: true,
         disable_array_delete_all_rows: true,
         disable_properties: true,
-        disable_edit_json: true,
+        disable_edit_json: false,
         collapsed: true,
         object_layout: "grid",
         show_errors: 'always'

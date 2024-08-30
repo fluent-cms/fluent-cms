@@ -45,7 +45,7 @@ public class Crosstable
     {
         var vals = targetItems.Select(x => x[TargetEntity.PrimaryKey]);
         return new SqlKata.Query(CrossEntity.TableName).Where(FromAttribute.Field, id)
-            .WhereIn(TargetAttribute.Field, vals).AsUpdate(["deleted"],[true]);
+            .WhereIn(TargetAttribute.Field, vals).AsUpdate([CrossEntity.DeleteAttribute().Field],[true]);
     }
     
     public SqlKata.Query Insert(object id, Record[] targetItems)
@@ -69,20 +69,20 @@ public class Crosstable
      public SqlKata.Query Many(Attribute[] selectAttributes, bool exclude, object id)
      {
          var baseQuery = Base(selectAttributes);
-         var (a, b) = (TargetEntity.PrimaryKeyAttribute.FullName(), TargetAttribute.FullName());
+         var (a, b) = (TargetEntity.PrimaryKeyAttribute().FullName(), TargetAttribute.FullName());
          if (exclude)
          {
              baseQuery.LeftJoin(CrossEntity.TableName,
                  j => j.On(a, b)
                      .Where(FromAttribute.FullName(), id)
-                     .Where(CrossEntity.Fullname("deleted"), false)
+                     .Where(CrossEntity.DeleteAttribute().FullName(), false)
              ).WhereNull(FromAttribute.FullName());
          }
          else
          {
              baseQuery.Join(CrossEntity.TableName, a, b)
                  .Where(FromAttribute.FullName(), id)
-                 .Where(CrossEntity.Fullname("deleted"), false);
+                 .Where(CrossEntity.DeleteAttribute().FullName(), false);
          }
 
          return baseQuery;
@@ -91,10 +91,10 @@ public class Crosstable
      public SqlKata.Query Many(Attribute[] selectAttributes, object[] ids)
      {
          var baseQuery = Base(selectAttributes);
-         var (a, b) = (TargetEntity.PrimaryKeyAttribute.FullName(), TargetAttribute.FullName());
+         var (a, b) = (TargetEntity.PrimaryKeyAttribute().FullName(), TargetAttribute.FullName());
          baseQuery.Join(CrossEntity.TableName, a, b)
              .WhereIn(FromAttribute.FullName(), ids)
-             .Where(CrossEntity.Fullname("deleted"), false);
+             .Where(CrossEntity.DeleteAttribute().FullName(), false);
          return baseQuery;
      }
 }
