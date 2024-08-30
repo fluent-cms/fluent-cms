@@ -43,7 +43,7 @@ public sealed class EntityService(
 
         foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.lookup,InListOrDetail.InDetail))
         {
-            attribute.Children = [attribute.Lookup!.PrimaryKeyAttribute(), attribute.Lookup.DisplayTitleAttribute()];
+            attribute.Children = [attribute.Lookup!.PrimaryKeyAttribute(), attribute.Lookup.DisplayTitleAttribute()!];
             await AttachLookup(attribute, [record],cancellationToken);
         }
 
@@ -102,7 +102,7 @@ public sealed class EntityService(
         {
             foreach (var listLookupsAttribute in entity.Attributes.GetAttributesByType(DisplayType.lookup, InListOrDetail.InList))
             {
-                listLookupsAttribute.Children = [listLookupsAttribute.Lookup!.PrimaryKeyAttribute(),listLookupsAttribute.Lookup!.DisplayTitleAttribute()];
+                listLookupsAttribute.Children = [listLookupsAttribute.Lookup!.PrimaryKeyAttribute(),listLookupsAttribute.Lookup!.DisplayTitleAttribute()!];
                 await AttachLookup(listLookupsAttribute, records, cancellationToken);
             }
             ret.TotalRecords = await queryKateQueryExecutor.Count(entity.CountQuery(filters),cancellationToken);

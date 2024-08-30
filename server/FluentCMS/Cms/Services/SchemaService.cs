@@ -79,7 +79,7 @@ public sealed partial class SchemaService(
             return false;
         }
         
-        var query = new SqlKata.Query(SchemaTableName).Where(SchemaColumnId,id).AsUpdate([SchemaColumnDeleted],[1]);
+        var query = new SqlKata.Query(TableName).Where(ColumnId,id).AsUpdate([ColumnDeleted],[1]);
         await kateQueryExecutor.Exec(query,cancellationToken);
         return true;
     }
@@ -89,20 +89,20 @@ public sealed partial class SchemaService(
         var query = BaseQuery();
         if (!string.IsNullOrWhiteSpace(type))
         {
-            query = query.Where(SchemaColumnType, type);
+            query = query.Where(ColumnType, type);
         }
         return  ParseSchema(await kateQueryExecutor.Many(query,cancellationToken)); 
     }
 
     public async Task<Schema?> GetByIdDefault(int id, CancellationToken cancellationToken = default)
     {
-        var query = BaseQuery().Where(SchemaColumnId, id);
+        var query = BaseQuery().Where(ColumnId, id);
         return ParseSchema(await kateQueryExecutor.One(query, cancellationToken));
     }
 
     public async Task<Schema?> GetByNameDefault(string name, CancellationToken cancellationToken = default)
     {
-        var query =  BaseQuery().Where(SchemaColumnName, name);
+        var query =  BaseQuery().Where(ColumnName, name);
         return ParseSchema(await kateQueryExecutor.One(query,cancellationToken));
     }
 
@@ -131,7 +131,7 @@ public sealed partial class SchemaService(
     public async Task<Query> GetViewByName(string name, CancellationToken cancellationToken = default)
     {
         StrNotEmpty(name).ValOrThrow("view name should not be empty");
-        var query = BaseQuery().Where(SchemaColumnName, name).Where(SchemaColumnType, SchemaType.Query);
+        var query = BaseQuery().Where(ColumnName, name).Where(ColumnType, SchemaType.Query);
         var item = ParseSchema(await kateQueryExecutor.One(query,cancellationToken));
         item = NotNull(item).ValOrThrow($"didn't find {name}");
         var view = NotNull(item.Settings.Query)
@@ -158,7 +158,7 @@ public sealed partial class SchemaService(
 
     public async Task EnsureTopMenuBar(CancellationToken cancellationToken = default)
     {
-        var query = BaseQuery().Where(SchemaColumnName, SchemaName.TopMenuBar);
+        var query = BaseQuery().Where(ColumnName, SchemaName.TopMenuBar);
         var item = ParseSchema(await kateQueryExecutor.One(query,cancellationToken));
         if (item is not null)
         {
@@ -181,33 +181,33 @@ public sealed partial class SchemaService(
 
     public async Task EnsureSchemaTable(CancellationToken cancellationToken = default)
     {
-        var cols = await definitionExecutor.GetColumnDefinitions(SchemaTableName,cancellationToken);
+        var cols = await definitionExecutor.GetColumnDefinitions(TableName,cancellationToken);
         if (cols.Length > 0)
         {
             return;
         }
         var entity = new Entity
         {
-            TableName = SchemaTableName,
+            TableName = TableName,
             Attributes = [
                 new Attribute
                 {
-                    Field = SchemaColumnName,
+                    Field = ColumnName,
                     DataType = DataType.String,
                 },
                 new Attribute
                 {
-                    Field = SchemaColumnType,
+                    Field = ColumnType,
                     DataType = DataType.String,
                 }, 
                 new Attribute
                 {
-                    Field = SchemaColumnSettings,
+                    Field = ColumnSettings,
                     DataType = DataType.Text,
                 },            
                 new Attribute
                 {
-                    Field = SchemaColumnCreatedBy,
+                    Field = ColumnCreatedBy,
                     DataType = DataType.String,
                 }
             ]

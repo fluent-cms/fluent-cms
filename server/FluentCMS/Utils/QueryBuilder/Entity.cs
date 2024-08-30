@@ -53,7 +53,7 @@ public sealed class Entity
     public Attribute[] Attributes { get; set; } = [];
 
     public Attribute PrimaryKeyAttribute() => Attributes.First(x => x.Field == PrimaryKey);
-    public Attribute DisplayTitleAttribute() => Attributes.First(x => x.Field == TitleAttribute);
+    public Attribute? DisplayTitleAttribute() => Attributes.FirstOrDefault(x => x.Field == TitleAttribute);
     public Attribute DeleteAttribute() => new Attribute { Parent = this, Field = "deleted"};
 
     public void Init()

@@ -24,19 +24,19 @@ public static class SchemaName
 }
 public partial class SchemaService
 {
-    private const string SchemaTableName = "__schemas";
-    private const string SchemaColumnId = "id";
-    private const string SchemaColumnName = "name";
-    private const string SchemaColumnType = "type";
-    private const string SchemaColumnSettings = "settings";
-    private const string SchemaColumnDeleted = "deleted";
-    private const string SchemaColumnCreatedBy = "created_by";
+    private const string TableName = "__schemas";
+    private const string ColumnId = "id";
+    private const string ColumnName = "name";
+    private const string ColumnType = "type";
+    private const string ColumnSettings = "settings";
+    private const string ColumnDeleted = "deleted";
+    private const string ColumnCreatedBy = "created_by";
 
-    private static string[] Fields() => [SchemaColumnId, SchemaColumnName, SchemaColumnType, SchemaColumnSettings, SchemaColumnCreatedBy];
+    private static string[] Fields() => [ColumnId, ColumnName, ColumnType, ColumnSettings, ColumnCreatedBy];
 
     private static SqlKata.Query BaseQuery()
     {
-        return new SqlKata.Query(SchemaTableName).Select(Fields()).Where(SchemaColumnDeleted, false);
+        return new SqlKata.Query(TableName).Select(Fields()).Where(ColumnDeleted, false);
     }
 
     private async Task<Result> InitViewSelection(Query query, CancellationToken cancellationToken)
@@ -161,16 +161,34 @@ public partial class SchemaService
 
     private async Task VerifyEntity(Schema dto, ColumnDefinition[] cols, Entity entity, CancellationToken cancellationToken)
     {
-        var query = BaseQuery().Where(SchemaColumnName, dto.Name).WhereNot(SchemaColumnId, dto.Id);
-        var existing = await kateQueryExecutor.Count(query,cancellationToken);
-        True(existing ==0).ThrowNotTrue($"the schema name {dto.Name} exists");
-        False(cols.Length > 0 && dto.Id ==0 ).
-            ThrowNotFalse($"the table name {entity.TableName} exists");
+        CheckResult(await NameNotTakenByOther(dto, cancellationToken));
+        CheckResult(TableExistsWhenCreatingNewEntity());
+        CheckResult(TitleAttributeExists());
         
         foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.lookup))
         {
             await CheckLookup(attribute,cancellationToken);
         }
+
+        Result TitleAttributeExists()
+        {
+            var attribute = entity.DisplayTitleAttribute();
+            return attribute is null ? Result.Fail($"`{entity.TitleAttribute}` was not in attributes list") : Result.Ok();
+        }
+        
+        Result TableExistsWhenCreatingNewEntity()
+        {
+            var creatingNewEntity = dto.Id == 0;
+            var tableExists = cols.Length > 0;
+            return creatingNewEntity && tableExists ? Result.Fail($"Fail to add new entity, the table {entity.TableName} aleady exists") : Result.Ok();
+        } 
+    }
+
+    private async Task<Result> NameNotTakenByOther(Schema schema, CancellationToken cancellationToken)
+    {
+        var query = BaseQuery().Where(ColumnName, schema.Name).WhereNot(ColumnId, schema.Id);
+        var count = await kateQueryExecutor.Count(query, cancellationToken);
+        return count == 0? Result.Ok(): Result.Fail($"the schema name {schema.Name} was taken by other schema");
     }
 
     private async Task EnsureEntityInTopMenuBar(Entity entity, CancellationToken cancellationToken)
@@ -199,7 +217,7 @@ public partial class SchemaService
 
     private async Task<Result<Entity>> GetEntityByNameOrDefault(string name, bool loadRelated, CancellationToken cancellationToken)
     {
-        var query = BaseQuery().Where(SchemaColumnName, name).Where(SchemaColumnType, SchemaType.Entity);
+        var query = BaseQuery().Where(ColumnName, name).Where(ColumnType, SchemaType.Entity);
         var item = ParseSchema(await kateQueryExecutor.One(query,cancellationToken));
 
         var entity = item?.Settings.Entity;
@@ -306,20 +324,20 @@ public partial class SchemaService
         {
             var record = new Dictionary<string, object>
             { 
-                {SchemaColumnName, dto.Name},
-                {SchemaColumnType, dto.Type},
-                {SchemaColumnSettings, JsonSerializer.Serialize(dto.Settings)},
-                {SchemaColumnCreatedBy, dto.CreatedBy}
+                {ColumnName, dto.Name},
+                {ColumnType, dto.Type},
+                {ColumnSettings, JsonSerializer.Serialize(dto.Settings)},
+                {ColumnCreatedBy, dto.CreatedBy}
             };
-            var query = new SqlKata.Query(SchemaTableName).AsInsert(record,true);
+            var query = new SqlKata.Query(TableName).AsInsert(record,true);
             dto.Id = await kateQueryExecutor.Exec(query,cancellationToken);
         }
         else
         {
-            var query = new SqlKata.Query(SchemaTableName)
-                .Where(SchemaColumnId, dto.Id)
+            var query = new SqlKata.Query(TableName)
+                .Where(ColumnId, dto.Id)
                 .AsUpdate(
-                    [SchemaColumnName, SchemaColumnType, SchemaColumnSettings],
+                    [ColumnName, ColumnType, ColumnSettings],
                     [dto.Name, dto.Type, JsonSerializer.Serialize(dto.Settings)]
                 );
             await kateQueryExecutor.Exec(query,cancellationToken);
@@ -335,11 +353,11 @@ public partial class SchemaService
         record = record.ToDictionary(pair => pair.Key.ToLower(), pair => pair.Value);
         return  new Schema
         {
-            Name = (string)record[SchemaColumnName],
-            Type = (string)record[SchemaColumnType],
-            Settings = JsonSerializer.Deserialize<Settings>((string)record[SchemaColumnSettings])!,
-            CreatedBy = (string)record[SchemaColumnCreatedBy],
-            Id = record[SchemaColumnId] switch
+            Name = (string)record[ColumnName],
+            Type = (string)record[ColumnType],
+            Settings = JsonSerializer.Deserialize<Settings>((string)record[ColumnSettings])!,
+            CreatedBy = (string)record[ColumnCreatedBy],
+            Id = record[ColumnId] switch
             {
                 int val => val,
                 long val => (int)val,
@@ -355,10 +373,7 @@ public partial class SchemaService
     
     private async Task<Schema> InternalSave(Schema dto, CancellationToken cancellationToken = default)
     {
-        var query = BaseQuery().Where(SchemaColumnName, dto.Name)
-            .WhereNot(SchemaColumnId, dto.Id);
-        var existing = await kateQueryExecutor.Count(query, cancellationToken);
-        True(existing == 0).ThrowNotTrue($"the schema name {dto.Name} exists");
+        CheckResult(await NameNotTakenByOther(dto, cancellationToken));
         await VerifyIfSchemaIsView(dto, cancellationToken);
         await SaveSchema(dto, cancellationToken);
         return dto;
