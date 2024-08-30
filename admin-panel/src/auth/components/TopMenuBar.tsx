@@ -19,10 +19,10 @@ export function TopMenuBar({start, end, profile}:{start:any, end:any, profile: P
         }
 
         const entityName = x.url.substring(entityPrefix.length);
-        return profile.readWriteEntities.includes(entityName)
-            || profile.restrictedReadWriteEntities.includes(entityName)
-            || profile.readonlyEntities.includes(entityName)
-            || profile.restrictedReadonlyEntities.includes(entityName);
+        return profile?.readWriteEntities?.includes(entityName)
+            || profile?.restrictedReadWriteEntities?.includes(entityName)
+            || profile?.readonlyEntities?.includes(entityName)
+            || profile?.restrictedReadonlyEntities?.includes(entityName);
     })
 
     const links = items.map((x: any)=> x.isHref ? x :(
@@ -59,7 +59,7 @@ export function TopMenuBar({start, end, profile}:{start:any, end:any, profile: P
             url: '/schema-ui/list.html'
         }
     ].forEach(x=>{
-        if (profile.allowedMenus.includes(x.key)){
+        if (profile?.allowedMenus?.includes(x.key)){
             links.push(x)
         }
     });
