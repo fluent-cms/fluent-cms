@@ -20,12 +20,7 @@ builder.AddCmsAuth<IdentityUser, IdentityRole, AppDbContext>();
 
 var app = builder.Build();
 
-//ensure database is created
-using var scope = app.Services.CreateScope();
-var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-await ctx.Database.EnsureCreatedAsync();
-
-//use fluent cms' CRUD featrue
+//use fluent cms' CRUD 
 await app.UseCmsAsync();
 
 //user fluent permission control feature

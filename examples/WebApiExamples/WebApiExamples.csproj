@@ -9,39 +9,5 @@
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.6"/>
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0"/>
     </ItemGroup>
-    <ItemGroup>
-      <_ContentIncludedByDefault Remove="wwwroot\assets\index-BNLh2e8Y.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\index-C4V4BfVX.css" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\index-C56t_YGU.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\Inter-italic.var-C0P-kdXT.woff2" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\Inter-roman.var-e-DsT6iu.woff2" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\primeicons-C6QP2o4f.woff2" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\primeicons-DMOk5skT.eot" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\primeicons-Dr5RGzOO.svg" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\primeicons-MpK4pl85.ttf" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\primeicons-WjwUDZjB.woff" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\quill-C1PHeGBy.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\quill-DstnRzfT.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\favicon.ico" />
-      <_ContentIncludedByDefault Remove="wwwroot\fluent-cms.png" />
-      <_ContentIncludedByDefault Remove="wwwroot\index.html" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\edit.html" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\edit.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\entity.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\list.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\menu.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\repo.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\view.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\attribute.json" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\constraint.json" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\entity.json" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\filter.json" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\filters.json" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\menu.json" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\sort.json" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\sorts.json" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\view.json" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\list.html" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\styles.css" />
-    </ItemGroup>
+   
 </Project>

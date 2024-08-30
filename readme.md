@@ -9,14 +9,14 @@ Fluent CMS is an open-source content management system designed to streamline we
 - **Performance:** The system is designed with performance in mind, boasting speeds 100 times faster than Strapi (details in the [performance vs Strapi](https://github.com/fluent-cms/fluent-cms/blob/main/doc%2Fpeformance-tests%2Fperformance-test-fluent-cms-vs-strapi.md) test). It is also as faster than manually written APIs using Entity Framework (details in the [performance vs EF](https://github.com/fluent-cms/fluent-cms/blob/main/doc%2Fpeformance-tests%2Fperformance-test-fluent-cms-vs-entity-framework.md) test).
 - **Easily Extensible** The system can automatically generate `EntityCreated`, `EntityUpdated`, and `EntityDeleted` events and publish them to an event broker (such as Kafka). This makes it simple to extend functionality, such as adding consumers for OpenSearch, Elasticsearch, or document databases. 
 ## Live Demo - A blog website based on Fluent CMS 
-   source code [FluentCMS.Blog](https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS.Blog)
+   source code [Example Blog Project](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).
    - Admin Panel https://fluent-cms-admin.azurewebsites.net/
       - Email: `admin@cms.com`
       - Password: `Admin1!`  
    - Public Site : https://fluent-cms-ui.azurewebsites.net/
     
 ## Add Fluent CMS to your own project
-The example project can be found at [An Example Project Using Nuget](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).
+The example project can be found at [Example Blog Project](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).
 1. Create your own Asp.net Core WebApplication.
 2. Add FluentCMS package    
    ```shell
