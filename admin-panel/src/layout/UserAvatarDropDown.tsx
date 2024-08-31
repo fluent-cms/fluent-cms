@@ -2,8 +2,10 @@ import React, {useRef} from 'react';
 import {Avatar} from 'primereact/avatar';
 import {Menu} from 'primereact/menu';
 import CryptoJS from 'crypto-js';
-import {logout, useUserInfo} from "../services/auth";
+import {logout, useUserInfo} from "../auth/services/auth";
 import { useNavigate} from "react-router-dom";
+import {configs} from "../config";
+import {ChangePasswordRoute} from "../auth/AccountRouter";
 
 const getGravatarUrl = (email: string) => {
     const trimmedEmail = email.trim().toLowerCase();
@@ -20,7 +22,7 @@ const UserAvatarDropdown = ({email}: { email: string }) => {
         {
             label: 'Change Password',
             icon: 'pi pi-lock',
-            command: ()=>navigate(`/profile/password`)
+            command: ()=>navigate(`${configs.authBaseRouter}${ChangePasswordRoute}`)
         },
         {
             label: 'Logout',
@@ -28,7 +30,7 @@ const UserAvatarDropdown = ({email}: { email: string }) => {
             command: async () => {
                 await logout();
                 await mutate();
-                window.location.href = '/'
+                window.location.href = configs.adminBaseRouter;
             }
         }
     ];

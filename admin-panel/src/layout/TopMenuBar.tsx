@@ -1,11 +1,16 @@
 import {Menubar} from 'primereact/menubar';
 import React from "react";
-import {useTopMenuBar} from "../services/menu";
+import {useTopMenuBar} from "../auth/services/menu";
 import { useNavigate} from "react-router-dom";
-import {MenuRoles, MenuSchemaBuilder, MenuUsers, Profile} from "../types/Profile";
+import {Profile} from "../auth/types/Profile";
+import {configs} from "../config";
+import {AccountRouter, RoleRoute, UserRoute} from "../auth/AccountRouter";
 
 
-const entityPrefix = '/entities/'
+const entityPrefix = '/entities'
+export const  MenuSchemaBuilder = "menu_schema_builder";
+export const  MenuUsers = "menu_users";
+export const  MenuRoles = "menu_roles";
 
 export function TopMenuBar({start, end, profile}:{start:any, end:any, profile: Profile}) {
     const navigate = useNavigate();
@@ -18,7 +23,7 @@ export function TopMenuBar({start, end, profile}:{start:any, end:any, profile: P
             return true;
         }
 
-        const entityName = x.url.substring(entityPrefix.length);
+        const entityName = x.url.substring(entityPrefix.length + 1);
         return profile?.readWriteEntities?.includes(entityName)
             || profile?.restrictedReadWriteEntities?.includes(entityName)
             || profile?.readonlyEntities?.includes(entityName)
@@ -27,6 +32,7 @@ export function TopMenuBar({start, end, profile}:{start:any, end:any, profile: P
 
     const links = items.map((x: any)=> x.isHref ? x :(
         {
+            url:  x.url.replaceAll(entityPrefix, configs.entityBaseRouter),
             icon: 'pi ' + (x.icon === ''?'pi-bolt':x.icon),
             label:x.label,
             command: ()=>{
@@ -41,7 +47,7 @@ export function TopMenuBar({start, end, profile}:{start:any, end:any, profile: P
             icon: 'pi pi-sitemap',
             label: 'Roles',
             command: () => {
-                navigate('/roles')
+                navigate(`${configs.authBaseRouter}${RoleRoute}`)
             }
         },
         {
@@ -49,7 +55,7 @@ export function TopMenuBar({start, end, profile}:{start:any, end:any, profile: P
             icon: 'pi pi-users',
             label: 'Users',
             command: () => {
-                navigate('/users')
+                navigate(`${configs.authBaseRouter}${UserRoute}`)
             }
         },
         {

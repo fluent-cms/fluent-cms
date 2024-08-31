@@ -9,7 +9,7 @@ export function UserListPage() {
         return record.roles.join(',');
     };
     const emailTemplate = (record:{email:string,id:string[]}) => {
-        return <Link to={'/users/' + record.id}>{record.email}</Link>
+        return <Link to={record.id.toString()}>{record.email}</Link>
     }
     return <>
         <h2>User list</h2>

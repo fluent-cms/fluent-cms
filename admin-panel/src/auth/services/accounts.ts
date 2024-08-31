@@ -1,7 +1,7 @@
 import useSWR from "swr";
 import {catchResponse, decodeError, fetcher, swrConfig} from "../../services/util";
 import axios from "axios";
-import {fullAuthAPIURI} from "./configs";
+import {fullAuthAPIURI} from "../configs";
 
 export  function useUsers(){
     let res = useSWR(fullAuthAPIURI(`/accounts/users`), fetcher,swrConfig);

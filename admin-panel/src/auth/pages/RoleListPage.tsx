@@ -10,7 +10,7 @@ export function RoleListPage() {
     const data = roles?.map((x: string)=> ({name:x}));
 
     const emailTemplate = (record:{name:string}) => {
-        return <Link to={'/roles/' + record.name}>{record.name}</Link>
+        return <Link to={record.name}>{record.name}</Link>
     }
     return <>
         <h2>User list</h2>

@@ -3,7 +3,7 @@ import 'primereact/resources/primereact.min.css'; //core css
 import 'primeicons/primeicons.css'; //icons
 import 'primeflex/primeflex.css'; // flex
 import './App.css';
-import {TopMenuBar} from "./auth/components/TopMenuBar";
+import {TopMenuBar} from "./layout/TopMenuBar";
 import React  from "react";
 import {setAPIUrlPrefix, setAssetsBaseURL} from "./cms-client/services/configs";
 import {configs} from "./config";
@@ -13,19 +13,14 @@ import axios from "axios";
 import {useUserInfo} from "./auth/services/auth";
 import {LoginPage} from "./auth/pages/LoginPage";
 import {RegisterPage} from "./auth/pages/RegisterPage";
-import UserAvatarDropdown from "./auth/components/UserAvatarDropDown";
-import {UserListPage} from "./auth/pages/UserListPage";
-import {UserDetailPage} from "./auth/pages/UserDetailPage";
-import {ChangePasswordPage} from "./auth/pages/ChangePasswordPage";
-import {RoleListPage} from "./auth/pages/RoleListPage";
-import {RoleDetailPage} from "./auth/pages/RoleDetailPage";
-import {setFullAuthAPIUrl} from "./auth/services/configs";
+import UserAvatarDropdown from "./layout/UserAvatarDropDown";
+import {setFullAuthAPIUrl} from "./auth/configs";
+import {AccountRouter, LoginRoute} from "./auth/AccountRouter";
 setAPIUrlPrefix(configs.apiURL)
 setAssetsBaseURL(configs.assetURL);
 setFullAuthAPIUrl(configs.authAPIURL)
 
 axios.defaults.withCredentials = true
-
 function App() {
 
     const {data:profile} = useUserInfo()
@@ -39,18 +34,17 @@ function App() {
         profile? <>
             <TopMenuBar start={start} end={end} profile={profile}/>
             <Routes>
-                <Route path={'/entities/*'} element={<EntityRouter/>}/>
-                <Route path={'/users'} element={<UserListPage/>}/>
-                <Route path={'/users/:id'} element={<UserDetailPage/>}/>
-                <Route path={'/roles'} element={<RoleListPage/>}/>
-                <Route path={'/roles/:name'} element={<RoleDetailPage/>}/>
-                <Route path={'/profile/password'} element={<ChangePasswordPage/>}/>
+                <Route path={`${configs.entityBaseRouter}/*`} element={<EntityRouter/>}/>
+                <Route path={`${configs.authBaseRouter}/*`} element={<AccountRouter/>}/>
+                <Route path={configs.adminBaseRouter} element={<EntityRouter />} />
+                <Route path={'/'} element={<EntityRouter />} />
             </Routes>
         </>:<>
             <Routes>
-                <Route path={'/login'} element={<LoginPage/>}/>
-                <Route path={'/register'} element={<RegisterPage/>}/>
-                <Route path="/" element={<Navigate to="/login" />} />
+                <Route path={`${configs.adminBaseRouter}${LoginRoute}`} element={<LoginPage/>}/>
+                <Route path={`${configs.adminBaseRouter}${LoginRoute}`} element={<RegisterPage/>}/>
+                <Route path={configs.adminBaseRouter} element={<LoginPage />} />
+                <Route path={'/'} element={<LoginPage />} />
             </Routes>
             </>
     );

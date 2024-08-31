@@ -4,8 +4,8 @@ export const configs = {
     authAPIURL: import.meta.env.VITE_REACT_APP_AUTH_API_URL,
     assetURL: import.meta.env.VITE_REACT_APP_ASSET_URL,
     versionAPIURL: import.meta.env.VITE_REACT_APP_VERSION_API_URL,
-    entityBaseRouter: '/entities',
-    editorBaseRouter: '/editor',
-    authBaseRouter: '/auth'
+    entityBaseRouter: '/admin/entities',
+    authBaseRouter: '/admin/auth',
+    adminBaseRouter: '/admin',
 }
 console.log({configs})
