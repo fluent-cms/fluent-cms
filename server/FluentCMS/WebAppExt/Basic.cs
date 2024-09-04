@@ -150,8 +150,9 @@ public static class Basic
                 new KateQueryExecutor(p.GetRequiredService<IKateProvider>(), 30));
             builder.Services.AddScoped<ISchemaService, SchemaService>();
             builder.Services.AddScoped<IEntityService, EntityService>();
-            builder.Services.AddScoped<IViewService, QueryService>();
+            builder.Services.AddScoped<IQueryService, QueryService>();
             builder.Services.AddScoped<IProfileService, DummyProfileService>();
+            builder.Services.AddScoped<IPageService, PageService>();
         }
 
         void InjectDbServices()

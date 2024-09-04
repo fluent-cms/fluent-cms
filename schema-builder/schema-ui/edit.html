@@ -23,46 +23,36 @@
         JSONEditor.defaults.theme = 'bootstrap5';
         JSONEditor.defaults.iconlib = 'bootstrap';
     </script>
+    <script src="components/nav-bar.js" type="module"></script>
 </head>
 <body>
-        <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <a class="navbar-brand" href="/admin">
-                <img alt="logo" src="/fluent-cms.png" height="40" class="mr-2">
-            </a>
-            <div class="navbar-nav">
-                <a class="nav-item nav-link border-item" href="./list.html">All Schemas</a>
-                <a class="nav-item nav-link border-item" href="./list.html?schema=entity">Entities</a>
-                <a class="nav-item nav-link border-item" href="./list.html?schema=query">Queries</a>
-                <a class="nav-item nav-link border-item" href="./edit.html?schema=menu&id=top-menu-bar">MenuItems</a>
-                <a class="nav-item nav-link border-item" href="/admin">Admin Panel</a>
-            </div>
-        </nav>
-            
-        <div class="header">
-            <span id="entityActions" hidden>
-                <button id='saveDefine' class="btn btn-primary">Save Schema</button>
-                <button id='editContent' class="btn btn-primary">Edit Content</button>
-                <span >
-                    <input type="checkbox" class="form-check-input" id="showAdvancedActions">
-                    <label for="showAdvancedActions">Advanced Actions</label>
-                </span>
-                <span id="advancedEntityActions" hidden>
-                    <button id='define' class="btn btn-primary">Get Columns Definition from Database</button>
-                    <button id='saveEntity' class="btn btn-primary">Save Schema Not Update Database</button>
-                </span>
+    <nav-bar></nav-bar>
+           
+    <div class="header">
+        <span id="entityActions" hidden>
+            <button id='saveDefine' class="btn btn-primary">Save Schema</button>
+            <button id='editContent' class="btn btn-primary">Edit Content</button>
+            <span >
+                <input type="checkbox" class="form-check-input" id="showAdvancedActions">
+                <label for="showAdvancedActions">Advanced Actions</label>
             </span>
-            <span id="queryActions" hidden>
-                <button id='saveQuery' class="btn btn-primary">Save Query</button>
-                <button id='visitAPI' class="btn btn-primary">Visit Public API</button>
+            <span id="advancedEntityActions" hidden>
+                <button id='define' class="btn btn-primary">Get Columns Definition from Database</button>
+                <button id='saveEntity' class="btn btn-primary">Save Schema Not Update Database</button>
             </span>
-            <span id="menuActions" hidden>
-                <button id='saveMenu' class="btn btn-primary">Save Menu</button>
-            </span>
-            <div id="errorPanel" class="alert alert-danger" role="alert" style="display: none;">
-                An error has occurred. Please try again.
-            </div>
+        </span>
+        <span id="queryActions" hidden>
+            <button id='saveQuery' class="btn btn-primary">Save Query</button>
+            <button id='visitAPI' class="btn btn-primary">Visit Public API</button>
+        </span>
+        <span id="menuActions" hidden>
+            <button id='saveMenu' class="btn btn-primary">Save Menu</button>
+        </span>
+        <div id="errorPanel" class="alert alert-danger" role="alert" style="display: none;">
+            An error has occurred. Please try again.
         </div>
-      
-        <div class='column col-md-12' id='editor_holder'></div>
+    </div>
+  
+    <div class='column col-md-12' id='editor_holder'></div>
 </body>
 </html>

@@ -3,8 +3,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>Fluent CMS Schema Builder</title>
-    <script src="https://cdn.jsdelivr.net/npm/@json-editor/json-editor@latest/dist/jsoneditor.min.js"></script>
+    <title>Fluent CMS Schema Builder - Page</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
     <script src="//code.jquery.com/jquery.min.js"></script>
@@ -15,14 +14,9 @@
     <link rel="stylesheet" href="styles.css">
     
     <script src="js/repo.js"></script>
-    <script src="js/edit.js"></script>
-    <script src="js/entity.js"></script>
-    <script src="js/query.js"></script>
-    <script src="js/menu.js"></script>
-    <script>
-        JSONEditor.defaults.theme = 'bootstrap5';
-        JSONEditor.defaults.iconlib = 'bootstrap';
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@editorjs/editorjs@latest"></script>
+
+
 </head>
 <body>
         <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -40,30 +34,20 @@
         </nav>
             
         <div class="header">
-            <span id="entityActions" hidden>
-                <button id='saveDefine' class="btn btn-primary">Save Schema</button>
-                <button id='editContent' class="btn btn-primary">Edit Content</button>
-                <span >
-                    <input type="checkbox" class="form-check-input" id="showAdvancedActions">
-                    <label for="showAdvancedActions">Advanced Actions</label>
-                </span>
-                <span id="advancedEntityActions" hidden>
-                    <button id='define' class="btn btn-primary">Get Columns Definition from Database</button>
-                    <button id='saveEntity' class="btn btn-primary">Save Schema Not Update Database</button>
-                </span>
-            </span>
-            <span id="queryActions" hidden>
-                <button id='saveQuery' class="btn btn-primary">Save Query</button>
-                <button id='visitAPI' class="btn btn-primary">Visit Public API</button>
-            </span>
-            <span id="menuActions" hidden>
-                <button id='saveMenu' class="btn btn-primary">Save Menu</button>
+            <span id="queryActions" >
+                <button id='saveQuery' class="btn btn-primary">Save Page</button>
+                <button id='visitAPI' class="btn btn-primary">View Page</button>
             </span>
             <div id="errorPanel" class="alert alert-danger" role="alert" style="display: none;">
                 An error has occurred. Please try again.
             </div>
         </div>
-      
-        <div class='column col-md-12' id='editor_holder'></div>
+
+        <h1>Page</h1>
+        <div id='editorjs' style="border: 2px solid #000;"></div>
+    <script>
+        const editor = new EditorJS({ holder: 'editorjs', tools: {},});
+
+    </script>
 </body>
 </html>

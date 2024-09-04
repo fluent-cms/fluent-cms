@@ -1,5 +1,7 @@
 using FluentCMS.Cms.Models;
 using FluentCMS.Cms.Services;
+using FluentCMS.Services;
+using FluentCMS.Utils.QueryBuilder;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FluentCMS.Cms.Controllers;
@@ -43,10 +45,25 @@ public class SchemasController(ISchemaService schemaService):ControllerBase
         return Ok(item);
     }
 
-    [HttpGet("{name}")]
-    public async Task<ActionResult<Schema>> GetOne(string name, CancellationToken cancellationToken, [FromQuery] bool? extend)
+    
+    [HttpGet("entity/{name}")]
+    public async Task<ActionResult<Entity>> GetOneEntity(string name, CancellationToken cancellationToken)
     {
-        return Ok(await schemaService.GetByNameVerify(name, extend?? true, cancellationToken));
+        var schema =
+            InvalidParamExceptionFactory.CheckResult(
+                await schemaService.GetEntityByNameOrDefault(name, true, cancellationToken));
+        return Ok(schema);
+    }
+    
+    [HttpGet("{name}")]
+    public async Task<ActionResult<Schema>> GetOne(string name, CancellationToken cancellationToken)
+    {
+        var schema = await schemaService.GetByNameDefault(name, "",cancellationToken);
+        if (schema is null)
+        {
+            return NotFound($"can not find schema {name}");
+        }
+        return Ok(schema);
     }
 
     [HttpDelete("{id}")]

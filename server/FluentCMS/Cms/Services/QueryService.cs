@@ -15,13 +15,13 @@ public class QueryService(
     ImmutableCache<Query> viewCache,
     IServiceProvider provider,
     HookRegistry hookRegistry
-) : IViewService
+) : IQueryService
 {
 
     public async Task<RecordViewResult> List(string viewName, Cursor cursor,
         Dictionary<string, StringValues> querystringDictionary, CancellationToken cancellationToken)
     {
-        var view = await GetView(viewName, cancellationToken);
+        var view = await GetQuery(viewName, cancellationToken);
         CheckResult(view.Filters.ResolveValues(view.Entity!,  schemaService.CastToDatabaseType, querystringDictionary));
         CheckResult(cursor.ResolveBoundaryItem(view.Entity!, schemaService.CastToDatabaseType));
         var pagination = new Pagination { Limit = view.PageSize + 1 }; //get extra record to check if it's the last page
@@ -45,31 +45,46 @@ public class QueryService(
         return results;
     }
 
-    public async Task<Record[]> Many(string viewName, Dictionary<string, StringValues> querystringDictionary,
+    public async Task<Record[]> Many(string viewName, Pagination? pagination,
+        Dictionary<string, StringValues> querystringDictionary,
         CancellationToken cancellationToken)
     {
-        var view = await GetView(viewName, cancellationToken);
-        CheckResult(view.Filters.ResolveValues(view.Entity!,  schemaService.CastToDatabaseType, querystringDictionary));
+        var query = await GetQuery(viewName, cancellationToken);
+        CheckResult(query.Filters.ResolveValues(query.Entity!, schemaService.CastToDatabaseType,
+            querystringDictionary));
 
-        var (exit, hookResult) = await TriggerHook(Occasion.BeforeQueryMany,view, view.Filters);
+        var (exit, hookResult) = await TriggerHook(Occasion.BeforeQueryMany, query, query.Filters);
         if (exit)
         {
             return hookResult.Records;
         }
 
-        var attributes = view.Selection.GetLocalAttributes();
-        var pagination = new Pagination { Limit = view.PageSize };
-        var query = CheckResult(view.Entity!.ListQuery(view.Filters, null, pagination, null, attributes,
+        var attributes = query.Selection.GetLocalAttributes();
+        
+        pagination ??= new Pagination { Limit = query.PageSize };
+        if (pagination.Limit == 0) pagination.Limit = query.PageSize;
+
+        if (pagination.Offset > query.PageSize * 10)
+            throw new InvalidParamException(
+                $"invalid offset {pagination.Offset}, maximum value is {query.PageSize * 10}");
+
+        if (pagination.Limit > query.PageSize * 5)
+            throw new InvalidParamException(
+                $"invalid offset {pagination.Limit}, maximum value is {query.PageSize * 5}");
+
+
+        //var pagination = new Pagination { Limit = view.PageSize };
+        var kateQuery = CheckResult(query.Entity!.ListQuery(query.Filters, query.Sorts, pagination, null, attributes,
             schemaService.CastToDatabaseType));
-        var items = await kateQueryExecutor.Many(query, cancellationToken);
-        await entityService.AttachRelatedEntity(view.Selection, items, cancellationToken);
+        var items = await kateQueryExecutor.Many(kateQuery, cancellationToken);
+        await entityService.AttachRelatedEntity(query.Selection, items, cancellationToken);
         return items;
     }
 
     public async Task<Record> One(string viewName, Dictionary<string, StringValues> querystringDictionary,
         CancellationToken cancellationToken)
     {
-        var view = await GetView(viewName, cancellationToken);
+        var view = await GetQuery(viewName, cancellationToken);
         CheckResult(view.Filters.ResolveValues(view.Entity!,  schemaService.CastToDatabaseType, querystringDictionary));
         var (exit, hookResult) = await TriggerHook(Occasion.BeforeQueryOne,view, view.Filters);
         if (exit)
@@ -93,10 +108,10 @@ public class QueryService(
         return (exit, hookReturn);
     }
 
-    private async Task<Query> GetView(string viewName, CancellationToken cancellationToken)
+    private async Task<Query> GetQuery(string viewName, CancellationToken cancellationToken)
     {
         var view = await viewCache.GetOrSet(viewName,
-            async () => await schemaService.GetViewByName(viewName, cancellationToken));
+            async () => await schemaService.GetQueryByName(viewName, cancellationToken));
         return view;
     }
 

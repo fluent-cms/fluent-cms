@@ -3,10 +3,17 @@ $(document).ready(function() {
     const schema = searchParams.get("schema");
     if (schema === "query") {
         $('#addEntity').prop('hidden', true);
+        $('#addPage').prop('hidden', true);
     }
     if (schema === "entity") {
         $('#addQuery').prop('hidden', true);
+        $('#addPage').prop('hidden', true);
     }
+    if (schema === "page") {
+        $('#addQuery').prop('hidden', true);
+        $('#addEntity').prop('hidden', true);
+    }
+
     async function deleteSchema(e) {
         if (confirm("Do you want to delete schema: " + e.getAttribute('data-name'))) {
             $.LoadingOverlay("show");

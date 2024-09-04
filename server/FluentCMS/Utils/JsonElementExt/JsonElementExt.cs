@@ -15,8 +15,8 @@ public static class JsonElementExt
 
       return dict; 
    }
-   
-   public static List<object> ToArray(this JsonElement jsonElement)
+
+   private static List<object> ToArray(this JsonElement jsonElement)
    {
       var list = new List<object>();
 

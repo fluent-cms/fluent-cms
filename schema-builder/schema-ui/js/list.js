@@ -1,12 +1,10 @@
 $(document).ready(function() {
     const searchParams = new URLSearchParams(window.location.search);
     const schema = searchParams.get("schema");
-    if (schema === "query") {
-        $('#addEntity').prop('hidden', true);
-    }
-    if (schema === "entity") {
-        $('#addQuery').prop('hidden', true);
-    }
+    $('#addEntity').prop('hidden', schema !=='entity');
+    $('#addPage').prop('hidden', schema !=='page');
+    $('#addQuery').prop('hidden', schema !=='query');
+
     async function deleteSchema(e) {
         if (confirm("Do you want to delete schema: " + e.getAttribute('data-name'))) {
             $.LoadingOverlay("show");
@@ -29,9 +27,10 @@ $(document).ready(function() {
             const $tableBody = $('#' + elementId);
             data.forEach(item => {
                 const $row = $('<tr></tr>');
+                const target = item.type ==='page'? 'page.html':'edit.html';
                 $row.html(`
                         <td>${item.id}</td>
-                        <td><a href="edit.html?schema=${item.type}&id=${item.name}">${item.name}</a></td>
+                        <td><a href="${target}?schema=${item.type}&id=${item.name}">${item.name}</a></td>
                         <td>${item.type}</td>
                         <td><button class="btn badge btn-danger btn-sm delete-btn" id="${item.id}" data-name="${item.name}">Delete</button></td>
                     `);

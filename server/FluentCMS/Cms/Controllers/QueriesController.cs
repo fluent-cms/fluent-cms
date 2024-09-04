@@ -5,32 +5,31 @@ using Microsoft.AspNetCore.WebUtilities;
 using FluentCMS.Utils.QueryBuilder;
 
 namespace FluentCMS.Cms.Controllers;
-[AllowAnonymous]
 [ApiController]
 [Route("api/[controller]")]
-public class QueriesController(IViewService viewService) : ControllerBase
+public class QueriesController(IQueryService queryService) : ControllerBase
 {
-    [HttpGet("{viewName}")]
-    public async Task<ActionResult<ListResult>> Get(string viewName, CancellationToken cancellationToken,
-        [FromQuery] Cursor cursor, [FromQuery] bool omitHook)
+    [HttpGet("{pageName}")]
+    public async Task<ActionResult<ListResult>> Get(string pageName, CancellationToken cancellationToken,
+        [FromQuery] Cursor cursor)
     {
         var queryDictionary = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
-        var res = await viewService.List(viewName, cursor, queryDictionary,cancellationToken);
+        var res = await queryService.List(pageName, cursor, queryDictionary,cancellationToken);
         return Ok( res);
    
     }
-    [HttpGet("{viewName}/one")]
-    public async Task<ActionResult<Record>> GetOne(string viewName, CancellationToken cancellationToken)
+    [HttpGet("{pageName}/one")]
+    public async Task<ActionResult<Record>> GetOne(string pageName, CancellationToken cancellationToken)
     {
         var queryDictionary = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
-        return Ok(await viewService.One(viewName,  queryDictionary,cancellationToken));
+        return Ok(await queryService.One(pageName,  queryDictionary,cancellationToken));
     }
 
-    [HttpGet("{viewName}/many")]
-    public async Task<ActionResult<IDictionary<string, object>[]>> GetMany(string viewName,
+    [HttpGet("{pageName}/many")]
+    public async Task<ActionResult<IDictionary<string, object>[]>> GetMany(string pageName, [FromQuery] Pagination?pagination,
         CancellationToken cancellationToken)
     {
         var queryDictionary = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
-        return Ok(await viewService.Many(viewName, queryDictionary,cancellationToken));
+        return Ok(await queryService.Many(pageName,pagination, queryDictionary,cancellationToken));
     }
 }

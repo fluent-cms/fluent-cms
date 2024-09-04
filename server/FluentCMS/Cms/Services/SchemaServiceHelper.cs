@@ -16,6 +16,7 @@ public static class  SchemaType
     public const string Menu = "menu";
     public const string Entity = "entity";
     public const string Query = "query";
+    public const string Page = "page";
 }
 
 public static class SchemaName
@@ -148,17 +149,6 @@ public partial class SchemaService
 
     }
     
-    private async Task<Result> InitIfSchemaIsEntity(Schema dto, CancellationToken cancellationToken)
-    {
-        var entity = dto.Settings.Entity;
-        if (entity is null)//not a entity, ignore
-        {
-            return Result.Ok();
-        }
-        entity.Init();
-        return await LoadRelated(entity,cancellationToken);
-    }
-
     private async Task VerifyEntity(Schema dto, ColumnDefinition[] cols, Entity entity, CancellationToken cancellationToken)
     {
         CheckResult(await NameNotTakenByOther(dto, cancellationToken));
@@ -193,7 +183,8 @@ public partial class SchemaService
 
     private async Task EnsureEntityInTopMenuBar(Entity entity, CancellationToken cancellationToken)
     {
-        var menuBarSchema = await GetByNameVerify(SchemaName.TopMenuBar, false,cancellationToken);
+        var menuBarSchema = NotNull(await GetByNameDefault(SchemaName.TopMenuBar,"",cancellationToken))
+            .ValOrThrow("not find top menu bar");
         var menuBar = menuBarSchema.Settings.Menu;
         if (menuBar is not null)
         {
@@ -215,31 +206,7 @@ public partial class SchemaService
         }
     }
 
-    private async Task<Result<Entity>> GetEntityByNameOrDefault(string name, bool loadRelated, CancellationToken cancellationToken)
-    {
-        var query = BaseQuery().Where(ColumnName, name).Where(ColumnType, SchemaType.Entity);
-        var item = ParseSchema(await kateQueryExecutor.One(query,cancellationToken));
-
-        var entity = item?.Settings.Entity;
-        if (entity is null)
-        {
-            return Result.Fail($"Not find entity {name}");
-        }
-
-        entity.Init();
-        if (!loadRelated)
-        {
-            return entity;
-        }
-
-        var result = await LoadRelated(entity,cancellationToken);
-        if (result.IsFailed)
-        {
-            return Result.Fail(result.Errors);
-        }
-
-        return entity;
-    }
+   
 
     private async Task<Result> LoadLookup(Attribute attribute,CancellationToken cancellationToken)
     {
@@ -271,12 +238,13 @@ public partial class SchemaService
         {
             return Result.Fail($"not find entity by name {targetEntityName} for crosstable {attribute.FullName()}");
         }
+        
         attribute.Crosstable = new Crosstable(sourceEntity, targetEntity.Value);
-        return Result.Ok();
+        return await LoadLookups(targetEntity.Value, cancellationToken);
 
     }
 
-    private async Task<Result> LoadRelated(Entity entity, CancellationToken cancellationToken)
+    private async Task<Result> LoadLookups(Entity entity, CancellationToken cancellationToken)
     {
         foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.lookup))
         {
@@ -287,21 +255,35 @@ public partial class SchemaService
             }
         }
 
+        return Result.Ok();
+    }
+
+    private async Task<Result> LoadCrosstables(Entity entity, CancellationToken cancellationToken)
+    {
         foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.crosstable))
         {
-            var res = await LoadCrosstable(entity,attribute, cancellationToken);
+            var res = await LoadCrosstable(entity, attribute, cancellationToken);
             if (res.IsFailed)
             {
                 return Result.Fail(res.Errors);
             }
         }
+
         return Result.Ok();
+    }
+
+    private async Task<Result> LoadRelated(Entity entity, CancellationToken cancellationToken)
+    {
+        var res = await LoadLookups(entity, cancellationToken);
+        if (res.IsFailed) return res;
+        return await LoadCrosstables(entity, cancellationToken);
     }
 
     private async Task CreateCrosstable(Entity entity, Attribute attribute,CancellationToken cancellationToken)
     {
         var entityName = CheckResult(attribute.GetCrossEntityName());
         var targetEntity = CheckResult(await GetEntityByNameOrDefault(entityName, false,cancellationToken));
+        await LoadRelated(targetEntity,cancellationToken);
         var crossTable = new Crosstable(entity, targetEntity);
         var columns = await definitionExecutor.GetColumnDefinitions(crossTable.CrossEntity.TableName, cancellationToken);
         if (columns.Length == 0)
@@ -344,33 +326,33 @@ public partial class SchemaService
         }
     }
 
-    private static Schema? ParseSchema(Record? record)
+    private static Result<Schema> ParseSchema(Record? record)
     {
         if (record is null)
         {
-            return null;
+            return Result.Fail("Can not parse schema, input record is null");
         }
-        record = record.ToDictionary(pair => pair.Key.ToLower(), pair => pair.Value);
-        return  new Schema
+        return Result.Try(() =>
         {
-            Name = (string)record[ColumnName],
-            Type = (string)record[ColumnType],
-            Settings = JsonSerializer.Deserialize<Settings>((string)record[ColumnSettings])!,
-            CreatedBy = (string)record[ColumnCreatedBy],
-            Id = record[ColumnId] switch
+            record = record.ToDictionary(pair => pair.Key.ToLower(), pair => pair.Value);
+            var s = JsonSerializer.Deserialize<Settings>((string)record[ColumnSettings]);
+            return new Schema
             {
-                int val => val,
-                long val => (int)val,
-                _ => 0
-            }
-        };
-    }
+                Name = (string)record[ColumnName],
+                Type = (string)record[ColumnType],
+                Settings = s,
+                CreatedBy = (string)record[ColumnCreatedBy],
+                Id = record[ColumnId] switch
+                {
+                    int val => val,
+                    long val => (int)val,
+                    _ => 0
+                }
+            };
 
-    private static Schema[] ParseSchema(IEnumerable<Record> records)
-    {
-        return records.Select(x => ParseSchema(x)!).ToArray();
+        });
     }
-    
+   
     private async Task<Schema> InternalSave(Schema dto, CancellationToken cancellationToken = default)
     {
         CheckResult(await NameNotTakenByOther(dto, cancellationToken));

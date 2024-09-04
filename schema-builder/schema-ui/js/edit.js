@@ -34,7 +34,7 @@ function loadEditor() {
             const {data, error} = await one(id);
             if (data){
                 id = data.id;
-                delete (data.id);
+                delete (data.id); //prevent json-edit add extra property
                 editor.setValue(data);
             }else {
                 $('#errorPanel').text(error).show();

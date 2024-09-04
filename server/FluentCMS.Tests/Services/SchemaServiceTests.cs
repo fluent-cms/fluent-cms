@@ -51,7 +51,7 @@ public class SchemaServiceTests :IAsyncLifetime
     {
         await _schemaService.EnsureSchemaTable();
         await _schemaService.EnsureTopMenuBar();
-        var menus = await _schemaService.GetByNameVerify(SchemaName.TopMenuBar,false);
+        var menus = await _schemaService.GetByNameDefault(SchemaName.TopMenuBar);
         Assert.NotNull(menus);
     }
   
@@ -61,7 +61,7 @@ public class SchemaServiceTests :IAsyncLifetime
         await _schemaService.EnsureSchemaTable();
         await _schemaService.EnsureTopMenuBar();
         await _schemaService.Save(TestSchema());
-        var entity = _schemaService.GetEntityByNameOrDefault(TestEntity().Name);
+        var entity = _schemaService.GetEntityByNameOrDefault(TestEntity().Name, false,default);
         Assert.NotNull(entity);
         Assert.True(entity.Id > 0);
     }
@@ -82,7 +82,7 @@ public class SchemaServiceTests :IAsyncLifetime
         var schema = await _schemaService.Save(TestSchema());
         schema.Settings.Entity!.TableName = "test2";
         await _schemaService.Save(schema);
-        var entity = await _schemaService.GetEntityByNameOrDefault(TestEntity().Name);
+        var entity = await _schemaService.GetEntityByNameOrDefault(TestEntity().Name, false,default);
         Assert.False(entity.IsFailed);
         Assert.Equal("test2",entity.Value.TableName);
     }
