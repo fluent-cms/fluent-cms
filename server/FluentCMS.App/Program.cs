@@ -29,8 +29,8 @@ app.RegisterMongoViewHook("mongo-posts");
 
 using var scope = app.Services.CreateScope();
 
-var schemaService = scope.ServiceProvider.GetRequiredService<ISchemaService>();
-var entity = await schemaService.GetEntityByNameOrDefault(TestEntity.EntityName, true);
+var schemaService = scope.ServiceProvider.GetRequiredService<IEntitySchemaService>();
+var entity = await schemaService.GetByNameDefault(TestEntity.EntityName, true);
 if (entity.IsFailed)
 {
     await schemaService.AddOrSaveSimpleEntity(TestEntity.EntityName, TestEntity.FieldName, "", "");

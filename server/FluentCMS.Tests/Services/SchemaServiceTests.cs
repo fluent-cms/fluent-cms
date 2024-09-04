@@ -14,6 +14,9 @@ namespace FluentCMS.Tests.Services;
 public class SchemaServiceTests :IAsyncLifetime
 {
     private readonly SchemaService _schemaService;
+    private readonly EntitySchemaService _entitySchemaService;
+    private readonly QuerySchemaService _querySchemaService;
+    
     private readonly string _dbFilePath = Path.Combine(Directory.GetCurrentDirectory(), $"{Guid.NewGuid()}.db");
     public SchemaServiceTests()
     {
@@ -27,6 +30,8 @@ public class SchemaServiceTests :IAsyncLifetime
 
         HookRegistry registry = new();
         _schemaService = new SchemaService(definitionExecutor, kateQueryExecutor,registry,provider.Object);
+        _entitySchemaService = new EntitySchemaService(_schemaService, definitionExecutor);
+        _querySchemaService = new QuerySchemaService(_schemaService,_entitySchemaService);
         Batteries.Init();
     }
     private void CleanDb()
@@ -51,7 +56,7 @@ public class SchemaServiceTests :IAsyncLifetime
     {
         await _schemaService.EnsureSchemaTable();
         await _schemaService.EnsureTopMenuBar();
-        var menus = await _schemaService.GetByNameDefault(SchemaName.TopMenuBar);
+        var menus = await _schemaService.GetByNameDefault(SchemaName.TopMenuBar,SchemaType.Menu);
         Assert.NotNull(menus);
     }
   
@@ -61,7 +66,7 @@ public class SchemaServiceTests :IAsyncLifetime
         await _schemaService.EnsureSchemaTable();
         await _schemaService.EnsureTopMenuBar();
         await _schemaService.Save(TestSchema());
-        var entity = _schemaService.GetEntityByNameOrDefault(TestEntity().Name, false,default);
+        var entity = _entitySchemaService.GetByNameDefault(TestEntity().Name, false,default);
         Assert.NotNull(entity);
         Assert.True(entity.Id > 0);
     }
@@ -70,8 +75,8 @@ public class SchemaServiceTests :IAsyncLifetime
     {
         await _schemaService.EnsureSchemaTable();
         await _schemaService.EnsureTopMenuBar();
-        var schema = await _schemaService.SaveTableDefine(TestSchema());
-        await _schemaService.SaveTableDefine(schema);
+        var schema = await _entitySchemaService.SaveTableDefine(TestSchema());
+        await _entitySchemaService.SaveTableDefine(schema);
     }
 
     [Fact]
@@ -82,7 +87,7 @@ public class SchemaServiceTests :IAsyncLifetime
         var schema = await _schemaService.Save(TestSchema());
         schema.Settings.Entity!.TableName = "test2";
         await _schemaService.Save(schema);
-        var entity = await _schemaService.GetEntityByNameOrDefault(TestEntity().Name, false,default);
+        var entity = await _entitySchemaService.GetByNameDefault(TestEntity().Name, false,default);
         Assert.False(entity.IsFailed);
         Assert.Equal("test2",entity.Value.TableName);
     }
@@ -93,11 +98,11 @@ public class SchemaServiceTests :IAsyncLifetime
         await _schemaService.EnsureSchemaTable();
         await _schemaService.EnsureTopMenuBar();
 
-        var schema = await _schemaService.GetByNameDefault(TestEntity().Name) ??
+        var schema = await _schemaService.GetByNameDefault(TestEntity().Name, SchemaType.Entity) ??
                      await _schemaService.Save(TestSchema());
            
         await _schemaService.Delete(schema.Id);
-        schema = await _schemaService.GetByNameDefault(TestEntity().Name);
+        schema = await _schemaService.GetByNameDefault(TestEntity().Name,SchemaType.Entity);
         Assert.Null(schema);
     }
 

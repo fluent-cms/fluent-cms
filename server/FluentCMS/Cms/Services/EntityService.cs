@@ -14,11 +14,12 @@ public sealed class EntityService(
     IServiceProvider provider,
     KateQueryExecutor queryKateQueryExecutor,
     ISchemaService schemaService,
+    IEntitySchemaService entitySchemaService,
     HookRegistry hookRegistry) : IEntityService
 {
     public async Task<Record> OneByAttributes(string entityName, string id, string[] attributes, CancellationToken cancellationToken)
     {
-        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,true,cancellationToken));
+        var entity = CheckResult(await entitySchemaService.GetByNameDefault(entityName,true,cancellationToken));
         var idValue = schemaService.CastToDatabaseType(entity.PrimaryKeyAttribute(), id);
         var query = entity.ByIdQuery(idValue, entity.Attributes.GetLocalAttributes(attributes),null);
         return NotNull(await queryKateQueryExecutor.One(query,cancellationToken)).ValOrThrow($"not find record by [{id}]");
@@ -26,7 +27,7 @@ public sealed class EntityService(
     
     public async Task<Record> One(string entityName, string id, CancellationToken cancellationToken)
     {
-        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,true,cancellationToken));
+        var entity = CheckResult(await entitySchemaService.GetByNameDefault(entityName,true,cancellationToken));
         var meta = new EntityMeta(entityName, id);
         var hookReturn = new HookReturn();
         var filters = new Filters();
@@ -53,7 +54,7 @@ public sealed class EntityService(
 
     public async Task<ListResult?> List(string entityName, Pagination? pagination, Dictionary<string, StringValues> qs, CancellationToken cancellationToken)
     {
-        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,true,cancellationToken));
+        var entity = CheckResult(await entitySchemaService.GetByNameDefault(entityName,true,cancellationToken));
         var qsDict = new QsDict(qs);
         var filters = CheckResult(Filters.Parse(entity,qsDict,schemaService.CastToDatabaseType));
         var sorts = CheckResult(Sorts.Parse(qsDict));
@@ -62,7 +63,7 @@ public sealed class EntityService(
 
     public async Task<ListResult?> List(string entityName, Filters? filters, Sorts? sorts, Pagination? pagination, CancellationToken cancellationToken)
     {
-        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,true,cancellationToken));
+        var entity = CheckResult(await entitySchemaService.GetByNameDefault(entityName,true,cancellationToken));
         return await List(entity, filters, sorts, pagination,cancellationToken);
     }
     
@@ -117,39 +118,39 @@ public sealed class EntityService(
 
     public async Task<Record> Insert(string entityName, JsonElement ele, CancellationToken cancellationToken)
     {
-        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,true,cancellationToken));
+        var entity = CheckResult(await entitySchemaService.GetByNameDefault(entityName,true,cancellationToken));
         var record = CheckResult(RecordParser.Parse(ele, entity, schemaService.CastToDatabaseType));
         return await Insert(entity, record,cancellationToken);
     }
 
     public async Task<Record> Insert(string entityName, Record record, CancellationToken cancellationToken)
     {
-        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,true,cancellationToken));
+        var entity = CheckResult(await entitySchemaService.GetByNameDefault(entityName,true,cancellationToken));
         return await Insert(entity, record, cancellationToken);
     }
 
     public async Task<Record> Update(string entityName, JsonElement ele, CancellationToken cancellationToken)
     {
-        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,true,cancellationToken));
+        var entity = CheckResult(await entitySchemaService.GetByNameDefault(entityName,true,cancellationToken));
         var record = CheckResult(RecordParser.Parse(ele, entity, schemaService.CastToDatabaseType));
         return await Update(entity, record, cancellationToken);
     }
 
     public async Task<Record> Update(string entityName, Record record, CancellationToken cancellationToken)
     {
-        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,true,cancellationToken));
+        var entity = CheckResult(await entitySchemaService.GetByNameDefault(entityName,true,cancellationToken));
         return await Update(entity, record, cancellationToken);
     }
 
     public async Task<Record> Delete(string entityName, JsonElement ele, CancellationToken cancellationToken)
     {
-        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,true,cancellationToken));
+        var entity = CheckResult(await entitySchemaService.GetByNameDefault(entityName,true,cancellationToken));
         var record = CheckResult(RecordParser.Parse(ele, entity, schemaService.CastToDatabaseType));
         return await Delete(entity, record,cancellationToken);
     }
     public async Task<Record> Delete(string entityName, Record record, CancellationToken cancellationToken)
     {
-        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,true,cancellationToken));
+        var entity = CheckResult(await entitySchemaService.GetByNameDefault(entityName,true,cancellationToken));
         return await Delete(entity, record,cancellationToken);
     }
 
@@ -318,7 +319,7 @@ public sealed class EntityService(
 
     private async Task<Attribute?> FindAttribute(string entityName, string attributeName, CancellationToken cancellationToken)
     {
-        var entity = CheckResult(await schemaService.GetEntityByNameOrDefault(entityName,true, cancellationToken));
+        var entity = CheckResult(await entitySchemaService.GetByNameDefault(entityName,true, cancellationToken));
         return entity.Attributes.FindOneAttribute(attributeName);
     }
 

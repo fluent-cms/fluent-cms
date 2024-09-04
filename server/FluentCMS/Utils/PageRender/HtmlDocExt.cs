@@ -8,28 +8,17 @@ public static class HtmlDocExt
     public static Result<MultipleRecordNode[]> LoadMultipleRecordNode(this HtmlDocument doc)
     {
         var nodeCollection = doc.DocumentNode.SelectNodes(
-            $"//section[@{Constants.DataSourceTypeTag}='{DataSourceType.MultipleRecords}']");
+            $"//*[self::section or self::div or self::span][@{Constants.DataSourceTypeTag}='{DataSourceType.MultipleRecords}']");
+        
         if (nodeCollection is null)
         {
             return Result.Ok<MultipleRecordNode[]>([]);
         }
 
-        var ret = new MultipleRecordNode[nodeCollection.Count];
-        for (var i = 0; i < nodeCollection.Count; i++)
-        {
-            var node = nodeCollection[i];
-            var queryRes = node.ParseMultipleRecordsQuery();
-            if (queryRes.IsFailed)
-            {
-                return Result.Fail(queryRes.Errors);
-            }
-
-            var dict = node.GetFieldAttributes();
-
-            ret[i] = new MultipleRecordNode(node.GetId(), node, node.OuterHtml, queryRes.Value,dict);
-        }
-
-        return ret;
+        return (from node in nodeCollection
+            let queryRes = node.ParseMultipleRecordsQuery()
+            where queryRes.IsSuccess
+            select new MultipleRecordNode(node, queryRes.Value)).ToArray();
     }
 
     private static Result<int> ParseInt32(this HtmlNode node, string attribute)
@@ -48,14 +37,6 @@ public static class HtmlDocExt
     {
         var s = node.GetAttributeValue(Attributes.Id, string.Empty);
         return s!;
-    }
-
-    private static IDictionary<string, string> GetFieldAttributes(this HtmlNode node)
-    {
-        return node.Attributes
-            .Where(attr => attr.Name.StartsWith(Attributes.FieldPrefix))
-            .Select(x => new { Name = x.Name.Substring(Attributes.FieldPrefix.Length), x.Value })
-            .ToDictionary(x => x.Name, x => string.IsNullOrWhiteSpace(x.Value) ? x.Name : x.Value);
     }
 
     private static Result<MultipleRecordQuery> ParseMultipleRecordsQuery(this HtmlNode div)

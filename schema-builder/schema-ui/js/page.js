@@ -27,7 +27,7 @@ $(document).ready(function() {
     $('#visitPage').on('click', function () {
         const name = $(`#name`).val();
         if (name){
-            window.location.href = `/pages/${name}`;
+            window.open(`/pages/${name}`, '_blank'); // Opens in a new tab
         }
     });
     
@@ -54,7 +54,7 @@ $(document).ready(function() {
         if (data) {
             alert("submit succeed!");
             if (!id) {
-                window.location.href = `page.html?id=${data.name}`;
+                window.location.href = `page.html?id=${data.id}`;
             }
             $('#errorPanel').text('').hide();
         } else {
@@ -97,18 +97,35 @@ function addCustomBlocks(editor){
         });
     }
 }
+
 function addCustomTypes(editor){
+    
     for(const [name, traits] of  Object.entries(customTypes)){
         editor.Components.addType(name, {
             model: {
                 defaults: {traits},
+            },
+            view:{
+                openSettings: function ( e ) {
+                    e.preventDefault();
+                    editor.select( this.model );
+                    editor.Panels.getButton( 'views', 'open-tm' ).set( 'active', 1 );
+                },
+                onActive() {
+                    this.el.contentEditable = true;
+                },
+                events:{
+                    dblclick: 'onActive',
+                    click: `openSettings`,
+                    selected: `openSettings`
+                }
             }
         });       
     }
 }
 
 
-const controls = ['name']
+const controls = ['name', 'query', 'queryString'];
 
 function restoreFormData(payload){
     for (const ctl of controls){

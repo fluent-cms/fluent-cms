@@ -149,6 +149,8 @@ public static class Basic
             builder.Services.AddSingleton<KateQueryExecutor>(p =>
                 new KateQueryExecutor(p.GetRequiredService<IKateProvider>(), 30));
             builder.Services.AddScoped<ISchemaService, SchemaService>();
+            builder.Services.AddScoped<IEntitySchemaService, EntitySchemaService>();
+            builder.Services.AddScoped<IQuerySchemaService, QuerySchemaService>();
             builder.Services.AddScoped<IEntityService, EntityService>();
             builder.Services.AddScoped<IQueryService, QueryService>();
             builder.Services.AddScoped<IProfileService, DummyProfileService>();

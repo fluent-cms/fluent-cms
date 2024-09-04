@@ -7,18 +7,19 @@ async function list(type){
     return  await tryFetch(async ()=>await  axios.get(apiPrefix + `/schemas?type=${type??''}`))
 }
 async function saveDefine(data){
-    return await tryFetch(async ()=>await  axios.post(apiPrefix + `/schemas/define`, encode(data)))
+    return await tryFetch(async ()=>await  axios.post(apiPrefix + `/schemas/entity/define`, encode(data)))
 }
 
 async function define(name){
-    return await tryFetch(async ()=> await  axios.get(apiPrefix + `/schemas/${name}/define`))
+    return await tryFetch(async ()=> await  axios.get(apiPrefix + `/schemas/entity/${name}/define`))
 }
 
 async function one(id){
-    const {data, err} = await tryFetch(async ()=>await  axios.get(apiPrefix + `/schemas/${id}/?extend=false`))
+    const {data, err} = await tryFetch(async ()=>await  axios.get(apiPrefix + `/schemas/${id}`))
     if (err){
         return {err}
     }
+    console.log(data);
     
     data.settings[data.type].name = data.name;
     data.settings[data.type].id = data.id;

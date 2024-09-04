@@ -8,9 +8,10 @@ namespace FluentCMS.Cms.Services;
 
 using static InvalidParamExceptionFactory;
 
-public class QueryService(
+public sealed class QueryService(
     KateQueryExecutor kateQueryExecutor,
     ISchemaService schemaService,
+    IQuerySchemaService querySchemaService,
     IEntityService entityService,
     ImmutableCache<Query> viewCache,
     IServiceProvider provider,
@@ -18,10 +19,10 @@ public class QueryService(
 ) : IQueryService
 {
 
-    public async Task<RecordViewResult> List(string viewName, Cursor cursor,
+    public async Task<RecordViewResult> List(string queryName, Cursor cursor,
         Dictionary<string, StringValues> querystringDictionary, CancellationToken cancellationToken)
     {
-        var view = await GetQuery(viewName, cancellationToken);
+        var view = await GetQuery(queryName, cancellationToken);
         CheckResult(view.Filters.ResolveValues(view.Entity!,  schemaService.CastToDatabaseType, querystringDictionary));
         CheckResult(cursor.ResolveBoundaryItem(view.Entity!, schemaService.CastToDatabaseType));
         var pagination = new Pagination { Limit = view.PageSize + 1 }; //get extra record to check if it's the last page
@@ -45,11 +46,11 @@ public class QueryService(
         return results;
     }
 
-    public async Task<Record[]> Many(string viewName, Pagination? pagination,
+    public async Task<Record[]> Many(string queryName, Pagination? pagination,
         Dictionary<string, StringValues> querystringDictionary,
         CancellationToken cancellationToken)
     {
-        var query = await GetQuery(viewName, cancellationToken);
+        var query = await GetQuery(queryName, cancellationToken);
         CheckResult(query.Filters.ResolveValues(query.Entity!, schemaService.CastToDatabaseType,
             querystringDictionary));
 
@@ -81,10 +82,10 @@ public class QueryService(
         return items;
     }
 
-    public async Task<Record> One(string viewName, Dictionary<string, StringValues> querystringDictionary,
+    public async Task<Record> One(string queryName, Dictionary<string, StringValues> querystringDictionary,
         CancellationToken cancellationToken)
     {
-        var view = await GetQuery(viewName, cancellationToken);
+        var view = await GetQuery(queryName, cancellationToken);
         CheckResult(view.Filters.ResolveValues(view.Entity!,  schemaService.CastToDatabaseType, querystringDictionary));
         var (exit, hookResult) = await TriggerHook(Occasion.BeforeQueryOne,view, view.Filters);
         if (exit)
@@ -111,7 +112,7 @@ public class QueryService(
     private async Task<Query> GetQuery(string viewName, CancellationToken cancellationToken)
     {
         var view = await viewCache.GetOrSet(viewName,
-            async () => await schemaService.GetQueryByName(viewName, cancellationToken));
+            async () => await querySchemaService.GetByName(viewName, cancellationToken));
         return view;
     }
 

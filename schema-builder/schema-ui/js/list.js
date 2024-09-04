@@ -30,7 +30,7 @@ $(document).ready(function() {
                 const target = item.type ==='page'? 'page.html':'edit.html';
                 $row.html(`
                         <td>${item.id}</td>
-                        <td><a href="${target}?schema=${item.type}&id=${item.name}">${item.name}</a></td>
+                        <td><a href="${target}?schema=${item.type}&id=${item.id}">${item.name}</a></td>
                         <td>${item.type}</td>
                         <td><button class="btn badge btn-danger btn-sm delete-btn" id="${item.id}" data-name="${item.name}">Delete</button></td>
                     `);
