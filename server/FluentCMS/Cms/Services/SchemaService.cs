@@ -148,7 +148,7 @@ public sealed  class SchemaService(
     }
     public async Task EnsureEntityInTopMenuBar(Entity entity, CancellationToken cancellationToken)
     {
-        var menuBarSchema = NotNull(await GetByNameDefault(SchemaName.TopMenuBar, "", cancellationToken))
+        var menuBarSchema = NotNull(await GetByNameDefault(SchemaName.TopMenuBar, SchemaType.Menu, cancellationToken))
             .ValOrThrow("not find top menu bar");
         var menuBar = menuBarSchema.Settings.Menu;
         if (menuBar is not null)

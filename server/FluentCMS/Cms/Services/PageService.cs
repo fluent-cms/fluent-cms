@@ -10,7 +10,7 @@ namespace FluentCMS.Cms.Services;
 using static InvalidParamExceptionFactory;
 public sealed class PageService(ISchemaService schemaService,IQueryService queryService):IPageService
 {
-    public async Task<string> GetBySlug(string pageName, string slug, Cursor cursor, CancellationToken cancellationToken)
+    public async Task<string> GetBySlug(string pageName, string slug,  CancellationToken cancellationToken)
     {
         var page = NotNull(await schemaService.GetByNameDefault(Page.SinglePageName(pageName), SchemaType.Page, cancellationToken))
             .ValOrThrow($"can not find page {pageName}").Settings.Page;
@@ -24,7 +24,7 @@ public sealed class PageService(ISchemaService schemaService,IQueryService query
         return RenderHtml(html, page.Css);
     }
 
-    public async Task<string> Get(string pageName, Cursor cursor, CancellationToken cancellationToken)
+    public async Task<string> Get(string pageName,  CancellationToken cancellationToken)
     {
         var page = NotNull(await schemaService.GetByNameDefault(pageName, SchemaType.Page, cancellationToken))
             .ValOrThrow($"can not find page {pageName}").Settings.Page;

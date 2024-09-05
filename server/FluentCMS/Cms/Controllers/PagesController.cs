@@ -9,16 +9,16 @@ namespace FluentCMS.Cms.Controllers;
 public class PagesController(IPageService pageService) : ControllerBase
 {
     [HttpGet("{pageName}")]
-    public async Task<ActionResult> Get(string pageName, [FromQuery] Cursor cursor, CancellationToken cancellationToken)
+    public async Task<ActionResult> Get(string pageName, CancellationToken cancellationToken)
     {
-        var htmlContent = await pageService.Get(pageName, cursor, cancellationToken);
+        var htmlContent = await pageService.Get(pageName, cancellationToken);
         return Content(htmlContent, "text/html");
     }
 
     [HttpGet("{pageName}/{slug}")]
-    public async Task<ActionResult> Get(string pageName, string slug,[FromQuery] Cursor cursor, CancellationToken cancellationToken)
+    public async Task<ActionResult> Get(string pageName, string slug, CancellationToken cancellationToken)
     {
-        var htmlContent = await pageService.GetBySlug(pageName,slug, cursor, cancellationToken);
+        var htmlContent = await pageService.GetBySlug(pageName,slug, cancellationToken);
         return Content(htmlContent, "text/html");
     }
 }

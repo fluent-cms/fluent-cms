@@ -1,8 +1,8 @@
 using System.IO.Compression;
 using System.Text.Json.Serialization;
 using FluentCMS.Auth.Services;
+using FluentCMS.Cms.Models;
 using FluentCMS.Cms.Services;
-using FluentCMS.Components;
 using FluentCMS.Services;
 using FluentCMS.Utils.Cache;
 using FluentCMS.Utils.DataDefinitionExecutor;
@@ -46,9 +46,20 @@ public static class Basic
         app.UseRouting();
         app.UseExceptionHandler(app.Environment.IsDevelopment() ? "/error-development" : "/error");
         app.MapControllers();
-
-        app.UseAntiforgery();
-        app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
+        app.Use(async (context, next) =>
+        {
+            await next();
+            if (context.Response.StatusCode == 404)
+            {
+                if (context.Request.Path == "/")
+                {
+                    using var scope = app.Services.CreateScope();
+                    var pageService = scope.ServiceProvider.GetRequiredService<IPageService>();
+                    var html = await pageService.Get(Page.HomePage);
+                    await context.Response.WriteAsync(html);
+                }
+            }
+        });
 
         async Task InitSchema()
         {
@@ -127,10 +138,6 @@ public static class Basic
 
         void AddRouters()
         {
-            builder.Services.AddRazorPages();
-            builder.Services.AddRazorComponents().AddInteractiveServerComponents();
-            builder.Services.AddServerSideBlazor();
-
             builder.Services.AddRouting(options => { options.LowercaseUrls = true; });
             builder.Services.AddControllers().AddJsonOptions(options =>
             {

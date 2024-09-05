@@ -63,14 +63,14 @@ public class SchemasController(
         return NoContent();
     }
  
-    [HttpPost("/entity/define")]
+    [HttpPost("entity/define")]
     public async Task<ActionResult<Schema>> SaveEntityDefine(CancellationToken cancellationToken, [FromBody] Schema dto)
     {
         var item = await entitySchemaService.SaveTableDefine(dto, cancellationToken);
         return Ok(item);
     }
 
-    [HttpGet("/entity/{name}/define")]
+    [HttpGet("entity/{name}/define")]
     public async Task<ActionResult<Schema>> GetTableDefine(string name, CancellationToken cancellationToken)
     {
         var item = await entitySchemaService.GetTableDefine(name, cancellationToken);

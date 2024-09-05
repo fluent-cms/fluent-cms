@@ -1,7 +1,8 @@
 namespace FluentCMS.Cms.Models;
 
-public class Page
+public sealed class Page
 {
+    
     public string Name { get; set; } = "";
     public string Query { get; set; } = "";
     public string QueryString { get; set; } = "";
@@ -9,6 +10,7 @@ public class Page
     public string Html { get; set; } = "";
     public string Css { get; set; } = "";
 
+    public const string HomePage = "home";
     public static string SinglePageName(string pageName)
     {
         return pageName + "/single";
