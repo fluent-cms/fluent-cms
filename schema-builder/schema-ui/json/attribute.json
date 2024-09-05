@@ -69,6 +69,16 @@
         "crosstable"
       ]
     },
+    "validation": {
+      "title": "Validation Rule",
+      "type": "string",
+      "description": "simple C# statements of Dynamic Expresso"
+    },
+    "validationMessage":{
+      "title": "Validation Error Message",
+      "type": "string",
+      "description": "The error message displayed when validation fails."
+    },
     "options": {
       "title": "Options",
       "type": "string",

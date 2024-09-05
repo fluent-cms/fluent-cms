@@ -1,8 +1,9 @@
+using FluentCMS.Utils.QueryBuilder;
 using FluentResults;
 
-namespace FluentCMS.Utils.QueryBuilder;
+namespace FluentCMS.Utils.KateQueryExt;
 
-public static class QueryExt
+public static class KateQueryExt
 {
     public static void ApplyPagination(this SqlKata.Query query, Pagination? pagination)
     {

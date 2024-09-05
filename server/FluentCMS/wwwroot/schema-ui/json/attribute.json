@@ -69,6 +69,11 @@
         "crosstable"
       ]
     },
+    "validation": {
+      "title": "Validation Rule",
+      "type": "string",
+      "description": "simple C# statements of Dynamic Expresso"
+    },
     "options": {
       "title": "Options",
       "type": "string",

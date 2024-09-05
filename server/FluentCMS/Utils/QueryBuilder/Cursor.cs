@@ -73,7 +73,7 @@ public sealed class Cursor
             var recordStr = IsForward ? Last : First;
             recordStr = Base64UrlEncoder.Decode(recordStr);
             var element = JsonSerializer.Deserialize<JsonElement>(recordStr);
-            var parseRes = RecordParser.Parse(element, entity, cast);
+            var parseRes = entity.Parse(element, cast);
             if (parseRes.IsFailed)
             {
                 return Result.Fail(parseRes.Errors);

@@ -27,6 +27,8 @@ public class Attribute
     public DisplayType Type { get; set; }
 
     public string Options { get; set; } = "";
+    public string Validation { get; set; } = "";
+    public string ValidationMessage { get; set; } = "";
 
     [JsonIgnore]
     public bool IsLocalAttribute => Type != DisplayType.crosstable;
@@ -37,9 +39,7 @@ public class Attribute
     public Entity? Lookup { get; set; }
 
     [JsonIgnore] public Attribute[]? Children { get; set; } 
-    public Attribute()
-    {
-    }
+    public Attribute() {}
 
     public Attribute(ColumnDefinition col)
     {
@@ -49,6 +49,21 @@ public class Attribute
         InDetail = true;
         Type = DisplayType.text;
         DataType = col.DataType;
+        return;
+        string SnakeToTitle(string snakeStr)
+        {
+            // Split the snake_case string by underscores
+            var components = snakeStr.Split('_');
+            // Capitalize the first letter of each component and join them with spaces
+            for (var i = 0; i < components.Length; i++)
+            {
+                if (components[i].Length > 0)
+                {
+                    components[i] = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(components[i]);
+                }
+            }
+            return string.Join(" ", components);
+        }
     }
 
     public string FullName()
@@ -69,20 +84,6 @@ public class Attribute
     public object[] GetValues(Record[] records)
     {
         return records.Where(x=>x.ContainsKey(Field)).Select(x => x[Field]).Distinct().Where(x => x != null).ToArray();
-    }
-    private static string SnakeToTitle(string snakeStr)
-    {
-        // Split the snake_case string by underscores
-        var components = snakeStr.Split('_');
-        // Capitalize the first letter of each component and join them with spaces
-        for (var i = 0; i < components.Length; i++)
-        {
-            if (components[i].Length > 0)
-            {
-                components[i] = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(components[i]);
-            }
-        }
-        return string.Join(" ", components);
     }
 }
 

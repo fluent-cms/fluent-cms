@@ -25,7 +25,7 @@ export function useRequestStatus(id:any){
         },
         Status: ()=>{
             return <>
-                {error&& <Message severity={'error'} text={error}/> }
+                {error&& error.split('\n').map(e =>(<><Message severity={'error'} text={e}/>&nbsp;&nbsp;</>))}
                 <Toast ref={toastRef} position="top-right" />
                 <ConfirmDialog key={id} id={id} tagKey={id}/>
             </>

@@ -24,8 +24,8 @@ builder.AddMongoView(mongoConfig);
 var app = builder.Build();
 await app.UseCmsAsync();
 
-app.RegisterMessageProducerHook("post");
-app.RegisterMongoViewHook("mongo-posts");
+//app.RegisterMessageProducerHook("post");
+//app.RegisterMongoViewHook("mongo-posts");
 
 using var scope = app.Services.CreateScope();
 

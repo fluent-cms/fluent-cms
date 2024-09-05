@@ -119,7 +119,7 @@ public sealed class EntityService(
     public async Task<Record> Insert(string entityName, JsonElement ele, CancellationToken cancellationToken)
     {
         var entity = CheckResult(await entitySchemaService.GetByNameDefault(entityName,true,cancellationToken));
-        var record = CheckResult(RecordParser.Parse(ele, entity, schemaService.CastToDatabaseType));
+        var record = CheckResult(entity.Parse(ele, schemaService.CastToDatabaseType));
         return await Insert(entity, record,cancellationToken);
     }
 
@@ -132,7 +132,7 @@ public sealed class EntityService(
     public async Task<Record> Update(string entityName, JsonElement ele, CancellationToken cancellationToken)
     {
         var entity = CheckResult(await entitySchemaService.GetByNameDefault(entityName,true,cancellationToken));
-        var record = CheckResult(RecordParser.Parse(ele, entity, schemaService.CastToDatabaseType));
+        var record = CheckResult(entity.Parse(ele, schemaService.CastToDatabaseType));
         return await Update(entity, record, cancellationToken);
     }
 
@@ -145,7 +145,7 @@ public sealed class EntityService(
     public async Task<Record> Delete(string entityName, JsonElement ele, CancellationToken cancellationToken)
     {
         var entity = CheckResult(await entitySchemaService.GetByNameDefault(entityName,true,cancellationToken));
-        var record = CheckResult(RecordParser.Parse(ele, entity, schemaService.CastToDatabaseType));
+        var record = CheckResult(entity.Parse(ele, schemaService.CastToDatabaseType));
         return await Delete(entity, record,cancellationToken);
     }
     public async Task<Record> Delete(string entityName, Record record, CancellationToken cancellationToken)
@@ -163,7 +163,7 @@ public sealed class EntityService(
         var crossTable = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable of {attributeName}");
 
         var items = elements.Select(ele =>
-            CheckResult(RecordParser.Parse(ele, crossTable.TargetEntity, schemaService.CastToDatabaseType))).ToArray();
+            CheckResult(crossTable.TargetEntity.Parse(ele, schemaService.CastToDatabaseType))).ToArray();
 
         var meta = new EntityMeta(entityName, strId);
         var hookData = new HookParameter
@@ -194,8 +194,7 @@ public sealed class EntityService(
 
         var crossTable = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable of {attributeName}");
 
-        var items = elements.Select(ele =>
-            CheckResult(RecordParser.Parse(ele, crossTable.TargetEntity, schemaService.CastToDatabaseType))).ToArray();
+        var items = elements.Select(ele => CheckResult(crossTable.TargetEntity.Parse(ele, schemaService.CastToDatabaseType))).ToArray();
         var meta = new EntityMeta(entityName, strId);
         var hookData = new HookParameter
         {
@@ -330,6 +329,9 @@ public sealed class EntityService(
             throw new InvalidParamException("Can not find id ");
         }
 
+        CheckResult(entity.ValidateLocalAttributes(record));
+        
+
         var meta = new EntityMeta(entity.Name, id.ToString()!);
         var exit = await hookRegistry.Trigger(provider, Occasion.BeforeUpdate, meta, new HookParameter{Record = record});
         if (exit)
@@ -345,6 +347,7 @@ public sealed class EntityService(
 
     private async Task<Record> Insert(Entity entity, Record record,CancellationToken cancellationToken)
     {
+        CheckResult(entity.ValidateLocalAttributes(record));
         var meta = new EntityMeta(entity.Name);
         var exit = await hookRegistry.Trigger(provider, Occasion.BeforeInsert, meta, new HookParameter{Record = record});
         if (exit)
