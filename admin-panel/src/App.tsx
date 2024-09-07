@@ -24,7 +24,7 @@ axios.defaults.withCredentials = true
 function App() {
 
     const {data:profile} = useUserInfo()
-    const start = <img alt="logo" src="/fluent-cms.png" height="40" className="mr-2"></img>;
+    const start = <img alt="logo" src={`/admin/fluent-cms.png`} height="40" className="mr-2"></img>;
     const end = (
         <div className="flex align-items-center gap-2">
             <UserAvatarDropdown email={profile?.email??''}/>

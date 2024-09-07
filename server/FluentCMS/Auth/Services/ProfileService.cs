@@ -17,12 +17,12 @@ public class ProfileService<TUser>(
     ):IProfileService
 where TUser :IdentityUser, new()
 {
-    public UserDto GetInfo()
+    public UserDto? GetInfo()
     {
         
         var claims = contextAccessor.HttpContext?.User;
-        True(claims?.Identity?.IsAuthenticated == true)
-            .ThrowNotTrue("Not logged in");
+        if (claims?.Identity?.IsAuthenticated != true) return null; 
+        
         var ret =new UserDto
         {
             Email = claims?.FindFirstValue(ClaimTypes.Email) ?? "",

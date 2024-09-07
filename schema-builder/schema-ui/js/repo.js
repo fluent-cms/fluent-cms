@@ -15,11 +15,15 @@ async function define(name){
 }
 
 async function one(id){
-    const {data, err} = await tryFetch(async ()=>await  axios.get(apiPrefix + `/schemas/${id}`))
+    let url = `/schemas/${id}`;
+    if (id === 'top-menu-bar'){
+        url = `/schemas/name/${id}?type=menu`;
+    }
+    
+    const {data, err} = await tryFetch(async ()=>await  axios.get(apiPrefix + url))
     if (err){
         return {err}
     }
-    console.log(data);
     
     data.settings[data.type].name = data.name;
     data.settings[data.type].id = data.id;

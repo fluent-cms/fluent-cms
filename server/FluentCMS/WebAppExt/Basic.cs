@@ -77,8 +77,8 @@ public static class Basic
                 subApp.UseRouting();
                 subApp.UseEndpoints(endpoints =>
                 {
-                    endpoints.MapFallbackToFile("/admin/", "index.html");
-                    endpoints.MapFallbackToFile("/admin/{*path:nonfile}", "index.html");
+                    endpoints.MapFallbackToFile("/admin/", "admin/index.html");
+                    endpoints.MapFallbackToFile("/admin/{*path:nonfile}", "admin/index.html");
                 });
             });
         }

@@ -21,7 +21,7 @@ public sealed class PageService(ISchemaService schemaService,IQueryService query
         await ReplaceMultipleRecordNode(doc, cancellationToken);
         var template = Handlebars.Compile(doc.DocumentNode.OuterHtml);
         var html = template(data);
-        return RenderHtml(html, page.Css);
+        return RenderHtml(page.Title,html, page.Css);
     }
 
     public async Task<string> Get(string pageName,  CancellationToken cancellationToken)
@@ -31,7 +31,7 @@ public sealed class PageService(ISchemaService schemaService,IQueryService query
         var doc = new HtmlDocument();
         doc.LoadHtml(page!.Html);
         await ReplaceMultipleRecordNode(doc, cancellationToken);
-        return RenderHtml(doc.DocumentNode.OuterHtml,page.Css);
+        return RenderHtml(page.Title, doc.DocumentNode.OuterHtml,page.Css);
     }
 
     private async Task ReplaceMultipleRecordNode(HtmlDocument doc, CancellationToken cancellationToken)
@@ -62,16 +62,18 @@ public sealed class PageService(ISchemaService schemaService,IQueryService query
         return new MultipleRecordData(records);
     }
 
-    private static string RenderHtml(string body, string css)
+    private static string RenderHtml(string title,string body,  string css)
     {
         return $"""
                 <!DOCTYPE html>
                 <html>
                 <head>
+                    <title>{title}</title>
                     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.0.2/tailwind.min.css">
                     <style>
                     {css}
                     </style>
+                    <link rel="icon" href="/favicon.ico" type="image/x-icon">
                 </head>
                 {body}
                 </html>

@@ -1,9 +1,14 @@
+
 $(document).ready(function() {
     const searchParams = new URLSearchParams(window.location.search);
     const schema = searchParams.get("schema");
     $('#addEntity').prop('hidden', schema !=='entity');
     $('#addPage').prop('hidden', schema !=='page');
     $('#addQuery').prop('hidden', schema !=='query');
+    
+    if (schema){
+        $('title').text(`${schema} list - Fluent CMS Schema Builder`);
+    }
 
     async function deleteSchema(e) {
         if (confirm("Do you want to delete schema: " + e.getAttribute('data-name'))) {

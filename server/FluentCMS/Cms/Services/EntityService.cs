@@ -330,6 +330,7 @@ public sealed class EntityService(
         }
 
         CheckResult(entity.ValidateLocalAttributes(record));
+        CheckResult(entity.ValidateTitleAttributes(record));
         
 
         var meta = new EntityMeta(entity.Name, id.ToString()!);
@@ -348,6 +349,8 @@ public sealed class EntityService(
     private async Task<Record> Insert(Entity entity, Record record,CancellationToken cancellationToken)
     {
         CheckResult(entity.ValidateLocalAttributes(record));
+        CheckResult(entity.ValidateTitleAttributes(record));
+        
         var meta = new EntityMeta(entity.Name);
         var exit = await hookRegistry.Trigger(provider, Occasion.BeforeInsert, meta, new HookParameter{Record = record});
         if (exit)

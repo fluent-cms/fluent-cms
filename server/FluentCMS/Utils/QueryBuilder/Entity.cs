@@ -222,6 +222,15 @@ public sealed class Entity
         Attributes = Attributes.Where(x => x.Field != DeletedFieldName).ToArray();
     }
 
+    public Result ValidateTitleAttributes(Record record)
+    {
+        if (record.TryGetValue(TitleAttribute, out var value) && value is not null)
+        {
+            return Result.Ok();
+        }
+        return Result.Fail($"Validation fail for {TitleAttribute}");
+    }
+    
     public Result ValidateLocalAttributes(Record record)
     {
         var interpreter = new Interpreter();

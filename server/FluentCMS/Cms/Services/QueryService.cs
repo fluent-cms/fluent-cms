@@ -13,7 +13,6 @@ public sealed class QueryService(
     ISchemaService schemaService,
     IQuerySchemaService querySchemaService,
     IEntityService entityService,
-    ImmutableCache<Query> viewCache,
     IServiceProvider provider,
     HookRegistry hookRegistry
 ) : IQueryService
@@ -22,7 +21,7 @@ public sealed class QueryService(
     public async Task<RecordViewResult> List(string queryName, Cursor cursor,
         Dictionary<string, StringValues> querystringDictionary, CancellationToken cancellationToken)
     {
-        var view = await GetQuery(queryName, cancellationToken);
+        var view = await querySchemaService.GetByNameAndCache(queryName, cancellationToken);
         CheckResult(view.Filters.ResolveValues(view.Entity!,  schemaService.CastToDatabaseType, querystringDictionary));
         CheckResult(cursor.ResolveBoundaryItem(view.Entity!, schemaService.CastToDatabaseType));
         var pagination = new Pagination { Limit = view.PageSize + 1 }; //get extra record to check if it's the last page
@@ -50,7 +49,7 @@ public sealed class QueryService(
         Dictionary<string, StringValues> querystringDictionary,
         CancellationToken cancellationToken)
     {
-        var query = await GetQuery(queryName, cancellationToken);
+        var query = await querySchemaService.GetByNameAndCache(queryName, cancellationToken);
         CheckResult(query.Filters.ResolveValues(query.Entity!, schemaService.CastToDatabaseType,
             querystringDictionary));
 
@@ -85,7 +84,7 @@ public sealed class QueryService(
     public async Task<Record> One(string queryName, Dictionary<string, StringValues> querystringDictionary,
         CancellationToken cancellationToken)
     {
-        var view = await GetQuery(queryName, cancellationToken);
+        var view = await querySchemaService.GetByNameAndCache(queryName, cancellationToken);
         CheckResult(view.Filters.ResolveValues(view.Entity!,  schemaService.CastToDatabaseType, querystringDictionary));
         var (exit, hookResult) = await TriggerHook(Occasion.BeforeQueryOne,view, view.Filters);
         if (exit)
@@ -109,12 +108,7 @@ public sealed class QueryService(
         return (exit, hookReturn);
     }
 
-    private async Task<Query> GetQuery(string viewName, CancellationToken cancellationToken)
-    {
-        var view = await viewCache.GetOrSet(viewName,
-            async () => await querySchemaService.GetByName(viewName, cancellationToken));
-        return view;
-    }
+
 
     private RecordViewResult BuildRecordViewResult(Record[] items, Cursor cursor, Pagination pagination, Sorts? sorts)
     {

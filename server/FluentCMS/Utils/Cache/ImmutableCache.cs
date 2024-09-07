@@ -3,15 +3,16 @@ using AutoMapper;
 
 namespace FluentCMS.Utils.Cache;
 
-//add this to DI
-public class MemoryCacheFactory
+/*
+add this to DI
+private async Task<Query> GetQuery(string viewName, CancellationToken cancellationToken)
 {
-    public MemoryCache Cache { get; } = new MemoryCache(
-        new MemoryCacheOptions
-        {
-            SizeLimit = 1024
-        });
+    var view = await viewCache.GetOrSet(viewName,
+    async () => await querySchemaService.GetByName(viewName, cancellationToken));
+    return view;
 }
+*/
+
 
 //asp.net core is going to supports hybrid cache, use memory cache only for now
 //https://learn.microsoft.com/en-us/aspnet/core/performance/caching/memory?view=aspnetcore-8.0
@@ -20,15 +21,20 @@ public class ImmutableCache<T>(IMemoryCache memoryCache, int ttlSeconds, string 
 {
     readonly IMapper _mapper = new MapperConfiguration(cfg => cfg.CreateMap<T, T>()).CreateMapper();
 
-    public async Task<T> GetOrSet(string key,  Func<Task<T>> factory)
+    public void Set(string key, T item)
     {
-        var item = await memoryCache.GetOrCreateAsync<T>(prefix + key, async (entry) =>
+        var entry = memoryCache.CreateEntry(key);
+        entry.Value = item;
+    }
+    
+    public async Task<T?> GetOrSet(string key,  Func<Task<T>> factory)
+    {
+        key = prefix + key;
+        var item = await memoryCache.GetOrCreateAsync<T>(key, async (entry) =>
         {
             entry.SlidingExpiration = TimeSpan.FromSeconds(ttlSeconds);
             return await factory();
-        })?? await factory();
-        
-        //make a deep clone,
-        return _mapper.Map<T>(item);
+        });
+        return item is null ? item : _mapper.Map<T>(item);// make a deep copy
     }
 }

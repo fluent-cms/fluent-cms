@@ -45,6 +45,7 @@ public sealed  class SchemaService(
         return res.IsSuccess ? res.Value : null;
     }
 
+
     public async Task<Schema?> GetByNameDefault(string name, string type, CancellationToken cancellationToken = default)
     {
         var query = BaseQuery().Where(ColumnName, name).Where(ColumnType, type);

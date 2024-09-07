@@ -8,6 +8,8 @@ $(document).ready(function() {
     $("#entityActions").prop('hidden', schema !=="entity");
     $("#queryActions").prop('hidden', schema !=="query");
     $("#menuActions").prop('hidden', schema !=="menu");
+    
+
     editor = loadEditor();
 });
 
@@ -33,6 +35,7 @@ function loadEditor() {
             $.LoadingOverlay("show");
             const {data, error} = await one(id);
             if (data){
+                $('title').text(`${data.name} - ${schema} setting - Fluent CMS Schema Builder`);
                 id = data.id;
                 delete (data.id); //prevent json-edit add extra property
                 editor.setValue(data);

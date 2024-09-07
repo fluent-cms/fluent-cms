@@ -1,5 +1,7 @@
 import {useSchema} from "../services/schema";
 import {FetchingStatus} from "../../components/FetchingStatus";
+import React from "react";
+import {Helmet} from "react-helmet";
 
 interface PageLayoutProps {
     schemaName:string,
@@ -11,6 +13,9 @@ export function PageLayout({schemaName, page:Page}: PageLayoutProps){
         return <FetchingStatus isLoading={isLoading} error={error}/>
     }
     return <>
+        <Helmet>
+            <title>🚀{schema?.name} - Fluent CMS Admin Panel</title>
+        </Helmet>
         <Page schema={schema}/>
     </>
 }

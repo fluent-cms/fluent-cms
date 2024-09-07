@@ -1,9 +1,6 @@
-import {customTypes} from "../grapes-components/custom-types.js";
-import {customBlocks} from "../grapes-components/custom-blocks.js";
+import {loadEditor} from "../grapes-components/grapes.js";
 $(document).ready(function() {
-    const editor = loadEditor();
-    addCustomTypes(editor);
-    addCustomBlocks(editor);
+    const editor = loadEditor("#gjs");
 
     const searchParams = new URLSearchParams(window.location.search);
     let id = searchParams.get("id");
@@ -14,6 +11,7 @@ $(document).ready(function() {
             const {data, error} = await one(id);
             $.LoadingOverlay("hide");
             if (data){
+                $('title').text(`🏠${data.name} - page setting - Fluent CMS Schema Builder`);
                 id = data.id;
                 restoreFormData(data);
                 editor.setComponents(JSON.parse(data.components));
@@ -64,68 +62,7 @@ $(document).ready(function() {
     });
 });
 
-function loadEditor() {
-    return grapesjs.init({
-        storageManager: false,
-        container: '#gjs',
-        plugins: [
-            'gjs-blocks-basic',
-            'grapesjs-preset-webpage'
-        ],
-        pluginsOpts: {
-            'grapesjs-preset-webpage':{
-                flexGrid: true, // Enables flex-based grid, optional
-            },
-            'gjs-blocks-basic': {
-                flexGrid: true, // Enables flex-based grid, optional
-            },
-        },
-        canvas: {
-            scripts: [],
-            styles: [
-                'https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.0.2/tailwind.min.css',
-            ],
-        }
-
-    });
-}
-function addCustomBlocks(editor){
-    for(const [name, content] of  Object.entries(customBlocks)){
-        editor.Blocks.add(name, {
-            label:name,
-            content: content,
-        });
-    }
-}
-
-function addCustomTypes(editor){
-    
-    for(const [name, traits] of  Object.entries(customTypes)){
-        editor.Components.addType(name, {
-            model: {
-                defaults: {traits},
-            },
-            view:{
-                openSettings: function ( e ) {
-                    e.preventDefault();
-                    editor.select( this.model );
-                    editor.Panels.getButton( 'views', 'open-tm' ).set( 'active', 1 );
-                },
-                onActive() {
-                    this.el.contentEditable = true;
-                },
-                events:{
-                    dblclick: 'onActive',
-                    click: `openSettings`,
-                    selected: `openSettings`
-                }
-            }
-        });       
-    }
-}
-
-
-const controls = ['name', 'query', 'queryString'];
+const controls = ['name','title', 'query', 'queryString'];
 
 function restoreFormData(payload){
     for (const ctl of controls){

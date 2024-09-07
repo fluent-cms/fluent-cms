@@ -13,8 +13,9 @@ public class ProfileController(IProfileService profileService):ControllerBase
     }
 
     [HttpGet("info")]
-    public UserDto GetInfo()
+    public ActionResult<UserDto> GetInfo()
     {
-        return profileService.GetInfo();
+        var info = profileService.GetInfo();
+        return info == null ? Unauthorized() : Ok(info);
     }
 }

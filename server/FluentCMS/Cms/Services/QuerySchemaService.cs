@@ -1,5 +1,6 @@
 using FluentCMS.Cms.Models;
 using FluentCMS.Services;
+using FluentCMS.Utils.Cache;
 using FluentCMS.Utils.QueryBuilder;
 using FluentResults;
 using GraphQLParser;
@@ -11,10 +12,17 @@ using static InvalidParamExceptionFactory;
 
 public sealed class QuerySchemaService(
     ISchemaService schemaService,
-    IEntitySchemaService entitySchemaService
+    IEntitySchemaService entitySchemaService,
+    ImmutableCache<Query> queryCache
 ) : IQuerySchemaService
 {
-    public async Task<Query> GetByName(string name, CancellationToken cancellationToken = default)
+    public async Task<Query> GetByNameAndCache(string name, CancellationToken cancellationToken = default)
+    {
+        var query = await queryCache.GetOrSet(name, async () => await GetByName(name, cancellationToken));
+        return NotNull(query).ValOrThrow($"can not find query [{name}]");
+    }
+
+    private async Task<Query> GetByName(string name,CancellationToken cancellationToken)
     {
         StrNotEmpty(name).ValOrThrow("query name should not be empty");
         var item = NotNull(await schemaService.GetByNameDefault(name, SchemaType.Query, cancellationToken))
@@ -33,7 +41,10 @@ public sealed class QuerySchemaService(
     public async Task<Schema> Save(Schema schema, CancellationToken cancellationToken)
     {
         await VerifyQuery(schema.Settings.Query, cancellationToken);
-        return await schemaService.Save(schema, cancellationToken);
+        var ret = await schemaService.Save(schema, cancellationToken);
+        var query =await GetByName(schema.Name, cancellationToken);
+        queryCache.Set(query.Name, query);
+        return ret;
     }
 
     private async Task<Result> InitViewSelection(Query query, CancellationToken cancellationToken)
@@ -70,7 +81,7 @@ public sealed class QuerySchemaService(
             if (selection is not GraphQLField field) continue;
             var fldName = field.Name.StringValue;
             var attribute = entity.Attributes.FindOneAttribute(fldName);
-            if (attribute is null) return Result.Fail($"can not find {fldName} in {entity.Name}");
+            if (attribute is null) return Result.Fail($"Verifying `SectionSet` fail, can not find {fldName} in {entity.Name}");
             switch (attribute.Type)
             {
                 case DisplayType.crosstable:

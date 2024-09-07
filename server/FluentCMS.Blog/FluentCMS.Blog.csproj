@@ -35,4 +35,28 @@
     <ItemGroup>
       <Folder Include="Services\" />
     </ItemGroup>
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="wwwroot\bootstrap\bootstrap.min.css" />
+      <_ContentIncludedByDefault Remove="wwwroot\bootstrap\bootstrap.min.css.map" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\edit.html" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\edit.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\entity.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\list.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\menu.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\page.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\query.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\repo.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\attribute.json" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\constraint.json" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\entity.json" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\filter.json" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\filters.json" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\menu.json" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\query.json" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\sort.json" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\sorts.json" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\list.html" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\page.html" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\styles.css" />
+    </ItemGroup>
 </Project>

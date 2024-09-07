@@ -15,7 +15,6 @@ public class SchemaServiceTests :IAsyncLifetime
 {
     private readonly SchemaService _schemaService;
     private readonly EntitySchemaService _entitySchemaService;
-    private readonly QuerySchemaService _querySchemaService;
     
     private readonly string _dbFilePath = Path.Combine(Directory.GetCurrentDirectory(), $"{Guid.NewGuid()}.db");
     public SchemaServiceTests()
@@ -31,7 +30,6 @@ public class SchemaServiceTests :IAsyncLifetime
         HookRegistry registry = new();
         _schemaService = new SchemaService(definitionExecutor, kateQueryExecutor,registry,provider.Object);
         _entitySchemaService = new EntitySchemaService(_schemaService, definitionExecutor);
-        _querySchemaService = new QuerySchemaService(_schemaService,_entitySchemaService);
         Batteries.Init();
     }
     private void CleanDb()

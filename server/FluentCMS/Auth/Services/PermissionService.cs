@@ -43,20 +43,15 @@ public class PermissionService<TUser>(
     public async Task HandleSaveSchema(Schema schema)
     {
         var currentUserId = MustGetCurrentUserId();
-        //edit
-        if (schema.Id > 0)
-        {
-            await CheckSchemaPermission(schema, currentUserId);
-        }
+        await CheckSchemaPermission(schema, currentUserId);
         //create
-        else
+        if (schema.Id == 0)
         {
-            await CheckSchemaPermission(schema, currentUserId);
             schema.CreatedBy = currentUserId;
             if (schema.Type == SchemaType.Entity)
             {
-                await EnsureUserHaveAccess(schema);
                 EnsureCreatedByField(schema);
+                await EnsureUserHaveAccessEntity(schema);
             }
         }
     }
@@ -124,22 +119,19 @@ public class PermissionService<TUser>(
             case SchemaType.Menu:
                 True(contextAccessor.HttpContext.HasRole(Roles.Sa)).ThrowNotTrue("Only Supper Admin has the permission to modify menu");
                 break;
-            case SchemaType.Entity:
-                await CheckQueryAndEntityPermission(schema,currentUserId);
-                break;
-            case SchemaType.Query:
-                await CheckQueryAndEntityPermission(schema,currentUserId);
+            default:
+                await SaOrAdminHaveAccessToSchema(schema,currentUserId);
                 break;
         }
     } 
-    private async Task EnsureUserHaveAccess(Schema schema)
+    private async Task EnsureUserHaveAccessEntity(Schema schema)
     {
-        //use have restricted access to the entity data
         if (contextAccessor.HttpContext.HasRole(Roles.Sa))
         {
             return;
         }
 
+        //use have restricted access to the entity data
         var user = await userManager.GetUserAsync(contextAccessor.HttpContext!.User);
         var claims = await userManager.GetClaimsAsync(user!);
         
@@ -147,10 +139,10 @@ public class PermissionService<TUser>(
         {
             await userManager.AddClaimAsync(user!, new Claim(AccessScope.RestrictedAccess, schema.Name));
         }
-
         await signInManager.RefreshSignInAsync(user!);
     }
-    private void EnsureCreatedByField(Schema schema)
+    
+    private static void EnsureCreatedByField(Schema schema)
     {
         var entity = schema.Settings.Entity;
         if (entity is null) return;
@@ -164,7 +156,7 @@ public class PermissionService<TUser>(
         }).ToArray();
     }
 
-    private async Task CheckQueryAndEntityPermission(Schema schema, string currentUserId)
+    private async Task SaOrAdminHaveAccessToSchema(Schema schema, string currentUserId)
     {
         if (contextAccessor.HttpContext.HasRole(Roles.Sa))
         {

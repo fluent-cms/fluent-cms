@@ -17,8 +17,5 @@
     </ItemGroup>
     <ItemGroup>
         <InternalsVisibleTo Include="FluentCMS.App.Tests" />
-    </ItemGroup>
-    <ItemGroup>
-      <Folder Include="wwwroot\" />
     </ItemGroup> 
 </Project>
