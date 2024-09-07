@@ -43,7 +43,7 @@ public sealed class QuerySchemaService(
         await VerifyQuery(schema.Settings.Query, cancellationToken);
         var ret = await schemaService.Save(schema, cancellationToken);
         var query =await GetByName(schema.Name, cancellationToken);
-        queryCache.Set(query.Name, query);
+        queryCache.Remove(query.Name);
         return ret;
     }
 

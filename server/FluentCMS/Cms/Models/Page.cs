@@ -12,9 +12,10 @@ public sealed class Page
     public string Css { get; set; } = "";
 
     public const string HomePage = "home";
+    public const string RouterKey = "router.key";
     public static string SinglePageName(string pageName)
     {
-        return pageName + "/single";
+        return pageName + ".detail";
     } 
     
     /*for grapes.js restore last configure */

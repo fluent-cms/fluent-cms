@@ -15,10 +15,10 @@ public class PagesController(IPageService pageService) : ControllerBase
         return Content(htmlContent, "text/html");
     }
 
-    [HttpGet("{pageName}/{slug}")]
-    public async Task<ActionResult> Get(string pageName, string slug, CancellationToken cancellationToken)
+    [HttpGet("{pageName}/{routerKey}")]
+    public async Task<ActionResult> Get(string pageName, string routerKey, CancellationToken cancellationToken)
     {
-        var htmlContent = await pageService.GetBySlug(pageName,slug, cancellationToken);
+        var htmlContent = await pageService.GetByRouterKey(pageName,routerKey, cancellationToken);
         return Content(htmlContent, "text/html");
     }
 }

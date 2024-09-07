@@ -1,3 +1,4 @@
+using FluentCMS.Auth.Services;
 using FluentCMS.Cms.Models;
 using FluentCMS.Services;
 using FluentCMS.Utils.PageRender;
@@ -8,76 +9,105 @@ using Microsoft.AspNetCore.WebUtilities;
 
 namespace FluentCMS.Cms.Services;
 using static InvalidParamExceptionFactory;
-public sealed class PageService(ISchemaService schemaService,IQueryService queryService):IPageService
+public sealed class PageService(ISchemaService schemaService,IQueryService queryService, IProfileService profileService):IPageService
 {
-    public async Task<string> GetBySlug(string pageName, string slug,  CancellationToken cancellationToken)
+    public async Task<string> GetByRouterKey(string pageName, string key,  CancellationToken cancellationToken)
     {
-        var page = NotNull(await schemaService.GetByNameDefault(Page.SinglePageName(pageName), SchemaType.Page, cancellationToken))
-            .ValOrThrow($"can not find page {pageName}").Settings.Page;
-        var doc = new HtmlDocument();
-        doc.LoadHtml(page!.Html);
-        StrNotEmpty(page.Query).ValOrThrow($"can not find query of page [{pageName}]");
-        var data =await GetSingle(page.Query, page.QueryString,slug, cancellationToken);
-        await ReplaceMultipleRecordNode(doc, cancellationToken);
-        var template = Handlebars.Compile(doc.DocumentNode.OuterHtml);
-        var html = template(data);
-        return RenderHtml(page.Title,html, page.Css);
+        pageName = Page.SinglePageName(pageName);
+        var schema = NotNull(await schemaService.GetByNameDefault(pageName, SchemaType.Page, cancellationToken))
+            .ValOrThrow($"Can not find page [{pageName}]");
+        var page = NotNull(schema.Settings.Page).ValOrThrow("Invalid page payload");
+        var data =await GetSingle(page.Query, page.QueryString,key, cancellationToken);
+        return await RenderPage(data, page, cancellationToken);
     }
 
     public async Task<string> Get(string pageName,  CancellationToken cancellationToken)
     {
-        var page = NotNull(await schemaService.GetByNameDefault(pageName, SchemaType.Page, cancellationToken))
-            .ValOrThrow($"can not find page {pageName}").Settings.Page;
-        var doc = new HtmlDocument();
-        doc.LoadHtml(page!.Html);
-        await ReplaceMultipleRecordNode(doc, cancellationToken);
-        return RenderHtml(page.Title, doc.DocumentNode.OuterHtml,page.Css);
+        var schema = NotNull(await schemaService.GetByNameDefault(pageName, SchemaType.Page, cancellationToken))
+            .ValOrThrow($"Can not find page [{pageName}]");
+        var page = NotNull(schema.Settings.Page).ValOrThrow("Invalid page payload");
+        var data = new Dictionary<string, object>();
+        return await RenderPage(data, page!, cancellationToken);
     }
 
-    private async Task ReplaceMultipleRecordNode(HtmlDocument doc, CancellationToken cancellationToken)
+    private async Task<string> RenderPage(Record data, Page page,CancellationToken cancellationToken)
     {
-        var listNodes = CheckResult(doc.LoadMultipleRecordNode());
+         var doc = new HtmlDocument();
+         doc.LoadHtml(page!.Html);
+         var listNodes = CheckResult(doc.LoadMultipleRecordNode());
+         ReplaceMultipleRecordNode(listNodes);
+         await AttachListData(data, listNodes, cancellationToken);
+        
+         var template = Handlebars.Compile(doc.DocumentNode.OuterHtml);
+         var html = template(data); 
+         return RenderHtml(page.Title, html,page.Css);       
+    }
+
+    private void ReplaceMultipleRecordNode(MultipleRecordNode[] listNodes)
+    {
         foreach (var listNode in listNodes)
         {
-            var template = Handlebars.Compile(listNode.HtmlNode.OuterHtml);
-            var html = "";
-            var data = await GetListData(listNode.MultipleQuery, cancellationToken);
-            html = template(data);
-            listNode.HtmlNode.ParentNode.ReplaceChild(HtmlNode.CreateNode(html), listNode.HtmlNode);
+            listNode.HtmlNode.InnerHtml = "{{#each " + listNode.Field+ "}}" + listNode.HtmlNode.InnerHtml + "{{/each}}";
         }
     }
 
-    private async Task<Record> GetSingle(string query, string qs, string slug, CancellationToken cancellationToken)
+    private async Task<Record> GetSingle(string query, string qs, string key, CancellationToken cancellationToken)
     {
-        qs = qs.Replace("{slug}", slug);
+        qs = qs.Replace(Page.RouterKey, key);
         var queryDictionary = QueryHelpers.ParseQuery(qs);
         return await queryService.One(query,queryDictionary, cancellationToken);
     }
 
-    private async Task<MultipleRecordData> GetListData(MultipleRecordQuery queryInfo,CancellationToken cancellationToken)
+    private async Task AttachListData(Record data, MultipleRecordNode[] listNodes, CancellationToken cancellationToken)
     {
-        var pagination = new Pagination { Offset = queryInfo.Offset, Limit = queryInfo.Limit };
-        var queryDictionary = QueryHelpers.ParseQuery(queryInfo.Qs);
-        var records = await queryService.Many(queryInfo.Query, pagination, queryDictionary, cancellationToken);
-        return new MultipleRecordData(records);
+        foreach (var multipleRecordNode in listNodes)
+        {
+            if (!multipleRecordNode.MultipleQuery.IsSuccess) continue;
+            var queryInfo = multipleRecordNode.MultipleQuery.Value;
+            var pagination = new Pagination { Offset = queryInfo.Offset, Limit = queryInfo.Limit };
+            var queryDictionary = QueryHelpers.ParseQuery(queryInfo.Qs);
+            var records = await queryService.Many(queryInfo.Query, pagination, queryDictionary, cancellationToken);
+            data[multipleRecordNode.Field] = records;
+        }
     }
 
     private static string RenderHtml(string title,string body,  string css)
     {
-        return $"""
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>{title}</title>
-                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.0.2/tailwind.min.css">
-                    <style>
-                    {css}
-                    </style>
-                    <link rel="icon" href="/favicon.ico" type="image/x-icon">
-                </head>
-                {body}
-                </html>
-                """;
+        return $$"""
+                 <!DOCTYPE html>
+                 <html>
+                 <head>
+                     <title>{{title}}</title>
+                     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.0.2/tailwind.min.css">
+                     <style>
+                     {{css}}
+                     </style>
+                     <link rel="icon" href="/favicon.ico" type="image/x-icon">
+                     <style>
+                     /* General styles for the button */
+                 .edit-button {
+                     position: fixed;
+                     top: 10px;
+                     right: 10px;
+                     background-color: #007bff;
+                     color: #fff;
+                     border: none;
+                     padding: 10px 20px;
+                     border-radius: 5px;
+                     cursor: pointer;
+                     font-size: 16px;
+                     transition: background-color 0.3s ease;
+                 }
+                 
+                 /* Hover effect for the button */
+                 .edit-button:hover {
+                     background-color: #0056b3;
+                 }
+                     </style>
+                 </head>
+                 {{body}}
+                 </html>
+                 """;
     }
 }
 

@@ -1,3 +1,4 @@
+using FluentResults;
 using HtmlAgilityPack;
 
 namespace FluentCMS.Utils.PageRender;
@@ -21,12 +22,11 @@ public static class Attributes
     public const string Offset = "offset";
     public const string Limit = "limit";
     public const string Qs = "qs";
+    public const string Field = "field";
 }
 
 public record MultipleRecordQuery(string Query, string? Qs, int Offset, int Limit);
 
-public record MultipleRecordNode(HtmlNode HtmlNode,MultipleRecordQuery MultipleQuery);
-
-public record MultipleRecordData(Record[] Items);
+public record MultipleRecordNode(string Id, HtmlNode HtmlNode,string Field, Result<MultipleRecordQuery> MultipleQuery);
 
 

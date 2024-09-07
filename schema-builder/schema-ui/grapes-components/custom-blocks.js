@@ -20,8 +20,7 @@ export const customBlocks = [
       </div>
       <p class="lg:w-1/2 w-full leading-relaxed text-gray-500">Whatever cardigan tote bag tumblr hexagon brooklyn asymmetrical gentrify, subway tile poke farm-to-table. Franzen you probably haven't heard of them man bun deep jianbing selfies heirloom prism food truck ugh squid celiac humblebrag.</p>
     </div>
-    <div data-add="2" class="flex flex-wrap -m-4" data-gjs-type="image-card-list" data-source-type="multiple-records">
-      {{#each items}}
+    <div data-add="2" class="flex flex-wrap -m-4" data-gjs-type="multiple-records" data-source-type="multiple-records">
       <div class="xl:w-1/4 md:w-1/2 p-4">
         <div class="bg-gray-100 p-6 rounded-lg">
           <a href="/pages/page-name/{{slug}}" style="display: inline-block" >
@@ -32,7 +31,6 @@ export const customBlocks = [
           <p class="leading-relaxed text-base">{{{desc}}}</p>
         </div>
       </div>
-      {{/each}}
     </div>
   </div>
 </section>  
@@ -50,7 +48,9 @@ export const customBlocks = [
     <img class="lg:w-2/6 md:w-3/6 w-5/6 mb-10 object-cover object-center rounded" alt="hero" src="/files{{image}}">
     <div class="text-center lg:w-2/3 w-full">
       <h1 class="title-font sm:text-4xl text-3xl mb-4 font-medium text-gray-900">{{title}}</h1>
-      <p class="mb-8 leading-relaxed">{{{Content}}}</p>
+    </div>
+    <div class="text-left lg:w-2/3 w-full">
+      <p class="mb-8 leading-relaxed">{{{content}}}</p>
     </div>
   </div>
 </section> 
@@ -97,26 +97,41 @@ export const customBlocks = [
         content: `
 <section class="text-gray-600 body-font">
   <div class="container px-5 py-10 mx-auto">
-    <div class="lg:w-1/2 w-full mb-6 lg:mb-0">
-        <h1 class="sm:text-3xl text-2xl font-medium title-font mb-2 text-gray-900">Category Name</h1>
-        <div class="h-1 w-20 bg-red-500 rounded"></div>
-    </div>
-    <div class="flex flex-wrap -m-4" data-gjs-type="image-card-list" data-source-type="multiple-records">
-      {{#each items}}
+    <h1 class="sm:text-3xl text-2xl font-medium title-font mb-2 text-gray-900">Category Name</h1>
+    <div class="flex flex-wrap -m-4" data-gjs-type="multiple-records" data-source-type="multiple-records">
       <div class="lg:w-1/4 md:w-1/2 p-4 w-full">
         <a  style="display: inline-block" href="/pages/pageName/{{slug}}">
           <img alt="ecommerce" class="object-cover object-center w-full h-full block" src="/files{{image}}">
         </a>
         <div class="mt-4">
           <h3 class="text-gray-500 text-xs tracking-widest title-font mb-1">{{category}}</h3>
-          <h2 class="text-gray-900 title-font text-lg font-medium"><a href="/pages/pageName/{{slug}}">{{name}}</h2>
+          <h2 class="text-gray-900 title-font text-lg font-medium"><a href="/pages/pageName/{{slug}}">{{title}}</h2>
           <p class="mt-1">{{price}}</p>
         </div>
       </div>
-      {{/each}}
     </div>
   </div>
 </section> 
         `
+    },{
+    name: 'small-images',
+        label: 'Small Images',
+        media: `<svg viewBox="0 0 24 24">
+        <path d="M14.6 16.6l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4m-5.2 0L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4z"></path>
+</svg>`,
+        content: `
+<section class="text-gray-600 body-font">
+    <h1 class="sm:text-3xl text-2xl font-medium title-font mb-2 text-gray-900">Category Name</h1>
+    <div class="mx-auto max-w-7xl px-6 lg:px-8 " data-gjs-type="multiple-records" data-source-type="multiple-records">
+      <div class="flex items-center gap-x-6 p-4">
+        <img class="h-16 w-16" src="/files{{image}}" alt="">
+        <div>
+          <h3 class="text-base font-semibold leading-7 tracking-tight text-gray-900">{{title}}</h3>
+          <p class="text-sm font-semibold leading-6 text-indigo-600">{{desc}}</p>
+        </div>
+      </div>
+    </div>
+</section>
+`
     }
 ]

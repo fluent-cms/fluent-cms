@@ -50,7 +50,12 @@ $(document).ready(function() {
         $.LoadingOverlay("show");
         const {data, error} = await save(payload);
         if (data) {
-            alert("submit succeed!");
+            $.toast({
+                heading: 'Success',
+                text: 'submit succeed!',
+                showHideTransition: 'slide',
+                icon: 'success'
+            })
             if (!id) {
                 window.location.href = `page.html?id=${data.id}`;
             }

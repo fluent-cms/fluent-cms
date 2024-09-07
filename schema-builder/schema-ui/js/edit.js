@@ -75,7 +75,12 @@ async function submit(callback) {
     $.LoadingOverlay("show");
     const {data, error} = await callback(val);
     if (data) {
-        alert("submit succeed!");
+        $.toast({
+            heading: 'Success',
+            text: 'submit succeed!',
+            showHideTransition: 'slide',
+            icon: 'success'
+        })
         if (!id) {
             window.location.href = `edit.html?schema=${schema}&id=${data.id}`;
         }

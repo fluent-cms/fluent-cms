@@ -7,18 +7,25 @@ public static class HtmlDocExt
 {
     public static Result<MultipleRecordNode[]> LoadMultipleRecordNode(this HtmlDocument doc)
     {
-        var nodeCollection = doc.DocumentNode.SelectNodes(
-            $"//*[self::section or self::div or self::span][@{Constants.DataSourceTypeTag}='{DataSourceType.MultipleRecords}']");
+        var nodeCollection =
+            doc.DocumentNode.SelectNodes($"//*[@{Constants.DataSourceTypeTag}='{DataSourceType.MultipleRecords}']");
         
         if (nodeCollection is null)
         {
             return Result.Ok<MultipleRecordNode[]>([]);
         }
 
-        return (from node in nodeCollection
-            let queryRes = node.ParseMultipleRecordsQuery()
-            where queryRes.IsSuccess
-            select new MultipleRecordNode(node, queryRes.Value)).ToArray();
+        var ret = new List<MultipleRecordNode>();
+        foreach (var htmlNode in nodeCollection)
+        {
+            var field = htmlNode.GetAttributeValue(Attributes.Field, string.Empty);
+            if (string.IsNullOrWhiteSpace(field))
+            {
+                return Result.Fail("can not find field of a multiple records name");
+            }
+            ret.Add(new MultipleRecordNode(htmlNode.GetId(), htmlNode, field, htmlNode.ParseMultipleRecordsQuery()));
+        }
+        return ret.ToArray();
     }
 
     private static Result<int> ParseInt32(this HtmlNode node, string attribute)

@@ -20,17 +20,15 @@ private async Task<Query> GetQuery(string viewName, CancellationToken cancellati
 public class ImmutableCache<T>(IMemoryCache memoryCache, int ttlSeconds, string prefix)
 {
     readonly IMapper _mapper = new MapperConfiguration(cfg => cfg.CreateMap<T, T>()).CreateMapper();
-
-    public void Set(string key, T item)
+    string CacheKey(string key) => prefix + key;  
+    public void Remove(string key)
     {
-        var entry = memoryCache.CreateEntry(key);
-        entry.Value = item;
+        memoryCache.Remove(CacheKey(key));
     }
     
     public async Task<T?> GetOrSet(string key,  Func<Task<T>> factory)
     {
-        key = prefix + key;
-        var item = await memoryCache.GetOrCreateAsync<T>(key, async (entry) =>
+        var item = await memoryCache.GetOrCreateAsync<T>(CacheKey(key), async (entry) =>
         {
             entry.SlidingExpiration = TimeSpan.FromSeconds(ttlSeconds);
             return await factory();
