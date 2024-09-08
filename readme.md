@@ -18,7 +18,7 @@ It proves valuable even for non-CMS projects by eliminating the need for tedious
 
 ## Live Demo - A blog website based on Fluent CMS
 source code [Example Blog Project](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).
-- Admin Panel https://fluent-cms-admin.azurewebsites.net/
+- Admin Panel https://fluent-cms-admin.azurewebsites.net/admin
     - Email: `admin@cms.com`
     - Password: `Admin1!`
 - Public Site : https://fluent-cms-admin.azurewebsites.net/
@@ -314,6 +314,9 @@ If the number of IDs exceeds the allowed page size, only the first set of record
 ### Cache Settings:
 - Query Settings are cached in memory for 1 minutes.
 - Query Result are not cached because caching large data to memory is tricky and I intend implement stand alone cache module.
+
+## Design Web Page
+
 
 ## Produce Events to Kafka
 The producing event functionality is implemented by adding hook functions behind the scene,  to enable this functionality, you need add two line of code,
