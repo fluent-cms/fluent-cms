@@ -2,23 +2,31 @@
 [![GitHub stars](https://img.shields.io/github/stars/fluent-cms/fluent-cms.svg?style=social&label=Star)](https://github.com/fluent-cms/fluent-cms/stargazers)
 Welcome to [Fluent CMS](https://github.com/fluent-cms/fluent-cms) If you find it useful, please give it a star ⭐
 ## What is it
-Fluent CMS is an open-source content management system designed to streamline web development workflows. It proves valuable even for non-CMS projects by eliminating the need for tedious CRUD API and page development.
-- **CRUD APIs:** It offers a set of RESTful CRUD (Create, Read, Update, Delete) APIs for any entities based on your configuration, easily set up using the Schema Builder.
-- **Admin Panel UI:** The system includes an Admin Panel UI for data management, featuring a rich set of input types such as datetime, dropdown, image, rich text, and a flexible query builder for data searching.
-- **Easy Integration:** The Systems can be seamlessly integrated into your ASP.NET Core project via a NuGet package. You can extend your business logic by registering hook functions that execute before or after database access.
-- **Performance:** The system is designed with performance in mind, boasting speeds 100 times faster than Strapi (details in the [performance vs Strapi](https://github.com/fluent-cms/fluent-cms/blob/main/doc%2Fpeformance-tests%2Fperformance-test-fluent-cms-vs-strapi.md) test). It is also as faster than manually written APIs using Entity Framework (details in the [performance vs EF](https://github.com/fluent-cms/fluent-cms/blob/main/doc%2Fpeformance-tests%2Fperformance-test-fluent-cms-vs-entity-framework.md) test).
-- **Easily Extensible** The system can automatically generate `EntityCreated`, `EntityUpdated`, and `EntityDeleted` events and publish them to an event broker (such as Kafka). This makes it simple to extend functionality, such as adding consumers for OpenSearch, Elasticsearch, or document databases. 
-## Live Demo - A blog website based on Fluent CMS 
-   source code [Example Blog Project](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).
-   - Admin Panel https://fluent-cms-admin.azurewebsites.net/admin
-      - Email: `admin@cms.com`
-      - Password: `Admin1!`  
-   - Public Site : https://fluent-cms-admin.azurewebsites.net/
-    
+Fluent CMS is an open-source Content Management System designed to streamline web development workflows.
+It proves valuable even for non-CMS projects by eliminating the need for tedious CRUD API and page development.
+- **CRUD:** Fluent CMS offers built-in RESTful CRUD (Create, Read, Update, Delete) APIs along with an Admin Panel that supports a wide range of input types, including datetime, dropdown, image, and rich text, all configurable to suit your needs.
+- **GraphQL-style Query** Retrieve multiple related entities in a single call, enhancing security, performance, and flexibility on the client side.
+- **Wysiwyg Web Page Designer:** Leveraging [Grapes.js](https://grapesjs.com/) and [HandleBars](https://handlebarsjs.com/), the page designer allows you to create pages and bind query data without coding.
+- **Permission Control** Assign read/write, read-only, access to entities based on user roles or individual permissions.
+- **Integration and extension** Fluent CMS can be integrated into projects via a NuGet package.
+  Validation logic can be implemented using C# statements through [DynamicExpresso](https://github.com/dynamicexpresso/DynamicExpresso),
+  and complex functionalities can be extended using CRUD Hook Functions.
+  Additionally, Fluent CMS supports message brokers like Kafka for CRUD operations.
+- **Performance:** Utilizing [SqlKata](https://sqlkata.com/) and [Dapper](https://www.learndapper.com/), Fluent CMS achieves performance levels comparable to manually written RESTful APIs using Entity Framework Core. Performance benchmarks include comparisons against Strapi and Entity Framework.
+    - [performance vs Strapi](https://github.com/fluent-cms/fluent-cms/blob/main/doc%2Fpeformance-tests%2Fperformance-test-fluent-cms-vs-strapi.md)
+    - [performance vs EF](https://github.com/fluent-cms/fluent-cms/blob/main/doc%2Fpeformance-tests%2Fperformance-test-fluent-cms-vs-entity-framework.md)
+
+## Live Demo - A blog website based on Fluent CMS
+source code [Example Blog Project](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).
+- Admin Panel https://fluent-cms-admin.azurewebsites.net/
+    - Email: `admin@cms.com`
+    - Password: `Admin1!`
+- Public Site : https://fluent-cms-admin.azurewebsites.net/
+
 ## Add Fluent CMS to your own project
 The example project can be found at [Example Blog Project](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).
 1. Create your own Asp.net Core WebApplication.
-2. Add FluentCMS package    
+2. Add FluentCMS package
    ```shell
    dotnet add package FluentCMS
    ```
@@ -34,10 +42,10 @@ The example project can be found at [Example Blog Project](https://github.com/fl
    await app.UseCmsAsync();
    ```
    this function bootstrap router, initialize Fluent CMS schema table
-Now that the web server is up and running, the next chapter will guide you through building the schema and managing data.
+   Now that the web server is up and running, the next chapter will guide you through building the schema and managing data.
 
 ## Develop a simple educational system use Fluent CMS
-When designing a database schema for a simple educational system, you typically need to create tables for `Teachers`, `Courses`, and `Students`. 
+When designing a database schema for a simple educational system, you typically need to create tables for `Teachers`, `Courses`, and `Students`.
 ### Database Schema
 #### 1. **Teachers Table**
 This table stores information about the teachers.
@@ -164,7 +172,7 @@ app.UseCmsAuth<IdentityUser>();
 InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]));
 InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]));
 ```
-Behind the scene, fluentCMS leverage the hook mechanism. 
+Behind the scene, fluentCMS leverage the hook mechanism.
 ## Design Query
 Here’s a text-based layout representation of the web page of the course introduction page.
 
@@ -184,13 +192,13 @@ This course provides an overview of web development...
 - [Week 1: Introduction to HTML](file:///2024-08/75dd9a00.txt)
 - [HTML Basics](https://www.youtube.com/watch?v=salY_Sm6mv4&pp=ygULaHRtbCBiYXNpY3M%3D)
 ---
-The data comes from several entities, 
+The data comes from several entities,
 - course
 - teacher
 - skills
 - teacher_skill
 - material
-- course_material  
+- course_material
 
 Fluent CMS offers `Query` APIs to meet the following needs, similar to GraphQL queries:
 
@@ -203,7 +211,7 @@ To create or edit a query, navigate to `Schema Builder` > `Queries`.
 A query has 3 parts
 ### Selection Set
 In the examples below, the main entity is `course`:
-- `teacher` is a `lookup` attribute of `course`.  
+- `teacher` is a `lookup` attribute of `course`.
 - `skills` is a `crosstable` attributes of `teacher`.`
 - `materials` is a `crosstable` attributes of `course`.
 ```
@@ -227,10 +235,10 @@ In the examples below, the main entity is `course`:
 }
 ```
 ### Sorts
-FluentCMS uses cursor-based pagination, unlike GraphQL, which supports both cursor- and offset-based pagination. 
-Offset-based pagination is less stable and unsuitable for large datasets.  
+FluentCMS uses cursor-based pagination, unlike GraphQL, which supports both cursor- and offset-based pagination.
+Offset-based pagination is less stable and unsuitable for large datasets.
 
-Cursor-based pagination retrieves the next page based on the last cursor. FluentCMS calculates the cursor and sorts data as shown below:   
+Cursor-based pagination retrieves the next page based on the last cursor. FluentCMS calculates the cursor and sorts data as shown below:
 
 ```json
 {
@@ -245,7 +253,7 @@ Cursor-based pagination retrieves the next page based on the last cursor. Fluent
 ```
 ### Filter
 To prevent resource-intensive queries from the frontend, limit the number of exposed parameters.
-In the filter definition below, `qs.id` tries to resolve the ID from the query string parameter `id`. 
+In the filter definition below, `qs.id` tries to resolve the ID from the query string parameter `id`.
 The `qs.` prefix indicates that the value should be fetched from the query string, with the part after `qs.` representing the key of the query string parameter.
 
 For example, the API call /api/queries/<query-name>/one?id=3 corresponds to the SQL query:
@@ -282,7 +290,7 @@ For example, the API call /api/queries/<query-name>/one?id=3 corresponds to the 
 Each query definition corresponds to three endpoints:
 
 ####  List: `/api/queries/<query-name>` - retrieves a paginated list
-- To view next page: `/api/queries/<query-name>?last=***`  
+- To view next page: `/api/queries/<query-name>?last=***`
 - To view previous page: `/api/queries/<query-name>?first=***`
 
 Example response:
@@ -300,12 +308,12 @@ Example: `/api/queries/<query-name>/one?id=***`
 
 #### Multiple Record:  /api/queries/<query-name>/many
 - Returns multiple records based on specified values.
-Example: `/api/queries/<query-name>/one?id=1&id=2&id=3`. 
+  Example: `/api/queries/<query-name>/one?id=1&id=2&id=3`.
 
 If the number of IDs exceeds the allowed page size, only the first set of records will be returned.
-### Cache Settings: 
+### Cache Settings:
 - Query Settings are cached in memory for 1 minutes.
-- Query Result are not cached because caching large data to memory is tricky and I intend implement stand alone cache module. 
+- Query Result are not cached because caching large data to memory is tricky and I intend implement stand alone cache module.
 
 ## Produce Events to Kafka
 The producing event functionality is implemented by adding hook functions behind the scene,  to enable this functionality, you need add two line of code,
@@ -318,7 +326,7 @@ var app = builder.Build();
 await app.UseCmsAsync(false);
 app.RegisterMessageProducerHook();
 ```
-## We welcome contributions! 
+## We welcome contributions!
 If you're interested in improving FluentCMS, please read our [CONTRIBUTING.md](https://github.com/fluent-cms/fluent-cms/blob/main/CONTRIBUTING.md) guide.
 
 ## Development
