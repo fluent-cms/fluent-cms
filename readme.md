@@ -10,10 +10,10 @@ Fluent CMS is an open-source content management system designed to streamline we
 - **Easily Extensible** The system can automatically generate `EntityCreated`, `EntityUpdated`, and `EntityDeleted` events and publish them to an event broker (such as Kafka). This makes it simple to extend functionality, such as adding consumers for OpenSearch, Elasticsearch, or document databases. 
 ## Live Demo - A blog website based on Fluent CMS 
    source code [Example Blog Project](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).
-   - Admin Panel https://fluent-cms-admin.azurewebsites.net/
+   - Admin Panel https://fluent-cms-admin.azurewebsites.net/admin
       - Email: `admin@cms.com`
       - Password: `Admin1!`  
-   - Public Site : https://fluent-cms-ui.azurewebsites.net/
+   - Public Site : https://fluent-cms-admin.azurewebsites.net/
     
 ## Add Fluent CMS to your own project
 The example project can be found at [Example Blog Project](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).
