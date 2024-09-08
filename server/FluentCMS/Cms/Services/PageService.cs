@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.WebUtilities;
 
 namespace FluentCMS.Cms.Services;
 using static InvalidParamExceptionFactory;
-public sealed class PageService(ISchemaService schemaService,IQueryService queryService, IProfileService profileService):IPageService
+public sealed class PageService(ISchemaService schemaService,IQueryService queryService):IPageService
 {
     public async Task<string> GetByRouterKey(string pageName, string key,  CancellationToken cancellationToken)
     {

@@ -147,7 +147,6 @@ public static class Basic
 
         void InjectServices()
         {
-            builder.Services.AddSingleton(new AssemblyProvider { AppAssembly = typeof(T).Assembly });
             builder.Services.AddMemoryCache();
             builder.Services.AddSingleton<HookRegistry>(_ => new HookRegistry());
             builder.Services.AddSingleton<ImmutableCache<Query>>(p =>
