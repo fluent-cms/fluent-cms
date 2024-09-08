@@ -5,28 +5,54 @@
         <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="FluentCMS" Version="0.1.4" />
+        <PackageReference Include="FluentCMS" Version="0.2.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.8" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.6"/>
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0"/>
     </ItemGroup>
     <ItemGroup>
-      <_ContentIncludedByDefault Remove="wwwroot\assets\index-BNLh2e8Y.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\index-C4V4BfVX.css" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\index-C56t_YGU.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\index-DVXm8Gb9.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\Inter-italic.var-C0P-kdXT.woff2" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\Inter-roman.var-e-DsT6iu.woff2" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\primeicons-C6QP2o4f.woff2" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\primeicons-DMOk5skT.eot" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\primeicons-Dr5RGzOO.svg" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\primeicons-MpK4pl85.ttf" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\primeicons-WjwUDZjB.woff" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\quill-C1PHeGBy.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\quill-DHpIdL0D.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\assets\quill-DstnRzfT.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\admin\assets\index-Bv98n0Bu.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\admin\assets\index-BWZElyAo.css" />
+      <_ContentIncludedByDefault Remove="wwwroot\admin\assets\Inter-italic.var-C0P-kdXT.woff2" />
+      <_ContentIncludedByDefault Remove="wwwroot\admin\assets\Inter-roman.var-e-DsT6iu.woff2" />
+      <_ContentIncludedByDefault Remove="wwwroot\admin\assets\primeicons-C6QP2o4f.woff2" />
+      <_ContentIncludedByDefault Remove="wwwroot\admin\assets\primeicons-DMOk5skT.eot" />
+      <_ContentIncludedByDefault Remove="wwwroot\admin\assets\primeicons-Dr5RGzOO.svg" />
+      <_ContentIncludedByDefault Remove="wwwroot\admin\assets\primeicons-MpK4pl85.ttf" />
+      <_ContentIncludedByDefault Remove="wwwroot\admin\assets\primeicons-WjwUDZjB.woff" />
+      <_ContentIncludedByDefault Remove="wwwroot\admin\assets\quill-Vq8QrQo9.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\admin\fluent-cms.png" />
+      <_ContentIncludedByDefault Remove="wwwroot\admin\index.html" />
+      <_ContentIncludedByDefault Remove="wwwroot\favicon.ico" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\css\grapes-demo.css" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\css\grapes.min.css" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\css\grapesjs-preset-webpage.min.css" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\css\styles.css" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\edit.html" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\grapes-components\custom-blocks.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\grapes-components\custom-types.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\grapes-components\grapes.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\hybirds-components\nav-bar.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\img\fluent-cms.png" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\edit.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\entity.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\list.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\menu.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\page.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\query.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\repo.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\attribute.json" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\constraint.json" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\entity.json" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\filter.json" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\filters.json" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\menu.json" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\query.json" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\sort.json" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\sorts.json" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\list.html" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\page.html" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\toast\jquery.toast.min.css" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\toast\jquery.toast.min.js" />
     </ItemGroup>
-    <ItemGroup>
-      <Folder Include="wwwroot\" />
-    </ItemGroup>
-   
 </Project>

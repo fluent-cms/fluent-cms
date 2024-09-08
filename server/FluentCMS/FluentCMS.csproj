@@ -61,8 +61,8 @@
         <PackageReadmeFile>readme.md</PackageReadmeFile>
         <TargetFramework>net8.0</TargetFramework>
         <PackageId>FluentCMS</PackageId>
-        <Version>0.1.4</Version>
-        <Authors>jaike</Authors>
+        <Version>0.2.0</Version>
+        <Authors>Jason C</Authors>
         <Company>fluent-cms</Company>
         <Description>CRUD (Create, Read, Update, Delete) for any entities</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>

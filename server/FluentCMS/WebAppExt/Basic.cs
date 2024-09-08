@@ -1,4 +1,6 @@
 using System.IO.Compression;
+using System.Reflection;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using FluentCMS.Auth.Services;
 using FluentCMS.Cms.Models;
@@ -20,16 +22,21 @@ public enum DatabaseProvider
     SqlServer,
 }
 
+public class ContentRootConfig
+{
+    public string[] ContentRoots { get; set; } = [];
+}
+
 public static class Basic
 {
-    public static void AddPostgresCms<T>(this WebApplicationBuilder builder, string connectionString) =>
-        BuildCms<T>(builder, DatabaseProvider.Postgres, connectionString);
+    public static void AddPostgresCms(this WebApplicationBuilder builder, string connectionString) =>
+        BuildCms(builder, DatabaseProvider.Postgres, connectionString);
 
-    public static void AddSqliteCms<T>(this WebApplicationBuilder builder, string connectionString) =>
-        BuildCms<T>(builder, DatabaseProvider.Sqlite, connectionString);
+    public static void AddSqliteCms(this WebApplicationBuilder builder, string connectionString) =>
+        BuildCms(builder, DatabaseProvider.Sqlite, connectionString);
 
-    public static void AddSqlServerCms<T>(this WebApplicationBuilder builder, string connectionString) =>
-        BuildCms<T>(builder, DatabaseProvider.SqlServer, connectionString);
+    public static void AddSqlServerCms(this WebApplicationBuilder builder, string connectionString) =>
+        BuildCms(builder, DatabaseProvider.SqlServer, connectionString);
 
     public static void RegisterCmsHook(this WebApplication app, string entityName, Occasion[] occasion, Delegate func)
     {
@@ -40,26 +47,43 @@ public static class Basic
     public static async Task UseCmsAsync(this WebApplication app)
     {
         await InitSchema();
-        await UseStatic();
-        MapAdmin();
+        UseStatic();
+        UserAdminPanel();
+        UseServerRouters();
+        UseHomePage();
 
-        app.UseRouting();
-        app.UseExceptionHandler(app.Environment.IsDevelopment() ? "/error-development" : "/error");
-        app.MapControllers();
-        app.Use(async (context, next) =>
+        void UseServerRouters()
         {
-            await next();
-            if (context.Response.StatusCode == 404)
+            app.UseRouting();
+            app.UseExceptionHandler(app.Environment.IsDevelopment() ? "/error-development" : "/error");
+            app.MapControllers();
+        }
+
+        void UseHomePage()
+        {
+            app.Use(async (context, next) =>
             {
-                if (context.Request.Path == "/")
+                await next();
+                if (context.Response.StatusCode == 404)
                 {
-                    using var scope = app.Services.CreateScope();
-                    var pageService = scope.ServiceProvider.GetRequiredService<IPageService>();
-                    var html = await pageService.Get(Page.HomePage);
-                    await context.Response.WriteAsync(html);
+                    if (context.Request.Path == "/")
+                    {
+                        using var scope = app.Services.CreateScope();
+                        var pageService = scope.ServiceProvider.GetRequiredService<IPageService>();
+                        var html = """<a href="/admin">Log in to Admin</a>""";
+                        try
+                        {
+                            html = await pageService.Get(Page.HomePage);
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine(e);
+                        }
+                        await context.Response.WriteAsync(html);
+                    }
                 }
-            }
-        });
+            });
+        }
 
         async Task InitSchema()
         {
@@ -70,7 +94,7 @@ public static class Basic
             await schemaService.EnsureTopMenuBar(default);
         }
 
-        void MapAdmin()
+        void UserAdminPanel()
         {
             app.MapWhen(context => context.Request.Path.StartsWithSegments("/admin"), subApp =>
             {
@@ -83,52 +107,87 @@ public static class Basic
             });
         }
 
-        async Task UseStatic()
+        void UseStatic()
         {
-            if (!Directory.Exists("wwwroot/schema-ui"))
+            if (!Directory.Exists("wwwroot"))
             {
                 Console.WriteLine("***********************************************************************");
-                Console.WriteLine("Wwwroot directory is empty, download fluent-cms client files to wwwroot");
-                await DownloadAndExtractFilesFromGitHub();
-                Console.WriteLine("FluentCMS client files are downloaded to wwwroot, please start the app again");
-                Console.WriteLine("***********************************************************************");
+                Console.WriteLine("Can not find FluentCMS client files, copying files to wwwroot");
+                var res = CopyPackageFiles();
+                if (res)
+                {
+                    Console.WriteLine("FluentCMS client files are copied to wwwroot, please start the app again");
+                    Console.WriteLine("***********************************************************************");
+                }
+                else
+                {
+                    Console.WriteLine("Copy FluentCMS client files fail, please manually copy file from .nuget/packages/fluentcms to wwwroot");
+                    Console.WriteLine("***********************************************************************");
+                }
                 Environment.Exit(0);
             }
+
             app.UseStaticFiles();
         }
 
-        async Task DownloadAndExtractFilesFromGitHub()
+        bool CopyPackageFiles()
         {
-            const string zipUrl = "https://github.com/fluent-cms/fluent-cms/raw/main/client_release/wwwroot.zip";
-            var tempFile = Path.Combine(Path.GetTempPath(), "wwwroot.zip");
-            var extractPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-
-
-            using (var httpClient = new HttpClient())
+            string filePattern = "*.staticwebassets.runtime.json";
+            var files = Directory.GetFiles( GetAssemblyPath(), filePattern, SearchOption.TopDirectoryOnly);
+            if (files.Any())
             {
-                // Download the zip file
-                var response = await httpClient.GetAsync(zipUrl);
-                response.EnsureSuccessStatusCode();
-                await using var fs = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None);
-                await response.Content.CopyToAsync(fs);
+                var content = File.ReadAllText(files.First());
+                var rootConfig = JsonSerializer.Deserialize<ContentRootConfig>(content);
+                if (rootConfig?.ContentRoots.Length > 0)
+                {
+                    CopyDirectory(rootConfig.ContentRoots.Last(), Path.Combine(Directory.GetCurrentDirectory(),"wwwroot") );
+                    return true;
+                }
+            }
+            else
+            {
+                Console.WriteLine("Can not find file staticwebassets.runtime.json");
             }
 
-            // Extract the files
-            ZipFile.ExtractToDirectory(tempFile, Path.GetTempPath(), true);
+            return false;
+        }
+        
+        void CopyDirectory(string sourceDir, string destinationDir)
+        {
+            Directory.CreateDirectory(destinationDir);
 
-            // Move extracted files to wwwroot
-            var extractedDir = Path.Combine(Path.GetTempPath(), "wwwroot");
-            if (Directory.Exists(extractedDir))
+            foreach (var file in Directory.GetFiles(sourceDir))
             {
-                Directory.Move(extractedDir, extractPath);
+                var fileName = Path.GetFileName(file);
+                var destFile = Path.Combine(destinationDir, fileName);
+                try
+                {
+                    File.Copy(file, destFile, overwrite: true);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error copying file '{file}': {ex.Message}");
+                }
             }
 
-            // Clean up the temp file
-            File.Delete(tempFile);
+            // Recursively copy all subdirectories
+            foreach (var subDir in Directory.GetDirectories(sourceDir))
+            {
+                var subDirName = Path.GetFileName(subDir);
+                var destSubDir = Path.Combine(destinationDir, subDirName);
+                CopyDirectory(subDir, destSubDir);
+            }
         }
     }
 
-    private static void BuildCms<T>(WebApplicationBuilder builder, DatabaseProvider databaseProvider,
+    
+    private static string GetAssemblyPath()
+    {
+        var assemblyPath = Assembly.GetAssembly(typeof(InvalidParamException))!.Location;
+        return Path.GetDirectoryName(assemblyPath)!;
+    }
+
+    private static void BuildCms(WebApplicationBuilder builder, DatabaseProvider databaseProvider,
         string connectionString)
     {
         AddRouters();
@@ -199,12 +258,12 @@ public static class Basic
             var parts = connectionString.Split(";")
                 .Where(x => !x.StartsWith("Password"))
                 .ToArray();
-
-            Console.WriteLine("*********************************************************");
+           Console.WriteLine("*********************************************************");
             Console.WriteLine($"Fluent CMS, {builder.Environment.EnvironmentName}");
             Console.WriteLine($"Resolved Database Provider: {databaseProvider}");
             Console.WriteLine($"Connection String: {string.Join(";", parts)}");
-            Console.WriteLine($"Current Directory: {Directory.GetCurrentDirectory()}");
+            Console.WriteLine($"Current Location: {Directory.GetCurrentDirectory()}");
+            Console.WriteLine($"Fluent CMS Package Location:{GetAssemblyPath()}");
             Console.WriteLine("*********************************************************");
         }
     }

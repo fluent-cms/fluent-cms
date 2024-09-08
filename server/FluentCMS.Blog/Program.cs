@@ -40,13 +40,13 @@ void AddCms()
     switch (databaseProvider)
     {
         case "Sqlite":
-            builder.AddSqliteCms<Program>(connectionString);
+            builder.AddSqliteCms(connectionString);
             break;
         case "Postgres":
-            builder.AddPostgresCms<Program>(connectionString);
+            builder.AddPostgresCms(connectionString);
             break;
         case "SqlServer":
-            builder.AddSqlServerCms<Program>(connectionString);
+            builder.AddSqlServerCms(connectionString);
             break;
         default:
             throw new Exception($"unknown provider {databaseProvider}");
