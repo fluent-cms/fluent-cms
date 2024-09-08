@@ -49,6 +49,9 @@ public sealed class EntitySchemaService( ISchemaService schemaService, IDefiniti
         entity.EnsureDefaultAttribute();
         var cols = await definitionExecutor.GetColumnDefinitions(entity.TableName, cancellationToken);
         await VerifyEntity(dto, cols, entity, cancellationToken);
+        
+        //need  to save first because it will call trigger
+        var returnSchema = await schemaService.Save(dto, cancellationToken);
         foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.crosstable))
         {
             await CreateCrosstable(entity, attribute, cancellationToken);
@@ -71,7 +74,7 @@ public sealed class EntitySchemaService( ISchemaService schemaService, IDefiniti
         }
 
         await schemaService.EnsureEntityInTopMenuBar(entity, cancellationToken);
-        return await schemaService.Save(dto, cancellationToken);
+        return returnSchema;
     }    
 
     public async Task<Schema> AddOrSaveSimpleEntity(string entityName, string field, string? lookup, string? crossTable,

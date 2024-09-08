@@ -6,6 +6,7 @@ using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.IdentityExt;
 using FluentCMS.Utils.QueryBuilder;
+using FluentResults;
 using Microsoft.AspNetCore.Identity;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
@@ -50,7 +51,7 @@ public class PermissionService<TUser>(
             schema.CreatedBy = currentUserId;
             if (schema.Type == SchemaType.Entity)
             {
-                EnsureCreatedByField(schema);
+                CheckResult(EnsureCreatedByField(schema));
                 await EnsureUserHaveAccessEntity(schema);
             }
         }
@@ -142,11 +143,11 @@ public class PermissionService<TUser>(
         await signInManager.RefreshSignInAsync(user!);
     }
     
-    private static void EnsureCreatedByField(Schema schema)
+    private static Result EnsureCreatedByField(Schema schema)
     {
         var entity = schema.Settings.Entity;
-        if (entity is null) return;
-        if (schema.Settings.Entity?.Attributes.FindOneAttribute(CreatedBy) is not null) return;
+        if (entity is null) return Result.Fail("Invalid Entity payload");
+        if (schema.Settings.Entity?.Attributes.FindOneAttribute(CreatedBy) is not null) return Result.Ok();
 
         entity.Attributes = entity.Attributes.Append(new Attribute
         {
@@ -154,6 +155,7 @@ public class PermissionService<TUser>(
             Header = CreatedBy,
             DataType = DataType.String,
         }).ToArray();
+        return Result.Ok();
     }
 
     private async Task SaOrAdminHaveAccessToSchema(Schema schema, string currentUserId)
