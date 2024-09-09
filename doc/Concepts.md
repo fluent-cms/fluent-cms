@@ -104,7 +104,6 @@ Let's take the example of blog posts and categories:
 
 ### User Interface (UI)
 When creating or editing a post, the `category_id` field should be rendered as a dropdown menu. This dropdown should list all available categories, allowing the user to select one.  
-![img.png](screenshots/schema_builder_dropdown.png)
 ## Crosstable Attributes in Fluent CMS: Many-to-Many Relationship
 
 ### Concept
@@ -129,7 +128,6 @@ To manage a many-to-many relationship, a join table (crosstable) is used to link
 
 ### User Interface (UI)
 When creating or editing a post, the authors should be rendered in a table format where users can select or deselect authors for the post.
-![crosstable](screenshots/admin_panel_crosstable_authors.png)
 ## Query
 
 ### Definition
