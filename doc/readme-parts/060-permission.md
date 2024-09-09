@@ -1,4 +1,5 @@
 
+
 ## Permissions Control
 
 Fluent CMS's permission control module is decoupled from the Content Management module, allowing you to implement your own permission logic or forgo permission control entirely.
