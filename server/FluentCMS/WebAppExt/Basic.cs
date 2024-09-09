@@ -1,4 +1,3 @@
-using System.IO.Compression;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -54,7 +53,6 @@ public static class Basic
 
         void UseServerRouters()
         {
-            app.UseRouting();
             app.UseExceptionHandler(app.Environment.IsDevelopment() ? "/error-development" : "/error");
             app.MapControllers();
         }
@@ -109,7 +107,7 @@ public static class Basic
 
         void UseStatic()
         {
-            if (!Directory.Exists("wwwroot"))
+            if (!Directory.Exists("wwwroot/admin") && !Directory.Exists("wwwroot/schema-ui"))
             {
                 Console.WriteLine("***********************************************************************");
                 Console.WriteLine("Can not find FluentCMS client files, copying files to wwwroot");
@@ -138,9 +136,16 @@ public static class Basic
             {
                 var content = File.ReadAllText(files.First());
                 var rootConfig = JsonSerializer.Deserialize<ContentRootConfig>(content);
-                if (rootConfig?.ContentRoots.Length > 0)
+                var source = rootConfig?.ContentRoots.FirstOrDefault(x => x.Contains("fluentcms"));
+                if (!string.IsNullOrWhiteSpace(source))
                 {
-                    CopyDirectory(rootConfig.ContentRoots.Last(), Path.Combine(Directory.GetCurrentDirectory(),"wwwroot") );
+                    var target = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                    CopyDirectory(Path.Combine(source,"schema-ui"),Path.Combine(target, "schema-ui"));
+                    CopyDirectory(Path.Combine(source,"admin"),Path.Combine(target, "admin") );
+                    if (!File.Exists(Path.Combine(target,"favicon.ico")))
+                    {
+                        File.Copy(Path.Combine(source,"favicon.ico"), Path.Combine(target,"favicon.ico"));
+                    }
                     return true;
                 }
             }

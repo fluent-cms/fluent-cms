@@ -1,6 +1,6 @@
 # Fluent CMS - CRUD (Create, Read, Update, Delete) for any entities
 [![GitHub stars](https://img.shields.io/github/stars/fluent-cms/fluent-cms.svg?style=social&label=Star)](https://github.com/fluent-cms/fluent-cms/stargazers)
-Welcome to [Fluent CMS](https://github.com/fluent-cms/fluent-cms) If you find it useful, please give it a star ⭐
+Welcome to [Fluent CMS](https://github.com/fluent-cms/fluent-cms)! If you'd like to contribute to the project, please check out our [CONTRIBUTING guide](https://github.com/fluent-cms/fluent-cms/blob/main/CONTRIBUTING.md). Don’t forget to give us a star ⭐ if you find Fluent CMS helpful!
 ## What is it
 Fluent CMS is an open-source Content Management System designed to streamline web development workflows.
 It proves valuable even for non-CMS projects by eliminating the need for tedious CRUD API and page development.
@@ -15,7 +15,6 @@ It proves valuable even for non-CMS projects by eliminating the need for tedious
 - **Performance:** Utilizing [SqlKata](https://sqlkata.com/) and [Dapper](https://www.learndapper.com/), Fluent CMS achieves performance levels comparable to manually written RESTful APIs using Entity Framework Core. Performance benchmarks include comparisons against Strapi and Entity Framework.
     - [performance vs Strapi](https://github.com/fluent-cms/fluent-cms/blob/main/doc%2Fpeformance-tests%2Fperformance-test-fluent-cms-vs-strapi.md)
     - [performance vs EF](https://github.com/fluent-cms/fluent-cms/blob/main/doc%2Fpeformance-tests%2Fperformance-test-fluent-cms-vs-entity-framework.md)
-
 ## Live Demo - A blog website based on Fluent CMS
 source code [Example Blog Project](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).
 - Admin Panel https://fluent-cms-admin.azurewebsites.net/admin
@@ -24,7 +23,11 @@ source code [Example Blog Project](https://github.com/fluent-cms/fluent-cms/tree
 - Public Site : https://fluent-cms-admin.azurewebsites.net/
 
 ## Add Fluent CMS to your own project
-The example project can be found at [Example Blog Project](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).
+<details>
+  <summary>
+      The following chapter will guid you through add Fluent CMS to your own project by adding a nuget package.
+  </summary>
+
 1. Create your own Asp.net Core WebApplication.
 2. Add FluentCMS package
    ```shell
@@ -42,10 +45,31 @@ The example project can be found at [Example Blog Project](https://github.com/fl
    await app.UseCmsAsync();
    ```
    this function bootstrap router, initialize Fluent CMS schema table
-   Now that the web server is up and running, the next chapter will guide you through building the schema and managing data.
+5. Copy client file to wwwroot of your web project, fluentCMS have two client app `admin` and `schema-ui`, the folder structure looks like below.
+   ```
+   wwwroot
+   --schema-ui
+   --admin
+   --favicon.ico
+   ```
+   When you start your web app for the first time, in function `app.UseCmsAsync`, if fluentCMS didn't find client app, it will try to copy client file to `wwwroot` you application. 
+   After copy these files, it will prompt `FluentCMS client files are copied to wwwroot, please start the app again`.
+   You can also copy these two app manually, you can find these two app at nuget's package folder
+   By default, when you install a NuGet package, it gets stored in a global cache folder on your machine. You can find it at:
+   - Windows: C:\Users\<YourUsername>\.nuget\packages
+   - Mac/Linux: ~/.nuget/packages
+   You can find fluentCMS client Apps at `<NuGet package directory>\fluentcms\<version>\staticwebassets`
 
-## Develop a simple educational system use Fluent CMS
-When designing a database schema for a simple educational system, you typically need to create tables for `Teachers`, `Courses`, and `Students`.
+Now that the web server is up and running, the next chapter will guide you through building the schema and managing data.
+The example project can be found at [Example Blog Project](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).
+</details>
+
+## Developing a simple online course system use Fluent CMS
+<details>
+  <summary>
+      The following chapter will guide you through developing a simple online course system, starts with three entity `Teachers`, `Courses`, and `Students`.
+  </summary>
+
 ### Database Schema
 #### 1. **Teachers Table**
 This table stores information about the teachers.
@@ -94,7 +118,7 @@ This table manages the many-to-many relationship between `Students` and `Courses
 ### Build Schema use Fluent CMS Schema builder
 After starting your ASP.NET Core application, you will find a menu item labeled "Schema Builder" on the application's home page.
 
-In the Schema Builder UI, you can add entities such as "Teacher" and "Student."
+In the Schema Builder, you can add entities such as "Teacher" and "Student."
 
 When adding the "Course" entity, start by adding basic attributes like "Name" and "Description." You can then define relationships by adding attributes as follows:
 
@@ -129,6 +153,7 @@ When adding the "Course" entity, start by adding basic attributes like "Name" an
    ```
 
 With these configurations, your minimal viable product is ready to use.
+</details>
 
 ## Extent functionality by add Hook functions
 You need to add your own Business logic, for examples, you want to verify if the email and phone number of entity `teacher` is valid.
@@ -146,6 +171,18 @@ app.RegisterCmsHook("teacher", [Occasion.BeforeInsert, Occasion.BeforeUpdate],(I
         throw new InvalidParamException($"phone number `{phoneNumber}` is invalid");
     }
 }
+```
+
+## Produce Events to Kafka
+The producing event functionality is implemented by adding hook functions behind the scene,  to enable this functionality, you need add two line of code,
+`builder.AddKafkaMessageProducer("localhost:9092");` and `app.RegisterMessageProducerHook()`.
+
+```
+builder.AddSqliteCms("Data Source=cmsapp.db").PrintVersion();
+builder.AddKafkaMessageProducer("localhost:9092");
+var app = builder.Build();
+await app.UseCmsAsync(false);
+app.RegisterMessageProducerHook();
 ```
 ## Permissions Control
 
@@ -327,44 +364,29 @@ GrapesJS has a flexible user interface with four main panels that help in design
 3. **Layers Panel**: The Layers panel provides a hierarchical view of the page elements, similar to the DOM structure.
 4. **Blocks Panel**: This panel contains pre-made blocks or components that can be dragged and dropped onto the canvas. These blocks can be anything from text, images, buttons, forms, and other HTML elements.
 
-These panels work together to provide a comprehensive web design experience, allowing users to build complex layouts with ease. 
+These panels work together to provide a comprehensive web design experience, allowing users to build complex layouts with ease.
 ![Grapes.js-toolbox](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/grapes-toolbox.png)
 
 ### Landing Page
-![LandingPage](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/landing-page.png)    
-1. For above page, the data comes from 3 Queries 
-   - Featured Courses,  https://fluent-cms-admin.azurewebsites.net/api/queries/courses?status=featured
-   - Advanced Courses,  https://fluent-cms-admin.azurewebsites.net/api/queries/courses?level=Advanced
-   - Beginner Courses,  https://fluent-cms-admin.azurewebsites.net/api/queries/courses?level=Beginner
-2. Drag a Content Block from `Blocks Panel` > `Extra` to Canvas, 
-To Bind a multiple records trait to a data source, hover mouse to a element with `Multiple-records` tooltips, select the element, then the traits panels shows. There are the following options
-    - field 
+![LandingPage](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/landing-page.png)
+1. For above page, the data comes from 3 Queries
+    - Featured Courses,  https://fluent-cms-admin.azurewebsites.net/api/queries/courses?status=featured
+    - Advanced Courses,  https://fluent-cms-admin.azurewebsites.net/api/queries/courses?level=Advanced
+    - Beginner Courses,  https://fluent-cms-admin.azurewebsites.net/api/queries/courses?level=Beginner
+2. Drag a Content Block from `Blocks Panel` > `Extra` to Canvas,
+   To Bind a multiple records trait to a data source, hover mouse to a element with `Multiple-records` tooltips, select the element, then the traits panels shows. There are the following options
+    - field
     - query
-    - qs : stands for query string, e.g. the Beginner Course section use level=Beginner to add a constraint only beginner course can show in this section. 
+    - qs : stands for query string, e.g. the Beginner Course section use level=Beginner to add a constraint only beginner course can show in this section.
     - offset
     - limit
-![Grapes](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/graps-traits.png)    
+      ![Grapes](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/graps-traits.png)
 ### Detail Page
 We normally give a router parameter to Detail page, e.g. https://fluent-cms-admin.azurewebsites.net/pages/course/7.  
 The suffix `.detail` should be added to page name, the page `course.detail` corresponds to above path.  
 Detail page need to call query with query parameter `router.key`
 
 You can also add `Multipe-records` elements to detail page, if you don't specify query, page render tries to resolve the field from query result of the page.
-
-
-## Produce Events to Kafka
-The producing event functionality is implemented by adding hook functions behind the scene,  to enable this functionality, you need add two line of code,
-`builder.AddKafkaMessageProducer("localhost:9092");` and `app.RegisterMessageProducerHook()`.
-
-```
-builder.AddSqliteCms("Data Source=cmsapp.db").PrintVersion();
-builder.AddKafkaMessageProducer("localhost:9092");
-var app = builder.Build();
-await app.UseCmsAsync(false);
-app.RegisterMessageProducerHook();
-```
-## We welcome contributions!
-If you're interested in improving FluentCMS, please read our [CONTRIBUTING.md](https://github.com/fluent-cms/fluent-cms/blob/main/CONTRIBUTING.md) guide.
 
 ## Development
 ### System Overviews
