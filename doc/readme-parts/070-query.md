@@ -1,70 +1,70 @@
 
-## Design Query
-Here’s a text-based layout representation of the web page of the course introduction page.
 
----
-**Introduction to Web Development**  
-**Description:**
-This course provides an overview of web development...  
-**Teacher: John Doe**
+## **Designing Queries in FluentCMS**
+<details>
+ <summary>
+FluentCMS streamlines frontend development with support for GraphQL-style queries.
+</summary>
 
-- **Skills:**
-    - C++ (3 years)
-    - C# (5 years)
-    - HTML (7 years)
-    - Database (4 years)
+### Requirements
 
-**Materials:**
-- [Week 1: Introduction to HTML](file:///2024-08/75dd9a00.txt)
-- [HTML Basics](https://www.youtube.com/watch?v=salY_Sm6mv4&pp=ygULaHRtbCBiYXNpY3M%3D)
----
-The data comes from several entities,
-- course
-- teacher
-- skills
-- teacher_skill
-- material
-- course_material
+As shown in the screenshot below, we aim to design a course detail page. In addition to displaying basic course information, the page should also show related entity data, such as:
 
-Fluent CMS offers `Query` APIs to meet the following needs, similar to GraphQL queries:
+- Teacher's bio and skills
+- Course-related materials, such as videos   
 
-1. **Single API Call:** Allows the frontend to retrieve all related data with just one API call.
-2. **Protection of Sensitive Information:** Prevents sensitive data, like the teacher's phone number, from being exposed to the frontend.
-3. **Performance:** Reduces resource-intensive database queries, making it more suitable for public access.
+![Course](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/page-course.png)
+### RESTful API
 
-To create or edit a query, navigate to `Schema Builder` > `Queries`.
+FluentCMS provides Query APIs that address the following needs, similar to GraphQL:
 
-A query has 3 parts
-### Selection Set
-In the examples below, the main entity is `course`:
-- `teacher` is a `lookup` attribute of `course`.
-- `skills` is a `crosstable` attributes of `teacher`.`
-- `materials` is a `crosstable` attributes of `course`.
-```
+- **Single API Call**: Retrieve all related data with one API call.
+- **Sensitive Information Protection**: Safeguard sensitive details, like a teacher's phone number, from being exposed.
+- **Performance**: Optimize performance by reducing resource-intensive database queries for public access.
+
+To create or edit a query, navigate to **Schema Builder > Queries**.
+
+### Query Structure
+
+A query is composed of three key parts:
+
+#### 1. Selection Set
+
+The primary entity in the examples below is `course`:
+
+- `teacher` is a lookup attribute of the course.
+- `skills` is a cross-table attribute of `teacher`.
+- `materials` is a cross-table attribute of `course`.
+
+```graphql
 {
-    name, 
-    id, 
-    description,
+    id,
+    name,
+    desc,
+    image,
+    level,
+    status,
     teacher{
-        firstname, 
-        lastname, 
+        firstname,
+        lastname,
+        image,
+        bio,
         skills{
-            name, 
+            name,
             years
         }
     },
     materials{
         name,
-        link, 
-        file
+        image,
+        link
     }
 }
 ```
-### Sorts
-FluentCMS uses cursor-based pagination, unlike GraphQL, which supports both cursor- and offset-based pagination.
-Offset-based pagination is less stable and unsuitable for large datasets.
 
-Cursor-based pagination retrieves the next page based on the last cursor. FluentCMS calculates the cursor and sorts data as shown below:
+#### 2. Sorts
+
+FluentCMS employs **cursor-based pagination**, which is more stable for large datasets compared to offset-based pagination. Cursor-based pagination fetches the next page based on the last cursor. Sorting is handled as follows:
 
 ```json
 {
@@ -75,15 +75,16 @@ Cursor-based pagination retrieves the next page based on the last cursor. Fluent
     }
   ]
 }
-
 ```
-### Filter
-To prevent resource-intensive queries from the frontend, limit the number of exposed parameters.
-In the filter definition below, `qs.id` tries to resolve the ID from the query string parameter `id`.
-The `qs.` prefix indicates that the value should be fetched from the query string, with the part after `qs.` representing the key of the query string parameter.
 
-For example, the API call /api/queries/<query-name>/one?id=3 corresponds to the SQL query:
-`select * from courses where level='advanced' and id=3`
+#### 3. Filter
+
+To avoid resource-intensive queries, restrict the number of parameters that can be exposed. In the example below, `qs.id` resolves the ID from the query string parameter `id`. The prefix `qs.` indicates that the value should be fetched from the query string.
+
+Example API call: `/api/queries/<query-name>/one?id=3`
+
+SQL equivalent: `SELECT * FROM courses WHERE level = 'advanced' AND id = 3`
+
 ```json
 {
   "filters": [
@@ -112,31 +113,38 @@ For example, the API call /api/queries/<query-name>/one?id=3 corresponds to the 
   ]
 }
 ```
-### Query Endpoints
-Each query definition corresponds to three endpoints:
 
-####  List: `/api/queries/<query-name>` - retrieves a paginated list
-- To view next page: `/api/queries/<query-name>?last=***`
-- To view previous page: `/api/queries/<query-name>?first=***`
+### Query Endpoints
+
+Each query has three corresponding endpoints:
+
+- **List**: `/api/queries/<query-name>` retrieves a paginated list.
+  - To view the next page: `/api/queries/<query-name>?last=***`
+  - To view the previous page: `/api/queries/<query-name>?first=***`
 
 Example response:
+
 ```json
 {
-"items": [],
-"first": "",
-"hasPrevious": false,
-"last": "eyJpZCI6M30",
-"hasNext": true
+  "items": [],
+  "first": "",
+  "hasPrevious": false,
+  "last": "eyJpZCI6M30",
+  "hasNext": true
 }
 ```
-#### Single Record:  /api/queries/<query-name>/one - Returns the first record
-Example: `/api/queries/<query-name>/one?id=***`
 
-#### Multiple Record:  /api/queries/<query-name>/many
-- Returns multiple records based on specified values.
-  Example: `/api/queries/<query-name>/one?id=1&id=2&id=3`.
+- **Single Record**: `/api/queries/<query-name>/one` returns the first record.
+  - Example: `/api/queries/<query-name>/one?id=***`
 
-If the number of IDs exceeds the allowed page size, only the first set of records will be returned.
-### Cache Settings:
-- Query Settings are cached in memory for 1 minutes.
-- Query Result are not cached because caching large data to memory is tricky and I intend implement stand alone cache module.
+- **Multiple Records**: `/api/queries/<query-name>/many` returns multiple records.
+  - Example: `/api/queries/<query-name>/many?id=1&id=2&id=3`
+
+If the number of IDs exceeds the page size, only the first set will be returned.
+
+### Cache Settings
+
+- **Query Settings**: Cached in memory for 1 minute.
+- **Query Results**: Not cached. A standalone cache module is planned for future implementation.
+
+</details>
