@@ -1,4 +1,5 @@
 using FluentCMS.Utils.DataDefinitionExecutor;
+using FluentCMS.Utils.KateQueryExt;
 using SqlKata;
 
 namespace FluentCMS.Utils.QueryBuilder;
@@ -65,8 +66,7 @@ public class Crosstable
           var qry = TargetEntity.Basic().Select(lstFields);
           return qry;
      }
-
-     public SqlKata.Query Many(Attribute[] selectAttributes, bool exclude, object id)
+     public SqlKata.Query Filter(Attribute[] selectAttributes, bool exclude, object id)
      {
          var baseQuery = Base(selectAttributes);
          var (a, b) = (TargetEntity.PrimaryKeyAttribute().FullName(), TargetAttribute.FullName());
@@ -84,7 +84,13 @@ public class Crosstable
                  .Where(FromAttribute.FullName(), id)
                  .Where(CrossEntity.DeleteAttribute().FullName(), false);
          }
+         return baseQuery;
+     }
 
+     public SqlKata.Query Many(Attribute[] selectAttributes, bool exclude, object id, Pagination? pagination)
+     {
+         var baseQuery = Filter(selectAttributes, exclude, id);
+         baseQuery.ApplyPagination(pagination);
          return baseQuery;
      }
 
