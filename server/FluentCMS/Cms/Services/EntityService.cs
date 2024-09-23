@@ -217,18 +217,20 @@ public sealed class EntityService(
         return ret;
     }
 
-    public async Task<ListResult> CrosstableList(string entityName, string strId, string attributeName, bool exclude, CancellationToken cancellationToken)
+    public async Task<ListResult> CrosstableList(string entityName, string strId, string attributeName, bool exclude, Pagination? pagination, CancellationToken cancellationToken)
     {
         var attribute = NotNull(await FindAttribute(entityName, attributeName,cancellationToken))
             .ValOrThrow($"not find {attributeName} in {entityName}");
 
         var crossTable = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable of {attributeName}");
         var selectAttributes = crossTable.TargetEntity.Attributes.GetLocalAttributes(InListOrDetail.InList);
-        var query = crossTable.Many(selectAttributes, exclude,  schemaService.CastToDatabaseType(crossTable.FromAttribute,strId));
+        var id = schemaService.CastToDatabaseType(crossTable.FromAttribute, strId);
+        var countQuery = crossTable.Filter(selectAttributes, exclude, id);
+        var pagedListQuery = crossTable.Many(selectAttributes, exclude, id ,pagination);
         return new ListResult
         {
-            Items = [..await queryKateQueryExecutor.Many(query,cancellationToken)],
-            TotalRecords = await queryKateQueryExecutor.Count(query,cancellationToken)
+            Items = [..await queryKateQueryExecutor.Many(pagedListQuery,cancellationToken)],
+            TotalRecords = await queryKateQueryExecutor.Count(countQuery,cancellationToken)
         };
     }
 

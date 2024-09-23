@@ -47,8 +47,12 @@ public class EntitiesController(IEntityService entityService) : ControllerBase
         Ok(await entityService.CrosstableAdd(entityName, id, attributeName, items, cancellationToken));
 
     [HttpGet("{entityName}/{id}/{attributeName}")]
-    public async Task<ActionResult<object>> CrosstableList(string entityName, string id, string attributeName,
+    public async Task<ActionResult<object>> CrosstableList(
+        string entityName, 
+        string id, 
+        string attributeName, 
+        [FromQuery] Pagination? pagination,
         CancellationToken cancellationToken,
         [FromQuery] bool exclude) =>
-        Ok(await entityService.CrosstableList(entityName, id, attributeName, exclude, cancellationToken));
+        Ok(await entityService.CrosstableList(entityName, id, attributeName, exclude, pagination, cancellationToken));
 }
