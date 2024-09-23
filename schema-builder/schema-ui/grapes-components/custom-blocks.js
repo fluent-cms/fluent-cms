@@ -28,7 +28,7 @@ export const customBlocks = [
           </a>
           <h3 class="tracking-widest text-red-500 text-xs font-medium title-font">{{subtitle}}</h3>
           <h2 class="text-lg text-gray-900 font-medium title-font mb-4"><a href="/pages/page-name/{{slug}}">{{title}}</a></h2>
-          <p class="leading-relaxed text-base">{{{desc}}}</p>
+          <p class="leading-relaxed text-base prose">{{{desc}}}</p>
         </div>
       </div>
     </div>
@@ -43,20 +43,28 @@ export const customBlocks = [
         <path d="M14.6 16.6l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4m-5.2 0L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4z"></path>
       </svg>`,
         content: `
-<section class="text-gray-600 body-font">
-  <div class="container mx-auto flex px-5 py-24 items-center justify-center flex-col">
-    <img class="lg:w-2/6 md:w-3/6 w-5/6 mb-10 object-cover object-center rounded" alt="hero" src="/files{{image}}">
-    <div class="text-center lg:w-2/3 w-full">
-      <h1 class="title-font sm:text-4xl text-3xl mb-4 font-medium text-gray-900">{{title}}</h1>
-    </div>
-    <div class="text-left lg:w-2/3 w-full">
-      <p class="mb-8 leading-relaxed">{{{content}}}</p>
+<div class="container px-8 mx-auto xl:px-5  max-w-screen-lg py-5 lg:py-8 !pt-0">
+  <div class="mx-auto max-w-screen-md ">
+    <div class="flex justify-center"> <div class="flex gap-3"> <span class="inline-block text-xs font-medium tracking-wider mt-5 text-pink-600">{{tag}}</span> </div> </div>
+    <h1 class="text-brand-primary mb-3 mt-2 text-center text-3xl font-semibold tracking-tight dark:text-white lg:text-4xl lg:leading-snug">{{title}}</h1>
+    <div class="mt-3 flex justify-center space-x-3 text-gray-500 ">
+      <div class="flex items-center gap-3">
+        <div class="relative h-10 w-10 flex-shrink-0">
+            <img alt="Li Bai" loading="lazy" decoding="async" data-nimg="fill" class="rounded-full object-cover" src="/files{{author.image}}" style="position: absolute; height: 100%; width: 100%; inset: 0px; color: transparent;"/>
+        </div>
+        <div class="flex items-center space-x-2 text-sm"> <p class="text-gray-800 dark:text-gray-400"> <a href=""> {{author.name}} </a> </p> </div>
+        <div> <div class="flex items-center space-x-2 text-sm"> <time class="text-gray-500 dark:text-gray-400" >{{date}}</time> <span>{{time_to_read}}</span> </div>
+      </div>
     </div>
   </div>
-</section> 
+</div>
+<div class="relative z-0 mx-auto aspect-video max-w-screen-lg overflow-hidden lg:rounded-lg"><img alt="Thumbnail" loading="eager" decoding="async" data-nimg="fill" class="object-cover" src="/files{{image}}"/></div>
+<div class="container px-8 mx-auto xl:px-5  max-w-screen-lg py-5 lg:py-8"> 
+    <article class="mx-auto max-w-screen-md ">
+       <div class="prose mx-auto my-3 dark:prose-invert prose-a:text-blue-600"> {{{content}}}</div>
+    </article>
+</div>
         `,
-            
-        
     },
     {
         name:'header-b',
@@ -113,25 +121,47 @@ export const customBlocks = [
   </div>
 </section> 
         `
-    },{
-    name: 'small-images',
-        label: 'Small Images',
+    },
+    {
+        name: 'card-a',
+        label: 'Card A',
         media: `<svg viewBox="0 0 24 24">
         <path d="M14.6 16.6l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4m-5.2 0L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4z"></path>
 </svg>`,
         content: `
-<section class="text-gray-600 body-font">
-    <h1 class="sm:text-3xl text-2xl font-medium title-font mb-2 text-gray-900">Category Name</h1>
-    <div class="mx-auto max-w-7xl px-6 lg:px-8 " data-gjs-type="multiple-records" data-source-type="multiple-records">
-      <div class="flex items-center gap-x-6 p-4">
-        <img class="h-16 w-16" src="/files{{image}}" alt="">
+<div class="container px-8 mx-auto xl:px-5  max-w-screen-lg py-5 lg:py-8 !pt-0">
+  <div class="mx-auto max-w-screen-md ">
+    <div class="mt-3 rounded-2xl bg-gray-50 px-8 py-8 text-gray-500 dark:bg-gray-900 dark:text-gray-400">
+      <div class="flex flex-wrap items-start sm:flex-nowrap sm:space-x-6">
+        <div class="relative mt-1 h-24 w-24 flex-shrink-0 ">
+            <a href="pages/{{page}}"> <img loading="lazy" decoding="async" data-nimg="fill" class="rounded-full object-cover" style="position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent" src="/files/{{image}}"> </a>
+        </div>
         <div>
-          <h3 class="text-base font-semibold leading-7 tracking-tight text-gray-900">{{title}}</h3>
-          <p class="text-sm font-semibold leading-6 text-indigo-600">{{desc}}</p>
+            <div class="mb-3"> <h3 class="text-lg font-medium text-gray-800 dark:text-gray-300">{{title}}</h3> </div>
+            <div>{{{content}}}</div>
         </div>
       </div>
+    </div>        
+  </div>
+</div>
+ `
+    },
+    {
+        name: 'list-a',
+        label: 'List A',
+        media: `<svg viewBox="0 0 24 24">
+        <path d="M14.6 16.6l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4m-5.2 0L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4z"></path>
+</svg>`,
+        content: `
+<div class="mt-32">
+    <div class="px-4 sm:px-8 max-w-5xl m-auto">
+        <h1 class="text-center font-semibold text-sm">List Group</h1>
+        <ul class="border border-gray-200 rounded overflow-hidden shadow-md"  data-gjs-type="multiple-records" data-source-type="multiple-records">
+            <li class="px-4 py-2 bg-white hover:bg-sky-100 hover:text-sky-900 border-b last:border-none border-gray-200 transition-all duration-300 ease-in-out">{{title}}</li>
+        </ul>
     </div>
-</section>
-`
+</div>
+ `
     }
+    
 ]
