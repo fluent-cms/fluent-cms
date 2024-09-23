@@ -31,6 +31,8 @@ export function Crosstable({column, data, schema, getFullURL}: {
     const {checkError, Status, confirm} = useRequestStatus(column.field)
 
     const mutateDate = () => {
+        setExistingItems(null);
+        setToAddItems(null)
         subgridMutate()
         execMutate()
 
