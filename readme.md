@@ -197,9 +197,10 @@ app.RegisterMessageProducerHook();
 </details>
 
 ## Permissions Control
+<details>
+  <summary>FluentCMS authorizes access to each entity by using role-based permissions and custom policies that control user actions like create, read, update, and delete.</summary>
 
-Fluent CMS's permission control module is decoupled from the Content Management module, allowing you to implement your own permission logic or forgo permission control entirely.
-
+Fluent CMS' permission control module is decoupled from the Content Management module, allowing you to implement your own permission logic or forgo permission control entirely.
 The built-in permission control in Fluent CMS offers four privilege types for each entity:
 - **ReadWrite**: Full access to read and write.
 - **RestrictedReadWrite**: Users can only modify records they have created.
@@ -222,6 +223,8 @@ InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("sadmin@cms.com
 InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]));
 ```
 Behind the scene, fluentCMS leverage the hook mechanism.
+</details>
+
 ## Design Query
 Here’s a text-based layout representation of the web page of the course introduction page.
 
