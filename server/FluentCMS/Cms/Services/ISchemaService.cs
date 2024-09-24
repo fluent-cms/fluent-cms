@@ -25,6 +25,7 @@ public interface ISchemaService
     Task<Schema[]> GetAll(string type,CancellationToken cancellationToken);
     Task<Schema?> GetByIdDefault(int id, CancellationToken cancellationToken = default);
     Task<Schema?> GetByNameDefault(string name, string type, CancellationToken cancellationToken = default);
+    Task<Schema?> GetByNamePrefixDefault(string name, string type, CancellationToken cancellationToken = default);
 
     Task<Schema> Save(Schema schema, CancellationToken cancellationToken);
     Task Delete(int id, CancellationToken cancellationToken);

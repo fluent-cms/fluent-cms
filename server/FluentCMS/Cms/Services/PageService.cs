@@ -1,4 +1,3 @@
-using FluentCMS.Auth.Services;
 using FluentCMS.Cms.Models;
 using FluentCMS.Services;
 using FluentCMS.Utils.PageRender;
@@ -11,13 +10,13 @@ namespace FluentCMS.Cms.Services;
 using static InvalidParamExceptionFactory;
 public sealed class PageService(ISchemaService schemaService,IQueryService queryService):IPageService
 {
-    public async Task<string> GetByRouterKey(string pageName, string key,  CancellationToken cancellationToken)
+    public async Task<string> GetDetail(string pageName, string key,  CancellationToken cancellationToken)
     {
-        pageName = Page.SinglePageName(pageName);
-        var schema = NotNull(await schemaService.GetByNameDefault(pageName, SchemaType.Page, cancellationToken))
+        var schema = NotNull(await schemaService.GetByNamePrefixDefault(pageName + "/{", SchemaType.Page, cancellationToken))
             .ValOrThrow($"Can not find page [{pageName}]");
         var page = NotNull(schema.Settings.Page).ValOrThrow("Invalid page payload");
-        var data =await GetSingle(page.Query, page.QueryString,key, cancellationToken);
+        var paramName = schema.Name.Split("/").Last();
+        var data =await GetSingle(page.Query, page.QueryString,paramName,key, cancellationToken);
         return await RenderPage(data, page, cancellationToken);
     }
 
@@ -51,9 +50,9 @@ public sealed class PageService(ISchemaService schemaService,IQueryService query
         }
     }
 
-    private async Task<Record> GetSingle(string query, string qs, string key, CancellationToken cancellationToken)
+    private async Task<Record> GetSingle(string query, string qs, string paramName, string paramValue, CancellationToken cancellationToken)
     {
-        qs = qs.Replace(Page.RouterKey, key);
+        qs = qs.Replace(paramName, paramValue);
         var queryDictionary = QueryHelpers.ParseQuery(qs);
         return await queryService.One(query,queryDictionary, cancellationToken);
     }

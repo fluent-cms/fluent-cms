@@ -18,7 +18,7 @@ public class PagesController(IPageService pageService) : ControllerBase
     [HttpGet("{pageName}/{routerKey}")]
     public async Task<ActionResult> Get(string pageName, string routerKey, CancellationToken cancellationToken)
     {
-        var htmlContent = await pageService.GetByRouterKey(pageName,routerKey, cancellationToken);
+        var htmlContent = await pageService.GetDetail(pageName,routerKey, cancellationToken);
         return Content(htmlContent, "text/html");
     }
 }

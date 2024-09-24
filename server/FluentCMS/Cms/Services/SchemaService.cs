@@ -45,10 +45,17 @@ public sealed  class SchemaService(
         return res.IsSuccess ? res.Value : null;
     }
 
+    public async Task<Schema?> GetByNamePrefixDefault(string name, string type, CancellationToken cancellationToken = default)
+    {
+        var query = BaseQuery().WhereStarts(ColumnName ,name).Where(ColumnType, type);
+        var item = await kateQueryExecutor.One(query, cancellationToken);
+        var res = ParseSchema(item);
+        return res.IsSuccess ? res.Value : null;
+    }
 
     public async Task<Schema?> GetByNameDefault(string name, string type, CancellationToken cancellationToken = default)
     {
-        var query = BaseQuery().Where(ColumnName, name).Where(ColumnType, type);
+        var query = BaseQuery().Where(ColumnName ,name).Where(ColumnType, type);
         var item = await kateQueryExecutor.One(query, cancellationToken);
         var res = ParseSchema(item);
         return res.IsSuccess ? res.Value : null;
