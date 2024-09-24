@@ -225,72 +225,71 @@ InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("admin@cms.com"
 Behind the scene, fluentCMS leverage the hook mechanism.
 </details>
 
-## Design Query
-Here’s a text-based layout representation of the web page of the course introduction page.
 
----
-**Introduction to Web Development**  
-**Description:**
-This course provides an overview of web development...  
-**Teacher: John Doe**
+## **Designing Queries in FluentCMS**
+<details>
+ <summary>
+FluentCMS streamlines frontend development with support for GraphQL-style queries.
+</summary>
 
-- **Skills:**
-    - C++ (3 years)
-    - C# (5 years)
-    - HTML (7 years)
-    - Database (4 years)
+### Requirements
 
-**Materials:**
-- [Week 1: Introduction to HTML](file:///2024-08/75dd9a00.txt)
-- [HTML Basics](https://www.youtube.com/watch?v=salY_Sm6mv4&pp=ygULaHRtbCBiYXNpY3M%3D)
----
-The data comes from several entities,
-- course
-- teacher
-- skills
-- teacher_skill
-- material
-- course_material
+As shown in the screenshot below, we aim to design a course detail page. In addition to displaying basic course information, the page should also show related entity data, such as:
 
-Fluent CMS offers `Query` APIs to meet the following needs, similar to GraphQL queries:
+- Teacher's bio and skills
+- Course-related materials, such as videos   
+![Course](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/page-course.png)
+### RESTful API
 
-1. **Single API Call:** Allows the frontend to retrieve all related data with just one API call.
-2. **Protection of Sensitive Information:** Prevents sensitive data, like the teacher's phone number, from being exposed to the frontend.
-3. **Performance:** Reduces resource-intensive database queries, making it more suitable for public access.
+FluentCMS provides Query APIs that address the following needs, similar to GraphQL:
 
-To create or edit a query, navigate to `Schema Builder` > `Queries`.
+- **Single API Call**: Retrieve all related data with one API call.
+- **Sensitive Information Protection**: Safeguard sensitive details, like a teacher's phone number, from being exposed.
+- **Performance**: Optimize performance by reducing resource-intensive database queries for public access.
 
-A query has 3 parts
-### Selection Set
-In the examples below, the main entity is `course`:
-- `teacher` is a `lookup` attribute of `course`.
-- `skills` is a `crosstable` attributes of `teacher`.`
-- `materials` is a `crosstable` attributes of `course`.
-```
+To create or edit a query, navigate to **Schema Builder > Queries**.
+
+### Query Structure
+
+A query is composed of three key parts:
+
+#### 1. Selection Set
+
+The primary entity in the examples below is `course`:
+
+- `teacher` is a lookup attribute of the course.
+- `skills` is a cross-table attribute of `teacher`.
+- `materials` is a cross-table attribute of `course`.
+
+```graphql
 {
-    name, 
-    id, 
-    description,
+    id,
+    name,
+    desc,
+    image,
+    level,
+    status,
     teacher{
-        firstname, 
-        lastname, 
+        firstname,
+        lastname,
+        image,
+        bio,
         skills{
-            name, 
+            name,
             years
         }
     },
     materials{
         name,
-        link, 
-        file
+        image,
+        link
     }
 }
 ```
-### Sorts
-FluentCMS uses cursor-based pagination, unlike GraphQL, which supports both cursor- and offset-based pagination.
-Offset-based pagination is less stable and unsuitable for large datasets.
 
-Cursor-based pagination retrieves the next page based on the last cursor. FluentCMS calculates the cursor and sorts data as shown below:
+#### 2. Sorts
+
+FluentCMS employs **cursor-based pagination**, which is more stable for large datasets compared to offset-based pagination. Cursor-based pagination fetches the next page based on the last cursor. Sorting is handled as follows:
 
 ```json
 {
@@ -301,15 +300,16 @@ Cursor-based pagination retrieves the next page based on the last cursor. Fluent
     }
   ]
 }
-
 ```
-### Filter
-To prevent resource-intensive queries from the frontend, limit the number of exposed parameters.
-In the filter definition below, `qs.id` tries to resolve the ID from the query string parameter `id`.
-The `qs.` prefix indicates that the value should be fetched from the query string, with the part after `qs.` representing the key of the query string parameter.
 
-For example, the API call /api/queries/<query-name>/one?id=3 corresponds to the SQL query:
-`select * from courses where level='advanced' and id=3`
+#### 3. Filter
+
+To avoid resource-intensive queries, restrict the number of parameters that can be exposed. In the example below, `qs.id` resolves the ID from the query string parameter `id`. The prefix `qs.` indicates that the value should be fetched from the query string.
+
+Example API call: `/api/queries/<query-name>/one?id=3`
+
+SQL equivalent: `SELECT * FROM courses WHERE level = 'advanced' AND id = 3`
+
 ```json
 {
   "filters": [
@@ -338,52 +338,91 @@ For example, the API call /api/queries/<query-name>/one?id=3 corresponds to the 
   ]
 }
 ```
-### Query Endpoints
-Each query definition corresponds to three endpoints:
 
-####  List: `/api/queries/<query-name>` - retrieves a paginated list
-- To view next page: `/api/queries/<query-name>?last=***`
-- To view previous page: `/api/queries/<query-name>?first=***`
+### Query Endpoints
+
+Each query has three corresponding endpoints:
+
+- **List**: `/api/queries/<query-name>` retrieves a paginated list.
+  - To view the next page: `/api/queries/<query-name>?last=***`
+  - To view the previous page: `/api/queries/<query-name>?first=***`
 
 Example response:
+
 ```json
 {
-"items": [],
-"first": "",
-"hasPrevious": false,
-"last": "eyJpZCI6M30",
-"hasNext": true
+  "items": [],
+  "first": "",
+  "hasPrevious": false,
+  "last": "eyJpZCI6M30",
+  "hasNext": true
 }
 ```
-#### Single Record:  /api/queries/<query-name>/one - Returns the first record
-Example: `/api/queries/<query-name>/one?id=***`
 
-#### Multiple Record:  /api/queries/<query-name>/many
-- Returns multiple records based on specified values.
-  Example: `/api/queries/<query-name>/one?id=1&id=2&id=3`.
+- **Single Record**: `/api/queries/<query-name>/one` returns the first record.
+  - Example: `/api/queries/<query-name>/one?id=***`
 
-If the number of IDs exceeds the allowed page size, only the first set of records will be returned.
-### Cache Settings:
-- Query Settings are cached in memory for 1 minutes.
-- Query Result are not cached because caching large data to memory is tricky and I intend implement stand alone cache module.
+- **Multiple Records**: `/api/queries/<query-name>/many` returns multiple records.
+  - Example: `/api/queries/<query-name>/many?id=1&id=2&id=3`
+
+If the number of IDs exceeds the page size, only the first set will be returned.
+
+### Cache Settings
+
+- **Query Settings**: Cached in memory for 1 minute.
+- **Query Results**: Not cached. A standalone cache module is planned for future implementation.
+
+</details>
 
 ## Design Web Page
+<details>
+ <summary>
+The Page designer is built on the open-source project GrapesJS and Handlebars, allowing you to bind pages with FluentCMS queries for dynamic content rendering.
+</summary>
+
+### Introduction to GrapesJS Panels
+
+GrapesJS has a user interface with four main panels. 
+
+![Grapes.js-toolbox](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/grapes-toolbox.png)
+1. **Style Manager**: Allows users to customize the CSS properties of selected elements on the canvas, with no modifications made by FluentCMS to this panel.
+2. **Traits Panel**: Used to modify attributes of selected elements, with FluentCMS adding custom traits to help the page renderer bind data to pages.
+3. **Layers Panel**: Displays a hierarchical view of page elements, similar to the DOM structure. FluentCMS does not customize this panel but it is useful for locating FluentCMS blocks.
+4. **Blocks Panel**: Contains pre-made blocks or components for drag-and-drop functionality, with FluentCMS adding its own customized blocks.
+
+### Tailwind CSS support
+Fluent CMS page render include the following CSS by default.
+```html
+    <link rel="stylesheet" href="https://unpkg.com/tailwindcss@1.4.6/dist/base.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/tailwindcss@1.4.6/dist/components.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/@tailwindcss/typography@0.1.2/dist/typography.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/tailwindcss@1.4.6/dist/utilities.min.css">
+```
+### Page Type: Landing Page vs Detail Page
+#### **Landing Page**: A landing page is typically the first page a visitor sees.  
+Data in the following example landing page comes from 3 data sources:
+   - Featured Courses,  https://fluent-cms-admin.azurewebsites.net/api/queries/courses?status=featured
+   - Advanced Courses,  https://fluent-cms-admin.azurewebsites.net/api/queries/courses?level=Advanced
+   - Beginner Courses,  https://fluent-cms-admin.azurewebsites.net/api/queries/courses?level=Beginner
+![LandingPage](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/landing-page.png)
+#### **Detail Page**: A detail page provides in-depth information about a specific item.   
+Fluent CMS use the router param to retrieve the specific item
+
+![Course](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/page-course.png)
+
+### Data Binding: single Field or repeat field 
+
+
+### Image And Link
+
+### Customized Blocks
+
+
+#### Landing Page
 In previous chapter, we have defined query APIs to combine data from multiple entities, now is time to design front-end web pages to render the data.
 To manage pages, go to `schema builder` > `pages`.
 
-FluentCMS using open source html design tool GrapesJS to design web pages.   
-GrapesJS has a flexible user interface with four main panels that help in designing and managing web pages. Here’s an overview of the four main panels in the GrapesJS toolbox:
 
-1. **Style Manager**: Allows users to customize the styles (CSS properties) of the selected element on the canvas. You can adjust properties like color, size, margin, padding, etc.
-2. **Traits Panel**: This panel is used to modify the attributes of the selected element, such as the source of an image, link targets, or other custom attributes. It is highly customizable and can be extended to add specific traits based on the needs of the design.
-3. **Layers Panel**: The Layers panel provides a hierarchical view of the page elements, similar to the DOM structure.
-4. **Blocks Panel**: This panel contains pre-made blocks or components that can be dragged and dropped onto the canvas. These blocks can be anything from text, images, buttons, forms, and other HTML elements.
-
-These panels work together to provide a comprehensive web design experience, allowing users to build complex layouts with ease.
-![Grapes.js-toolbox](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/grapes-toolbox.png)
-
-### Landing Page
-![LandingPage](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/landing-page.png)
 1. For above page, the data comes from 3 Queries
     - Featured Courses,  https://fluent-cms-admin.azurewebsites.net/api/queries/courses?status=featured
     - Advanced Courses,  https://fluent-cms-admin.azurewebsites.net/api/queries/courses?level=Advanced
@@ -396,22 +435,25 @@ These panels work together to provide a comprehensive web design experience, all
     - offset
     - limit
       ![Grapes](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/graps-traits.png)
-### Detail Page
+#### Detail Page
 We normally give a router parameter to Detail page, e.g. https://fluent-cms-admin.azurewebsites.net/pages/course/7.  
 The suffix `.detail` should be added to page name, the page `course.detail` corresponds to above path.  
 Detail page need to call query with query parameter `router.key`
 
 You can also add `Multipe-records` elements to detail page, if you don't specify query, page render tries to resolve the field from query result of the page.
+</details>
 
 ## Development
+<details>
+  <summary>The backend is written in ASP.NET Core, the Admin Panel uses React, and the Schema Builder is developed with jQuery</summary>
+
 ### System Overviews
 ![System Overview](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/overview.png)
 - [**Backend Server**](https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS)
 - [**Admin Panel UI**](https://github.com/fluent-cms/fluent-cms/tree/main/admin-panel)
-- [**Schema Builder**](https://github.com/fluent-cms/fluent-cms/tree/main/schema-ui)
-- [**Demo Next.js Public Site**](https://github.com/fluent-cms/fluent-cms/tree/main/examples/BlogPublicSiteNextJsUI)
+- [**Schema Builder**](https://github.com/fluent-cms/fluent-cms/tree/main/schema-builder)
 
-### Web Server
+### Backend Server
 - **Tools**:
     - **ASP.NET Core**
     - **SqlKata**: [SqlKata](https://sqlkata.com/)
@@ -431,3 +473,4 @@ You can also add `Multipe-records` elements to detail page, if you don't specify
     - **jsoneditor**: [JSON Editor](https://github.com/json-editor/json-editor)
 
 ![Schema Builder Sequence](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/schema-builder-sequence.png)
+</details>

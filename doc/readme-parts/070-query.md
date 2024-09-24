@@ -12,7 +12,6 @@ As shown in the screenshot below, we aim to design a course detail page. In addi
 
 - Teacher's bio and skills
 - Course-related materials, such as videos   
-
 ![Course](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/page-course.png)
 ### RESTful API
 
