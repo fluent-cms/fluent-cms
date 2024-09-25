@@ -6,8 +6,6 @@ public sealed class Page
     public string Name { get; set; } = "";
     public string Title { get; set; } = "";
     public string Query { get; set; } = "";
-    public string QueryString { get; set; } = "";
-    
     public string Html { get; set; } = "";
     public string Css { get; set; } = "";
 

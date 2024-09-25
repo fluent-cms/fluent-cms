@@ -5,41 +5,59 @@ using FluentCMS.Utils.QueryBuilder;
 using HandlebarsDotNet;
 using HtmlAgilityPack;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Primitives;
 
 namespace FluentCMS.Cms.Services;
 using static InvalidParamExceptionFactory;
 public sealed class PageService(ISchemaService schemaService,IQueryService queryService):IPageService
 {
-    public async Task<string> GetDetail(string pageName, string key,  CancellationToken cancellationToken)
+    private static string RemoveBrace(string fullRouterParamName) => fullRouterParamName[1..^1]; 
+    
+    public async Task<string> GetDetail(string pageName, string paramValue,  Dictionary<string,StringValues> qsDictionary, CancellationToken cancellationToken)
     {
         var schema = NotNull(await schemaService.GetByNamePrefixDefault(pageName + "/{", SchemaType.Page, cancellationToken))
             .ValOrThrow($"Can not find page [{pageName}]");
         var page = NotNull(schema.Settings.Page).ValOrThrow("Invalid page payload");
-        var paramName = schema.Name.Split("/").Last();
-        var data =await GetSingle(page.Query, page.QueryString,paramName,key, cancellationToken);
-        return await RenderPage(data, page, cancellationToken);
+        var bracedName = schema.Name.Split("/").Last();
+        var routerName = RemoveBrace(bracedName);
+        if (bracedName != paramValue)
+        {
+            qsDictionary[routerName] = paramValue;
+        }
+        
+        var data = await queryService.One(page.Query, qsDictionary, cancellationToken);
+        var body = await RenderBody(data, page, qsDictionary, cancellationToken);
+        var title = RenderTitle(data, page);
+        return RenderHtml(title, body, page.Css);
     }
 
-    public async Task<string> Get(string pageName,  CancellationToken cancellationToken)
+    public async Task<string> Get(string pageName, Dictionary<string,StringValues> qsDictionary,  CancellationToken cancellationToken)
     {
         var schema = NotNull(await schemaService.GetByNameDefault(pageName, SchemaType.Page, cancellationToken))
             .ValOrThrow($"Can not find page [{pageName}]");
         var page = NotNull(schema.Settings.Page).ValOrThrow("Invalid page payload");
-        var data = new Dictionary<string, object>();
-        return await RenderPage(data, page!, cancellationToken);
+        Record data = new Dictionary<string, object>();
+        var body = await RenderBody(new Dictionary<string, object>(), page, qsDictionary,cancellationToken);
+        var title = RenderTitle(data, page);
+        return RenderHtml(title, body, page.Css);
+    }
+    
+    private string RenderTitle(Record data, Page page)
+    {
+         var template = Handlebars.Compile(page.Title);
+         return template(data); 
     }
 
-    private async Task<string> RenderPage(Record data, Page page,CancellationToken cancellationToken)
+    private async Task<string> RenderBody(Record data, Page page, Dictionary<string,StringValues> qsDict, CancellationToken cancellationToken)
     {
          var doc = new HtmlDocument();
-         doc.LoadHtml(page!.Html);
+         doc.LoadHtml(page.Html);
          var listNodes = CheckResult(doc.LoadMultipleRecordNode());
          ReplaceMultipleRecordNode(listNodes);
-         await AttachListData(data, listNodes, cancellationToken);
+         await AttachListData(data, listNodes,qsDict,  cancellationToken);
         
          var template = Handlebars.Compile(doc.DocumentNode.OuterHtml);
-         var html = template(data); 
-         return RenderHtml(page.Title, html,page.Css);       
+         return template(data); 
     }
 
     private void ReplaceMultipleRecordNode(MultipleRecordNode[] listNodes)
@@ -50,22 +68,20 @@ public sealed class PageService(ISchemaService schemaService,IQueryService query
         }
     }
 
-    private async Task<Record> GetSingle(string query, string qs, string paramName, string paramValue, CancellationToken cancellationToken)
-    {
-        qs = qs.Replace(paramName, paramValue);
-        var queryDictionary = QueryHelpers.ParseQuery(qs);
-        return await queryService.One(query,queryDictionary, cancellationToken);
-    }
-
-    private async Task AttachListData(Record data, MultipleRecordNode[] listNodes, CancellationToken cancellationToken)
+    private async Task AttachListData(Record data, MultipleRecordNode[] listNodes, Dictionary<string,StringValues> qsDict, CancellationToken cancellationToken)
     {
         foreach (var multipleRecordNode in listNodes)
         {
             if (!multipleRecordNode.MultipleQuery.IsSuccess) continue;
             var queryInfo = multipleRecordNode.MultipleQuery.Value;
             var pagination = new Pagination { Offset = queryInfo.Offset, Limit = queryInfo.Limit };
-            var queryDictionary = QueryHelpers.ParseQuery(queryInfo.Qs);
-            var records = await queryService.Many(queryInfo.Query, pagination, queryDictionary, cancellationToken);
+
+            var dict = new Dictionary<string, StringValues>(qsDict);//make a copy
+            foreach (var (key, value) in QueryHelpers.ParseQuery(queryInfo.Qs))
+            {
+                dict[key] = value;
+            }
+            var records = await queryService.Many(queryInfo.Query, pagination, dict, cancellationToken);
             data[multipleRecordNode.Field] = records;
         }
     }
@@ -76,6 +92,7 @@ public sealed class PageService(ISchemaService schemaService,IQueryService query
                  <!DOCTYPE html>
                  <html>
                  <head>
+                     <meta charset="UTF-8">
                      <title>{{title}}</title>
                      <link rel="stylesheet" href="https://unpkg.com/tailwindcss@1.4.6/dist/base.min.css">
                      <link rel="stylesheet" href="https://unpkg.com/tailwindcss@1.4.6/dist/components.min.css">

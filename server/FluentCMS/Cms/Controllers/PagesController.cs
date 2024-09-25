@@ -1,6 +1,6 @@
 using FluentCMS.Cms.Services;
-using FluentCMS.Utils.QueryBuilder;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace FluentCMS.Cms.Controllers;
 
@@ -11,14 +11,16 @@ public class PagesController(IPageService pageService) : ControllerBase
     [HttpGet("{pageName}")]
     public async Task<ActionResult> Get(string pageName, CancellationToken cancellationToken)
     {
-        var htmlContent = await pageService.Get(pageName, cancellationToken);
+        var queryDictionary = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
+        var htmlContent = await pageService.Get(pageName,queryDictionary, cancellationToken);
         return Content(htmlContent, "text/html");
     }
 
     [HttpGet("{pageName}/{routerKey}")]
     public async Task<ActionResult> Get(string pageName, string routerKey, CancellationToken cancellationToken)
     {
-        var htmlContent = await pageService.GetDetail(pageName,routerKey, cancellationToken);
+        var queryDictionary = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
+        var htmlContent = await pageService.GetDetail(pageName,routerKey, queryDictionary, cancellationToken);
         return Content(htmlContent, "text/html");
     }
 }

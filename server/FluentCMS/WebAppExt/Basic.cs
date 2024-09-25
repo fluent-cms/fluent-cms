@@ -12,6 +12,7 @@ using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.LocalFileStore;
 using FluentCMS.Utils.QueryBuilder;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Primitives;
 
 namespace FluentCMS.WebAppExt;
 public enum DatabaseProvider
@@ -71,7 +72,7 @@ public static class Basic
                         var html = """<a href="/admin">Log in to Admin</a>""";
                         try
                         {
-                            html = await pageService.Get(Page.HomePage);
+                            html = await pageService.Get(Page.HomePage,new Dictionary<string, StringValues>());
                         }
                         catch (Exception e)
                         {

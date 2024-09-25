@@ -5,6 +5,7 @@ using HtmlAgilityPack;
 
 public static class HtmlDocExt
 {
+    
     public static Result<MultipleRecordNode[]> LoadMultipleRecordNode(this HtmlDocument doc)
     {
         var nodeCollection =
@@ -19,11 +20,16 @@ public static class HtmlDocExt
         foreach (var htmlNode in nodeCollection)
         {
             var field = htmlNode.GetAttributeValue(Attributes.Field, string.Empty);
-            if (string.IsNullOrWhiteSpace(field))
+            var query = htmlNode.ParseMultipleRecordsQuery();
+            if (string.IsNullOrWhiteSpace(field) )
             {
-                return Result.Fail("can not find field of a multiple records name");
+                if (string.IsNullOrWhiteSpace(query.Value.Query))
+                {
+                    return Result.Fail("can not find field of a multiple records name");
+                }
+                field = GenerateShortUuid();
             }
-            ret.Add(new MultipleRecordNode(htmlNode.GetId(), htmlNode, field, htmlNode.ParseMultipleRecordsQuery()));
+            ret.Add(new MultipleRecordNode(htmlNode.GetId(), htmlNode, field,query ));
         }
         return ret.ToArray();
     }
@@ -68,5 +74,20 @@ public static class HtmlDocExt
 
         var qs = div.GetAttributeValue(Attributes.Qs, string.Empty);
         return new MultipleRecordQuery(query, qs, offset.Value, limit.Value);
+    }
+
+    private static string GenerateShortUuid()
+    {
+        // Generate a new GUID
+        Guid guid = Guid.NewGuid();
+
+        // Convert GUID to a byte array
+        byte[] guidBytes = guid.ToByteArray();
+
+        // Encode the byte array to Base64 and remove padding
+        return Convert.ToBase64String(guidBytes)
+            .Replace("=", "") // Remove padding
+            .Replace("/", "_") // Replace URL-unsafe characters
+            .Replace("+", "-"); // Replace URL-unsafe characters
     }
 }

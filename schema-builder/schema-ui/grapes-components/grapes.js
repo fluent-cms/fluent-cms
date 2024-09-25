@@ -1,12 +1,12 @@
 import {customTypes} from "./custom-types.js"
 import {customBlocks} from "./custom-blocks.js"
 function addCustomBlocks(editor){
-    for (const {name, label, media, content} of customBlocks){
+    for (const {name, label, media, content, category} of customBlocks){
         editor.Blocks.add(name, {
             media: media,
             label:  label,
             content: content,
-            category: 'Extra',
+            category: category,
         });
     }
 }
