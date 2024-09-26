@@ -1,19 +1,18 @@
 
 
-## Development
-<details>
-  <summary>The backend is written in ASP.NET Core, the Admin Panel uses React, and the Schema Builder is developed with jQuery</summary>
+## Development Guide
+<details><summary>The backend is written in ASP.NET Core, the Admin Panel uses React, and the Schema Builder is developed with jQuery</summary>
 
 ### System Overviews
-![System Overview](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/overview.png)
-- [**Backend Server**](https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS)
-- [**Admin Panel UI**](https://github.com/fluent-cms/fluent-cms/tree/main/admin-panel)
-- [**Schema Builder**](https://github.com/fluent-cms/fluent-cms/tree/main/schema-builder)
+![System Overview](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/overview.png)   
+- [**Backend Server**](https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS)  
+- [**Admin Panel UI**](https://github.com/fluent-cms/fluent-cms/tree/main/admin-panel)  
+- [**Schema Builder**](https://github.com/fluent-cms/fluent-cms/tree/main/schema-builder)  
 
 ### Backend Server
-- **Tools**:
-    - **ASP.NET Core**
-    - **SqlKata**: [SqlKata](https://sqlkata.com/)
+- **Tools**:  
+    - **ASP.NET Core**  
+    - **SqlKata**: [SqlKata](https://sqlkata.com/)  
 
 ![API Controller Service](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/api-controller-service.png)
 

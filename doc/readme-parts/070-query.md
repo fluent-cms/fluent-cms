@@ -1,10 +1,7 @@
 
 
 ## **Designing Queries in FluentCMS**
-<details>
- <summary>
-FluentCMS streamlines frontend development with support for GraphQL-style queries.
-</summary>
+<details> <summary> FluentCMS streamlines frontend development with support for GraphQL-style queries. </summary>
 
 ### Requirements
 
@@ -13,7 +10,7 @@ As shown in the screenshot below, we aim to design a course detail page. In addi
 - Teacher's bio and skills
 - Course-related materials, such as videos   
 ![Course](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/page-course.png)
-### RESTful API
+### RESTFul API
 
 FluentCMS provides Query APIs that address the following needs, similar to GraphQL:
 

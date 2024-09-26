@@ -62,8 +62,13 @@ export function loadEditor(container) {
             styles: [
                 'https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.0.2/tailwind.min.css',
             ],
-        }
+        },
+        assetManager: {
+            assets:['/files/{{image}}'],
+            uploadName: 'files'
 
+            // options
+        }
     });
 
     var pn = editor.Panels;

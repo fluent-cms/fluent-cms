@@ -1,8 +1,7 @@
 
 
 ## Permissions Control
-<details>
-  <summary>FluentCMS authorizes access to each entity by using role-based permissions and custom policies that control user actions like create, read, update, and delete.</summary>
+<details> <summary>FluentCMS authorizes access to each entity by using role-based permissions and custom policies that control user actions like create, read, update, and delete.</summary>
 
 Fluent CMS' permission control module is decoupled from the Content Management module, allowing you to implement your own permission logic or forgo permission control entirely.
 The built-in permission control in Fluent CMS offers four privilege types for each entity:
@@ -13,7 +12,7 @@ The built-in permission control in Fluent CMS offers four privilege types for ea
 
 Additionally, Fluent CMS supports custom roles, where a user's privileges are a combination of their individual entity privileges and the privileges assigned to their role.
 
-To enable fluentCMS' build-in permission control feature, add the following line to builder.
+To enable fluentCMS' build-in permission control feature, add the following line .
 ```
 //add fluent cms' permission control service 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));

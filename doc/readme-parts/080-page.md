@@ -1,36 +1,111 @@
 
-## Design Web Page
-In previous chapter, we have defined query APIs to combine data from multiple entities, now is time to design front-end web pages to render the data.
-To manage pages, go to `schema builder` > `pages`.
 
-FluentCMS using open source html design tool GrapesJS to design web pages.   
-GrapesJS has a flexible user interface with four main panels that help in designing and managing web pages. Here’s an overview of the four main panels in the GrapesJS toolbox:
 
-1. **Style Manager**: Allows users to customize the styles (CSS properties) of the selected element on the canvas. You can adjust properties like color, size, margin, padding, etc.
-2. **Traits Panel**: This panel is used to modify the attributes of the selected element, such as the source of an image, link targets, or other custom attributes. It is highly customizable and can be extended to add specific traits based on the needs of the design.
-3. **Layers Panel**: The Layers panel provides a hierarchical view of the page elements, similar to the DOM structure.
-4. **Blocks Panel**: This panel contains pre-made blocks or components that can be dragged and dropped onto the canvas. These blocks can be anything from text, images, buttons, forms, and other HTML elements.
+## Designing Web Page in FluentCMS
 
-These panels work together to provide a comprehensive web design experience, allowing users to build complex layouts with ease.
-![Grapes.js-toolbox](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/grapes-toolbox.png)
+<details> <summary> The page designer is built using the open-source project GrapesJS and Handlebars, allowing you to bind `GrapesJS Components` with `FluentCMS Queries` for dynamic content rendering. </summary>
 
-### Landing Page
-![LandingPage](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/landing-page.png)
-1. For above page, the data comes from 3 Queries
-    - Featured Courses,  https://fluent-cms-admin.azurewebsites.net/api/queries/courses?status=featured
-    - Advanced Courses,  https://fluent-cms-admin.azurewebsites.net/api/queries/courses?level=Advanced
-    - Beginner Courses,  https://fluent-cms-admin.azurewebsites.net/api/queries/courses?level=Beginner
-2. Drag a Content Block from `Blocks Panel` > `Extra` to Canvas,
-   To Bind a multiple records trait to a data source, hover mouse to a element with `Multiple-records` tooltips, select the element, then the traits panels shows. There are the following options
-    - field
-    - query
-    - qs : stands for query string, e.g. the Beginner Course section use level=Beginner to add a constraint only beginner course can show in this section.
-    - offset
-    - limit
-      ![Grapes](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/graps-traits.png)
-### Detail Page
-We normally give a router parameter to Detail page, e.g. https://fluent-cms-admin.azurewebsites.net/pages/course/7.  
-The suffix `.detail` should be added to page name, the page `course.detail` corresponds to above path.  
-Detail page need to call query with query parameter `router.key`
+### Introduction to GrapesJS Panels
+The GrapesJS Page Designer UI provides a toolbox with four main panels:  
+![GrapesJS Toolbox](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/grapes-toolbox.png)  
+1. **Style Manager**: Lets users customize CSS properties of selected elements on the canvas. FluentCMS does not modify this panel.  
+2. **Traits Panel**: Allows you to modify attributes of selected elements. FluentCMS adds custom traits to bind data to components here.  
+3. **Layers Panel**: Displays a hierarchical view of page elements similar to the DOM structure. FluentCMS does not customize this panel, but it’s useful for locating FluentCMS blocks.  
+4. **Blocks Panel**: Contains pre-made blocks or components for drag-and-drop functionality. FluentCMS adds its own customized blocks here.  
 
-You can also add `Multipe-records` elements to detail page, if you don't specify query, page render tries to resolve the field from query result of the page.
+### Tailwind CSS Support
+FluentCMS includes Tailwind CSS by default for page rendering, using the following styles:
+
+```html
+<link rel="stylesheet" href="https://unpkg.com/tailwindcss@1.4.6/dist/base.min.css">
+<link rel="stylesheet" href="https://unpkg.com/tailwindcss@1.4.6/dist/components.min.css">
+<link rel="stylesheet" href="https://unpkg.com/@tailwindcss/typography@0.1.2/dist/typography.min.css">
+<link rel="stylesheet" href="https://unpkg.com/tailwindcss@1.4.6/dist/utilities.min.css">
+```
+
+### Page Types: Landing Page, Detail Page, and Home Page
+
+#### **Landing Page**: A landing page is typically the first page a visitor sees.   
+The URL format is `/page/<pagename>`.    
+A landing page is typically composed of multiple `Multiple Records Components`, each with its own `Query`, making the page-level `Query` optional.
+
+![Landing Page](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/page-landing.png)
+
+#### **Detail Page**: A detail page provides specific information about an item.  
+The URL format is `/page/<pagename>/<router parameter>`, FluentCMS retrieves data by passing the router parameter to the `FluentCMS Query`. 
+
+For the following settings  
+- Page Name: `course/{id}`  
+- Query: `courses`  
+FluentCMS will call the query `https://fluent-cms-admin.azurewebsites.net/api/queries/courses/one?id=3` for URL `https://fluent-cms-admin.azurewebsites.net/pages/course/3`
+
+![Course Detail Page](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/page-course.png)
+
+#### **Home Page**:
+The homepage is a special landing page with the name `home`. Its URL is `/pages/home`. If no other route handles the path `/`, FluentCMS will render `/` as `/pages/home`.
+
+### Data Binding: Singleton or Multiple Records
+
+FluentCMS uses [Handlebars expression](https://github.com/Handlebars-Net/Handlebars.Net) for dynamic data binding.
+
+#### Singleton
+Singleton fields are enclosed within `{{ }}`.
+
+![Singleton Field](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-single-field.png)
+
+#### Multiple Records
+`Handlebars` loops over arrays using the `each` block.
+
+```handlebars
+{{#each course}}
+    <li>{{title}}</li>
+{{/each}}
+```
+
+However, you won’t see the `{{#each}}` statement in the GrapesJS Page Designer. FluentCMS adds it automatically for any block under the `Multiple Records` category.
+
+Steps to bind multiple records:  
+1. Drag a block from the `Multiple Records` category.
+    ![Multiple Record Blocks](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-multiple-record-block.png)
+2. Hover over the GrapesJS components to find a block with the `Multiple-records` tag in the top-left corner, then click the `Traits` panel. You can also use the GrapesJS Layers Panel to locate the component.
+    ![Multiple Record Select](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-multiple-record-select.png)  
+3. In the `Traits` panel, you have the following options:
+    - **Field**: Specify the field name for the Page-Level Query (e.g., for the FluentCMS Query below, you could set the field as `teacher.skills`).  
+      ```json
+      {
+        "teacher": {
+          "firstname": "",
+          "skills": [
+            {
+              "name": "cooking fish",
+              "years": 3
+            }
+          ]
+        }
+      }
+      ```   
+    - **Query**: The query to retrieve data.  
+    - **Qs**: Query string parameters to pass (e.g., `?status=featured`, `?level=Advanced`).  
+    - **Offset**: Number of records to skip.  
+    - **Limit**: Number of records to retrieve.  
+   ![Multiple Record Trait](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-multiple-record-trait.png)
+
+### Linking and Images
+
+FluentCMS does not customize GrapesJS' Image and Link components, but locating where to input `Query Field` can be challenging. The steps below explain how to bind them.
+
+- **Link**:
+  Locate the link by hovering over the GrapesJS component or finding it in the `GrapesJS Layers Panel`. Then switch to the `Traits Panel` and input the detail page link, e.g., `/pages/course/{{id}}`. FluentCMS will render this as `<a href="/pages/course/3">...</a>`.
+
+- **Image**:
+  Double-click on the image component, input the image path, and select the image. For example, if the image field is `thumbnail_image_url`, input `/files/{{thumbnail_image_url}}`. FluentCMS will replace `{{thumbnail_image_url}}` with the actual field value.
+
+  ![Designer Image](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-image.png)
+
+### Customized Blocks
+FluentCMS adds customized blocks to simplify web page design and data binding for `FluentCMS Queries`. These blocks use Tailwind CSS.
+
+- **Multiple Records**: Components in this category contain subcomponents with a `Multiple-Records` trait.
+- **Card**: Typically used in detail pages.
+- **Header**: Represents a navigation bar or page header.
+</details>

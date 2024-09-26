@@ -1,10 +1,10 @@
 
 
 ## Developing a simple online course system use Fluent CMS
-<details>
-  <summary>
-      The following chapter will guide you through developing a simple online course system, starts with three entity `Teachers`, `Courses`, and `Students`.
-  </summary>
+<details> 
+<summary> 
+The following chapter will guide you through developing a simple online course system, starts with three entity `Teachers`, `Courses`, and `Students`. 
+</summary>
 
 ### Database Schema
 #### 1. **Teachers Table**
