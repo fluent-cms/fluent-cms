@@ -52,21 +52,14 @@ public sealed class PageService(ISchemaService schemaService,IQueryService query
     {
          var doc = new HtmlDocument();
          doc.LoadHtml(page.Html);
-         var listNodes = CheckResult(doc.LoadMultipleRecordNode());
-         ReplaceMultipleRecordNode(listNodes);
+         var listNodes = CheckResult(doc.GetMultipleRecordNode());
+         AddLoop(listNodes);
          await AttachListData(data, listNodes,qsDict,  cancellationToken);
         
          var template = Handlebars.Compile(doc.DocumentNode.OuterHtml);
          return template(data); 
     }
 
-    private void ReplaceMultipleRecordNode(MultipleRecordNode[] listNodes)
-    {
-        foreach (var listNode in listNodes)
-        {
-            listNode.HtmlNode.InnerHtml = "{{#each " + listNode.Field+ "}}" + listNode.HtmlNode.InnerHtml + "{{/each}}";
-        }
-    }
 
     private async Task AttachListData(Record data, MultipleRecordNode[] listNodes, Dictionary<string,StringValues> qsDict, CancellationToken cancellationToken)
     {
@@ -83,6 +76,13 @@ public sealed class PageService(ISchemaService schemaService,IQueryService query
             }
             var records = await queryService.Many(queryInfo.Query, pagination, dict, cancellationToken);
             data[multipleRecordNode.Field] = records;
+        }
+    }
+    private static void AddLoop(MultipleRecordNode[] listNodes)
+    {
+        foreach (var listNode in listNodes)
+        {
+            listNode.HtmlNode.InnerHtml = "{{#each " + listNode.Field+ "}}" + listNode.HtmlNode.InnerHtml + "{{/each}}";
         }
     }
 

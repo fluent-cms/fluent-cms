@@ -5,8 +5,7 @@ using HtmlAgilityPack;
 
 public static class HtmlDocExt
 {
-    
-    public static Result<MultipleRecordNode[]> LoadMultipleRecordNode(this HtmlDocument doc)
+    public static Result<MultipleRecordNode[]> GetMultipleRecordNode(this HtmlDocument doc)
     {
         var nodeCollection =
             doc.DocumentNode.SelectNodes($"//*[@{Constants.DataSourceTypeTag}='{DataSourceType.MultipleRecords}']");
@@ -23,13 +22,10 @@ public static class HtmlDocExt
             var query = htmlNode.ParseMultipleRecordsQuery();
             if (string.IsNullOrWhiteSpace(field) )
             {
-                if (string.IsNullOrWhiteSpace(query.Value.Query))
-                {
-                    return Result.Fail("can not find field of a multiple records name");
-                }
-                field = GenerateShortUuid();
+                if (string.IsNullOrWhiteSpace(query.Value.Query)) continue;
+                field = query.Value.ToString();
             }
-            ret.Add(new MultipleRecordNode(htmlNode.GetId(), htmlNode, field,query ));
+            ret.Add(new MultipleRecordNode(htmlNode, field,query ));
         }
         return ret.ToArray();
     }
@@ -46,11 +42,6 @@ public static class HtmlDocExt
         return i;
     }
 
-    private static string GetId(this HtmlNode node)
-    {
-        var s = node.GetAttributeValue(Attributes.Id, string.Empty);
-        return s!;
-    }
 
     private static Result<MultipleRecordQuery> ParseMultipleRecordsQuery(this HtmlNode div)
     {
@@ -74,20 +65,5 @@ public static class HtmlDocExt
 
         var qs = div.GetAttributeValue(Attributes.Qs, string.Empty);
         return new MultipleRecordQuery(query, qs, offset.Value, limit.Value);
-    }
-
-    private static string GenerateShortUuid()
-    {
-        // Generate a new GUID
-        Guid guid = Guid.NewGuid();
-
-        // Convert GUID to a byte array
-        byte[] guidBytes = guid.ToByteArray();
-
-        // Encode the byte array to Base64 and remove padding
-        return Convert.ToBase64String(guidBytes)
-            .Replace("=", "") // Remove padding
-            .Replace("/", "_") // Replace URL-unsafe characters
-            .Replace("+", "-"); // Replace URL-unsafe characters
     }
 }

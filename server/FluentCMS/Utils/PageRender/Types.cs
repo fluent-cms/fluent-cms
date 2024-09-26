@@ -1,3 +1,4 @@
+using System.Text;
 using FluentResults;
 using HtmlAgilityPack;
 
@@ -11,13 +12,10 @@ public static class Constants
 public static class DataSourceType
 {
     public const string  MultipleRecords= "multiple-records";
-    public const string SingleRecord = "single-record";
-    public const string PagedRecords = "paged-record";
 }
 
 public static class Attributes
 {
-    public const string Id = "id";
     public const string Query = "query";
     public const string Offset = "offset";
     public const string Limit = "limit";
@@ -25,8 +23,36 @@ public static class Attributes
     public const string Field = "field";
 }
 
-public record MultipleRecordQuery(string Query, string? Qs, int Offset, int Limit);
+public record MultipleRecordQuery(string Query, string? Qs, int Offset, int Limit)
+{
+    public override string ToString()
+    {
+        return $"{Query}_{Sanitize(Qs)}_{Offset}_{Limit}";
 
-public record MultipleRecordNode(string Id, HtmlNode HtmlNode,string Field, Result<MultipleRecordQuery> MultipleQuery);
+        string Sanitize(string? s)
+        {
+            if (string.IsNullOrWhiteSpace(s))
+            {
+                return "";
+            }
+            var ret = new StringBuilder();
+            foreach (var c in s)
+            {
+                if (c >= '0' && c <= '9' || c >= 'a' && c <= 'z')
+                {
+                    ret.Append(c);
+                }
+                else
+                {
+                    ret.Append('_');
+                }
+            }
+
+            return ret.ToString();
+        }
+    }
+}
+
+public record MultipleRecordNode(HtmlNode HtmlNode,string Field, Result<MultipleRecordQuery> MultipleQuery);
 
 
