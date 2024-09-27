@@ -10,6 +10,7 @@ using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.LocalFileStore;
+using FluentCMS.Utils.PageRender;
 using FluentCMS.Utils.QueryBuilder;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Primitives;
@@ -78,6 +79,7 @@ public static class Basic
                         {
                             Console.WriteLine(e);
                         }
+                        context.Response.StatusCode = StatusCodes.Status200OK;
                         await context.Response.WriteAsync(html);
                     }
                 }
@@ -141,8 +143,13 @@ public static class Basic
                 if (!string.IsNullOrWhiteSpace(source))
                 {
                     var target = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-                    CopyDirectory(Path.Combine(source,"schema-ui"),Path.Combine(target, "schema-ui"));
-                    CopyDirectory(Path.Combine(source,"admin"),Path.Combine(target, "admin") );
+                    foreach (var path in new[] { "schema-ui", "admin", "static-assets" })
+                    {
+                        CopyDirectory(Path.Combine(source, path), Path.Combine(target, path));
+                        CopyDirectory(Path.Combine(source, path), Path.Combine(target, path));
+                        CopyDirectory(Path.Combine(source, path), Path.Combine(target, path));
+                    }
+
                     if (!File.Exists(Path.Combine(target,"favicon.ico")))
                     {
                         File.Copy(Path.Combine(source,"favicon.ico"), Path.Combine(target,"favicon.ico"));
@@ -213,6 +220,7 @@ public static class Basic
         void InjectServices()
         {
             builder.Services.AddMemoryCache();
+            builder.Services.AddSingleton<Renderer>(_ => new Renderer("wwwroot/static-assets/templates/template.html"));
             builder.Services.AddSingleton<HookRegistry>(_ => new HookRegistry());
             builder.Services.AddSingleton<ImmutableCache<Query>>(p =>
                 new ImmutableCache<Query>(p.GetRequiredService<IMemoryCache>(), 30, "view"));

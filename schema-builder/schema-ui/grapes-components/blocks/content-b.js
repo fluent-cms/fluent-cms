@@ -116,7 +116,7 @@ export const contentB = {
       </div>
       <p class="lg:w-1/2 w-full leading-relaxed text-gray-500">Whatever cardigan tote bag tumblr hexagon brooklyn asymmetrical gentrify, subway tile poke farm-to-table. Franzen you probably haven't heard of them man bun deep jianbing selfies heirloom prism food truck ugh squid celiac humblebrag.</p>
     </div>
-    <div data-add="2" class="flex flex-wrap -m-4" data-gjs-type="multiple-records" data-source-type="multiple-records">
+    <div class="flex flex-wrap -m-4" data-gjs-type="multiple-records" data-source-type="multiple-records">
       <div class="xl:w-1/4 md:w-1/2 p-4">
         <div class="bg-gray-100 p-6 rounded-lg">
           <a href="/pages/page-name/{{slug}}" style="display: inline-block" >

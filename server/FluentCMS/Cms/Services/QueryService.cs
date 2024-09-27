@@ -18,13 +18,19 @@ public sealed class QueryService(
 ) : IQueryService
 {
 
-    public async Task<RecordViewResult> List(string queryName, Cursor cursor,
+    public async Task<RecordQueryResult> List(string queryName, Cursor cursor, Pagination? pagination,
         Dictionary<string, StringValues> querystringDictionary, CancellationToken cancellationToken)
     {
         var view = await querySchemaService.GetByNameAndCache(queryName, cancellationToken);
         CheckResult(view.Filters.ResolveValues(view.Entity!,  schemaService.CastToDatabaseType, querystringDictionary));
         CheckResult(cursor.ResolveBoundaryItem(view.Entity!, schemaService.CastToDatabaseType));
-        var pagination = new Pagination { Limit = view.PageSize + 1 }; //get extra record to check if it's the last page
+        pagination ??= new Pagination { Limit = view.PageSize };
+        if (pagination.Limit== 0 || pagination.Limit > view.PageSize)
+        {
+            pagination.Limit = view.PageSize;
+        }
+
+        pagination.Limit++;// add extra to check has more
         var (exit, hookResult) = await TriggerHook(Occasion.BeforeQueryList, view, view.Filters, view.Sorts, cursor, pagination);
         if (exit)
         {
@@ -35,6 +41,7 @@ public sealed class QueryService(
         var query = CheckResult(view.Entity!.ListQuery(view.Filters, view.Sorts, pagination, cursor, attributes,
             schemaService.CastToDatabaseType));
         var items = await kateQueryExecutor.Many(query, cancellationToken);
+
         var results = BuildRecordViewResult(items, cursor, pagination, view.Sorts);
         if (results.Items is not null && results.Items.Length > 0)
         {
@@ -110,11 +117,11 @@ public sealed class QueryService(
 
 
 
-    private RecordViewResult BuildRecordViewResult(Record[] items, Cursor cursor, Pagination pagination, Sorts? sorts)
+    private RecordQueryResult BuildRecordViewResult(Record[] items, Cursor cursor, Pagination pagination, Sorts? sorts)
     {
         if (items.Length == 0)
         {
-            return new RecordViewResult();
+            return new RecordQueryResult();
         }
         
         var hasMore = items.Length == pagination.Limit;
@@ -127,7 +134,7 @@ public sealed class QueryService(
 
         var nextCursor = CheckResult(cursor.GetNextCursor(items, sorts, hasMore));
 
-        return new RecordViewResult
+        return new RecordQueryResult
         {
             Items = items,
             First = nextCursor.First,

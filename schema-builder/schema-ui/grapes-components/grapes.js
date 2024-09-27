@@ -15,7 +15,10 @@ function addCustomTypes(editor){
     for(const [name, traits] of  Object.entries(customTypes)){
         editor.Components.addType(name, {
             model: {
-                defaults: {traits},
+                defaults: {
+                    traits,
+                    attributes: { id: `${name}-${Date.now()}-${Math.floor(Math.random() * 1000)}` },
+                },
             },
             view:{
                 openSettings: function ( e ) {

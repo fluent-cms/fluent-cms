@@ -1,8 +1,8 @@
 namespace FluentCMS.Utils.QueryBuilder;
 
-public class RecordViewResult : ViewResult<Record>;
+public class RecordQueryResult : QueryResult<Record>;
 
-public class ViewResult<T>
+public class QueryResult<T>
 {
     public T[]? Items { get; set; }
     public string First { get; set; } = "";
