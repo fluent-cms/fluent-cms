@@ -28,10 +28,6 @@ namespace FluentCMS.Utils.QueryBuilder;
     {
         public const string SortKey = "sort";
 
-        public Sorts()
-        {
-        }
-
         public static Result<Sorts>  Parse(Qs.QsDict qsDict)
         {
             var ret = new Sorts();
@@ -44,6 +40,14 @@ namespace FluentCMS.Utils.QueryBuilder;
             {
                 FieldName = field.Key, Order = field.Values.FirstOrDefault() == "1" ? SortOrder.Asc : SortOrder.Desc,
             }));
+            return ret;
+        }
+
+        public Sorts ReverseOrder()
+        {
+            var ret = new Sorts();
+            ret.AddRange(this.Select(sort => new Sort
+                { FieldName = sort.FieldName, Order = sort.Order == SortOrder.Asc ? SortOrder.Desc : SortOrder.Asc }));
             return ret;
         }
     }

@@ -1,42 +1,66 @@
 $(document).ready(function() {
-    var loading = false;
-
-    function loadMoreCourses(target) {
-        let last = target.attributes['last'].value;
-        if (!last){
+    var loadingDict = new Map();
+    initIntersectionObserver();
+    
+    function loadMore(token, render) {
+        if (!token || loadingDict[token]){
             return
         }
-        
-        if (loading) return;
-        loading = true;
+        loadingDict[token] = true;
         $.ajax({
             url: '/pages', 
             type: 'GET',
             data: {
-                token: last,
+                token,
             },
             success: function(response) {
-                const template = document.createElement('template');
-                template.innerHTML = response.trim();
-                target.parentElement.appendChild(template.content);
-                target.remove();
-                loading = false;
-            },
+                render(response);
+                loadingDict[token] = false;
+           },
             error: function() {
                 console.log('Error loading more.');
-                loading = false;
+                loadingDict[token] = false;
             }
         });
     }
     
-    let observer = new IntersectionObserver(function(entries) {
-        entries.forEach(entry => {
-            if (entry.isIntersecting && !loading) {
-                loadMoreCourses(entry.target);  // Load more courses when the hidden element is in view
-            }
+    function initIntersectionObserver() {
+        let observer = new IntersectionObserver(function (entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    loadMore(  entry.target.attributes['last'].value, response=>{
+                        const template = document.createElement('template');
+                        template.innerHTML = response.trim();
+                        entry.target.parentElement.appendChild(content);
+                        entry.target.remove();
+                        initIntersectionObserver();
+                    });
+                }
+            });
         });
-    });
 
-    // Observe the hidden element
-    observer.observe(document.querySelector(".load-more-trigger"));
+        // Observe the hidden element
+        let ele = document.querySelector(".load-more-trigger");
+        if (ele) observer.observe(ele);
+    }
+
+    $('[data-command="next"]').click(function(e) {
+        event.preventDefault(); // Prevent default anchor behavior
+        let target = e.target;
+        let parent = target.parentElement.parentElement;
+        let list = parent.querySelector('[data-source-type="multiple-records"]');
+        loadMore(list.attributes['last'].value, response =>{
+            list.outerHTML = response;
+        })
+    });
+    
+    $('[data-command="previous"]').click(function(e) {
+        event.preventDefault();
+        let target = e.target;
+        let parent = target.parentElement.parentElement;
+        let list = parent.querySelector('[data-source-type="multiple-records"]');
+        loadMore(list.attributes['first'].value, response =>{
+            list.outerHTML = response;
+        })
+    });
 });

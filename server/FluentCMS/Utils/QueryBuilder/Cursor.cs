@@ -13,7 +13,7 @@ public sealed class Cursor
 
     public object? BoundaryValue(string fld) => BoundaryItem?[fld];
     private bool IsEmpty => string.IsNullOrWhiteSpace(First) && string.IsNullOrWhiteSpace(Last);
-    private bool IsForward => !string.IsNullOrWhiteSpace(Last) || string.IsNullOrWhiteSpace(First);
+    public bool IsForward => !string.IsNullOrWhiteSpace(Last) || string.IsNullOrWhiteSpace(First);
     
     public string GetCompareOperator(Sort s)
     {

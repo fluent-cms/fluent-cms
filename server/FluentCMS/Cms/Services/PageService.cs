@@ -55,7 +55,7 @@ public sealed class PageService(ISchemaService schemaService, IQueryService quer
             .ValOrThrow($"Can not find page [{token.Page}]");
 
         var htmlNode = ParseNode();
-        var template = Handlebars.Compile(htmlNode.InnerHtml);
+        var template = Handlebars.Compile(htmlNode.OuterHtml);
         var data = await PrepareData();
         return template(data);
 
@@ -65,7 +65,7 @@ public sealed class PageService(ISchemaService schemaService, IQueryService quer
             doc.LoadHtml(page.Html);
             var node = doc.GetElementbyId(token.NodeId);
             node.AddLoop(token.Field);
-            node.AddPagination(token.Field, token.PaginationType);
+            if (token.PaginationType == PaginationType.InfiniteScroll) node.AddPagination(token.Field);
             return node;
 
         }
@@ -95,7 +95,7 @@ public sealed class PageService(ISchemaService schemaService, IQueryService quer
         foreach (var (htmlNode, field, paginationType, _) in listNodes)
         {
             htmlNode.AddLoop(field);
-            htmlNode.AddPagination(field, paginationType);
+            if (paginationType == PaginationType.InfiniteScroll) htmlNode.AddPagination(field);
         }
 
         foreach (var repeatNode in listNodes)
@@ -110,7 +110,6 @@ public sealed class PageService(ISchemaService schemaService, IQueryService quer
         return template(data);
     }
 
-
     private static void SetPaginationData(RecordQueryResult result, string page, RepeatNode repeatNode)
     {
         var token = new PartialToken(page, repeatNode.HtmlNode.Id, repeatNode.Field, repeatNode.PaginationType,
@@ -120,7 +119,6 @@ public sealed class PageService(ISchemaService schemaService, IQueryService quer
         result.Last = string.IsNullOrWhiteSpace(result.Last) ? "" :(token with{Last = result.Last}).ToString();
         result.First = string.IsNullOrWhiteSpace(result.First) ? "" :(token with{First = result.First}).ToString();
     }
-
 
     private static string GetTitle(Record data, Page page) => Handlebars.Compile(page.Title)(data);
 }

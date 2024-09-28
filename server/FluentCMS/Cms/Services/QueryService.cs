@@ -38,9 +38,15 @@ public sealed class QueryService(
         }
 
         var attributes = view.Selection.GetLocalAttributes();
+        
         var query = CheckResult(view.Entity!.ListQuery(view.Filters, view.Sorts, pagination, cursor, attributes,
             schemaService.CastToDatabaseType));
         var items = await kateQueryExecutor.Many(query, cancellationToken);
+        
+        if (!cursor.IsForward)
+        {
+            items = items.Reverse().ToArray();
+        }
 
         var results = BuildRecordViewResult(items, cursor, pagination, view.Sorts);
         if (results.Items is not null && results.Items.Length > 0)

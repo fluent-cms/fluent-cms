@@ -8,28 +8,17 @@ using HtmlAgilityPack;
 
 public static class HtmlDocExt
 {
-    public static void AddPagination(this HtmlNode node, string field, PaginationType paginationType)
+    public static void AddPagination(this HtmlNode node, string field)
     {
-            node.InnerHtml += paginationType switch
-            {
-                PaginationType.InfiniteScroll =>
-                    $"<div class=\"load-more-trigger\" style=\"visibility:hidden;\" last=\"{{{{{field}.last}}}}\"></div>",
-                PaginationType.Button =>
-                    """
-                    <nav class="flex space-x-2" aria-label="Pagination">
-                       <a href="#" class="relative inline-flex items-center px-4 py-2 text-sm bg-gradient-to-r from-violet-300 to-indigo-300 border border-fuchsia-100 hover:border-violet-100 font-semibold cursor-pointer leading-5 rounded-md transition duration-150 ease-in-out focus:outline-none focus:shadow-outline-blue focus:border-blue-300 focus:z-10"> Previous </a>
-                       <a href="#" class="relative inline-flex items-center px-4 py-2 text-sm bg-gradient-to-r from-violet-300 to-indigo-300 border border-fuchsia-100 hover:border-violet-100 font-semibold cursor-pointer leading-5 rounded-md transition duration-150 ease-in-out focus:outline-none focus:shadow-outline-blue focus:border-blue-300 focus:z-10"> Next </a>
-                    </nav>
-                    """,
-                _ => ""
-            };
+        node.InnerHtml += $"<div class=\"load-more-trigger\" style=\"visibility:hidden;\" last=\"{{{{{field}.last}}}}\"></div>";
     }
 
     public static void AddLoop(this HtmlNode node, string field)
     {
         node.InnerHtml = "{{#each " + field+ ".items}}" + node.InnerHtml + "{{/each}}";
+        node.Attributes.Add("first",$"{{{{{field}.first}}}}");
+        node.Attributes.Add("last", $"{{{{{field}.last}}}}");
     }
-
   
     public static Result<RepeatNode[]> GetRepeatingNodes(this HtmlDocument doc, Dictionary<string,StringValues> baseDict)
     {
