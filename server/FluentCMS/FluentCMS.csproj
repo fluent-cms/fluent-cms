@@ -53,10 +53,6 @@
       <_ContentIncludedByDefault Remove="Components\Routes.razor" />
       <_ContentIncludedByDefault Remove="Components\_Imports.razor" />
     </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Utils\MongoExt\" />
-    </ItemGroup>
     <PropertyGroup>
         <PackageReadmeFile>readme.md</PackageReadmeFile>
         <TargetFramework>net8.0</TargetFramework>
