@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using FluentCMS.Auth.Services;
 using FluentCMS.Blog.Data;
 using FluentCMS.Services;
@@ -37,18 +36,16 @@ return;
 /////////////////////////////////////////////////
 void AddCms()
 {
-    var staticAssetRoot = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "wwwroot-win" : "wwwroot";
-
     switch (databaseProvider)
     {
         case "Sqlite":
-            builder.AddSqliteCms(connectionString, staticAssetRoot);
+            builder.AddSqliteCms(connectionString);
             break;
         case "Postgres":
-            builder.AddPostgresCms(connectionString, staticAssetRoot);
+            builder.AddPostgresCms(connectionString);
             break;
         case "SqlServer":
-            builder.AddSqlServerCms(connectionString,staticAssetRoot);
+            builder.AddSqlServerCms(connectionString);
             break;
         default:
             throw new Exception($"unknown provider {databaseProvider}");

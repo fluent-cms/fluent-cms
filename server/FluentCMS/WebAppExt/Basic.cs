@@ -11,19 +11,19 @@ public class ContentRootConfig
 
 public static class Basic
 {
-    public static void AddPostgresCms(this WebApplicationBuilder builder, string connectionString, string staticAssetRootPath ="")
+    public static void AddPostgresCms(this WebApplicationBuilder builder, string connectionString)
     {
-        CmsApp.Build(builder, DatabaseProvider.Postgres,connectionString,staticAssetRootPath);
+        CmsApp.Build(builder, DatabaseProvider.Postgres,connectionString);
     }
 
-    public static void AddSqliteCms(this WebApplicationBuilder builder, string connectionString, string staticAssetRootPath ="")
+    public static void AddSqliteCms(this WebApplicationBuilder builder, string connectionString)
     {
-        CmsApp.Build(builder, DatabaseProvider.Sqlite,connectionString, staticAssetRootPath);
+        CmsApp.Build(builder, DatabaseProvider.Sqlite,connectionString);
     }
 
-    public static void AddSqlServerCms(this WebApplicationBuilder builder, string connectionString, string staticAssetRootPath ="")
+    public static void AddSqlServerCms(this WebApplicationBuilder builder, string connectionString)
     {
-        CmsApp.Build(builder, DatabaseProvider.SqlServer, connectionString, staticAssetRootPath);
+        CmsApp.Build(builder, DatabaseProvider.SqlServer, connectionString);
     } 
 
     public static void RegisterCmsHook(this WebApplication app, string entityName, Occasion[] occasion, Delegate func)

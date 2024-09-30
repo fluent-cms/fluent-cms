@@ -26,9 +26,10 @@ public enum DatabaseProvider
     SqlServer,
 }
 
-public class CmsApp(ILogger<CmsApp> logger, DatabaseProvider databaseProvider, string connectionString, string environmentName, string staticFileRoot)
+public class CmsApp(ILogger<CmsApp> logger, DatabaseProvider databaseProvider, string connectionString, string environmentName)
 {
-    public static void Build(WebApplicationBuilder builder,DatabaseProvider databaseProvider, string connectionString, string staticFileRoot = "")
+    private const string StaticFileRoot = "wwwroot";
+    public static void Build(WebApplicationBuilder builder,DatabaseProvider databaseProvider, string connectionString)
     {
         AddRouters();
         InjectDbServices();
@@ -50,13 +51,14 @@ public class CmsApp(ILogger<CmsApp> logger, DatabaseProvider databaseProvider, s
                 p.GetRequiredService<ILogger<CmsApp>>(), 
                 databaseProvider, 
                 connectionString,
-                builder.Environment.EnvironmentName,
-                string.IsNullOrWhiteSpace(staticFileRoot) ? "wwwroot": staticFileRoot));
-            builder.Services.AddSingleton<Renderer>(_ => new Renderer(Path.Combine(Directory.GetCurrentDirectory(),staticFileRoot,"static-assets/templates/template.html")));
+                builder.Environment.EnvironmentName
+                )
+            );
+            builder.Services.AddSingleton<Renderer>(_ => new Renderer(Path.Combine(Directory.GetCurrentDirectory(),StaticFileRoot,"static-assets/templates/template.html")));
             builder.Services.AddSingleton<HookRegistry>(_ => new HookRegistry());
             builder.Services.AddSingleton<ImmutableCache<Query>>(p =>
                 new ImmutableCache<Query>(p.GetRequiredService<IMemoryCache>(), 30, "view"));
-            builder.Services.AddSingleton<LocalFileStore>(p => new LocalFileStore(Path.Combine(Directory.GetCurrentDirectory(),staticFileRoot,"files")));
+            builder.Services.AddSingleton<LocalFileStore>(p => new LocalFileStore(Path.Combine(Directory.GetCurrentDirectory(),StaticFileRoot,"files")));
             builder.Services.AddSingleton<KateQueryExecutor>(p =>
                 new KateQueryExecutor(p.GetRequiredService<IKateProvider>(), 30));
             builder.Services.AddScoped<ISchemaService, SchemaService>();
@@ -170,14 +172,14 @@ public class CmsApp(ILogger<CmsApp> logger, DatabaseProvider databaseProvider, s
 
         void UseStatic()
         {
-            if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(),staticFileRoot, "admin"))  
-                && !Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(),staticFileRoot ,"schema-ui")))
+            if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(),StaticFileRoot, "admin"))  
+                && !Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(),StaticFileRoot ,"schema-ui")))
             {
-                logger.LogError($"Can not find FluentCMS client files, copying files to {staticFileRoot}");
+                logger.LogInformation($"Can not find FluentCMS client files, copying files to {StaticFileRoot}");
                 var res = CopyPackageFiles();
                 logger.LogWarning(res
-                    ? $"FluentCMS client files are copied to {staticFileRoot}, please start the app again"
-                    : $"Copy FluentCMS client files fail, please manually copy file from .nuget/packages/fluentcms to {staticFileRoot}");
+                    ? $"FluentCMS client files are copied to {StaticFileRoot}, please start the app again"
+                    : $"Copy FluentCMS client files fail, please manually copy file from .nuget/packages/fluentcms to {StaticFileRoot}");
 
                 Environment.Exit(0);
             }
@@ -196,7 +198,7 @@ public class CmsApp(ILogger<CmsApp> logger, DatabaseProvider databaseProvider, s
                 var source = rootConfig?.ContentRoots.FirstOrDefault(x => x.Contains("fluentcms"));
                 if (!string.IsNullOrWhiteSpace(source))
                 {
-                    var target = Path.Combine(Directory.GetCurrentDirectory(), staticFileRoot);
+                    var target = Path.Combine(Directory.GetCurrentDirectory(), StaticFileRoot);
                     foreach (var path in new[] { "schema-ui", "admin", "static-assets" })
                     {
                         CopyDirectory(Path.Combine(source, path), Path.Combine(target, path));
@@ -258,7 +260,7 @@ public class CmsApp(ILogger<CmsApp> logger, DatabaseProvider databaseProvider, s
         logger.LogInformation($"Resolved Database Provider: {databaseProvider}");
         logger.LogInformation($"Connection String: {string.Join(";", parts)}");
         logger.LogInformation($"Current Location: {Directory.GetCurrentDirectory()}");
-        logger.LogInformation($"Static Asset Root:{staticFileRoot}");
+        logger.LogInformation($"Static Asset Root:{StaticFileRoot}");
         logger.LogInformation($"Fluent CMS Package Location:{GetAssemblyPath()}");
         logger.LogInformation("*********************************************************");
     }
