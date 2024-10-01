@@ -5,6 +5,7 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <UserSecretsId>2c91248f-3004-4e04-88be-54a2a3bd3a75</UserSecretsId>
+        <RootNamespace>FluentCMS.Blog</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
