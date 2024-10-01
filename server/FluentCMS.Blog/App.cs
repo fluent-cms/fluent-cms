@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FluentCMS.Blog;
 
-public class App
+public static class App
 {
    const string CorsPolicyName = "AllowAllOrigins";
    public static async Task Run(WebApplicationBuilder builder)
@@ -44,7 +44,7 @@ public class App
       await ctx.Database.EnsureCreatedAsync();
    }
 
-   static void AddCms(WebApplicationBuilder builder,string databaseProvider, string connectionString)
+   private static void AddCms(WebApplicationBuilder builder,string databaseProvider, string connectionString)
    {
       switch (databaseProvider)
       {
@@ -61,8 +61,8 @@ public class App
             throw new Exception($"unknown provider {databaseProvider}");
       }
    }
-   
-   static void AddCors(WebApplicationBuilder builder)
+
+   private static void AddCors(WebApplicationBuilder builder)
    {
       var origins = builder.Configuration.GetValue<string>("AllowedOrigins");
       if (!string.IsNullOrWhiteSpace(origins))
@@ -78,8 +78,8 @@ public class App
          });
       }
    }
-   
-   static void AddDbContext(WebApplicationBuilder builder,string databaseProvider, string connectionString)
+
+   private static void AddDbContext(WebApplicationBuilder builder,string databaseProvider, string connectionString)
    {
       switch (databaseProvider)
       {
@@ -96,8 +96,8 @@ public class App
             throw new Exception($"Not supported Provider {databaseProvider}");
       }
    }
-   
-   static (string, string) GetProviderAndConnectionString(WebApplicationBuilder builder)
+
+   private static (string, string) GetProviderAndConnectionString(WebApplicationBuilder builder)
    {
       var provider = builder.Configuration.GetValue<string>("DatabaseProvider");
       if (string.IsNullOrWhiteSpace(provider))

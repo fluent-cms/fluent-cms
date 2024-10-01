@@ -44,7 +44,6 @@ function App() {
                 <Route path={`${configs.adminBaseRouter}${LoginRoute}`} element={<LoginPage/>}/>
                 <Route path={`${configs.adminBaseRouter}${LoginRoute}`} element={<RegisterPage/>}/>
                 <Route path={configs.adminBaseRouter} element={<LoginPage />} />
-                <Route path={'/'} element={<LoginPage />} />
             </Routes>
             </>
     );

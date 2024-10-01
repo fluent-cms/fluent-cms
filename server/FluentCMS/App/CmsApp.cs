@@ -1,10 +1,7 @@
-using System.Reflection;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 using FluentCMS.Auth.Services;
 using FluentCMS.Cms.Models;
 using FluentCMS.Cms.Services;
-using FluentCMS.Services;
 using FluentCMS.Utils.Cache;
 using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.HookFactory;
@@ -12,12 +9,10 @@ using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.LocalFileStore;
 using FluentCMS.Utils.PageRender;
 using FluentCMS.Utils.QueryBuilder;
-using FluentCMS.WebAppExt;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Primitives;
 
 namespace FluentCMS.App;
-
 
 public enum DatabaseProvider
 {
@@ -26,9 +21,14 @@ public enum DatabaseProvider
     SqlServer,
 }
 
-public class CmsApp(ILogger<CmsApp> logger, DatabaseProvider databaseProvider, string connectionString, string environmentName)
+public class CmsApp(
+    WebApplicationBuilder builder,
+    ILogger<CmsApp> logger, 
+    DatabaseProvider databaseProvider, 
+    string connectionString 
+)
 {
-    private const string StaticFileRoot = "wwwroot";
+    private const string FluentCmsContentRoot = "/_content/FluentCMS";
     public static void Build(WebApplicationBuilder builder,DatabaseProvider databaseProvider, string connectionString)
     {
         AddRouters();
@@ -48,17 +48,22 @@ public class CmsApp(ILogger<CmsApp> logger, DatabaseProvider databaseProvider, s
         {
             builder.Services.AddMemoryCache();
             builder.Services.AddSingleton<CmsApp>(p => new CmsApp(
+                    builder,
                 p.GetRequiredService<ILogger<CmsApp>>(), 
                 databaseProvider, 
-                connectionString,
-                builder.Environment.EnvironmentName
+                connectionString
                 )
             );
-            builder.Services.AddSingleton<Renderer>(_ => new Renderer(Path.Combine(Directory.GetCurrentDirectory(),StaticFileRoot,"static-assets/templates/template.html")));
+            builder.Services.AddSingleton<Renderer>(p =>
+            {
+                var provider = p.GetRequiredService<IWebHostEnvironment>().WebRootFileProvider;
+                var fileInfo = provider.GetFileInfo($"{FluentCmsContentRoot}/static-assets/templates/template.html");
+                return new Renderer(fileInfo.PhysicalPath??"");
+            });
             builder.Services.AddSingleton<HookRegistry>(_ => new HookRegistry());
             builder.Services.AddSingleton<ImmutableCache<Query>>(p =>
                 new ImmutableCache<Query>(p.GetRequiredService<IMemoryCache>(), 30, "view"));
-            builder.Services.AddSingleton<LocalFileStore>(p => new LocalFileStore(Path.Combine(Directory.GetCurrentDirectory(),StaticFileRoot,"files")));
+            builder.Services.AddSingleton<LocalFileStore>(p => new LocalFileStore(Path.Combine(Directory.GetCurrentDirectory(),"wwwroot/files")));
             builder.Services.AddSingleton<KateQueryExecutor>(p =>
                 new KateQueryExecutor(p.GetRequiredService<IKateProvider>(), 30));
             builder.Services.AddScoped<ISchemaService, SchemaService>();
@@ -106,10 +111,11 @@ public class CmsApp(ILogger<CmsApp> logger, DatabaseProvider databaseProvider, s
 
     public async Task UseCmsAsync(WebApplication app)
     {
+        var env = app.Services.GetRequiredService<IWebHostEnvironment>();
         PrintVersion();
         await InitSchema();
-        UseStatic();
-        UserAdminPanel();
+        app.UseStaticFiles();
+        UseAdminPanel();
         UseServerRouters();
         UseHomePage();
         return;
@@ -131,7 +137,10 @@ public class CmsApp(ILogger<CmsApp> logger, DatabaseProvider databaseProvider, s
                     {
                         using var scope = app.Services.CreateScope();
                         var pageService = scope.ServiceProvider.GetRequiredService<IPageService>();
-                        var html = """<a href="/admin">Log in to Admin</a>""";
+                        var html = $"""
+                                    <a href="{FluentCmsContentRoot}/admin">Log in to Admin</a><br/>
+                                    <a href="{FluentCmsContentRoot}/schema-ui/list.html">Go to Schema Builder</a>
+                                    """;
                         try
                         {
                             html = await pageService.Get(Page.HomePage, new Dictionary<string, StringValues>());
@@ -157,96 +166,17 @@ public class CmsApp(ILogger<CmsApp> logger, DatabaseProvider databaseProvider, s
             await schemaService.EnsureTopMenuBar(default);
         }
 
-        void UserAdminPanel()
+        void UseAdminPanel()
         {
-            app.MapWhen(context => context.Request.Path.StartsWithSegments("/admin"), subApp =>
+            app.MapWhen(context => context.Request.Path.StartsWithSegments($"{FluentCmsContentRoot}/admin"), subApp =>
             {
                 subApp.UseRouting();
                 subApp.UseEndpoints(endpoints =>
                 {
-                    endpoints.MapFallbackToFile("/admin/", "admin/index.html");
-                    endpoints.MapFallbackToFile("/admin/{*path:nonfile}", "admin/index.html");
+                    endpoints.MapFallbackToFile($"{FluentCmsContentRoot}/admin", $"{FluentCmsContentRoot}/admin/index.html");
+                    endpoints.MapFallbackToFile($"{FluentCmsContentRoot}/admin/{{*path:nonfile}}", $"{FluentCmsContentRoot}/admin/index.html");
                 });
             });
-        }
-
-        void UseStatic()
-        {
-            if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(),StaticFileRoot, "admin"))  
-                && !Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(),StaticFileRoot ,"schema-ui")))
-            {
-                logger.LogInformation($"Can not find FluentCMS client files, copying files to {StaticFileRoot}");
-                var res = CopyPackageFiles();
-                logger.LogWarning(res
-                    ? $"FluentCMS client files are copied to {StaticFileRoot}, please start the app again"
-                    : $"Copy FluentCMS client files fail, please manually copy file from .nuget/packages/fluentcms to {StaticFileRoot}");
-
-                Environment.Exit(0);
-            }
-
-            app.UseStaticFiles();
-        }
-
-        bool CopyPackageFiles()
-        {
-            var filePattern = "*.staticwebassets.runtime.json";
-            var files = Directory.GetFiles(GetAssemblyPath(), filePattern, SearchOption.TopDirectoryOnly);
-            if (files.Any())
-            {
-                var content = File.ReadAllText(files.First());
-                var rootConfig = JsonSerializer.Deserialize<ContentRootConfig>(content);
-                var source = rootConfig?.ContentRoots.FirstOrDefault(x => x.Contains("fluentcms"));
-                if (!string.IsNullOrWhiteSpace(source))
-                {
-                    var target = Path.Combine(Directory.GetCurrentDirectory(), StaticFileRoot);
-                    foreach (var path in new[] { "schema-ui", "admin", "static-assets" })
-                    {
-                        CopyDirectory(Path.Combine(source, path), Path.Combine(target, path));
-                        CopyDirectory(Path.Combine(source, path), Path.Combine(target, path));
-                        CopyDirectory(Path.Combine(source, path), Path.Combine(target, path));
-                    }
-
-                    if (!File.Exists(Path.Combine(target, "favicon.ico")))
-                    {
-                        File.Copy(Path.Combine(source, "favicon.ico"), Path.Combine(target, "favicon.ico"));
-                    }
-
-                    return true;
-                }
-            }
-            else
-            {
-               logger.LogWarning("Can not find file staticwebassets.runtime.json");
-            }
-
-            return false;
-        }
-
-        void CopyDirectory(string sourceDir, string destinationDir)
-        {
-            Directory.CreateDirectory(destinationDir);
-
-            foreach (var file in Directory.GetFiles(sourceDir))
-            {
-                var fileName = Path.GetFileName(file);
-                var destFile = Path.Combine(destinationDir, fileName);
-                try
-                {
-                    File.Copy(file, destFile, overwrite: true);
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError($"Error copying file '{file}': {ex.Message}");
-                }
-            }
-
-            // Recursively copy all subdirectories
-            foreach (var subDir in Directory.GetDirectories(sourceDir))
-            {
-                var subDirName = Path.GetFileName(subDir);
-                var destSubDir = Path.Combine(destinationDir, subDirName);
-                CopyDirectory(subDir, destSubDir);
-            }
         }
     }
 
@@ -256,18 +186,9 @@ public class CmsApp(ILogger<CmsApp> logger, DatabaseProvider databaseProvider, s
             .Where(x => !x.StartsWith("Password"))
             .ToArray();
         logger.LogInformation("*********************************************************");
-        logger.LogInformation($"Fluent CMS, {environmentName}");
+        logger.LogInformation($"Fluent CMS, {builder.Environment.EnvironmentName}");
         logger.LogInformation($"Resolved Database Provider: {databaseProvider}");
         logger.LogInformation($"Connection String: {string.Join(";", parts)}");
-        logger.LogInformation($"Current Location: {Directory.GetCurrentDirectory()}");
-        logger.LogInformation($"Static Asset Root:{StaticFileRoot}");
-        logger.LogInformation($"Fluent CMS Package Location:{GetAssemblyPath()}");
         logger.LogInformation("*********************************************************");
-    }
-    
-    private static string GetAssemblyPath()
-    {
-        var assemblyPath = Assembly.GetAssembly(typeof(InvalidParamException))!.Location;
-        return Path.GetDirectoryName(assemblyPath)!;
     }
 }
