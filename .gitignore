@@ -30,8 +30,3 @@
 /k8s_deploy/eks/ebs/mainfest/
 /server/FluentCMS.IntegrationTests/temp.db
 /server/FluentCMS.IntegrationTests/default.db
-/examples/WebApiExamples/cms.db
-/examples/WebApiExamples/wwwroot/
-/examples/WebApiExamples/.idea/
-/examples/WebApiExamples/bin/
-/examples/WebApiExamples/obj/

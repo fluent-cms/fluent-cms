@@ -63,7 +63,11 @@ public class CmsApp(
             builder.Services.AddSingleton<HookRegistry>(_ => new HookRegistry());
             builder.Services.AddSingleton<ImmutableCache<Query>>(p =>
                 new ImmutableCache<Query>(p.GetRequiredService<IMemoryCache>(), 30, "view"));
-            builder.Services.AddSingleton<LocalFileStore>(p => new LocalFileStore(Path.Combine(Directory.GetCurrentDirectory(),"wwwroot/files")));
+            builder.Services.AddSingleton<LocalFileStore>(p => new LocalFileStore(
+                Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/files"),
+                1200,
+                70)
+            );
             builder.Services.AddSingleton<KateQueryExecutor>(p =>
                 new KateQueryExecutor(p.GetRequiredService<IKateProvider>(), 30));
             builder.Services.AddScoped<ISchemaService, SchemaService>();
