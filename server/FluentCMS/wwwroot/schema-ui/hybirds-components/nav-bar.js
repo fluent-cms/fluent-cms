@@ -13,7 +13,7 @@ define({
             <a class="nav-item nav-link border-item" href="./list.html?schema=query">Queries</a>
             <a class="nav-item nav-link border-item" href="./list.html?schema=page">Pages</a>
             <a class="nav-item nav-link border-item" href="./edit.html?schema=menu&id=top-menu-bar">MenuItems</a>
-            <a class="nav-item nav-link border-item" href="/admin">Admin Panel</a>
+            <a class="nav-item nav-link border-item" href="../admin">Admin Panel</a>
         </div>
     </nav> 
 `,
