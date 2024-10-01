@@ -10,15 +10,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentCMS.App", "server\Flu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentCMS.App.Tests", "server\FluentCMS.App.Tests\FluentCMS.App.Tests.csproj", "{E7EAD0DD-856C-4530-9F62-4B3EFEB15F01}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentCMS.Blog.Mac", "server\FluentCMS.Blog.Mac\FluentCMS.Blog.Mac.csproj", "{ADF6D53D-B4EF-46BD-BC3C-D0B5520B87C5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentCMS.Blog", "server\FluentCMS.Blog\FluentCMS.Blog.csproj", "{ADF6D53D-B4EF-46BD-BC3C-D0B5520B87C5}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApiExamples", "examples\WebApiExamples\WebApiExamples.csproj", "{23F6E543-242A-4738-A450-C1798E295FF4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlogEfExample", "examples\BlogEfExample\BlogEfExample.csproj", "{2046DC4C-DDD1-4DB9-882D-89390D85A669}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentCMS.Consumer", "server\FluentCMS.Consumer\FluentCMS.Consumer.csproj", "{B28C2B85-666C-49A2-B6CF-75B1C3E18E86}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentCMS.Blog.Win", "server\FluentCMS.Blog.Win\FluentCMS.Blog.Win.csproj", "{5ED53C82-ED2F-44ED-95C8-EA150513E802}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -70,10 +68,6 @@ Global
 		{B28C2B85-666C-49A2-B6CF-75B1C3E18E86}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B28C2B85-666C-49A2-B6CF-75B1C3E18E86}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B28C2B85-666C-49A2-B6CF-75B1C3E18E86}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5ED53C82-ED2F-44ED-95C8-EA150513E802}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5ED53C82-ED2F-44ED-95C8-EA150513E802}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5ED53C82-ED2F-44ED-95C8-EA150513E802}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5ED53C82-ED2F-44ED-95C8-EA150513E802}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{997F3305-20F9-4C50-A724-BAE2972857C9} = {10BF50D7-F514-4193-8ADE-59A23EB194BE}

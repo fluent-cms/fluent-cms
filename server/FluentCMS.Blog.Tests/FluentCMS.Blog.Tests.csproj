@@ -23,6 +23,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\FluentCMS.Blog.Mac\FluentCMS.Blog.Mac.csproj" />
+      <ProjectReference Include="..\FluentCMS.Blog\FluentCMS.Blog.csproj" />
     </ItemGroup>
 </Project>
