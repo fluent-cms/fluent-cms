@@ -29,3 +29,10 @@
 /k8s_deploy/eks/ebs/mainfest/
 /server/FluentCMS.IntegrationTests/temp.db
 /server/FluentCMS.IntegrationTests/default.db
+bin/
+obj/
+/packages/
+riderModule.iml
+/_ReSharper.Caches/
+/FluentCMS.Blog/wwwroot/files
+.DS_Store
