@@ -4,6 +4,7 @@ using FluentCMS.Utils.PageRender;
 using FluentCMS.Utils.QueryBuilder;
 using HandlebarsDotNet;
 using HtmlAgilityPack;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Primitives;
 
 namespace FluentCMS.Cms.Services;
@@ -29,9 +30,7 @@ public sealed class PageService(ISchemaService schemaService, IQueryService quer
         }
 
         var data = await queryService.One(page.Query, qsDictionary, cancellationToken);
-        var body = await GetBody(data, page, qsDictionary, cancellationToken);
-        var title = GetTitle(data, page);
-        return renderer.RenderHtml(title, body, page.Css);
+        return await RenderPage(page, data, qsDictionary, cancellationToken);
     }
 
     public async Task<string> Get(string pageName, Dictionary<string, StringValues> qsDictionary,
@@ -40,9 +39,23 @@ public sealed class PageService(ISchemaService schemaService, IQueryService quer
         var schema = NotNull(await schemaService.GetByNameDefault(pageName, SchemaType.Page, cancellationToken))
             .ValOrThrow($"Can not find page [{pageName}]");
         var page = NotNull(schema.Settings.Page).ValOrThrow("Invalid page payload");
-        Record data = new Dictionary<string, object>();
-        var body = await GetBody(new Dictionary<string, object>(), page, qsDictionary, cancellationToken);
-        var title = GetTitle(data, page);
+        var data = new Dictionary<string, object>();
+        return await RenderPage(page, data, qsDictionary, cancellationToken);
+    }
+
+    private async Task<string> RenderPage(Page page, Record data, Dictionary<string,StringValues> qsDictionary, CancellationToken cancellationToken )
+    {
+        var doc = new HtmlDocument();
+        doc.LoadHtml(page.Html);
+
+        var repeatingNodes = CheckResult(doc.GetRepeatingNodes(qsDictionary));
+        repeatingNodes.SetLoopAndPagination();
+
+        await LoadData(data, repeatingNodes, cancellationToken);
+        SetDataPagination(page.Name, data, repeatingNodes);
+        
+        var title = GetTitle(page.Title, data);
+        var body = GetBody(doc, data);
         return renderer.RenderHtml(title, body, page.Css);
     }
 
@@ -56,7 +69,9 @@ public sealed class PageService(ISchemaService schemaService, IQueryService quer
 
         var htmlNode = ParseNode();
         var template = Handlebars.Compile(htmlNode.OuterHtml);
-        var data = await PrepareData();
+        var result = await PrepareData();
+        SetResultPagination(result,token);
+        var data = new Dictionary<string, object> { { token.Field, result } };
         return template(data);
 
         HtmlNode ParseNode()
@@ -64,62 +79,74 @@ public sealed class PageService(ISchemaService schemaService, IQueryService quer
             var doc = new HtmlDocument();
             doc.LoadHtml(page.Html);
             var node = doc.GetElementbyId(token.NodeId);
-            node.AddLoop(token.Field);
+            node.AddLoop(token.Field + ".items");
+            node.AddCursor(token.Field);
             if (token.PaginationType == PaginationType.InfiniteScroll) node.AddPagination(token.Field);
             return node;
 
         }
 
-        async Task<Dictionary<string, object>> PrepareData()
+        async Task<RecordQueryResult> PrepareData()
         {
             var cursor = new Cursor { First = token.First, Last = token.Last };
             var pagination = new Pagination { Offset = token.Offset, Limit = token.Limit };
-            var result = await queryService.List(token.Query, cursor, pagination, token.Qs, cancellationToken);
-
-            result.First = string.IsNullOrWhiteSpace(result.First)
-                ? ""
-                : (token with { Last = "", First = result.First }).ToString();
-            result.Last = string.IsNullOrWhiteSpace(result.Last)
-                ? ""
-                : (token with { Last = result.Last, First = "" }).ToString();
-            return new Dictionary<string, object> { { token.Field, result } };
+            return await queryService.List(token.Query, cursor, pagination,  QueryHelpers.ParseQuery(token.Qs), cancellationToken);
         }
     }
 
-    private async Task<string> GetBody(Record data, Page page, Dictionary<string, StringValues> qsDict,
-        CancellationToken cancellationToken)
+    private async Task LoadData(Record data,RepeatNode[] repeatNodes, CancellationToken cancellationToken)
     {
-        var doc = new HtmlDocument();
-        doc.LoadHtml(page.Html);
-        var listNodes = CheckResult(doc.GetRepeatingNodes(qsDict));
-        foreach (var (htmlNode, field, paginationType, _) in listNodes)
+        foreach (var repeatNode in repeatNodes)
         {
-            htmlNode.AddLoop(field);
-            if (paginationType == PaginationType.InfiniteScroll) htmlNode.AddPagination(field);
-        }
+            if (repeatNode.MultipleQuery is null)
+            {
+                continue;
+            }
 
-        foreach (var repeatNode in listNodes)
-        {
-            var pagination = new Pagination { Offset = repeatNode.MultipleQuery.Offset, Limit = repeatNode.MultipleQuery.Limit };
+            var pagination = new Pagination
+                { Offset = repeatNode.MultipleQuery.Offset, Limit = repeatNode.MultipleQuery.Limit };
             var result = await queryService.List(repeatNode.MultipleQuery.Query, new Cursor(), pagination,
                 repeatNode.MultipleQuery.Qs, cancellationToken);
-            SetPaginationData(result, page.Name, repeatNode);
             data[repeatNode.Field] = result;
         }
-        var template = Handlebars.Compile(doc.DocumentNode.FirstChild.InnerHtml);
+    }
+    
+    private  string GetBody(HtmlDocument doc, Record data)
+    {
+        var html = doc.DocumentNode.FirstChild.InnerHtml;
+        var template = Handlebars.Compile(html);
         return template(data);
     }
 
-    private static void SetPaginationData(RecordQueryResult result, string page, RepeatNode repeatNode)
+    private static void SetResultPagination(RecordQueryResult result, PartialToken token)
     {
-        var token = new PartialToken(page, repeatNode.HtmlNode.Id, repeatNode.Field, repeatNode.PaginationType,
-            repeatNode.MultipleQuery.Query, repeatNode.MultipleQuery.Offset, repeatNode.MultipleQuery.Limit, "", "",
-            repeatNode.MultipleQuery.Qs);
-
-        result.Last = string.IsNullOrWhiteSpace(result.Last) ? "" :(token with{Last = result.Last}).ToString();
-        result.First = string.IsNullOrWhiteSpace(result.First) ? "" :(token with{First = result.First}).ToString();
+        result.Last = string.IsNullOrEmpty(result.Last)  ? "" : (token with { Last = result.Last, First = ""}).ToString();
+        result.First = string.IsNullOrEmpty(result.First) ? "" : (token with { First = result.First, Last = ""}).ToString();
     }
 
-    private static string GetTitle(Record data, Page page) => Handlebars.Compile(page.Title)(data);
+    private static void SetDataPagination(string pageName, Record data, RepeatNode[] repeatNodes)
+    {
+        foreach (var repeatNode in repeatNodes)
+        {
+            if (repeatNode.MultipleQuery is not null && data.TryGetValue(repeatNode.Field, out var value) &&
+                value is RecordQueryResult result)
+            {
+                var token = new PartialToken(pageName, repeatNode.HtmlNode.Id, repeatNode.Field,
+                    repeatNode.PaginationType,
+                    repeatNode.MultipleQuery!.Query, repeatNode.MultipleQuery.Offset, repeatNode.MultipleQuery.Limit,
+                    "", "",
+                    GetQueryString(repeatNode.MultipleQuery.Qs));
+                SetResultPagination(result, token);
+            }
+        }
+    }
+
+    private static string GetQueryString(Dictionary<string, StringValues> queryParams)
+    {
+        return  string.Join("&", queryParams.Select(kvp =>
+            string.Join("&", kvp.Value.Select(value => $"{kvp.Key}={value}"))));
+    }
+    
+    private static string GetTitle( string title,Record data) => Handlebars.Compile(title)(data);
 }
 

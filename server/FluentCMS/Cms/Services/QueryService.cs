@@ -144,9 +144,7 @@ public sealed class QueryService(
         {
             Items = items,
             First = nextCursor.First,
-            HasPrevious = !string.IsNullOrWhiteSpace(nextCursor.First),
             Last = nextCursor.Last,
-            HasNext = !string.IsNullOrWhiteSpace(nextCursor.Last)
         };
     }
 }

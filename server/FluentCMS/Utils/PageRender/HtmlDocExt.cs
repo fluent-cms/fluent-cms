@@ -15,9 +15,27 @@ public static class HtmlDocExt
 
     public static void AddLoop(this HtmlNode node, string field)
     {
-        node.InnerHtml = "{{#each " + field+ ".items}}" + node.InnerHtml + "{{/each}}";
-        node.Attributes.Add("first",$"{{{{{field}.first}}}}");
+        node.InnerHtml = "{{#each " + field + "}}" + node.InnerHtml + "{{/each}}";
+    }
+
+    public static void AddCursor(this HtmlNode node, string field)
+    {
+        node.Attributes.Add("first", $"{{{{{field}.first}}}}");
         node.Attributes.Add("last", $"{{{{{field}.last}}}}");
+    }
+
+
+    public static void SetLoopAndPagination(this RepeatNode[] repeatNodes)
+    {
+        foreach (var repeatNode in repeatNodes)
+        {
+            repeatNode.HtmlNode.AddLoop(repeatNode.MultipleQuery is null ? repeatNode.Field :repeatNode.Field+ ".items");
+            repeatNode.HtmlNode.AddCursor(repeatNode.Field);
+            if (repeatNode.PaginationType == PaginationType.InfiniteScroll)
+            {
+                repeatNode.HtmlNode.AddPagination(repeatNode.Field);
+            }
+        }
     }
   
     public static Result<RepeatNode[]> GetRepeatingNodes(this HtmlDocument doc, Dictionary<string,StringValues> baseDict)
@@ -38,12 +56,13 @@ public static class HtmlDocExt
             {
                 return Result.Fail(query.Errors);
             }
+            
             var field = htmlNode.GetAttributeValue(Constants.AttrField, string.Empty);
             if (string.IsNullOrWhiteSpace(field) )
             {
-                if (string.IsNullOrWhiteSpace(query.Value.Query))
+                if (query.Value is null)
                 {
-                    continue;
+                    return Result.Fail($"both field and query was not set for multiple-record element [{htmlNode.OuterHtml}]");
                 }
                 field = htmlNode.Id;
             }
@@ -70,12 +89,12 @@ public static class HtmlDocExt
     }
 
 
-    private static Result<MultiQuery> ParseMultiQuery(this HtmlNode div, Dictionary<string,StringValues> baseDict)
+    private static Result<MultiQuery?> ParseMultiQuery(this HtmlNode div, Dictionary<string,StringValues> baseDict)
     {
         var query = div.GetAttributeValue(Constants.AttrQuery, string.Empty);
         if (query == string.Empty)
         {
-            return Result.Fail("can not find query");
+            return Result.Ok();
         }
 
         var offset = div.ParseInt32(Constants.AttrOffset);

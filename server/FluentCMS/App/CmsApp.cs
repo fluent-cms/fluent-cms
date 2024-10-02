@@ -9,6 +9,7 @@ using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.LocalFileStore;
 using FluentCMS.Utils.PageRender;
 using FluentCMS.Utils.QueryBuilder;
+using Microsoft.AspNetCore.Rewrite;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Primitives;
 
@@ -34,6 +35,7 @@ public class CmsApp(
         AddRouters();
         InjectDbServices();
         InjectServices();
+        return;
 
         void AddRouters()
         {
@@ -115,11 +117,15 @@ public class CmsApp(
 
     public async Task UseCmsAsync(WebApplication app)
     {
-        var env = app.Services.GetRequiredService<IWebHostEnvironment>();
         PrintVersion();
         await InitSchema();
         app.UseStaticFiles();
-        UseAdminPanel();
+        var options = new RewriteOptions();
+        options.AddRedirect(@"^admin$", $"{FluentCmsContentRoot}/admin");
+        options.AddRedirect(@"^schema$", $"{FluentCmsContentRoot}/schema-ui/list.html");
+        app.UseRewriter(options);
+        
+        UseSubApp("/admin");
         UseServerRouters();
         UseHomePage();
         return;
@@ -143,7 +149,7 @@ public class CmsApp(
                         var pageService = scope.ServiceProvider.GetRequiredService<IPageService>();
                         var html = $"""
                                     <a href="{FluentCmsContentRoot}/admin">Log in to Admin</a><br/>
-                                    <a href="{FluentCmsContentRoot}/schema-ui/list.html">Go to Schema Builder</a>
+                                    <a href="{FluentCmsContentRoot}/schema-ui">Go to Schema Builder</a>
                                     """;
                         try
                         {
@@ -170,15 +176,15 @@ public class CmsApp(
             await schemaService.EnsureTopMenuBar(default);
         }
 
-        void UseAdminPanel()
+        void UseSubApp(string  path)
         {
-            app.MapWhen(context => context.Request.Path.StartsWithSegments($"{FluentCmsContentRoot}/admin"), subApp =>
+            app.MapWhen(context => context.Request.Path.StartsWithSegments($"{FluentCmsContentRoot}{path}"), subApp =>
             {
                 subApp.UseRouting();
                 subApp.UseEndpoints(endpoints =>
                 {
-                    endpoints.MapFallbackToFile($"{FluentCmsContentRoot}/admin", $"{FluentCmsContentRoot}/admin/index.html");
-                    endpoints.MapFallbackToFile($"{FluentCmsContentRoot}/admin/{{*path:nonfile}}", $"{FluentCmsContentRoot}/admin/index.html");
+                    endpoints.MapFallbackToFile($"{FluentCmsContentRoot}{path}", $"{FluentCmsContentRoot}{path}/index.html");
+                    endpoints.MapFallbackToFile($"{FluentCmsContentRoot}{path}/{{*path:nonfile}}", $"{FluentCmsContentRoot}{path}/index.html");
                 });
             });
         }

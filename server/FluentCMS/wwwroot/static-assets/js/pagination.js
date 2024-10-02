@@ -69,7 +69,7 @@ $(document).ready(function() {
                     loadMore(entry.target.attributes['last'].value, response => {
                         const template = document.createElement('template');
                         template.innerHTML = response.trim();
-                        entry.target.parentElement.appendChild(content);
+                        entry.target.parentElement.appendChild(template.content);
                         entry.target.remove();
                         initIntersectionObserver();
                     });

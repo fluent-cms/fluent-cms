@@ -12,7 +12,7 @@ public enum PaginationType
     InfiniteScroll
 }
 
-public record RepeatNode(HtmlNode HtmlNode, string Field, PaginationType PaginationType, MultiQuery MultipleQuery);
+public record RepeatNode(HtmlNode HtmlNode, string Field, PaginationType PaginationType, MultiQuery? MultipleQuery);
 
 public record PartialToken(
     string Page,
@@ -24,7 +24,7 @@ public record PartialToken(
     int Limit,
     string First,
     string Last,
-    Dictionary<string, StringValues> Qs)
+    string Qs)
 {
     public override string ToString()
     {

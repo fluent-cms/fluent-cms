@@ -4,7 +4,7 @@ define({
     name: '',
     render: () => html`
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="/schema-ui/list.html">
+        <a class="navbar-brand" href="/">
             <img alt="logo" src="img/fluent-cms.png" height="40" class="mr-2">
         </a>
         <div class="navbar-nav">

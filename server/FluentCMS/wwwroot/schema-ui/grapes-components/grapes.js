@@ -106,8 +106,9 @@ export function loadEditor(container) {
             'active': true,
         });
     });
+    
     addCustomTypes(editor);
     addCustomBlocks(editor);
-    
+
     return editor
 }

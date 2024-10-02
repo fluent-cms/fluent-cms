@@ -54,7 +54,7 @@ public class FeedSaver(INosqlDao nosqlDao,ILogger<FeedSaver> logger)
                 logger.LogError(string.Join("\r\n",viewResult.Errors));
             }
 
-            if (!viewResult.Value.HasNext)
+            if (string.IsNullOrEmpty(viewResult.Value.Last))
             {
                 break;
             }
