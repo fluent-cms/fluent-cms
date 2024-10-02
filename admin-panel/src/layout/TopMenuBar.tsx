@@ -4,7 +4,7 @@ import {useTopMenuBar} from "../auth/services/menu";
 import { useNavigate} from "react-router-dom";
 import {Profile} from "../auth/types/Profile";
 import {configs} from "../config";
-import {AccountRouter, RoleRoute, UserRoute} from "../auth/AccountRouter";
+import {RoleRoute, UserRoute} from "../auth/AccountRouter";
 
 
 const entityPrefix = '/entities'
@@ -62,7 +62,7 @@ export function TopMenuBar({start, end, profile}:{start:any, end:any, profile: P
             key: MenuSchemaBuilder,
             icon: 'pi pi-cog',
             label: 'Schema Builder',
-            url: '/schema-ui/list.html'
+            url: '/schema'
         }
     ].forEach(x=>{
         if (profile?.allowedMenus?.includes(x.key)){

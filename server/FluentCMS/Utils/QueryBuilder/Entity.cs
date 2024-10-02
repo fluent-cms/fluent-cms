@@ -97,7 +97,15 @@ public sealed class Entity
         if (cursorResult.IsFailed) return Result.Fail(cursorResult.Errors);
 
         query.ApplyPagination(pagination);
-        query.ApplySorts(sorts);
+        if (cursor is { IsForward: false } && sorts != null)
+        {
+            query.ApplySorts(sorts.ReverseOrder());
+        }
+        else
+        {
+            query.ApplySorts(sorts);
+        }
+        
         query.ApplyFilters(filters);
         return query;
     }

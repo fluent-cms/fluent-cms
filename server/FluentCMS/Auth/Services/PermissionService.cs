@@ -183,6 +183,6 @@ public class PermissionService<TUser>(
         }
     }
     
-    private string MustGetCurrentUserId() => StrNotEmpty(contextAccessor.HttpContext.GetUserId()).ValOrThrow("not logged int"); 
+    private string MustGetCurrentUserId() => StrNotEmpty(contextAccessor.HttpContext.GetUserId()).ValOrThrow("not logged in"); 
   
 }

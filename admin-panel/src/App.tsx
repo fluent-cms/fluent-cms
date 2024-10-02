@@ -24,7 +24,7 @@ axios.defaults.withCredentials = true
 function App() {
 
     const {data:profile} = useUserInfo()
-    const start = <img alt="logo" src={`/admin/fluent-cms.png`} height="40" className="mr-2"></img>;
+    const start = <a href={'/'}><img alt="logo" src={`${configs.adminBaseRouter}/fluent-cms.png`} height="40" className="mr-2"></img></a>;
     const end = (
         <div className="flex align-items-center gap-2">
             <UserAvatarDropdown email={profile?.email??''}/>
@@ -44,7 +44,6 @@ function App() {
                 <Route path={`${configs.adminBaseRouter}${LoginRoute}`} element={<LoginPage/>}/>
                 <Route path={`${configs.adminBaseRouter}${LoginRoute}`} element={<RegisterPage/>}/>
                 <Route path={configs.adminBaseRouter} element={<LoginPage />} />
-                <Route path={'/'} element={<LoginPage />} />
             </Routes>
             </>
     );

@@ -1,5 +1,4 @@
 /admin-panel/node_modules
-/ui/node_modules
 /examples/fluent-cms-postgres-docker/db_data
 /examples/fluent-cms-postgres-docker/db_data_1m
 /examples/fluent-cms-postgres-docker/db_data_1m_back
@@ -28,11 +27,12 @@
 /k8s_deploy/eks/ebs/terraform.tfstate.backup
 /k8s_deploy/eks/ebs/.terraform/
 /k8s_deploy/eks/ebs/mainfest/
-/server/FluentCMS.App/wwwroot/
 /server/FluentCMS.IntegrationTests/temp.db
 /server/FluentCMS.IntegrationTests/default.db
-/examples/WebApiExamples/cms.db
-/examples/WebApiExamples/wwwroot/
-/examples/WebApiExamples/.idea/
-/examples/WebApiExamples/bin/
-/examples/WebApiExamples/obj/
+bin/
+obj/
+/packages/
+riderModule.iml
+/_ReSharper.Caches/
+/FluentCMS.Blog/wwwroot/files
+.DS_Store

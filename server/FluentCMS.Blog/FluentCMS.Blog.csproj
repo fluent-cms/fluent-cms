@@ -5,6 +5,7 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <UserSecretsId>2c91248f-3004-4e04-88be-54a2a3bd3a75</UserSecretsId>
+        <RootNamespace>FluentCMS.Blog</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
@@ -31,32 +32,45 @@
       <None Update="cms.db">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
+      <None Include="wwwroot\doc\404.html" />
+      <None Include="wwwroot\doc\css\base.css" />
+      <None Include="wwwroot\doc\css\bootstrap.min.css" />
+      <None Include="wwwroot\doc\css\bootstrap.min.css.map" />
+      <None Include="wwwroot\doc\css\brands.min.css" />
+      <None Include="wwwroot\doc\css\fontawesome.min.css" />
+      <None Include="wwwroot\doc\css\solid.min.css" />
+      <None Include="wwwroot\doc\css\v4-font-face.min.css" />
+      <None Include="wwwroot\doc\img\favicon.ico" />
+      <None Include="wwwroot\doc\img\grid.png" />
+      <None Include="wwwroot\doc\index.html" />
+      <None Include="wwwroot\doc\js\base.js" />
+      <None Include="wwwroot\doc\js\bootstrap.bundle.min.js" />
+      <None Include="wwwroot\doc\js\bootstrap.bundle.min.js.map" />
+      <None Include="wwwroot\doc\js\darkmode.js" />
+      <None Include="wwwroot\doc\search\lunr.js" />
+      <None Include="wwwroot\doc\search\main.js" />
+      <None Include="wwwroot\doc\search\worker.js" />
+      <None Include="wwwroot\doc\sitemap.xml" />
+      <None Include="wwwroot\doc\sitemap.xml.gz" />
+      <None Include="wwwroot\doc\webfonts\fa-brands-400.ttf" />
+      <None Include="wwwroot\doc\webfonts\fa-brands-400.woff2" />
+      <None Include="wwwroot\doc\webfonts\fa-regular-400.ttf" />
+      <None Include="wwwroot\doc\webfonts\fa-regular-400.woff2" />
+      <None Include="wwwroot\doc\webfonts\fa-solid-900.ttf" />
+      <None Include="wwwroot\doc\webfonts\fa-solid-900.woff2" />
+      <None Include="wwwroot\doc\webfonts\fa-v4compatibility.ttf" />
+      <None Include="wwwroot\doc\webfonts\fa-v4compatibility.woff2" />
+      <None Include="wwwroot\favicon.ico" />
     </ItemGroup>
     <ItemGroup>
-      <Folder Include="Services\" />
-    </ItemGroup>
-    <ItemGroup>
-      <_ContentIncludedByDefault Remove="wwwroot\bootstrap\bootstrap.min.css" />
-      <_ContentIncludedByDefault Remove="wwwroot\bootstrap\bootstrap.min.css.map" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\edit.html" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\edit.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\entity.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\list.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\menu.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\page.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\query.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\repo.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\attribute.json" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\constraint.json" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\entity.json" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\filter.json" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\filters.json" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\menu.json" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\query.json" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\sort.json" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\sorts.json" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\list.html" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\page.html" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\styles.css" />
+      <_ContentIncludedByDefault Remove="wwwroot000\schema-ui\json\attribute.json" />
+      <_ContentIncludedByDefault Remove="wwwroot000\schema-ui\json\constraint.json" />
+      <_ContentIncludedByDefault Remove="wwwroot000\schema-ui\json\entity.json" />
+      <_ContentIncludedByDefault Remove="wwwroot000\schema-ui\json\filter.json" />
+      <_ContentIncludedByDefault Remove="wwwroot000\schema-ui\json\filters.json" />
+      <_ContentIncludedByDefault Remove="wwwroot000\schema-ui\json\menu.json" />
+      <_ContentIncludedByDefault Remove="wwwroot000\schema-ui\json\query.json" />
+      <_ContentIncludedByDefault Remove="wwwroot000\schema-ui\json\sort.json" />
+      <_ContentIncludedByDefault Remove="wwwroot000\schema-ui\json\sorts.json" />
     </ItemGroup>
 </Project>

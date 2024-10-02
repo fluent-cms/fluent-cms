@@ -9,14 +9,18 @@ using Microsoft.Extensions.Primitives;
 
 namespace FluentCMS.Cms.Services;
 using static InvalidParamExceptionFactory;
-public sealed class PageService(ISchemaService schemaService,IQueryService queryService):IPageService
+
+public sealed class PageService(ISchemaService schemaService, IQueryService queryService, Renderer renderer)
+    : IPageService
 {
-    private static string RemoveBrace(string fullRouterParamName) => fullRouterParamName[1..^1]; 
-    
-    public async Task<string> GetDetail(string pageName, string paramValue,  Dictionary<string,StringValues> qsDictionary, CancellationToken cancellationToken)
+    private static string RemoveBrace(string fullRouterParamName) => fullRouterParamName[1..^1];
+
+    public async Task<string> GetDetail(string pageName, string paramValue,
+        Dictionary<string, StringValues> qsDictionary, CancellationToken cancellationToken)
     {
-        var schema = NotNull(await schemaService.GetByNamePrefixDefault(pageName + "/{", SchemaType.Page, cancellationToken))
-            .ValOrThrow($"Can not find page [{pageName}]");
+        var schema =
+            NotNull(await schemaService.GetByNamePrefixDefault(pageName + "/{", SchemaType.Page, cancellationToken))
+                .ValOrThrow($"Can not find page [{pageName}]");
         var page = NotNull(schema.Settings.Page).ValOrThrow("Invalid page payload");
         var bracedName = schema.Name.Split("/").Last();
         var routerName = RemoveBrace(bracedName);
@@ -24,109 +28,125 @@ public sealed class PageService(ISchemaService schemaService,IQueryService query
         {
             qsDictionary[routerName] = paramValue;
         }
-        
+
         var data = await queryService.One(page.Query, qsDictionary, cancellationToken);
-        var body = await RenderBody(data, page, qsDictionary, cancellationToken);
-        var title = RenderTitle(data, page);
-        return RenderHtml(title, body, page.Css);
+        return await RenderPage(page, data, qsDictionary, cancellationToken);
     }
 
-    public async Task<string> Get(string pageName, Dictionary<string,StringValues> qsDictionary,  CancellationToken cancellationToken)
+    public async Task<string> Get(string pageName, Dictionary<string, StringValues> qsDictionary,
+        CancellationToken cancellationToken)
     {
         var schema = NotNull(await schemaService.GetByNameDefault(pageName, SchemaType.Page, cancellationToken))
             .ValOrThrow($"Can not find page [{pageName}]");
         var page = NotNull(schema.Settings.Page).ValOrThrow("Invalid page payload");
-        Record data = new Dictionary<string, object>();
-        var body = await RenderBody(new Dictionary<string, object>(), page, qsDictionary,cancellationToken);
-        var title = RenderTitle(data, page);
-        return RenderHtml(title, body, page.Css);
+        var data = new Dictionary<string, object>();
+        return await RenderPage(page, data, qsDictionary, cancellationToken);
+    }
+
+    private async Task<string> RenderPage(Page page, Record data, Dictionary<string,StringValues> qsDictionary, CancellationToken cancellationToken )
+    {
+        var doc = new HtmlDocument();
+        doc.LoadHtml(page.Html);
+
+        var repeatingNodes = CheckResult(doc.GetRepeatingNodes(qsDictionary));
+        repeatingNodes.SetLoopAndPagination();
+
+        await LoadData(data, repeatingNodes, cancellationToken);
+        SetDataPagination(page.Name, data, repeatingNodes);
+        
+        var title = GetTitle(page.Title, data);
+        var body = GetBody(doc, data);
+        return renderer.RenderHtml(title, body, page.Css);
+    }
+
+    public async Task<string> GetPartial(string tokenString, CancellationToken cancellationToken)
+    {
+        var token = NotNull(PartialToken.Parse(tokenString)).ValOrThrow("Invalid Partial Token");
+        var schema = NotNull(await schemaService.GetByNameDefault(token.Page, SchemaType.Page, cancellationToken))
+            .ValOrThrow($"Can not find page [{token.Page}]");
+        var page = NotNull(schema.Settings.Page)
+            .ValOrThrow($"Can not find page [{token.Page}]");
+
+        var htmlNode = ParseNode();
+        var template = Handlebars.Compile(htmlNode.OuterHtml);
+        var result = await PrepareData();
+        SetResultPagination(result,token);
+        var data = new Dictionary<string, object> { { token.Field, result } };
+        return template(data);
+
+        HtmlNode ParseNode()
+        {
+            var doc = new HtmlDocument();
+            doc.LoadHtml(page.Html);
+            var node = doc.GetElementbyId(token.NodeId);
+            node.AddLoop(token.Field + ".items");
+            node.AddCursor(token.Field);
+            if (token.PaginationType == PaginationType.InfiniteScroll) node.AddPagination(token.Field);
+            return node;
+
+        }
+
+        async Task<RecordQueryResult> PrepareData()
+        {
+            var cursor = new Cursor { First = token.First, Last = token.Last };
+            var pagination = new Pagination { Offset = token.Offset, Limit = token.Limit };
+            return await queryService.List(token.Query, cursor, pagination,  QueryHelpers.ParseQuery(token.Qs), cancellationToken);
+        }
+    }
+
+    private async Task LoadData(Record data,RepeatNode[] repeatNodes, CancellationToken cancellationToken)
+    {
+        foreach (var repeatNode in repeatNodes)
+        {
+            if (repeatNode.MultipleQuery is null)
+            {
+                continue;
+            }
+
+            var pagination = new Pagination
+                { Offset = repeatNode.MultipleQuery.Offset, Limit = repeatNode.MultipleQuery.Limit };
+            var result = await queryService.List(repeatNode.MultipleQuery.Query, new Cursor(), pagination,
+                repeatNode.MultipleQuery.Qs, cancellationToken);
+            data[repeatNode.Field] = result;
+        }
     }
     
-    private string RenderTitle(Record data, Page page)
+    private  string GetBody(HtmlDocument doc, Record data)
     {
-         var template = Handlebars.Compile(page.Title);
-         return template(data); 
+        var html = doc.DocumentNode.FirstChild.InnerHtml;
+        var template = Handlebars.Compile(html);
+        return template(data);
     }
 
-    private async Task<string> RenderBody(Record data, Page page, Dictionary<string,StringValues> qsDict, CancellationToken cancellationToken)
+    private static void SetResultPagination(RecordQueryResult result, PartialToken token)
     {
-         var doc = new HtmlDocument();
-         doc.LoadHtml(page.Html);
-         var listNodes = CheckResult(doc.GetMultipleRecordNode());
-         AddLoop(listNodes);
-         await AttachListData(data, listNodes,qsDict,  cancellationToken);
-        
-         var template = Handlebars.Compile(doc.DocumentNode.OuterHtml);
-         return template(data); 
+        result.Last = string.IsNullOrEmpty(result.Last)  ? "" : (token with { Last = result.Last, First = ""}).ToString();
+        result.First = string.IsNullOrEmpty(result.First) ? "" : (token with { First = result.First, Last = ""}).ToString();
     }
 
-
-    private async Task AttachListData(Record data, MultipleRecordNode[] listNodes, Dictionary<string,StringValues> qsDict, CancellationToken cancellationToken)
+    private static void SetDataPagination(string pageName, Record data, RepeatNode[] repeatNodes)
     {
-        foreach (var multipleRecordNode in listNodes)
+        foreach (var repeatNode in repeatNodes)
         {
-            if (!multipleRecordNode.MultipleQuery.IsSuccess) continue;
-            var queryInfo = multipleRecordNode.MultipleQuery.Value;
-            var pagination = new Pagination { Offset = queryInfo.Offset, Limit = queryInfo.Limit };
-
-            var dict = new Dictionary<string, StringValues>(qsDict);//make a copy
-            foreach (var (key, value) in QueryHelpers.ParseQuery(queryInfo.Qs))
+            if (repeatNode.MultipleQuery is not null && data.TryGetValue(repeatNode.Field, out var value) &&
+                value is RecordQueryResult result)
             {
-                dict[key] = value;
+                var token = new PartialToken(pageName, repeatNode.HtmlNode.Id, repeatNode.Field,
+                    repeatNode.PaginationType,
+                    repeatNode.MultipleQuery!.Query, repeatNode.MultipleQuery.Offset, repeatNode.MultipleQuery.Limit,
+                    "", "",
+                    GetQueryString(repeatNode.MultipleQuery.Qs));
+                SetResultPagination(result, token);
             }
-            var records = await queryService.Many(queryInfo.Query, pagination, dict, cancellationToken);
-            data[multipleRecordNode.Field] = records;
-        }
-    }
-    private static void AddLoop(MultipleRecordNode[] listNodes)
-    {
-        foreach (var listNode in listNodes)
-        {
-            listNode.HtmlNode.InnerHtml = "{{#each " + listNode.Field+ "}}" + listNode.HtmlNode.InnerHtml + "{{/each}}";
         }
     }
 
-    private static string RenderHtml(string title,string body,  string css)
+    private static string GetQueryString(Dictionary<string, StringValues> queryParams)
     {
-        return $$"""
-                 <!DOCTYPE html>
-                 <html>
-                 <head>
-                     <meta charset="UTF-8">
-                     <title>{{title}}</title>
-                     <link rel="stylesheet" href="https://unpkg.com/tailwindcss@1.4.6/dist/base.min.css">
-                     <link rel="stylesheet" href="https://unpkg.com/tailwindcss@1.4.6/dist/components.min.css">
-                     <link rel="stylesheet" href="https://unpkg.com/@tailwindcss/typography@0.1.2/dist/typography.min.css">
-                     <link rel="stylesheet" href="https://unpkg.com/tailwindcss@1.4.6/dist/utilities.min.css">
-                     <style>
-                     {{css}}
-                     </style>
-                     <link rel="icon" href="/favicon.ico" type="image/x-icon">
-                     <style>
-                     /* General styles for the button */
-                 .edit-button {
-                     position: fixed;
-                     top: 10px;
-                     right: 10px;
-                     background-color: #007bff;
-                     color: #fff;
-                     border: none;
-                     padding: 10px 20px;
-                     border-radius: 5px;
-                     cursor: pointer;
-                     font-size: 16px;
-                     transition: background-color 0.3s ease;
-                 }
-                 
-                 /* Hover effect for the button */
-                 .edit-button:hover {
-                     background-color: #0056b3;
-                 }
-                     </style>
-                 </head>
-                 {{body}}
-                 </html>
-                 """;
+        return  string.Join("&", queryParams.Select(kvp =>
+            string.Join("&", kvp.Value.Select(value => $"{kvp.Key}={value}"))));
     }
+    
+    private static string GetTitle( string title,Record data) => Handlebars.Compile(title)(data);
 }
 

@@ -54,7 +54,7 @@ public class FeedSaver(INosqlDao nosqlDao,ILogger<FeedSaver> logger)
                 logger.LogError(string.Join("\r\n",viewResult.Errors));
             }
 
-            if (!viewResult.Value.HasNext)
+            if (string.IsNullOrEmpty(viewResult.Value.Last))
             {
                 break;
             }
@@ -66,7 +66,7 @@ public class FeedSaver(INosqlDao nosqlDao,ILogger<FeedSaver> logger)
 
         return;
 
-        async Task<Result<ViewResult<JsonElement>>> Call(string last)
+        async Task<Result<QueryResult<JsonElement>>> Call(string last)
         {
             var fullUrl = config.Url;
             if (!string.IsNullOrWhiteSpace(last))
@@ -74,7 +74,7 @@ public class FeedSaver(INosqlDao nosqlDao,ILogger<FeedSaver> logger)
                 fullUrl += $"?last={last}";
             }
 
-            var requestResult = await _client.GetObject<ViewResult<JsonElement>>(fullUrl);
+            var requestResult = await _client.GetObject<QueryResult<JsonElement>>(fullUrl);
             if (requestResult.IsFailed)
             {
                 return Result.Fail(requestResult.Errors);
