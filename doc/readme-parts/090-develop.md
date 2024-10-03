@@ -7,7 +7,7 @@
 ![System Overview](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/overview.png)   
 - [**Backend Server**](https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS)  
 - [**Admin Panel UI**](https://github.com/fluent-cms/fluent-cms/tree/main/admin-panel)  
-- [**Schema Builder**](https://github.com/fluent-cms/fluent-cms/tree/main/schema-builder)  
+- [**Schema Builder**](https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS/wwwroot/schema-ui)  
 
 ### Backend Server
 - **Tools**:  

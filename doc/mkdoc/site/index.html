@@ -143,20 +143,8 @@ It proves valuable even for non-CMS projects by eliminating the need for tedious
    <code>await app.UseCmsAsync();</code>
    this function bootstrap router, initialize Fluent CMS schema table</p>
 </li>
-<li>Copy client file to wwwroot of your web project, fluentCMS have two client app <code>admin</code> and <code>schema-ui</code>, the folder structure looks like below.
-   <code>wwwroot
-   --schema-ui
-   --admin
-   --favicon.ico</code>
-   When you start your web app for the first time, in function <code>app.UseCmsAsync</code>, if fluentCMS didn't find client app, it will try to copy client file to <code>wwwroot</code> you application. 
-   After copy these files, it will prompt <code>FluentCMS client files are copied to wwwroot, please start the app again</code>.
-   You can also copy these two app manually, you can find these two app at nuget's package folder.<br />
-   By default, when you install a NuGet package, it gets stored in a global cache folder on your machine. You can find it at:</li>
-<li>Windows: C:\Users\<YourUsername>.nuget\packages</li>
-<li>Mac/Linux: ~/.nuget/packages
-   You can find fluentCMS client Apps at <code>&lt;NuGet package directory&gt;\fluentcms\&lt;version&gt;\staticwebassets</code></li>
 </ol>
-<p>Now that the web server is up and running, the next chapter will guide you through building the schema and managing data.
+<p>When the web server is up and running,  you can access Admin Panel by url <code>/admin</code>, you can access Schema builder by url <code>/schema</code>.
 The example project can be found at <a href="https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples">Example Project</a>.</p>
 <h2 id="developing-a-simple-online-course-system-use-fluent-cms">Developing a simple online course system use Fluent CMS</h2>
 <p>The following chapter will guide you through developing a simple online course system, starts with three entity <code>Teachers</code>, <code>Courses</code>, and <code>Students</code>. </p>
@@ -584,7 +572,11 @@ FluentCMS will call the query <code>https://fluent-cms-admin.azurewebsites.net/a
     - <strong>Qs</strong>: Query string parameters to pass (e.g., <code>?status=featured</code>, <code>?level=Advanced</code>).<br />
     - <strong>Offset</strong>: Number of records to skip.<br />
     - <strong>Limit</strong>: Number of records to retrieve.<br />
-<img alt="Multiple Record Trait" src="https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-multiple-record-trait.png" /></p>
+    - <strong>Pagination</strong> There are 3 Options: 
+      - <code>Button</code>, content is divided into multiple pages, and navigation buttons (e.g., "Next," "Previous," or numbered buttons) are provided to allow users to move between the pages.
+      - <code>Infinite Scroll</code> , Content automatically loads as the user scrolls down the page, providing a seamless browsing experience without manual page transitions. It's better to set only one component to <code>infinite scroll</code>, and put it to the bottom of the pages. 
+      - <code>None</code>. Users see all the available content at once, without the need for additional actions.
+   <img alt="Multiple Record Trait" src="https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-multiple-record-trait.png" /></p>
 <h3 id="linking-and-images">Linking and Images</h3>
 <p>FluentCMS does not customize GrapesJS' Image and Link components, but locating where to input <code>Query Field</code> can be challenging. The steps below explain how to bind them.</p>
 <ul>
@@ -610,7 +602,7 @@ FluentCMS will call the query <code>https://fluent-cms-admin.azurewebsites.net/a
 <p><img alt="System Overview" src="https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/overview.png" /> <br />
 - <a href="https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS"><strong>Backend Server</strong></a><br />
 - <a href="https://github.com/fluent-cms/fluent-cms/tree/main/admin-panel"><strong>Admin Panel UI</strong></a><br />
-- <a href="https://github.com/fluent-cms/fluent-cms/tree/main/schema-builder"><strong>Schema Builder</strong></a>  </p>
+- <a href="https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS/wwwroot/schema-ui"><strong>Schema Builder</strong></a>  </p>
 <h3 id="backend-server">Backend Server</h3>
 <ul>
 <li><strong>Tools</strong>:  <ul>
@@ -719,5 +711,5 @@ FluentCMS will call the query <code>https://fluent-cms-admin.azurewebsites.net/a
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2024-09-25 23:40:20.323343+00:00
+Build Date UTC : 2024-10-03 18:38:29.082093+00:00
 -->

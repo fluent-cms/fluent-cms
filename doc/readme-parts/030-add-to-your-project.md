@@ -23,21 +23,7 @@ The following chapter will guid you through add Fluent CMS to your own project b
    await app.UseCmsAsync();
    ```
    this function bootstrap router, initialize Fluent CMS schema table
-5. Copy client file to wwwroot of your web project, fluentCMS have two client app `admin` and `schema-ui`, the folder structure looks like below.
-   ```
-   wwwroot
-   --schema-ui
-   --admin
-   --favicon.ico
-   ```
-   When you start your web app for the first time, in function `app.UseCmsAsync`, if fluentCMS didn't find client app, it will try to copy client file to `wwwroot` you application. 
-   After copy these files, it will prompt `FluentCMS client files are copied to wwwroot, please start the app again`.
-   You can also copy these two app manually, you can find these two app at nuget's package folder.  
-   By default, when you install a NuGet package, it gets stored in a global cache folder on your machine. You can find it at:
-   - Windows: C:\Users\<YourUsername>\.nuget\packages
-   - Mac/Linux: ~/.nuget/packages
-   You can find fluentCMS client Apps at `<NuGet package directory>\fluentcms\<version>\staticwebassets`
 
-Now that the web server is up and running, the next chapter will guide you through building the schema and managing data.
+When the web server is up and running,  you can access Admin Panel by url `/admin`, you can access Schema builder by url `/schema`.
 The example project can be found at [Example Project](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).
 </details>
