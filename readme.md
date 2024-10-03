@@ -1,32 +1,33 @@
-# Fluent CMS - CRUD (Create, Read, Update, Delete) for any entities
-[![GitHub stars](https://img.shields.io/github/stars/fluent-cms/fluent-cms.svg?style=social&label=Star)](https://github.com/fluent-cms/fluent-cms/stargazers)
-Welcome to [Fluent CMS](https://github.com/fluent-cms/fluent-cms)! If you'd like to contribute to the project, please check out our [CONTRIBUTING guide](https://github.com/fluent-cms/fluent-cms/blob/main/CONTRIBUTING.md). Don’t forget to give us a star ⭐ if you find Fluent CMS helpful!
+# FluentCMS - CRUD (Create, Read, Update, Delete) for any entities
+[![GitHub stars](https://img.shields.io/github/stars/fluent-cms/fluent-cms.svg?style=social&label=Star)](https://github.com/fluent-cms/fluent-cms/stargazers)  
+Welcome to [Fluent CMS](https://github.com/fluent-cms/fluent-cms)! 
+If you'd like to contribute to the project, please check out our [CONTRIBUTING guide](https://github.com/fluent-cms/fluent-cms/blob/main/CONTRIBUTING.md).Don’t forget to give us a star  ⭐ if you find Fluent CMS helpful!  
 ## What is it
-Fluent CMS is an open-source Content Management System designed to streamline web development workflows.
-It proves valuable even for non-CMS projects by eliminating the need for tedious CRUD API and page development.
-- **CRUD:** Fluent CMS offers built-in RESTful CRUD (Create, Read, Update, Delete) APIs along with an Admin Panel that supports a wide range of input types, including datetime, dropdown, image, and rich text, all configurable to suit your needs.
-- **GraphQL-style Query** Retrieve multiple related entities in a single call, enhancing security, performance, and flexibility on the client side.
-- **Wysiwyg Web Page Designer:** Leveraging [Grapes.js](https://grapesjs.com/) and [HandleBars](https://handlebarsjs.com/), the page designer allows you to create pages and bind query data without coding.
-- **Permission Control** Assign read/write, read-only, access to entities based on user roles or individual permissions.
-- **Integration and extension** Fluent CMS can be integrated into projects via a NuGet package.
+Fluent CMS is an open-source Content Management System designed to streamline web development workflows.  
+It proves valuable even for non-CMS projects by eliminating the need for tedious CRUD API and page development.  
+- **CRUD:** Fluent CMS offers built-in RESTful CRUD (Create, Read, Update, Delete) APIs along with an Admin Panel that supports a wide range of input types, including datetime, dropdown, image, and rich text, all configurable to suit your needs.  
+- **GraphQL-style Query** Retrieve multiple related entities in a single call, enhancing security, performance, and flexibility on the client side.  
+- **Wysiwyg Web Page Designer:** Leveraging [Grapes.js](https://grapesjs.com/) and [HandleBars](https://handlebarsjs.com/), the page designer allows you to create pages and bind query data without coding.  
+- **Permission Control** Assign read/write, read-only, access to entities based on user roles or individual permissions.  
+- **Integration and extension** Fluent CMS can be integrated into projects via a NuGet package.  
   Validation logic can be implemented using C# statements through [DynamicExpresso](https://github.com/dynamicexpresso/DynamicExpresso),
   and complex functionalities can be extended using CRUD Hook Functions.
-  Additionally, Fluent CMS supports message brokers like Kafka for CRUD operations.
-- **Performance:** Utilizing [SqlKata](https://sqlkata.com/) and [Dapper](https://www.learndapper.com/), Fluent CMS achieves performance levels comparable to manually written RESTful APIs using Entity Framework Core. Performance benchmarks include comparisons against Strapi and Entity Framework.
-    - [performance vs Strapi](https://github.com/fluent-cms/fluent-cms/blob/main/doc%2Fpeformance-tests%2Fperformance-test-fluent-cms-vs-strapi.md)
-    - [performance vs EF](https://github.com/fluent-cms/fluent-cms/blob/main/doc%2Fpeformance-tests%2Fperformance-test-fluent-cms-vs-entity-framework.md)
-## Live Demo - A blog website based on Fluent CMS
-source code [Example Blog Project](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).
-- Admin Panel https://fluent-cms-admin.azurewebsites.net/admin
-    - Email: `admin@cms.com`
-    - Password: `Admin1!`
-- Public Site : https://fluent-cms-admin.azurewebsites.net/
+  Additionally, Fluent CMS supports message brokers like Kafka for CRUD operations.  
+- **Performance:** Utilizing [SqlKata](https://sqlkata.com/) and [Dapper](https://www.learndapper.com/), Fluent CMS achieves performance levels comparable to manually written RESTful APIs using Entity Framework Core. Performance benchmarks include comparisons against Strapi and Entity Framework.  
+    - [performance vs Strapi](https://github.com/fluent-cms/fluent-cms/blob/main/doc%2Fpeformance-tests%2Fperformance-test-fluent-cms-vs-strapi.md)  
+    - [performance vs EF](https://github.com/fluent-cms/fluent-cms/blob/main/doc%2Fpeformance-tests%2Fperformance-test-fluent-cms-vs-entity-framework.md)  
+## Live Demo - A online course website based on Fluent CMS
+source code [Example Blog Project](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).  
+- Admin Panel https://fluent-cms-admin.azurewebsites.net/admin  
+    - Email: `admin@cms.com`  
+    - Password: `Admin1!`  
+- Public Site : https://fluent-cms-admin.azurewebsites.net/  
 
 ## Adding Fluent CMS to your own project
 <details>
-  <summary>
-      The following chapter will guid you through add Fluent CMS to your own project by adding a nuget package.
-  </summary>
+<summary> 
+The following chapter will guid you through add Fluent CMS to your own project by adding a nuget package. 
+</summary>
 
 1. Create your own Asp.net Core WebApplication.
 2. Add FluentCMS package
@@ -45,30 +46,16 @@ source code [Example Blog Project](https://github.com/fluent-cms/fluent-cms/tree
    await app.UseCmsAsync();
    ```
    this function bootstrap router, initialize Fluent CMS schema table
-5. Copy client file to wwwroot of your web project, fluentCMS have two client app `admin` and `schema-ui`, the folder structure looks like below.
-   ```
-   wwwroot
-   --schema-ui
-   --admin
-   --favicon.ico
-   ```
-   When you start your web app for the first time, in function `app.UseCmsAsync`, if fluentCMS didn't find client app, it will try to copy client file to `wwwroot` you application. 
-   After copy these files, it will prompt `FluentCMS client files are copied to wwwroot, please start the app again`.
-   You can also copy these two app manually, you can find these two app at nuget's package folder.  
-   By default, when you install a NuGet package, it gets stored in a global cache folder on your machine. You can find it at:
-   - Windows: C:\Users\<YourUsername>\.nuget\packages
-   - Mac/Linux: ~/.nuget/packages
-   You can find fluentCMS client Apps at `<NuGet package directory>\fluentcms\<version>\staticwebassets`
 
-Now that the web server is up and running, the next chapter will guide you through building the schema and managing data.
-The example project can be found at [Example Blog Project](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).
+When the web server is up and running,  you can access Admin Panel by url `/admin`, you can access Schema builder by url `/schema`.
+The example project can be found at [Example Project](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).
 </details>
 
 ## Developing a simple online course system use Fluent CMS
-<details>
-  <summary>
-      The following chapter will guide you through developing a simple online course system, starts with three entity `Teachers`, `Courses`, and `Students`.
-  </summary>
+<details> 
+<summary> 
+The following chapter will guide you through developing a simple online course system, starts with three entity `Teachers`, `Courses`, and `Students`. 
+</summary>
 
 ### Database Schema
 #### 1. **Teachers Table**
@@ -157,9 +144,7 @@ With these configurations, your minimal viable product is ready to use.
 
 ## Adding your own business logics 
 <details>
-  <summary>
-      The following chapter will guide you through add your own business logic by add validation logic, hook functions, and produce events to Kafka.
-  </summary>
+  <summary> The following chapter will guide you through add your own business logic by add validation logic, hook functions, and produce events to Kafka. </summary>
 
 ### Add validation logic using simple c# express
 
@@ -205,8 +190,7 @@ app.RegisterMessageProducerHook();
 </details>
 
 ## Permissions Control
-<details>
-  <summary>FluentCMS authorizes access to each entity by using role-based permissions and custom policies that control user actions like create, read, update, and delete.</summary>
+<details> <summary>FluentCMS authorizes access to each entity by using role-based permissions and custom policies that control user actions like create, read, update, and delete.</summary>
 
 Fluent CMS' permission control module is decoupled from the Content Management module, allowing you to implement your own permission logic or forgo permission control entirely.
 The built-in permission control in Fluent CMS offers four privilege types for each entity:
@@ -235,10 +219,7 @@ Behind the scene, fluentCMS leverage the hook mechanism.
 
 
 ## **Designing Queries in FluentCMS**
-<details>
- <summary>
-FluentCMS streamlines frontend development with support for GraphQL-style queries.
-</summary>
+<details> <summary> FluentCMS streamlines frontend development with support for GraphQL-style queries. </summary>
 
 ### Requirements
 
@@ -385,20 +366,15 @@ If the number of IDs exceeds the page size, only the first set will be returned.
 
 ## Designing Web Page in FluentCMS
 
-<details>
- <summary>
-    The page designer is built using the open-source project GrapesJS and Handlebars, allowing you to bind `GrapesJS Components` with `FluentCMS Queries` for dynamic content rendering.
-  </summary>
+<details> <summary> The page designer is built using the open-source project GrapesJS and Handlebars, allowing you to bind `GrapesJS Components` with `FluentCMS Queries` for dynamic content rendering. </summary>
 
 ### Introduction to GrapesJS Panels
-
-The GrapesJS Page Designer UI provides a toolbox with four main panels:
-
-![GrapesJS Toolbox](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/grapes-toolbox.png)
-1. **Style Manager**: Lets users customize CSS properties of selected elements on the canvas. FluentCMS does not modify this panel.
-2. **Traits Panel**: Allows you to modify attributes of selected elements. FluentCMS adds custom traits to bind data to components here.
-3. **Layers Panel**: Displays a hierarchical view of page elements similar to the DOM structure. FluentCMS does not customize this panel, but it’s useful for locating FluentCMS blocks.
-4. **Blocks Panel**: Contains pre-made blocks or components for drag-and-drop functionality. FluentCMS adds its own customized blocks here.
+The GrapesJS Page Designer UI provides a toolbox with four main panels:  
+![GrapesJS Toolbox](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/grapes-toolbox.png)  
+1. **Style Manager**: Lets users customize CSS properties of selected elements on the canvas. FluentCMS does not modify this panel.  
+2. **Traits Panel**: Allows you to modify attributes of selected elements. FluentCMS adds custom traits to bind data to components here.  
+3. **Layers Panel**: Displays a hierarchical view of page elements similar to the DOM structure. FluentCMS does not customize this panel, but it’s useful for locating FluentCMS blocks.  
+4. **Blocks Panel**: Contains pre-made blocks or components for drag-and-drop functionality. FluentCMS adds its own customized blocks here.  
 
 ### Tailwind CSS Support
 FluentCMS includes Tailwind CSS by default for page rendering, using the following styles:
@@ -412,20 +388,19 @@ FluentCMS includes Tailwind CSS by default for page rendering, using the followi
 
 ### Page Types: Landing Page, Detail Page, and Home Page
 
-#### **Landing Page**:
-A landing page is typically the first page a visitor sees.   
+#### **Landing Page**: A landing page is typically the first page a visitor sees.   
 The URL format is `/page/<pagename>`.    
 A landing page is typically composed of multiple `Multiple Records Components`, each with its own `Query`, making the page-level `Query` optional.
 
 ![Landing Page](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/page-landing.png)
 
-#### **Detail Page**:
-A detail page provides specific information about an item.  
-The URL format is `/page/<pagename>/<router parameter>`, and FluentCMS retrieves data by passing the router parameter to the `FluentCMS Query`. For example, for a course detail page:
-- Page Name: `course/{id}`
-- Query: `courses`
+#### **Detail Page**: A detail page provides specific information about an item.  
+The URL format is `/page/<pagename>/<router parameter>`, FluentCMS retrieves data by passing the router parameter to the `FluentCMS Query`. 
 
-For the page URL `https://fluent-cms-admin.azurewebsites.net/pages/course/3`, FluentCMS will call the query `https://fluent-cms-admin.azurewebsites.net/api/queries/courses/one?id=3`.
+For the following settings  
+- Page Name: `course/{id}`  
+- Query: `courses`  
+FluentCMS will call the query `https://fluent-cms-admin.azurewebsites.net/api/queries/courses/one?id=3` for URL `https://fluent-cms-admin.azurewebsites.net/pages/course/3`
 
 ![Course Detail Page](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/page-course.png)
 
@@ -452,16 +427,13 @@ Singleton fields are enclosed within `{{ }}`.
 
 However, you won’t see the `{{#each}}` statement in the GrapesJS Page Designer. FluentCMS adds it automatically for any block under the `Multiple Records` category.
 
-Steps to bind multiple records:
+Steps to bind multiple records:  
 1. Drag a block from the `Multiple Records` category.
-   ![Multiple Record Blocks](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-multiple-record-block.png)
-
+    ![Multiple Record Blocks](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-multiple-record-block.png)
 2. Hover over the GrapesJS components to find a block with the `Multiple-records` tag in the top-left corner, then click the `Traits` panel. You can also use the GrapesJS Layers Panel to locate the component.
-   ![Multiple Record Select](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-multiple-record-select.png)
-
+    ![Multiple Record Select](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-multiple-record-select.png)  
 3. In the `Traits` panel, you have the following options:
-    - **Field**: Specify the field name for the Page-Level Query (e.g., for the FluentCMS Query below, you could set the field as `teacher.skills`).
-
+    - **Field**: Specify the field name for the Page-Level Query (e.g., for the FluentCMS Query below, you could set the field as `teacher.skills`).  
       ```json
       {
         "teacher": {
@@ -474,12 +446,15 @@ Steps to bind multiple records:
           ]
         }
       }
-      ```
-    - **Query**: The query to retrieve data.
-    - **Qs**: Query string parameters to pass (e.g., `?status=featured`, `?level=Advanced`).
-    - **Offset**: Number of records to skip.
-    - **Limit**: Number of records to retrieve.
-
+      ```   
+    - **Query**: The query to retrieve data.  
+    - **Qs**: Query string parameters to pass (e.g., `?status=featured`, `?level=Advanced`).  
+    - **Offset**: Number of records to skip.  
+    - **Limit**: Number of records to retrieve.  
+    - **Pagination** There are 3 Options: 
+      - `Button`, content is divided into multiple pages, and navigation buttons (e.g., "Next," "Previous," or numbered buttons) are provided to allow users to move between the pages.
+      - `Infinite Scroll` , Content automatically loads as the user scrolls down the page, providing a seamless browsing experience without manual page transitions. It's better to set only one component to `infinite scroll`, and put it to the bottom of the pages. 
+      - `None`. Users see all the available content at once, without the need for additional actions.
    ![Multiple Record Trait](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-multiple-record-trait.png)
 
 ### Linking and Images
@@ -502,20 +477,19 @@ FluentCMS adds customized blocks to simplify web page design and data binding fo
 - **Header**: Represents a navigation bar or page header.
 </details>
 
-## Development
-<details>
-  <summary>The backend is written in ASP.NET Core, the Admin Panel uses React, and the Schema Builder is developed with jQuery</summary>
+## Development Guide
+<details><summary>The backend is written in ASP.NET Core, the Admin Panel uses React, and the Schema Builder is developed with jQuery</summary>
 
 ### System Overviews
-![System Overview](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/overview.png)
-- [**Backend Server**](https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS)
-- [**Admin Panel UI**](https://github.com/fluent-cms/fluent-cms/tree/main/admin-panel)
-- [**Schema Builder**](https://github.com/fluent-cms/fluent-cms/tree/main/schema-builder)
+![System Overview](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/overview.png)   
+- [**Backend Server**](https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS)  
+- [**Admin Panel UI**](https://github.com/fluent-cms/fluent-cms/tree/main/admin-panel)  
+- [**Schema Builder**](https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS/wwwroot/schema-ui)  
 
 ### Backend Server
-- **Tools**:
-    - **ASP.NET Core**
-    - **SqlKata**: [SqlKata](https://sqlkata.com/)
+- **Tools**:  
+    - **ASP.NET Core**  
+    - **SqlKata**: [SqlKata](https://sqlkata.com/)  
 
 ![API Controller Service](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/api-controller-service.png)
 
