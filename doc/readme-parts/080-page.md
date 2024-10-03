@@ -88,6 +88,10 @@ Steps to bind multiple records:
     - **Qs**: Query string parameters to pass (e.g., `?status=featured`, `?level=Advanced`).  
     - **Offset**: Number of records to skip.  
     - **Limit**: Number of records to retrieve.  
+    - **Pagination** There are 3 Options: 
+      - `Button`, content is divided into multiple pages, and navigation buttons (e.g., "Next," "Previous," or numbered buttons) are provided to allow users to move between the pages.
+      - `Infinite Scroll` , Content automatically loads as the user scrolls down the page, providing a seamless browsing experience without manual page transitions. It's better to set only one component to `infinite scroll`, and put it to the bottom of the pages. 
+      - `None`. Users see all the available content at once, without the need for additional actions.
    ![Multiple Record Trait](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-multiple-record-trait.png)
 
 ### Linking and Images
