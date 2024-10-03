@@ -24,7 +24,15 @@ public class LocalFileStore(string pathPrefix, int maxImageWith, int quality)
             if (IsImage(file))
             {
                 await using var inStream = file.OpenReadStream();
-                CompressImage(inStream, saveStream );
+                using var originalBitmap = SKBitmap.Decode(inStream);
+                if (originalBitmap.Width > maxImageWith)
+                {
+                    CompressImage(originalBitmap, saveStream );
+                }
+                else
+                {
+                    await file.CopyToAsync(saveStream);
+                }
             }
             else
             {
@@ -43,18 +51,14 @@ public class LocalFileStore(string pathPrefix, int maxImageWith, int quality)
         return validExtensions.Contains(ext);
     }
 
-    private void CompressImage(Stream inStream, Stream outStream)
+    private void CompressImage(SKBitmap originalBitmap, Stream outStream)
     {
-        using var originalBitmap = SKBitmap.Decode(inStream);
-        if (originalBitmap.Width > maxImageWith)
-        {
-            var scaleFactor = (float)maxImageWith / originalBitmap.Width;
-            var newHeight = (int)(originalBitmap.Height * scaleFactor);
 
-            var resizedImage = originalBitmap.Resize(new SKImageInfo(maxImageWith, newHeight), SKFilterQuality.Medium);
-            resizedImage?.Encode(outStream, SKEncodedImageFormat.Jpeg, quality);
-        }
-        inStream.CopyToAsync(outStream);
+        var scaleFactor = (float)maxImageWith / originalBitmap.Width;
+        var newHeight = (int)(originalBitmap.Height * scaleFactor);
+
+        var resizedImage = originalBitmap.Resize(new SKImageInfo(maxImageWith, newHeight), SKFilterQuality.Medium);
+        resizedImage?.Encode(outStream, SKEncodedImageFormat.Jpeg, quality);
     }
 
     string GetFileName(string fileName)
