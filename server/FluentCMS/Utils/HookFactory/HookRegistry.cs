@@ -19,7 +19,7 @@ public class HookRegistry
         }
     }
 
-    public async Task<bool> Trigger(IServiceProvider provider, Occasion occasion, SchemaMeta meta, Schema? schema)
+    public async Task<bool> Trigger(IServiceProvider provider, Occasion occasion, SchemaMeta meta, Schema? schema = null)
     {
         var exit = false;
         foreach (var hook in _hooks.Where(x=>x.Occasion == occasion))

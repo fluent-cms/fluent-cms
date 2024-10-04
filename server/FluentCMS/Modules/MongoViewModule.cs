@@ -3,17 +3,20 @@ using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.Nosql;
 using FluentCMS.Utils.QueryBuilder;
 
-namespace FluentCMS.WebAppExt;
+namespace FluentCMS.Modules;
 
-public static class MongoViewExt
+public class MongoViewModule(ILogger<MongoViewModule> logger)
 {
-    public static void AddMongoView(this WebApplicationBuilder builder, MongoConfig config)
+    
+    public static void AddMongoView(WebApplicationBuilder builder, MongoConfig config)
     {
         builder.Services.AddSingleton<INosqlDao>(p => new MongoDao(config, p.GetRequiredService<ILogger<MongoDao>>()));
+        builder.Services.AddSingleton<MongoViewModule>();
     }
 
-    public static void RegisterMongoViewHook(this WebApplication app, string viewName = "*")
+    public void RegisterMongoViewHook(WebApplication app, string viewName = "*")
     {
+        logger.LogInformation($"Registering mongo view hook {viewName}");
         var hookRegistry = app.Services.GetRequiredService<HookRegistry>();
         hookRegistry.AddHooks(
             viewName, 
@@ -53,4 +56,5 @@ public static class MongoViewExt
             }
         );
     }
+    
 }

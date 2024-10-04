@@ -30,6 +30,10 @@ public class HookReturn
 //metas are immutable, changes in hook function are ignored
 public record EntityMeta(string EntityName, string RecordId ="");
 
-public record SchemaMeta(int SchemaId);
+public record SchemaMeta(string SchemaType, int SchemaId)
+{
+    public const string TypeAll = "";
+    public const int NoId = 0;
+}
 
 public record QueryMeta(string QueryName, string EntityName);

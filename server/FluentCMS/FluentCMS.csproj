@@ -9,6 +9,8 @@
         <IsPackable>true</IsPackable>
         <OutputType>Library</OutputType>
         <AssemblyName>FluentCms</AssemblyName>
+        <PackageReadmeFile>readme.md</PackageReadmeFile>
+        <TargetFramework>net8.0</TargetFramework>
     </PropertyGroup>
 
     <ItemGroup>
@@ -85,13 +87,6 @@
       <_ContentIncludedByDefault Remove="wwwroot\schema-ui\toast\jquery.toast.min.js" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Content Include="wwwroot\static-assets\.idea\.gitignore" />
-      <Content Include="wwwroot\static-assets\.idea\modules.xml" />
-      <Content Include="wwwroot\static-assets\.idea\static-assets.iml" />
-      <Content Include="wwwroot\static-assets\.idea\vcs.xml" />
-      <Content Include="wwwroot\static-assets\.idea\workspace.xml" />
-    </ItemGroup>
     
     <PropertyGroup>
         <PackageReadmeFile>readme.md</PackageReadmeFile>
@@ -104,5 +99,12 @@
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageProjectUrl>https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS</PackageProjectUrl>
         <RepositoryUrl>https://github.com/fluent-cms/fluent-cms</RepositoryUrl>
+        
+        <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+        <!-- Add metadata to assembly -->
+        <AssemblyTitle>$(PackageId)</AssemblyTitle>
+        <AssemblyInformationalVersion>$(Version)</AssemblyInformationalVersion>
     </PropertyGroup>
+   
+
 </Project>

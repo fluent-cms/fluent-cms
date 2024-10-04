@@ -7,6 +7,7 @@ namespace FluentCMS.Utils.HookFactory;
 
 public enum Occasion
 {
+    ReadSchema,
     BeforeDeleteSchema,
     BeforeSaveSchema,
 

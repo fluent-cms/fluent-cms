@@ -17,16 +17,14 @@ public sealed  class SchemaService(
     IServiceProvider provider
 ) : ISchemaService
 {
-    public async Task<Result> NameNotTakenByOther(Schema schema, CancellationToken cancellationToken)
-    {
-        var query = BaseQuery().Where(ColumnName, schema.Name).Where(ColumnType, schema.Type)
-            .WhereNot(ColumnId, schema.Id);
-        var count = await kateQueryExecutor.Count(query, cancellationToken);
-        return count == 0 ? Result.Ok() : Result.Fail($"the schema name {schema.Name} was taken by other schema");
-    }
-
     public async Task<Schema[]> GetAll(string type, CancellationToken cancellationToken = default)
     {
+        var exit = await hookRegistry.Trigger(provider, Occasion.ReadSchema, new SchemaMeta(type, SchemaMeta.NoId));
+        if (exit)
+        {
+            return [];
+        }
+        
         var query = BaseQuery();
         if (!string.IsNullOrWhiteSpace(type))
         {
@@ -42,14 +40,24 @@ public sealed  class SchemaService(
         var query = BaseQuery().Where(ColumnId, id);
         var item = await kateQueryExecutor.One(query, cancellationToken);
         var res = ParseSchema(item);
+        if (res.IsSuccess)
+        {
+            await hookRegistry.Trigger(provider, Occasion.ReadSchema, new SchemaMeta(res.Value.Type, res.Value.Id));
+        }
         return res.IsSuccess ? res.Value : null;
     }
 
-    public async Task<Schema?> GetByNamePrefixDefault(string name, string type, CancellationToken cancellationToken = default)
+    public async Task<Schema?> GetByNamePrefixDefault(string name, string type,
+        CancellationToken cancellationToken = default)
     {
-        var query = BaseQuery().WhereStarts(ColumnName ,name).Where(ColumnType, type);
+        var query = BaseQuery().WhereStarts(ColumnName, name).Where(ColumnType, type);
         var item = await kateQueryExecutor.One(query, cancellationToken);
+
         var res = ParseSchema(item);
+        if (res.IsSuccess)
+        {
+            await hookRegistry.Trigger(provider, Occasion.ReadSchema, new SchemaMeta(type, res.Value.Id));
+        }
         return res.IsSuccess ? res.Value : null;
     }
 
@@ -58,6 +66,10 @@ public sealed  class SchemaService(
         var query = BaseQuery().Where(ColumnName ,name).Where(ColumnType, type);
         var item = await kateQueryExecutor.One(query, cancellationToken);
         var res = ParseSchema(item);
+        if (res.IsSuccess)
+        {
+            await hookRegistry.Trigger(provider, Occasion.ReadSchema, new SchemaMeta(type, res.Value.Id));
+        }
         return res.IsSuccess ? res.Value : null;
     }
 
@@ -69,7 +81,7 @@ public sealed  class SchemaService(
     public async Task<Schema> Save(Schema dto, CancellationToken cancellationToken = default)
     {
         CheckResult(await NameNotTakenByOther(dto, cancellationToken));
-        var exit = await hookRegistry.Trigger(provider, Occasion.BeforeSaveSchema, new SchemaMeta(dto.Id), dto);
+        var exit = await hookRegistry.Trigger(provider, Occasion.BeforeSaveSchema, new SchemaMeta(dto.Type, dto.Id), dto);
         if (exit)
         {
             return dto;
@@ -81,7 +93,7 @@ public sealed  class SchemaService(
 
     public async Task Delete(int id, CancellationToken cancellationToken = default)
     {
-        var exit = await hookRegistry.Trigger(provider, Occasion.BeforeDeleteSchema, new SchemaMeta(id), null);
+        var exit = await hookRegistry.Trigger(provider, Occasion.BeforeDeleteSchema, new SchemaMeta(SchemaMeta.TypeAll,id) );
         if (exit)
         {
             return;
@@ -247,5 +259,12 @@ public sealed  class SchemaService(
             };
 
         });
+    }
+    public async Task<Result> NameNotTakenByOther(Schema schema, CancellationToken cancellationToken)
+    {
+        var query = BaseQuery().Where(ColumnName, schema.Name).Where(ColumnType, schema.Type)
+            .WhereNot(ColumnId, schema.Id);
+        var count = await kateQueryExecutor.Count(query, cancellationToken);
+        return count == 0 ? Result.Ok() : Result.Fail($"the schema name {schema.Name} was taken by other schema");
     }
 }
