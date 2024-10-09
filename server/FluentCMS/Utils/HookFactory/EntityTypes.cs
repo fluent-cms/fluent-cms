@@ -1,0 +1,12 @@
+using FluentCMS.Utils.QueryBuilder;
+namespace FluentCMS.Utils.HookFactory;
+public record EntityPreGetOneArgs(string Name, string RecordId, Record? OutRecord):BaseArgs (Name);
+public record EntityPostGetOneArgs(string Name, string RecordId, Record Record):BaseArgs (Name);
+public record EntityPreGetListArgs(string Name, Filters RefFilters, Sorts RefSorts, Pagination RefPagination):BaseArgs(Name) ;
+public record EntityPostGetListArgs(string Name, ListResult RefListResult):BaseArgs(Name) ;
+public record EntityPreUpdateArgs(string Name, string RecordId, Record RefRecord):BaseArgs (Name);
+public record EntityPostUpdateArgs(string Name, string RecordId, Record Record):BaseArgs (Name);
+public record EntityPreAddArgs(string Name, Record RefRecord):BaseArgs (Name);
+public record EntityPostAddArgs(string Name, string RecordId, Record Record):BaseArgs(Name) ;
+public record EntityPreDelArgs(string Name, string RecordId, Record RefRecord):BaseArgs (Name);
+public record EntityPostDelArgs(string Name, string RecordId, Record Record):BaseArgs (Name);

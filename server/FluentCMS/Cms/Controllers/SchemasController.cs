@@ -34,7 +34,7 @@ public class SchemasController(
     [HttpGet("{id}")]
     public async Task<ActionResult<Schema>> GetOne(int id, CancellationToken cancellationToken)
     {
-        var schema = await schemaService.GetByIdDefault(id, cancellationToken);
+        var schema = await schemaService.GetByIdWithTrigger(id, cancellationToken);
         if (schema is null)
         {
             return NotFound($"can not find schema {id}");

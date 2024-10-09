@@ -8,7 +8,7 @@ public class EventProduceModule(ILogger<EventProduceModule> logger)
     public static void AddKafkaMessageProducer(WebApplicationBuilder builder, string brokerList)
     {
         builder.Services.AddSingleton<EventProduceModule>();
-        
+
         builder.Services.AddSingleton<IProducer>(p =>
             new KafkaProducer(brokerList, p.GetRequiredService<ILogger<KafkaProducer>>()));
     }
@@ -18,22 +18,25 @@ public class EventProduceModule(ILogger<EventProduceModule> logger)
         logger.LogInformation($"Register message producer hook for {entityName}");
         var registry = app.Services.GetRequiredService<HookRegistry>();
         var messageProducer = app.Services.GetRequiredService<IProducer>();
-        registry.AddHooks(entityName, [Occasion.AfterInsert],
-            (EntityMeta meta, Record record) =>
-            {
-                messageProducer.ProduceRecord(Topics.EntityCreated, Operations.Create, meta, record);
-            });
+        registry.EntityPostAdd.RegisterAsync(entityName, async parameter =>
+        {
+            await messageProducer.ProduceRecord(Topics.EntityCreated, Operations.Create, parameter.Name,
+                parameter.RecordId, parameter.Record);
+            return parameter;
+        });
 
-        registry.AddHooks(entityName, [Occasion.AfterUpdate],
-            (EntityMeta meta, Record record) =>
-            {
-                messageProducer.ProduceRecord(Topics.EntityUpdated, Operations.Update, meta, record);
-            });
-        registry.AddHooks(entityName, [Occasion.AfterDelete],
-            (EntityMeta meta, Record record) =>
-            {
-                messageProducer.ProduceRecord(Topics.EntityDeleted, Operations.Delete, meta, record);
-            });
+        registry.EntityPostUpdate.RegisterAsync(entityName, async parameter =>
+        {
+            await messageProducer.ProduceRecord(Topics.EntityCreated, Operations.Create, parameter.Name,
+                parameter.RecordId, parameter.Record);
+            return parameter;
+        });
+        registry.EntityPostDel.RegisterAsync(entityName, async parameter =>
+        {
+            await messageProducer.ProduceRecord(Topics.EntityCreated, Operations.Create, parameter.Name,
+                parameter.RecordId, parameter.Record);
+            return parameter;
+        });
     }
 }
     

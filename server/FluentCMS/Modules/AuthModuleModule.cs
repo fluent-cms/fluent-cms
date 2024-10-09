@@ -1,7 +1,5 @@
 using FluentCMS.Auth.Services;
-using FluentCMS.Cms.Models;
 using FluentCMS.Utils.HookFactory;
-using FluentCMS.Utils.QueryBuilder;
 using FluentResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -21,7 +19,8 @@ public sealed class AuthModuleModule<TCmsUser>(ILogger<IAuthModule> logger) : IA
 
         builder.Services.AddIdentityApiEndpoints<TUser>().AddRoles<TRole>().AddEntityFrameworkStores<TContext>();
         builder.Services.AddScoped<IAccountService, AccountService<TUser, TRole, TContext>>();
-        builder.Services.AddScoped<IPermissionService, PermissionService<TUser>>();
+        builder.Services.AddScoped<ISchemaPermissionService, SchemaPermissionService<TUser>>();
+        builder.Services.AddScoped<IEntityPermissionService, EntityPermissionService>();
         builder.Services.AddScoped<IProfileService, ProfileService<TUser>>();
         builder.Services.AddHttpContextAccessor();
     }
@@ -29,32 +28,84 @@ public sealed class AuthModuleModule<TCmsUser>(ILogger<IAuthModule> logger) : IA
     public void UseCmsAuth(WebApplication app)
     {
         logger.LogInformation("using cms auth");
-        using var scope = app.Services.CreateScope();
         app.UseAuthorization();
         app.MapGroup("/api").MapIdentityApi<TCmsUser>();
         app.MapGet("/api/logout", async (SignInManager<TCmsUser> signInManager) => await signInManager.SignOutAsync());
 
-        var registry = app.Services.GetRequiredService<HookRegistry>();
+        var registry = app.Services.GetRequiredService<CmsModule>().GetHookRegistry(app);
 
-        registry.AddHooks("*", [Occasion.BeforeSaveSchema],
-            async (IPermissionService service, Schema schema) => await service.HandleSaveSchema(schema));
-
-        registry.AddHooks("*", [Occasion.BeforeDeleteSchema],
-            async (IPermissionService service, SchemaMeta meta) => await service.HandleDeleteSchema(meta));
-
-        registry.AddHooks("*", [Occasion.BeforeReadOne, Occasion.BeforeReadList],
-            (IPermissionService service, EntityMeta meta, Filters filters) =>
-                service.CheckEntityReadPermission(meta, filters));
-
-        registry.AddHooks("*",
-            [Occasion.BeforeAddRelated, Occasion.BeforeDeleteRelated, Occasion.BeforeDelete, Occasion.BeforeUpdate],
-            async (IPermissionService service, EntityMeta meta) => await service.CheckEntityAccessPermission(meta));
-
-        registry.AddHooks("*", [Occasion.BeforeInsert],
-            async (IPermissionService service, EntityMeta meta, Record record) =>
+        registry.SchemaPreSave.RegisterDynamic("*",
+            async (ISchemaPermissionService schemaPermissionService, SchemaPreSaveArgs parameter) =>
             {
-                service.AssignCreatedBy(record);
-                await service.CheckEntityAccessPermission(meta);
+                await schemaPermissionService.Save(parameter.RefSchema);
+            });
+
+        registry.SchemaPreDel.RegisterDynamic("*",
+            async (ISchemaPermissionService schemaPermissionService, SchemaPreDelArgs parameter) =>
+            {
+                await schemaPermissionService.Delete(parameter.SchemaId);
+            });
+
+        registry.SchemaPreGetAll.RegisterDynamic("*",
+            (ISchemaPermissionService schemaPermissionService, SchemaPreGetAllArgs args) => args with { OutSchemaNames = schemaPermissionService.GetAll() });
+
+        registry.SchemaPostGetOne.RegisterDynamic("*",
+            (ISchemaPermissionService schemaPermissionService, SchemaPostGetOneArgs parameter) =>
+            {
+                schemaPermissionService.GetOne(parameter.Name);
+                return parameter;
+            });
+
+        
+        registry.EntityPreGetOne.RegisterDynamic("*", 
+            (IEntityPermissionService service, EntityPreGetOneArgs parameter) =>
+            {
+                service.GetOne(parameter.Name, parameter.RecordId);
+                return parameter;
+            });
+
+        registry.EntityPreGetList.RegisterDynamic("*", 
+            (IEntityPermissionService service, EntityPreGetListArgs parameter) =>
+            {
+                service.List(parameter.Name, parameter.RefFilters);
+                return parameter;
+            });
+                
+        registry.CrosstablePreAdd.RegisterDynamic("*",
+            async (IEntityPermissionService service, CrosstablePreAddArgs parameter ) =>
+            {
+                await service.Change(parameter.Name, parameter.RecordId);
+                return parameter;
+            });
+
+        registry.CrosstablePreDel.RegisterDynamic("*",
+            async (IEntityPermissionService service, CrosstablePreDelArgs parameter ) =>
+            {
+                await service.Change(parameter.Name, parameter.RecordId);
+                return parameter;
+            });
+        
+        registry.EntityPreDel.RegisterDynamic("*",
+            async (IEntityPermissionService service, EntityPreDelArgs parameter ) =>
+            {
+                await service.Change(parameter.Name, parameter.RecordId);
+                return parameter;
+            });
+        
+        registry.EntityPreUpdate.RegisterDynamic("*",
+            async (IEntityPermissionService service, EntityPreUpdateArgs parameter ) =>
+            {
+                await service.Change(parameter.Name, parameter.RecordId);
+                return parameter;
+            });
+        
+       
+        registry.EntityPreAdd.RegisterDynamic("*",
+            (IEntityPermissionService service, EntityPreAddArgs parameter) =>
+            {
+                service.Create(parameter.Name );
+                service.AssignCreatedBy(parameter.RefRecord);
+                return parameter;
             }
         );
     }
@@ -62,7 +113,6 @@ public sealed class AuthModuleModule<TCmsUser>(ILogger<IAuthModule> logger) : IA
     public async Task<Result> EnsureCmsUser(WebApplication app, string email, string password, string[] role)
     {
         using var scope = app.Services.CreateScope();
-        var service = scope.ServiceProvider.GetService<IAccountService>();
-        return await service?.EnsureUser(email, password, role)!;
+        return await scope.ServiceProvider.GetRequiredService<IAccountService>().EnsureUser(email, password,role);
     }
 }

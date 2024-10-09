@@ -12,8 +12,8 @@ public static class AppExt
         app.Services.GetService<IAuthModule>()?.UseCmsAuth(app);
     }
 
-    public static void RegisterCmsHook(this WebApplication app, string entityName, Occasion[] occasion,Delegate func) =>
-        app.Services.GetRequiredService<CmsModule>().RegisterCmsHook(app, entityName, occasion, func);
+    public static HookRegistry GetHookRegistry(this WebApplication app) =>
+        app.Services.GetRequiredService<CmsModule>().GetHookRegistry(app);
 
     public static async Task<Result> EnsureCmsUser(this WebApplication app, string email, string password,
         string[] role) =>

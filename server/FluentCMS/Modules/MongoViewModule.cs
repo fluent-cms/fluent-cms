@@ -1,7 +1,6 @@
 using FluentCMS.Services;
 using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.Nosql;
-using FluentCMS.Utils.QueryBuilder;
 
 namespace FluentCMS.Modules;
 
@@ -18,43 +17,30 @@ public class MongoViewModule(ILogger<MongoViewModule> logger)
     {
         logger.LogInformation($"Registering mongo view hook {viewName}");
         var hookRegistry = app.Services.GetRequiredService<HookRegistry>();
-        hookRegistry.AddHooks(
-            viewName, 
-            [Occasion.BeforeQueryList],
-            async (INosqlDao dao, QueryMeta meta, 
-                Filters filters, Sorts sorts, Cursor cursor, Pagination pagination,
-                HookReturn hookReturn) =>
+        hookRegistry.QueryPreGetList.RegisterDynamic(viewName,
+            async (INosqlDao dao, QueryPreGetListArgs p) =>
             {
-                var res = await dao.Query(meta.EntityName, filters, sorts, cursor, pagination);
-                hookReturn.Records = InvalidParamExceptionFactory.CheckResult(res);
-                return true;
+                var res = InvalidParamExceptionFactory.CheckResult(await dao.Query(p.EntityName, p.Filters, p.Sorts, p.Cursor, p.Pagination));
+                return p with { OutRecords = res };
             }
         );
         
-        hookRegistry.AddHooks(
+        hookRegistry.QueryPreGetMany.RegisterDynamic(
             viewName, 
-            [Occasion.BeforeQueryMany],
-            async (INosqlDao dao, QueryMeta meta, Filters filters, HookReturn hookReturn) =>
+            async (INosqlDao dao, QueryPreGetManyArgs p) =>
             {
-                hookReturn.Records =
-                    InvalidParamExceptionFactory.CheckResult(await dao.Query(meta.EntityName, filters));
-                return true;
+                var res = InvalidParamExceptionFactory.CheckResult(await dao.Query(p.EntityName, p.Filters));
+                return p with { OutRecords = res };
             }
         );
         
-        hookRegistry.AddHooks(
+        hookRegistry.QueryPreGetOne.RegisterDynamic(
             viewName, 
-            [Occasion.BeforeQueryOne],
-            async (INosqlDao dao, QueryMeta meta, Filters filters,HookReturn hookReturn) =>
+            async (INosqlDao dao, QueryPreGetOneArgs p) =>
             {
-                var records = InvalidParamExceptionFactory.CheckResult(await dao.Query(meta.EntityName, filters));
-                if (records.Length > 0)
-                {
-                    hookReturn.Record = records[0];
-                }
-                return true;
+                var records = InvalidParamExceptionFactory.CheckResult(await dao.Query(p.EntityName, p.Filters));
+                return p with { OutRecord = records.First() };
             }
         );
     }
-    
 }

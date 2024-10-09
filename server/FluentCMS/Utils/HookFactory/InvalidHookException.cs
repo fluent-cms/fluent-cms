@@ -1,9 +1,5 @@
-using Humanizer;
-
 namespace FluentCMS.Utils.HookFactory;
-
 public class HookException (string message): Exception(message);
-
 public class NullExceptionBuilder<T>(T? val)
 {
     public T ValOrThrow(string message)
@@ -15,7 +11,6 @@ public class NullExceptionBuilder<T>(T? val)
         return val;
     }
 }
-
 public static class HookChecker
 {
     public  static NullExceptionBuilder<T> NotNull<T>( T? obj)

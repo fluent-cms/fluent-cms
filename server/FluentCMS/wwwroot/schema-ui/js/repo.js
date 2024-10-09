@@ -1,5 +1,15 @@
 const apiPrefix = "/api";
 axios.defaults.withCredentials = true
+
+
+function getUserInfo() {
+    return tryFetch(async ()=> await axios.get(apiPrefix + `/profile/info`));
+}
+
+async function logout() {
+    return tryFetch(async () => await axios.get(apiPrefix + `/logout`));
+}
+
 async function save(data) {
     return tryFetch(async ()=>await axios.post(apiPrefix + "/schemas", encode(data)))
 }

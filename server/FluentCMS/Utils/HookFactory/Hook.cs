@@ -1,89 +1,28 @@
 using System.Reflection;
-using FluentCMS.Cms.Models;
-using FluentCMS.Utils.QueryBuilder;
-using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
-
 namespace FluentCMS.Utils.HookFactory;
 
-public enum Occasion
-{
-    ReadSchema,
-    BeforeDeleteSchema,
-    BeforeSaveSchema,
-
-    BeforeInsert,
-    AfterInsert,
-
-    BeforeReadOne,
-    AfterReadOne,
-
-    BeforeReadList,
-    AfterReadList,
-
-    BeforeUpdate,
-    AfterUpdate,
-
-    BeforeDelete,
-    AfterDelete,
-
-    BeforeAddRelated,
-    AfterAddRelated,
-
-    BeforeDeleteRelated,
-    AfterDeleteRelated,
-
-    BeforeQueryList,
-    BeforeQueryOne,
-    BeforeQueryMany,
-}
-
-public sealed class Hook
+public class Hook<TArgs>
+where TArgs: BaseArgs
 {
     public string SchemaName { get; init; } = "";
-    public Occasion Occasion { get; init; }
     public Delegate Callback { get; init; } = null!;
 
-    private string ExceptionPrefix => $"Execute Hook Fail [{SchemaName} - {Occasion}]: ";
+    private string ExceptionPrefix => $"Execute Hook Fail [{SchemaName} - {typeof(TArgs).Name}]: ";
 
-    internal async Task<bool> Trigger(IServiceProvider provider,
-        EntityMeta? meta, QueryMeta? viewMeta, SchemaMeta? schemaMeta,
-        HookParameter parameter, HookReturn? hookReturn)
+    public async Task<TArgs> Trigger(IServiceProvider provider, TArgs hookArgs)
     {
         var (method, args) = PrepareArgument(provider, t =>
         {
             return t switch
             {
-                _ when t == typeof(EntityMeta) && meta is not null=> meta,
-                _ when t == typeof(QueryMeta) && viewMeta is not null=> viewMeta,
-                _ when t == typeof(SchemaMeta) && schemaMeta is not null=> schemaMeta,
-                
-                //schema
-                _ when t == typeof(Schema) && parameter.Schema is not null=> parameter.Schema,
-                //list or view
-                _ when t == typeof(Filters) && parameter.Filters is not null=> parameter.Filters,
-                _ when t == typeof(Sorts) && parameter.Sorts is not null=> parameter.Sorts,
-                _ when t == typeof(Pagination) && parameter.Pagination is not null=> parameter.Pagination,
-                _ when t == typeof(Cursor) && parameter.Cursor is not null=> parameter.Cursor,
-                
-                //cross table
-                _ when t == typeof(Attribute)  && parameter.Attribute is not null=> parameter.Attribute,
-                _ when t == typeof(IList<Record>)  && parameter.Records is not null=> parameter.Records,
-                
-                //crud query One
-                _ when t == typeof(Record) && parameter.Record is not null  => parameter.Record,
-                
-                //list
-                _ when t == typeof(ListResult) && parameter.ListResult is not null  => parameter.ListResult,
-                
-                //view or before queryOne
-                _ when t == typeof(HookReturn) && hookReturn is not null => hookReturn,
+                _ when t.IsInstanceOfType(hookArgs) => hookArgs,
                 _ => throw new HookException($"{ExceptionPrefix}can not resolve type {t}")
             };
         });
         return await InvokeMethod(method, args);
     }
 
-    private  (MethodInfo, object[]) PrepareArgument(IServiceProvider provider, Func<Type, object> getInput)
+    private (MethodInfo, object[]) PrepareArgument(IServiceProvider provider, Func<Type, object> getInput)
     {
         var method = HookChecker
             .NotNull(Callback.GetType().GetMethod("Invoke"))
@@ -106,8 +45,7 @@ public sealed class Hook
         }
         return (method, args.ToArray());
     }
-
-    private async Task<bool> InvokeMethod(MethodInfo method, object[] args)
+    private async Task<TArgs> InvokeMethod(MethodInfo method, object[] args)
     {
         var returnType = method.ReturnType;
         var isAsync = returnType == typeof(Task) ||
@@ -118,12 +56,12 @@ public sealed class Hook
                 ? await InvokeAsyncTask(method, args.ToArray())
                 : method.Invoke(Callback, args.ToArray());
 
-            if (method.ReturnType == typeof(Task) || method.ReturnType == typeof(void))
+            if (result is TArgs res)
             {
-                result = false;
+                return res;
             }
 
-            return result is bool ? (bool)result : false;
+            throw new HookException($"{ExceptionPrefix} didn't find return value of type {typeof(TArgs).Name}");
         }
         catch(Exception ex)
         {

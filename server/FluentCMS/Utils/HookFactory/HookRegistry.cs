@@ -1,77 +1,25 @@
-using FluentCMS.Cms.Models;
-using FluentCMS.Utils.QueryBuilder;
-
 namespace FluentCMS.Utils.HookFactory;
 public class HookRegistry
 {
-    private readonly  List<Hook> _hooks= [];
-
-    public void AddHooks(string schemaName, Occasion[] occasions, Delegate func)
-    {
-        foreach (var occasion in occasions)
-        {
-            _hooks.Add(new Hook
-            {
-                SchemaName = schemaName,
-                Occasion = occasion,
-                Callback = func
-            });
-        }
-    }
-
-    public async Task<bool> Trigger(IServiceProvider provider, Occasion occasion, SchemaMeta meta, Schema? schema = null)
-    {
-        var exit = false;
-        foreach (var hook in _hooks.Where(x=>x.Occasion == occasion))
-        {
-            exit = await hook.Trigger(provider,null, null,meta, new HookParameter{Schema = schema},null);
-            if (exit)
-            {
-                break ;
-            }
-        }
-        return exit;
-    }
-    
-    public async Task<bool> Trigger(IServiceProvider provider, Occasion occasion, Query query, HookParameter hookParameter, HookReturn? hookReturn = null)
-    {
-        var exit = false;
-        var meta = new QueryMeta(query.Name, query.EntityName);
-        foreach (var hook in GetHooks(meta.QueryName,occasion))
-        {
-            exit = await hook.Trigger(provider,null,meta, null,hookParameter, hookReturn);
-            if (exit)
-            {
-                break ;
-            }
-        }
-        return exit;
-    }
-    
-    public async Task<bool> Trigger(IServiceProvider provider, Occasion occasion, EntityMeta meta, HookParameter hookParameter, HookReturn? hookReturn = null)
-    {
-        var exit = false;
-        foreach (var hook in GetHooks(meta.EntityName, occasion))
-        {
-            exit = await hook.Trigger(provider,meta,null,null, hookParameter,hookReturn);
-            if (exit)
-            {
-                break ;
-            }
-        }
-        return exit;
-    }
-    
-    private Hook[] GetHooks(string schemaName, Occasion occasion)
-    {
-        return _hooks.Where(x =>
-        {
-            var name = x.SchemaName;
-            if (name.EndsWith("*"))
-            {
-                name = name.Substring(0, name.Length - 1);
-            }
-            return x.Occasion == occasion && (name =="" || schemaName.StartsWith(name));
-        }).ToArray();
-    }
+        public HookList<SchemaPreGetAllArgs> SchemaPreGetAll { get; } = new();
+        public HookList<SchemaPostGetOneArgs> SchemaPostGetOne { get; } = new();
+        public HookList<SchemaPreSaveArgs> SchemaPreSave { get; } = new();
+        public HookList<SchemaPreDelArgs> SchemaPreDel { get; } = new();
+        public HookList<QueryPreGetListArgs> QueryPreGetList { get; } = new();
+        public HookList<QueryPreGetManyArgs> QueryPreGetMany { get; } = new();
+        public HookList<QueryPreGetOneArgs> QueryPreGetOne { get; } = new();
+        public HookList<EntityPreGetOneArgs> EntityPreGetOne { get; } = new();
+        public HookList<EntityPostGetOneArgs> EntityPostGetOne { get; } = new();
+        public HookList<EntityPreGetListArgs> EntityPreGetList { get; } = new();
+        public HookList<EntityPostGetListArgs> EntityPostGetList { get; } = new();
+        public HookList<EntityPreUpdateArgs> EntityPreUpdate { get; } = new();
+        public HookList<EntityPostUpdateArgs> EntityPostUpdate { get; } = new();
+        public HookList<EntityPreDelArgs> EntityPreDel { get; } = new();
+        public HookList<EntityPostDelArgs> EntityPostDel { get; } = new();
+        public HookList<EntityPreAddArgs> EntityPreAdd { get; } = new();
+        public HookList<EntityPostAddArgs> EntityPostAdd { get; } = new();
+        public HookList<CrosstablePreAddArgs> CrosstablePreAdd { get; } = new();
+        public HookList<CrosstablePostAddArgs> CrosstablePostAdd { get; } = new();
+        public HookList<CrosstablePreDelArgs> CrosstablePreDel { get; } = new();
+        public HookList<CrosstablePostDelArgs> CrosstablePostDel { get; } = new();
 }
