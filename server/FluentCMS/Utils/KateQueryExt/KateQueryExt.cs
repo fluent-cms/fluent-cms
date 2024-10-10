@@ -14,7 +14,7 @@ public static class KateQueryExt
 
         query.Offset(pagination.Offset).Limit(pagination.Limit);
     }
-    public static void ApplySorts(this SqlKata.Query query, Sorts? sorts)
+    public static void ApplySorts(this SqlKata.Query query, Sort[]? sorts)
     {
         if (sorts is null)
         {
@@ -34,7 +34,7 @@ public static class KateQueryExt
         }
     }
 
-    public static Result ApplyFilters(this SqlKata.Query query, Filters? filters)
+    public static Result ApplyFilters(this SqlKata.Query query, ValidFilter[]? filters)
     {
         var result = Result.Ok();
         if (filters is null) return result;
@@ -44,9 +44,9 @@ public static class KateQueryExt
             {
                 foreach (var c in filter.Constraints)
                 {
-                    var ret = filter.IsOr
-                        ? q.ApplyOrConstraint(filter.FieldName, c.Match, c.ResolvedValues)
-                        : q.ApplyAndConstraint(filter.FieldName, c.Match, c.ResolvedValues);
+                    var ret = filter.Operator=="or"
+                        ? q.ApplyOrConstraint(filter.FieldName, c.Match, c.Values)
+                        : q.ApplyAndConstraint(filter.FieldName, c.Match, c.Values);
                     if (ret.IsFailed)
                     {
                         result = Result.Fail(ret.Errors);
@@ -115,10 +115,10 @@ public static class KateQueryExt
         };
     }
 
-    public static Result ApplyCursor(this SqlKata.Query? query,  Cursor? cursor,Sorts? sorts)
+    public static Result ApplyCursor(this SqlKata.Query? query,  Cursor? cursor,Sort[]? sorts)
     {
         if (query is null || cursor?.BoundaryItem is null) return Result.Ok();
-        return sorts?.Count switch
+        return sorts?.Length switch
         {
             0 => Result.Fail("Sorts was not provided, can not perform cursor filter"),
             1 => HandleOneField(),

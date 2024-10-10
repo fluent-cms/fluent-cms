@@ -51,7 +51,7 @@ public class HookRegistryTests
     {
         _hookRegistry.EntityPreGetList.Register(People.EntityName, args => args);
         await _hookRegistry.EntityPreGetList.Trigger(_serviceProvider,
-            new EntityPreGetListArgs(People.EntityName, new Filters(), new Sorts(), new Pagination()));
+            new EntityPreGetListArgs(People.EntityName, [], new Sorts(), new Pagination()));
     }
     
     [Fact]
@@ -61,8 +61,6 @@ public class HookRegistryTests
         _hookRegistry.EntityPreGetList.Register(People.EntityName, args =>
         {
             args.RefPagination.Offset = offset;
-            args.RefFilters.Add(new Filter());
-            args.RefSorts.Add(new Sort());
             return args;
         });
 

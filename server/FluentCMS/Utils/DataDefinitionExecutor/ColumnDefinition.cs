@@ -1,19 +1,26 @@
 namespace FluentCMS.Utils.DataDefinitionExecutor;
 
-public enum DataType
+public static class DataType
 {
-    Int,
-    Datetime,
+    public const string Int = "int";
+    public const string Datetime = "datetime";
 
-    Text, //slow performance compare to string
-    String, //has length limit 255 
+    public const string Text = "text"; //slow performance compare to string
+    public const string String = "string"; //has length limit 255 
 
-    Na,
+    public const string Na = "na";
 }
 
-public record ColumnDefinition
-{
+public record ColumnDefinition(string ColumnName, string DataType);
 
-    public string ColumnName { get; set; } = "";
-    public DataType DataType { get; set; }
+public static class ColumnDefinitionHelper
+{
+    public static ColumnDefinition[] EnsureDeleted(this ColumnDefinition[] columnDefinitions)
+    {
+        if (columnDefinitions.FirstOrDefault(x => x.ColumnName == "delete") is not null)
+        {
+            return columnDefinitions;
+        }
+        return [..columnDefinitions, new ColumnDefinition("deleted", DataType.Int)];
+    }
 }

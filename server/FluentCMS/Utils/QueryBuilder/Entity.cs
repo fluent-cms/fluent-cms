@@ -68,7 +68,7 @@ public sealed class Entity
         }
     }
 
-    public Result<SqlKata.Query> OneQuery(Filters? filters, Attribute[] attributes)
+    public Result<SqlKata.Query> OneQuery(ValidFilter[]? filters, Attribute[] attributes)
     {
         var query = Basic().Select(attributes.Select(x => x.FullName()));
         var result = query.ApplyFilters(filters); //filters.Apply(this, query);
@@ -80,7 +80,7 @@ public sealed class Entity
         return query;
     }
 
-    public SqlKata.Query ByIdQuery(object id, Attribute[] attributes, Filters? filters)
+    public SqlKata.Query ByIdQuery(object id, Attribute[] attributes, ValidFilter[]? filters)
     {
         var query = Basic().Where(PrimaryKey, id)
             .Select(attributes.Select(x => x.FullName()));
@@ -88,8 +88,8 @@ public sealed class Entity
         return query;
     }
 
-    public Result<SqlKata.Query> ListQuery(Filters? filters, Sorts? sorts, Pagination? pagination, Cursor? cursor,
-        Attribute[] attributes, Func<Attribute, string, object> cast)
+    public Result<SqlKata.Query> ListQuery(ValidFilter[]? filters, Sort[]? sorts, Pagination? pagination, Cursor? cursor,
+        Attribute[] attributes)
     {
         var query = Basic().Select(attributes.Select(x => x.FullName()));
 
@@ -110,7 +110,7 @@ public sealed class Entity
         return query;
     }
 
-    public SqlKata.Query CountQuery(Filters? filters)
+    public SqlKata.Query CountQuery(ValidFilter[]? filters)
     {
         var query = Basic();
         query.ApplyFilters(filters);
@@ -167,13 +167,13 @@ public sealed class Entity
     {
         var set = columnDefinitions.Select(x => x.ColumnName.ToLower()).ToHashSet();
         var items = Attributes.GetLocalAttributes().Where(x => !set.Contains(x.Field.ToLower().Trim()));
-        return items.Select(x => new ColumnDefinition { ColumnName = x.Field, DataType = x.DataType }).ToArray();
+        return items.Select(x => new ColumnDefinition(x.Field, x.DataType) ).ToArray();
     }
 
     public ColumnDefinition[] ColumnDefinitions()
     {
         return Attributes.GetLocalAttributes()
-            .Select(x => new ColumnDefinition { ColumnName = x.Field, DataType = x.DataType })
+            .Select(x => new ColumnDefinition (ColumnName : x.Field, DataType : x.DataType ))
             .ToArray();
     }
 
@@ -186,7 +186,7 @@ public sealed class Entity
             {
                 Field = DefaultPrimaryKeyFieldName, Header = "id",
                 InList = true, InDetail = true, IsDefault = true,
-                DataType = DataType.Int, Type = DisplayType.text
+                DataType = DataType.Int, Type = DisplayType.Text
             });
         }
 
@@ -291,7 +291,7 @@ public sealed class Entity
             if (attribute == null) continue;
             var res = attribute.Type switch
             {
-                DisplayType.lookup => SubElement(property.Value, attribute.Lookup!.PrimaryKey).Bind(x=>Convert(x, attribute)),
+                DisplayType.Lookup => SubElement(property.Value, attribute.Lookup!.PrimaryKey).Bind(x=>Convert(x, attribute)),
                 _ => Convert(property.Value, attribute)
             };
             if (res.IsFailed)

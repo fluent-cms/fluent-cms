@@ -70,7 +70,7 @@ public sealed class PageService(ISchemaService schemaService, IQueryService quer
         var htmlNode = ParseNode();
         var template = Handlebars.Compile(htmlNode.OuterHtml);
         var result = await PrepareData();
-        SetResultPagination(result,token);
+        result = SetResultPagination(result,token);
         var data = new Dictionary<string, object> { { token.Field, result } };
         return template(data);
 
@@ -86,10 +86,10 @@ public sealed class PageService(ISchemaService schemaService, IQueryService quer
 
         }
 
-        async Task<RecordQueryResult> PrepareData()
+        async Task<QueryResult<Record>> PrepareData()
         {
             var cursor = new Cursor { First = token.First, Last = token.Last };
-            var pagination = new Pagination { Offset = token.Offset, Limit = token.Limit };
+            var pagination = new Pagination (token.Offset,token.Limit );
             return await queryService.List(token.Query, cursor, pagination,  QueryHelpers.ParseQuery(token.Qs), cancellationToken);
         }
     }
@@ -103,8 +103,7 @@ public sealed class PageService(ISchemaService schemaService, IQueryService quer
                 continue;
             }
 
-            var pagination = new Pagination
-                { Offset = repeatNode.MultipleQuery.Offset, Limit = repeatNode.MultipleQuery.Limit };
+            var pagination = new Pagination (repeatNode.MultipleQuery.Offset, repeatNode.MultipleQuery.Limit );
             var result = await queryService.List(repeatNode.MultipleQuery.Query, new Cursor(), pagination,
                 repeatNode.MultipleQuery.Qs, cancellationToken);
             data[repeatNode.Field] = result;
@@ -118,10 +117,11 @@ public sealed class PageService(ISchemaService schemaService, IQueryService quer
         return template(data);
     }
 
-    private static void SetResultPagination(RecordQueryResult result, PartialToken token)
+    private static QueryResult<Record>  SetResultPagination(QueryResult<Record> result, PartialToken token)
     {
-        result.Last = string.IsNullOrEmpty(result.Last)  ? "" : (token with { Last = result.Last, First = ""}).ToString();
-        result.First = string.IsNullOrEmpty(result.First) ? "" : (token with { First = result.First, Last = ""}).ToString();
+        var last = string.IsNullOrEmpty(result.Last)  ? "" : (token with { Last = result.Last, First = ""}).ToString();
+        var first = string.IsNullOrEmpty(result.First) ? "" : (token with { First = result.First, Last = ""}).ToString();
+        return result with { First = first, Last = last };
     }
 
     private static void SetDataPagination(string pageName, Record data, RepeatNode[] repeatNodes)
@@ -129,14 +129,14 @@ public sealed class PageService(ISchemaService schemaService, IQueryService quer
         foreach (var repeatNode in repeatNodes)
         {
             if (repeatNode.MultipleQuery is not null && data.TryGetValue(repeatNode.Field, out var value) &&
-                value is RecordQueryResult result)
+                value is QueryResult<Record> result)
             {
                 var token = new PartialToken(pageName, repeatNode.HtmlNode.Id, repeatNode.Field,
                     repeatNode.PaginationType,
                     repeatNode.MultipleQuery!.Query, repeatNode.MultipleQuery.Offset, repeatNode.MultipleQuery.Limit,
                     "", "",
                     GetQueryString(repeatNode.MultipleQuery.Qs));
-                SetResultPagination(result, token);
+                data[repeatNode.Field] = SetResultPagination(result, token);
             }
         }
     }

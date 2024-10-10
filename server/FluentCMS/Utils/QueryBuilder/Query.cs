@@ -13,6 +13,6 @@ public sealed class Query
     [JsonIgnore]
     public Entity? Entity { get; set; }
 
-    public Sorts Sorts { get; set; } = [];
-    public Filters Filters { get; set; } = [];
+    public Sort[] Sorts { get; set; } = [];
+    public Filter[] Filters { get; set; } = [];
 }

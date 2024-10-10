@@ -18,20 +18,20 @@ public sealed class QueryService(
 ) : IQueryService
 {
 
-    public async Task<RecordQueryResult> List(string queryName, Cursor cursor, Pagination? pagination,
+    public async Task<QueryResult<Record>> List(string queryName, Cursor cursor, Pagination? pagination,
         Dictionary<string, StringValues> querystringDictionary, CancellationToken cancellationToken)
     {
         var query = await querySchemaService.GetByNameAndCache(queryName, cancellationToken);
-        CheckResult(query.Filters.ResolveValues(query.Entity!,  schemaService.CastToDatabaseType, querystringDictionary));
+        var filters = CheckResult(query.Filters.Resolve(query.Entity!,  schemaService.CastToDatabaseType, querystringDictionary));
         CheckResult(cursor.ResolveBoundaryItem(query.Entity!, schemaService.CastToDatabaseType));
-        pagination ??= new Pagination { Limit = query.PageSize };
+        pagination ??= new Pagination (0,query.PageSize );
         if (pagination.Limit== 0 || pagination.Limit > query.PageSize)
         {
-            pagination.Limit = query.PageSize;
+            pagination = pagination with { Limit = query.PageSize };
         }
 
-        pagination.Limit++;// add extra to check has more
-        var hookParam = new QueryPreGetListArgs( queryName, query.EntityName, query.Filters,  query.Sorts, cursor, pagination);
+        pagination = pagination with { Limit = pagination.Limit + 1 };// add extra to check has more
+        var hookParam = new QueryPreGetListArgs( queryName, query.EntityName, filters,  query.Sorts, cursor, pagination);
         var res = await hookRegistry.QueryPreGetList.Trigger(provider, hookParam);
         if (res.OutRecords is not null)
         {
@@ -39,8 +39,7 @@ public sealed class QueryService(
         }
 
         var attributes = query.Selection.GetLocalAttributes();
-        var kateQuery = CheckResult(query.Entity!.ListQuery(res.Filters, res.Sorts, res.Pagination, res.Cursor, attributes,
-            schemaService.CastToDatabaseType));
+        var kateQuery = CheckResult(query.Entity!.ListQuery(res.Filters, res.Sorts, res.Pagination, res.Cursor, attributes));
         var items = await kateQueryExecutor.Many(kateQuery, cancellationToken);
         
         if (!cursor.IsForward)
@@ -63,10 +62,10 @@ public sealed class QueryService(
         CancellationToken cancellationToken)
     {
         var query = await querySchemaService.GetByNameAndCache(queryName, cancellationToken);
-        CheckResult(query.Filters.ResolveValues(query.Entity!, schemaService.CastToDatabaseType,
+        var filters = CheckResult(query.Filters.Resolve(query.Entity!, schemaService.CastToDatabaseType,
             querystringDictionary));
 
-        var res = await hookRegistry.QueryPreGetMany.Trigger(provider, new QueryPreGetManyArgs(queryName,query.EntityName, query.Filters,default));
+        var res = await hookRegistry.QueryPreGetMany.Trigger(provider, new QueryPreGetManyArgs(queryName,query.EntityName, filters));
         if (res.OutRecords is not null)
         {
             return res.OutRecords;
@@ -75,8 +74,11 @@ public sealed class QueryService(
 
         var attributes = query.Selection.GetLocalAttributes();
         
-        pagination ??= new Pagination { Limit = query.PageSize };
-        if (pagination.Limit == 0) pagination.Limit = query.PageSize;
+        pagination ??= new Pagination (0,query.PageSize );
+        if (pagination.Limit== 0 || pagination.Limit > query.PageSize)
+        {
+            pagination = pagination with { Limit = query.PageSize };
+        }
 
         if (pagination.Offset > query.PageSize * 10)
             throw new InvalidParamException(
@@ -86,8 +88,7 @@ public sealed class QueryService(
             throw new InvalidParamException(
                 $"invalid offset {pagination.Limit}, maximum value is {query.PageSize * 5}");
 
-        var kateQuery = CheckResult(query.Entity!.ListQuery(res.Filters, query.Sorts, pagination, null, attributes,
-            schemaService.CastToDatabaseType));
+        var kateQuery = CheckResult(query.Entity!.ListQuery(res.Filters, query.Sorts, pagination, null, attributes));
         var items = await kateQueryExecutor.Many(kateQuery, cancellationToken);
         await entityService.AttachRelatedEntity(query.Selection, items, cancellationToken);
         return items;
@@ -97,8 +98,8 @@ public sealed class QueryService(
         CancellationToken cancellationToken)
     {
         var query = await querySchemaService.GetByNameAndCache(queryName, cancellationToken);
-        CheckResult(query.Filters.ResolveValues(query.Entity!,  schemaService.CastToDatabaseType, querystringDictionary));
-        var res= await hookRegistry.QueryPreGetOne.Trigger(provider, new QueryPreGetOneArgs(queryName, query.EntityName,query.Filters));
+        var filters = CheckResult(query.Filters.Resolve(query.Entity!,  schemaService.CastToDatabaseType, querystringDictionary));
+        var res= await hookRegistry.QueryPreGetOne.Trigger(provider, new QueryPreGetOneArgs(queryName, query.EntityName,filters));
         if (res.OutRecord is not null)
         {
             return res.OutRecord;
@@ -110,11 +111,11 @@ public sealed class QueryService(
         return item;
     }
 
-    private RecordQueryResult BuildRecordViewResult(Record[] items, Cursor cursor, Pagination pagination, Sorts? sorts)
+    private QueryResult<Record> BuildRecordViewResult(Record[] items, Cursor cursor, Pagination pagination, Sort[]? sorts)
     {
         if (items.Length == 0)
         {
-            return new RecordQueryResult();
+            return new QueryResult<Record>([],"","");
         }
         
         var hasMore = items.Length == pagination.Limit;
@@ -127,11 +128,6 @@ public sealed class QueryService(
 
         var nextCursor = CheckResult(cursor.GetNextCursor(items, sorts, hasMore));
 
-        return new RecordQueryResult
-        {
-            Items = items,
-            First = nextCursor.First,
-            Last = nextCursor.Last,
-        };
+        return new QueryResult<Record>(items, nextCursor.First, nextCursor.Last);
     }
 }

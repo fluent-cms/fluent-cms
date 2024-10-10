@@ -1,12 +1,10 @@
 namespace FluentCMS.Utils.QueryBuilder;
 
-public class Pagination
-{
-    public int Offset { get; set; }
-    public int Limit { get; set; }
+public sealed record Pagination(int Offset, int Limit);
 
-    public void Apply(SqlKata.Query? query)
+public static class PaginationHelper{
+    public static void Apply(this Pagination pagination,SqlKata.Query? query)
     {
-       query?.Offset(Offset)?.Limit(Limit);
+       query?.Offset(pagination.Offset)?.Limit(pagination.Limit);
     }
 }

@@ -1,53 +1,35 @@
-using System.Text.Json.Serialization;
 using FluentResults;
 
 namespace FluentCMS.Utils.QueryBuilder;
-    public enum SortOrder
+
+public static class SortOrder
+{
+    public const string Asc = "ASC";
+    public const string Desc = "Desc";
+}
+
+public sealed record Sort(string FieldName, string Order);
+
+public static class SortHelper
+{
+    public const string SortKey = "sort";
+
+    public static Result<Sort[]> Parse(Qs.QsDict qsDict)
     {
-        Asc,
-        Desc,
+        var ret = new List<Sort>();
+
+        if (qsDict.Dict.TryGetValue(SortKey, out var fields))
+        {
+            ret.AddRange(fields.Select(field =>
+                new Sort(field.Key, field.Values.FirstOrDefault() == "1" ? SortOrder.Asc : SortOrder.Desc)));
+        }
+        return ret.ToArray();
     }
 
-    public class Sort
+    public static Sort[] ReverseOrder(this Sort[] sorts)
     {
-        private string _fieldName = "";
-
-        public string FieldName
-        {
-            get => _fieldName;
-            set => _fieldName = value.Trim();
-        }
-
-        [JsonConverter(typeof(JsonStringEnumConverter))]
-        public SortOrder Order { get; set; }
-
-       
+        return sorts.Select(sort =>
+            sort with { Order = sort.Order == SortOrder.Asc ? SortOrder.Desc : SortOrder.Asc }).ToArray();
     }
-
-    public class Sorts : List<Sort>
-    {
-        public const string SortKey = "sort";
-
-        public static Result<Sorts>  Parse(Qs.QsDict qsDict)
-        {
-            var ret = new Sorts();
-                
-            if (!qsDict.Dict.TryGetValue(SortKey, out var fields))
-            {
-                return ret;
-            }
-            ret.AddRange(fields.Select(field => new Sort
-            {
-                FieldName = field.Key, Order = field.Values.FirstOrDefault() == "1" ? SortOrder.Asc : SortOrder.Desc,
-            }));
-            return ret;
-        }
-
-        public Sorts ReverseOrder()
-        {
-            var ret = new Sorts();
-            ret.AddRange(this.Select(sort => new Sort
-                { FieldName = sort.FieldName, Order = sort.Order == SortOrder.Asc ? SortOrder.Desc : SortOrder.Asc }));
-            return ret;
-        }
-    }
+    
+}

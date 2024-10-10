@@ -43,7 +43,7 @@ public sealed class MongoDao:INosqlDao
         _logger.LogInformation($"Inserted {docs.Count()} documents");
     }
 
-    public async Task<Result<Record[]>> Query(string collectionName, Filters filters, Sorts? sorts, Cursor? cursor, Pagination? pagination)
+    public async Task<Result<Record[]>> Query(string collectionName, ValidFilter[] filters, Sort[]? sorts, Cursor? cursor, Pagination? pagination)
     {
         var collection = _mongoDatabase.GetCollection<BsonDocument>(collectionName);
         var filterRes = MongoExt.GetFiltersDefinition(filters);
@@ -63,7 +63,7 @@ public sealed class MongoDao:INosqlDao
             filterDefinitions.Add(cursorRes.Value);
         }
         var query = collection.Find(Builders<BsonDocument>.Filter.And(filterDefinitions));
-        if (sorts?.Count > 0)
+        if (sorts?.Length > 0)
         {
             var sd = MongoExt.GetSortDefinition<BsonDocument>(sorts);
             query = query.Sort(sd);

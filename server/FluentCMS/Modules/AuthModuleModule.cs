@@ -35,77 +35,77 @@ public sealed class AuthModuleModule<TCmsUser>(ILogger<IAuthModule> logger) : IA
         var registry = app.Services.GetRequiredService<CmsModule>().GetHookRegistry(app);
 
         registry.SchemaPreSave.RegisterDynamic("*",
-            async (ISchemaPermissionService schemaPermissionService, SchemaPreSaveArgs parameter) =>
+            async (ISchemaPermissionService schemaPermissionService, SchemaPreSaveArgs args) =>
             {
-                await schemaPermissionService.Save(parameter.RefSchema);
+                await schemaPermissionService.Save(args.RefSchema);
+                return args;
             });
 
         registry.SchemaPreDel.RegisterDynamic("*",
-            async (ISchemaPermissionService schemaPermissionService, SchemaPreDelArgs parameter) =>
+            async (ISchemaPermissionService schemaPermissionService, SchemaPreDelArgs args) =>
             {
-                await schemaPermissionService.Delete(parameter.SchemaId);
+                await schemaPermissionService.Delete(args.SchemaId);
+                return args;
             });
 
         registry.SchemaPreGetAll.RegisterDynamic("*",
-            (ISchemaPermissionService schemaPermissionService, SchemaPreGetAllArgs args) => args with { OutSchemaNames = schemaPermissionService.GetAll() });
+            (ISchemaPermissionService schemaPermissionService, SchemaPreGetAllArgs args) =>
+                args with { OutSchemaNames = schemaPermissionService.GetAll() });
 
         registry.SchemaPostGetOne.RegisterDynamic("*",
-            (ISchemaPermissionService schemaPermissionService, SchemaPostGetOneArgs parameter) =>
+            (ISchemaPermissionService schemaPermissionService, SchemaPostGetOneArgs args) =>
             {
-                schemaPermissionService.GetOne(parameter.Name);
-                return parameter;
+                schemaPermissionService.GetOne(args.Name);
+                return args;
             });
 
         
         registry.EntityPreGetOne.RegisterDynamic("*", 
-            (IEntityPermissionService service, EntityPreGetOneArgs parameter) =>
+            (IEntityPermissionService service, EntityPreGetOneArgs args) =>
             {
-                service.GetOne(parameter.Name, parameter.RecordId);
-                return parameter;
+                service.GetOne(args.Name, args.RecordId);
+                return args;
             });
 
         registry.EntityPreGetList.RegisterDynamic("*", 
-            (IEntityPermissionService service, EntityPreGetListArgs parameter) =>
-            {
-                service.List(parameter.Name, parameter.RefFilters);
-                return parameter;
-            });
+            (IEntityPermissionService service, EntityPreGetListArgs args) =>
+                args with {RefFilters = service.List(args.Name, args.RefFilters)});
                 
         registry.CrosstablePreAdd.RegisterDynamic("*",
-            async (IEntityPermissionService service, CrosstablePreAddArgs parameter ) =>
+            async (IEntityPermissionService service, CrosstablePreAddArgs args ) =>
             {
-                await service.Change(parameter.Name, parameter.RecordId);
-                return parameter;
+                await service.Change(args.Name, args.RecordId);
+                return args;
             });
 
         registry.CrosstablePreDel.RegisterDynamic("*",
-            async (IEntityPermissionService service, CrosstablePreDelArgs parameter ) =>
+            async (IEntityPermissionService service, CrosstablePreDelArgs args ) =>
             {
-                await service.Change(parameter.Name, parameter.RecordId);
-                return parameter;
+                await service.Change(args.Name, args.RecordId);
+                return args;
             });
         
         registry.EntityPreDel.RegisterDynamic("*",
-            async (IEntityPermissionService service, EntityPreDelArgs parameter ) =>
+            async (IEntityPermissionService service, EntityPreDelArgs args ) =>
             {
-                await service.Change(parameter.Name, parameter.RecordId);
-                return parameter;
+                await service.Change(args.Name, args.RecordId);
+                return args;
             });
         
         registry.EntityPreUpdate.RegisterDynamic("*",
-            async (IEntityPermissionService service, EntityPreUpdateArgs parameter ) =>
+            async (IEntityPermissionService service, EntityPreUpdateArgs args ) =>
             {
-                await service.Change(parameter.Name, parameter.RecordId);
-                return parameter;
+                await service.Change(args.Name, args.RecordId);
+                return args;
             });
         
        
         registry.EntityPreAdd.RegisterDynamic("*",
-            (IEntityPermissionService service, EntityPreAddArgs parameter) =>
+            (IEntityPermissionService service, EntityPreAddArgs args) =>
             {
-                service.Create(parameter.Name );
-                service.AssignCreatedBy(parameter.RefRecord);
-                return parameter;
+                service.Create(args.Name );
+                service.AssignCreatedBy(args.RefRecord);
+                return args;
             }
         );
     }

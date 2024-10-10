@@ -6,7 +6,7 @@ namespace FluentCMS.Utils.DataDefinitionExecutor;
 
 public sealed class SqliteDefinitionExecutor(string connectionString, ILogger<SqliteDefinitionExecutor> logger) : IDefinitionExecutor
 {
-    public object CastToDatabaseType(DataType dataType, string str)
+    public object CastToDatabaseType(string dataType, string str)
     {
         return dataType switch
         {
@@ -57,16 +57,16 @@ public sealed class SqliteDefinitionExecutor(string connectionString, ILogger<Sq
          {
             /*cid, name, type, notnull, dflt_value, pk */
             columnDefinitions.Add(new ColumnDefinition
-            {
-                ColumnName = reader.GetString(1),
-                DataType = StringToDataType(reader.GetString(2))
-            });
+           ( 
+                ColumnName : reader.GetString(1),
+                DataType : StringToDataType(reader.GetString(2))
+            ));
          }
          return columnDefinitions.ToArray();
       });
    }
    
-    private string DataTypeToString(DataType dataType)
+    private string DataTypeToString(string dataType)
     {
         return dataType switch
         {
@@ -78,7 +78,7 @@ public sealed class SqliteDefinitionExecutor(string connectionString, ILogger<Sq
         };
     }
 
-    private DataType StringToDataType(string s)
+    private string StringToDataType(string s)
     {
         s = s.ToLower();
         return s switch

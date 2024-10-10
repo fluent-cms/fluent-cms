@@ -8,8 +8,7 @@ namespace FluentCMS.Utils.QueryBuilder;
 public class Attribute
 {
 
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public DataType DataType { get; set; }
+    public string DataType { get; set; }
 
     private string _field = "";
     public string Field
@@ -22,16 +21,14 @@ public class Attribute
     public bool InDetail { get; set; }
     public bool IsDefault { get; set; } //for admin panel
 
-    
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public DisplayType Type { get; set; }
+    public string Type { get; set; }
 
     public string Options { get; set; } = "";
     public string Validation { get; set; } = "";
     public string ValidationMessage { get; set; } = "";
 
     [JsonIgnore]
-    public bool IsLocalAttribute => Type != DisplayType.crosstable;
+    public bool IsLocalAttribute => Type != DisplayType.Crosstable;
     [JsonIgnore]
     public Entity? Parent { get; set; }
     // not input in json designer, 
@@ -47,7 +44,7 @@ public class Attribute
         Header = SnakeToTitle(col.ColumnName);
         InList = true;
         InDetail = true;
-        Type = DisplayType.text;
+        Type = DisplayType.Text;
         DataType = col.DataType;
         return;
         string SnakeToTitle(string snakeStr)
@@ -100,22 +97,22 @@ public static class AttributeNodeHelper
     public static Attribute[] GetLocalAttributes(this Attribute[]? arr, InListOrDetail listOrDetail)
     {
         return arr?.Where(x =>
-                x.Type != DisplayType.crosstable &&
+                x.Type != DisplayType.Crosstable &&
                 (listOrDetail == InListOrDetail.InList ? x.InList : x.InDetail))
             .ToArray()??[];
     }
 
     public static Attribute[] GetLocalAttributes(this Attribute[]? arr, string[] attributes)
     {
-        return arr?.Where(x => x.Type != DisplayType.crosstable && attributes.Contains(x.Field)).ToArray()??[];
+        return arr?.Where(x => x.Type != DisplayType.Crosstable && attributes.Contains(x.Field)).ToArray()??[];
     }
 
-    public static Attribute[] GetAttributesByType(this Attribute[]? arr, DisplayType displayType)
+    public static Attribute[] GetAttributesByType(this Attribute[]? arr, string displayType)
     {
         return arr?.Where(x => x.Type == displayType).ToArray()??[];
     }
 
-    public static Attribute[] GetAttributesByType(this Attribute[]? arr, DisplayType type, InListOrDetail listOrDetail)
+    public static Attribute[] GetAttributesByType(this Attribute[]? arr, string type, InListOrDetail listOrDetail)
     {
         return arr?.Where(x => x.Type == type && (listOrDetail == InListOrDetail.InList ? x.InList : x.InDetail))
             .ToArray()??[];

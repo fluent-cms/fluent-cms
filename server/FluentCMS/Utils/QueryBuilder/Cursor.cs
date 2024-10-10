@@ -21,7 +21,7 @@ public sealed class Cursor
             s.Order == SortOrder.Asc ? "<" : ">";
     }
 
-    public Result<Cursor> GetNextCursor(Record[] items, Sorts? sorts, bool hasMore)
+    public Result<Cursor> GetNextCursor(Record[] items, Sort[]? sorts, bool hasMore)
     {
         if (sorts is null)
         {
@@ -50,7 +50,7 @@ public sealed class Cursor
         };
     }
 
-    private static string EncodeRecord(Record item, Sorts sorts)
+    private static string EncodeRecord(Record item, Sort[] sorts)
     {
         var dict = new Dictionary<string, object>();
         foreach (var field in sorts.Select(x => x.FieldName))

@@ -84,7 +84,7 @@ public sealed class QuerySchemaService(
             if (attribute is null) return Result.Fail($"Verifying `SectionSet` fail, can not find {fldName} in {entity.Name}");
             switch (attribute.Type)
             {
-                case DisplayType.crosstable:
+                case DisplayType.Crosstable:
                     if (attribute.Crosstable is null)
                     {
                         var res = await entitySchemaService.LoadCrosstable(entity, attribute, cancellationToken);
@@ -104,7 +104,7 @@ public sealed class QuerySchemaService(
 
                     attribute.Children = crossTableChildren.Value;
                     break;
-                case DisplayType.lookup:
+                case DisplayType.Lookup:
                     if (attribute.Lookup is null)
                     {
                         var res = await entitySchemaService.LoadLookup(attribute, cancellationToken);

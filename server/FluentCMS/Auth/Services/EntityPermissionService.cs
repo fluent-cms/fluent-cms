@@ -12,17 +12,17 @@ public class EntityPermissionService(
 
 ):IEntityPermissionService
 {
-    public void List(string entityName, Filters filters)
+    public ValidFilter[] List(string entityName, ValidFilter[] filters)
     {
         if (contextAccessor.HttpContext.HasRole(Roles.Sa))
         {
-            return;
+            return filters;
         }
 
         if (contextAccessor.HttpContext.HasClaims(AccessScope.FullAccess, entityName)
             || contextAccessor.HttpContext.HasClaims(AccessScope.FullRead, entityName))
         {
-            return;
+            return filters;
         }
 
         if (!(contextAccessor.HttpContext.HasClaims(AccessScope.RestrictedAccess, entityName)
@@ -31,19 +31,12 @@ public class EntityPermissionService(
             throw new InvalidParamException($"You don't have permission to read [{entityName}]");
         }
 
-        filters.Add(new Filter
-        {
-            FieldName = Constants.CreatedBy,
-            Constraints =
-            [
-                new Constraint
-                {
-                    Match = Matches.EqualsTo,
-                    ResolvedValues = [MustGetCurrentUserId()],
-                }
-            ],
-        });
-
+        return
+        [
+            ..filters,
+            new ValidFilter(Constants.CreatedBy, "and",
+                [new ValidConstraint(Matches.EqualsTo, [MustGetCurrentUserId()])])
+        ];
     }
 
     public async Task GetOne(string entityName, string recordId)

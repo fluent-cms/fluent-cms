@@ -52,7 +52,7 @@ public sealed class EntitySchemaService( ISchemaService schemaService, IDefiniti
         
         //need  to save first because it will call trigger
         var returnSchema = await schemaService.Save(dto, cancellationToken);
-        foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.crosstable))
+        foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.Crosstable))
         {
             await CreateCrosstable(entity, attribute, cancellationToken);
         }
@@ -110,7 +110,7 @@ public sealed class EntitySchemaService( ISchemaService schemaService, IDefiniti
                 InList = true,
                 InDetail = true,
                 DataType = DataType.Int,
-                Type = DisplayType.lookup,
+                Type = DisplayType.Lookup,
             }).ToArray();
 
         }
@@ -123,7 +123,7 @@ public sealed class EntitySchemaService( ISchemaService schemaService, IDefiniti
                 Options = crossTable,
                 Header = crossTable,
                 DataType = DataType.Na,
-                Type = DisplayType.crosstable,
+                Type = DisplayType.Crosstable,
                 InDetail = true,
             }).ToArray();
         }
@@ -180,7 +180,7 @@ public sealed class EntitySchemaService( ISchemaService schemaService, IDefiniti
 
     private async Task<Result> LoadLookups(Entity entity, CancellationToken cancellationToken)
     {
-        foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.lookup))
+        foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.Lookup))
         {
             var res = await LoadLookup(attribute, cancellationToken);
             if (res.IsFailed)
@@ -194,7 +194,7 @@ public sealed class EntitySchemaService( ISchemaService schemaService, IDefiniti
 
     private async Task<Result> LoadCrosstables(Entity entity, CancellationToken cancellationToken)
     {
-        foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.crosstable))
+        foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.Crosstable))
         {
             var res = await LoadCrosstable(entity, attribute, cancellationToken);
             if (res.IsFailed)
@@ -235,7 +235,7 @@ public sealed class EntitySchemaService( ISchemaService schemaService, IDefiniti
         CheckResult(TableExistsWhenCreatingNewEntity());
         CheckResult(TitleAttributeExists());
         
-        foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.lookup))
+        foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.Lookup))
         {
             await CheckLookup(attribute,cancellationToken);
         }

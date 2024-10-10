@@ -42,7 +42,7 @@ public sealed class EntityService(
         var record = NotNull(await queryKateQueryExecutor.One(query, cancellationToken))
             .ValOrThrow($"not find record by [{id}]");
 
-        foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.lookup, InListOrDetail.InDetail))
+        foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.Lookup, InListOrDetail.InDetail))
         {
             attribute.Children = [attribute.Lookup!.PrimaryKeyAttribute(), attribute.Lookup.DisplayTitleAttribute()!];
             await AttachLookup(attribute, [record], cancellationToken);
@@ -57,26 +57,22 @@ public sealed class EntityService(
     {
         var entity = CheckResult(await entitySchemaService.GetByNameDefault(entityName, true, cancellationToken));
         var qsDict = new QsDict(qs);
-        var filters = CheckResult(Filters.Parse(entity, qsDict, schemaService.CastToDatabaseType));
-        var sorts = CheckResult(Sorts.Parse(qsDict));
+        var filters = CheckResult(FilterUtil.Parse(entity, qsDict, schemaService.CastToDatabaseType));
+        var sorts = CheckResult(SortHelper.Parse(qsDict));
         return await List(entity, filters, sorts, pagination, cancellationToken);
     }
 
-    public async Task<ListResult?> List(string entityName, Filters? filters, Sorts? sorts, Pagination? pagination,
+    public async Task<ListResult?> List(string entityName, ValidFilter[]? filters, Sort[]? sorts, Pagination? pagination,
         CancellationToken cancellationToken)
     {
         var entity = CheckResult(await entitySchemaService.GetByNameDefault(entityName, true, cancellationToken));
         return await List(entity, filters, sorts, pagination, cancellationToken);
     }
 
-    private async Task<ListResult?> List(Entity entity, Filters? filters, Sorts? sorts, Pagination? pagination,
+    private async Task<ListResult?> List(Entity entity, ValidFilter[]? filters, Sort[]? sorts, Pagination? pagination,
         CancellationToken cancellationToken)
     {
-        pagination ??= new Pagination
-        {
-            Limit = entity.DefaultPageSize
-        };
-
+        pagination ??= new Pagination(0, entity.DefaultPageSize);
         filters ??= [];
         sorts ??= [];
 
@@ -84,19 +80,21 @@ public sealed class EntityService(
             new EntityPreGetListArgs(entity.Name, filters, sorts, pagination));
         var attributes = entity.Attributes.GetLocalAttributes(InListOrDetail.InList);
         
-        var query = CheckResult(entity.ListQuery(res.RefFilters, res.RefSorts, res.RefPagination, 
-            null, attributes, schemaService.CastToDatabaseType));
+        var query = CheckResult(entity.ListQuery(res.RefFilters, res.RefSorts, res.RefPagination, null, attributes));
         
         var records = await queryKateQueryExecutor.Many(query, cancellationToken);
 
+        /********
         var ret = new ListResult
         {
             Items = [..records]
         };
+        */
 
+        var ret = new ListResult(records, records.Length);
         if (records.Length > 0)
         {
-            foreach (var listLookupsAttribute in entity.Attributes.GetAttributesByType(DisplayType.lookup,
+            foreach (var listLookupsAttribute in entity.Attributes.GetAttributesByType(DisplayType.Lookup,
                          InListOrDetail.InList))
             {
                 listLookupsAttribute.Children =
@@ -106,8 +104,7 @@ public sealed class EntityService(
                 ];
                 await AttachLookup(listLookupsAttribute, records, cancellationToken);
             }
-
-            ret.TotalRecords = await queryKateQueryExecutor.Count(entity.CountQuery(filters), cancellationToken);
+            ret = ret with{TotalRecords = await queryKateQueryExecutor.Count(entity.CountQuery(filters), cancellationToken)};
         }
 
         var postRes = await hookRegistry.EntityPostGetList.Trigger(provider, new EntityPostGetListArgs(entity.Name, ret));
@@ -206,11 +203,8 @@ public sealed class EntityService(
         var id = schemaService.CastToDatabaseType(crossTable.FromAttribute, strId);
         var countQuery = crossTable.Filter(selectAttributes, exclude, id);
         var pagedListQuery = crossTable.Many(selectAttributes, exclude, id, pagination);
-        return new ListResult
-        {
-            Items = [..await queryKateQueryExecutor.Many(pagedListQuery, cancellationToken)],
-            TotalRecords = await queryKateQueryExecutor.Count(countQuery, cancellationToken)
-        };
+        return new ListResult(await queryKateQueryExecutor.Many(pagedListQuery, cancellationToken),
+            await queryKateQueryExecutor.Count(countQuery, cancellationToken));
     }
 
     public async Task AttachRelatedEntity(Attribute[]? attributes, Record[] items, CancellationToken cancellationToken)
@@ -220,12 +214,12 @@ public sealed class EntityService(
             return;
         }
 
-        foreach (var attribute in attributes.GetAttributesByType(DisplayType.lookup))
+        foreach (var attribute in attributes.GetAttributesByType(DisplayType.Lookup))
         {
             await AttachLookup(attribute, items, cancellationToken);
         }
 
-        foreach (var attribute in attributes.GetAttributesByType(DisplayType.crosstable))
+        foreach (var attribute in attributes.GetAttributesByType(DisplayType.Crosstable))
         {
             await AttachCrosstable(attribute, items, cancellationToken);
         }

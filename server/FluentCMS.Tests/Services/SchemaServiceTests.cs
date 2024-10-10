@@ -128,6 +128,7 @@ public class SchemaServiceTests :IAsyncLifetime
     {
         Name = "Test",
         TableName = "Test",
+        TitleAttribute = "Title",
         Attributes =
         [
             new Attribute
