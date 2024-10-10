@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using FluentCMS.Utils.QueryBuilder;
 using FluentResults;
 
@@ -14,7 +15,7 @@ public static class KateQueryExt
 
         query.Offset(pagination.Offset).Limit(pagination.Limit);
     }
-    public static void ApplySorts(this SqlKata.Query query, Sort[]? sorts)
+    public static void ApplySorts(this SqlKata.Query query, IEnumerable<Sort>? sorts)
     {
         if (sorts is null)
         {
@@ -34,7 +35,7 @@ public static class KateQueryExt
         }
     }
 
-    public static Result ApplyFilters(this SqlKata.Query query, ValidFilter[]? filters)
+    public static Result ApplyFilters(this SqlKata.Query query, IEnumerable<ValidFilter>? filters)
     {
         var result = Result.Ok();
         if (filters is null) return result;
@@ -115,7 +116,7 @@ public static class KateQueryExt
         };
     }
 
-    public static Result ApplyCursor(this SqlKata.Query? query,  Cursor? cursor,Sort[]? sorts)
+    public static Result ApplyCursor(this SqlKata.Query? query,  ValidCursor? cursor,ImmutableArray<Sort>? sorts)
     {
         if (query is null || cursor?.BoundaryItem is null) return Result.Ok();
         return sorts?.Length switch
@@ -126,15 +127,16 @@ public static class KateQueryExt
             _=> Result.Fail("More than two field in sorts is not supported")
         };
 
+        
         Result HandleOneField()
         {
-            ApplyCompare(query,sorts[0]);
+            ApplyCompare(query,sorts.Value[0]);
             return Result.Ok();
         }
 
         Result HandleTwoFields()
         {
-            var (first,last) = (sorts.First(),sorts.Last());
+            var (first,last) = (sorts.Value.First(),sorts.Value.Last());
             query.Where(q =>
             {
                 ApplyCompare(q, first);
@@ -152,8 +154,7 @@ public static class KateQueryExt
         }
         void ApplyCompare(SqlKata.Query q, Sort sort)
         {
-            q.Where(sort.FieldName, cursor.GetCompareOperator(sort), cursor.BoundaryValue(sort.FieldName));
+            q.Where(sort.FieldName, cursor.Cursor.GetCompareOperator(sort), cursor.BoundaryValue(sort.FieldName));
         }
-
     }
 }

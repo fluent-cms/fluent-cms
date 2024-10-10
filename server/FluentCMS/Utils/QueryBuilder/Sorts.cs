@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using FluentResults;
 
 namespace FluentCMS.Utils.QueryBuilder;
@@ -14,7 +15,7 @@ public static class SortHelper
 {
     public const string SortKey = "sort";
 
-    public static Result<Sort[]> Parse(Qs.QsDict qsDict)
+    public static Result<ImmutableArray<Sort>> Parse(Qs.QsDict qsDict)
     {
         var ret = new List<Sort>();
 
@@ -23,7 +24,8 @@ public static class SortHelper
             ret.AddRange(fields.Select(field =>
                 new Sort(field.Key, field.Values.FirstOrDefault() == "1" ? SortOrder.Asc : SortOrder.Desc)));
         }
-        return ret.ToArray();
+
+        return ret.ToImmutableArray();
     }
 
     public static Sort[] ReverseOrder(this Sort[] sorts)

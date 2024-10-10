@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using DynamicExpresso;
@@ -68,7 +69,7 @@ public sealed class Entity
         }
     }
 
-    public Result<SqlKata.Query> OneQuery(ValidFilter[]? filters, Attribute[] attributes)
+    public Result<SqlKata.Query> OneQuery(IEnumerable<ValidFilter>? filters, Attribute[] attributes)
     {
         var query = Basic().Select(attributes.Select(x => x.FullName()));
         var result = query.ApplyFilters(filters); //filters.Apply(this, query);
@@ -88,7 +89,7 @@ public sealed class Entity
         return query;
     }
 
-    public Result<SqlKata.Query> ListQuery(ValidFilter[]? filters, Sort[]? sorts, Pagination? pagination, Cursor? cursor,
+    public Result<SqlKata.Query> ListQuery(IEnumerable<ValidFilter>? filters, ImmutableArray<Sort>? sorts, Pagination? pagination, ValidCursor? cursor,
         Attribute[] attributes)
     {
         var query = Basic().Select(attributes.Select(x => x.FullName()));
@@ -97,9 +98,9 @@ public sealed class Entity
         if (cursorResult.IsFailed) return Result.Fail(cursorResult.Errors);
 
         query.ApplyPagination(pagination);
-        if (cursor is { IsForward: false } && sorts != null)
+        if (cursor?.Cursor.IsForward() == false && sorts != null)
         {
-            query.ApplySorts(sorts.ReverseOrder());
+            query.ApplySorts(sorts.Value.Reverse());
         }
         else
         {
@@ -110,7 +111,7 @@ public sealed class Entity
         return query;
     }
 
-    public SqlKata.Query CountQuery(ValidFilter[]? filters)
+    public SqlKata.Query CountQuery(IEnumerable<ValidFilter>? filters)
     {
         var query = Basic();
         query.ApplyFilters(filters);

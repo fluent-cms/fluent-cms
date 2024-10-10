@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Text.Json;
 using FluentCMS.Services;
 using FluentCMS.Utils.HookFactory;
@@ -62,14 +63,9 @@ public sealed class EntityService(
         return await List(entity, filters, sorts, pagination, cancellationToken);
     }
 
-    public async Task<ListResult?> List(string entityName, ValidFilter[]? filters, Sort[]? sorts, Pagination? pagination,
-        CancellationToken cancellationToken)
-    {
-        var entity = CheckResult(await entitySchemaService.GetByNameDefault(entityName, true, cancellationToken));
-        return await List(entity, filters, sorts, pagination, cancellationToken);
-    }
+   
 
-    private async Task<ListResult?> List(Entity entity, ValidFilter[]? filters, Sort[]? sorts, Pagination? pagination,
+    private async Task<ListResult?> List(Entity entity, ImmutableArray<ValidFilter>? filters, ImmutableArray<Sort>? sorts, Pagination? pagination,
         CancellationToken cancellationToken)
     {
         pagination ??= new Pagination(0, entity.DefaultPageSize);
@@ -77,19 +73,12 @@ public sealed class EntityService(
         sorts ??= [];
 
         var res = await hookRegistry.EntityPreGetList.Trigger(provider,
-            new EntityPreGetListArgs(entity.Name, filters, sorts, pagination));
+            new EntityPreGetListArgs(entity.Name, filters.Value, sorts.Value, pagination));
         var attributes = entity.Attributes.GetLocalAttributes(InListOrDetail.InList);
         
         var query = CheckResult(entity.ListQuery(res.RefFilters, res.RefSorts, res.RefPagination, null, attributes));
         
         var records = await queryKateQueryExecutor.Many(query, cancellationToken);
-
-        /********
-        var ret = new ListResult
-        {
-            Items = [..records]
-        };
-        */
 
         var ret = new ListResult(records, records.Length);
         if (records.Length > 0)

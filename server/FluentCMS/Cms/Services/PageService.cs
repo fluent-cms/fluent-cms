@@ -88,7 +88,7 @@ public sealed class PageService(ISchemaService schemaService, IQueryService quer
 
         async Task<QueryResult<Record>> PrepareData()
         {
-            var cursor = new Cursor { First = token.First, Last = token.Last };
+            var cursor = new Cursor (token.First, token.Last );
             var pagination = new Pagination (token.Offset,token.Limit );
             return await queryService.List(token.Query, cursor, pagination,  QueryHelpers.ParseQuery(token.Qs), cancellationToken);
         }
@@ -104,7 +104,7 @@ public sealed class PageService(ISchemaService schemaService, IQueryService quer
             }
 
             var pagination = new Pagination (repeatNode.MultipleQuery.Offset, repeatNode.MultipleQuery.Limit );
-            var result = await queryService.List(repeatNode.MultipleQuery.Query, new Cursor(), pagination,
+            var result = await queryService.List(repeatNode.MultipleQuery.Query, new Cursor("",""), pagination,
                 repeatNode.MultipleQuery.Qs, cancellationToken);
             data[repeatNode.Field] = result;
         }

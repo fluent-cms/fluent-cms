@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Text.Json.Serialization;
 using FluentCMS.Utils.Qs;
 using FluentResults;
@@ -5,12 +6,12 @@ using Microsoft.Extensions.Primitives;
 namespace FluentCMS.Utils.QueryBuilder;
 using System.Collections.Generic;
 
-public sealed record Filter(string FieldName, string Operator, Constraint[] Constraints, bool OmitFail);
+public sealed record RawFilter(string FieldName, string Operator, RawConstraint[] Constraints, bool OmitFail);
 public sealed record ValidFilter(string FieldName, string Operator, ValidConstraint[] Constraints);
 
 public static class FilterUtil
 {
-    public static Result<ValidFilter[]> Resolve(this Filter[] filters, Entity entity, Func<Attribute, string, object> cast,  
+    public static Result<ImmutableArray<ValidFilter>> Resolve(this RawFilter[] filters, Entity entity, Func<Attribute, string, object> cast,  
         Dictionary<string, StringValues>? querystringDictionary)
     {
         var ret = new List<ValidFilter>();
@@ -32,10 +33,11 @@ public static class FilterUtil
                 ret.Add(new ValidFilter(filter.FieldName,filter.Operator, res.Value));
             }
         }
-        return ret.ToArray();
+
+        return ret.ToImmutableArray();
     }
     
-    public static Result<ValidFilter[]> Parse(Entity entity, QsDict qsDict, Func<Attribute, string, object> cast)
+    public static Result<ImmutableArray<ValidFilter>> Parse(Entity entity, QsDict qsDict, Func<Attribute, string, object> cast)
     {
         var ret = new List<ValidFilter>();
         foreach (var pair in qsDict.Dict)
@@ -51,7 +53,8 @@ public static class FilterUtil
             }
             ret.Add(result.Value);
         }
-        return ret.ToArray();
+
+        return ret.ToImmutableArray();
     }
 
     private static Result<ValidFilter> Parse(Entity entity, string field, Pair[] pairs, Func<Attribute, string, object> cast)

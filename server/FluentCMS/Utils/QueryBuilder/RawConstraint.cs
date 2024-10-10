@@ -1,18 +1,17 @@
-using FluentCMS.Utils.Qs;
 using FluentResults;
 using Microsoft.Extensions.Primitives;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
-public sealed record Constraint(string Match, string Value);
+public sealed record RawConstraint(string Match, string Value);
 public sealed record ValidConstraint(string Match, object[] Values);
 
-public static class ConstraintsExt
+public static class ConstraintsHelper
 {
     private const string QuerystringPrefix = "qs.";
 
     public static Result<ValidConstraint[]> Resolve(
-        this Constraint[] constraints, 
+        this RawConstraint[] constraints, 
         bool ignoreResolveError,
         Attribute attribute,  
         Dictionary<string, StringValues>? querystringDictionary,

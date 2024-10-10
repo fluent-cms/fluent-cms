@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using FluentCMS.Cms.Services;
 using FluentCMS.Services;
 using FluentCMS.Utils.IdentityExt;
@@ -12,7 +13,7 @@ public class EntityPermissionService(
 
 ):IEntityPermissionService
 {
-    public ValidFilter[] List(string entityName, ValidFilter[] filters)
+    public ImmutableArray<ValidFilter> List(string entityName, ImmutableArray<ValidFilter> filters)
     {
         if (contextAccessor.HttpContext.HasRole(Roles.Sa))
         {

@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Text.Json.Serialization;
 namespace FluentCMS.Utils.QueryBuilder;
 
@@ -13,6 +14,6 @@ public sealed class Query
     [JsonIgnore]
     public Entity? Entity { get; set; }
 
-    public Sort[] Sorts { get; set; } = [];
-    public Filter[] Filters { get; set; } = [];
+    public ImmutableArray<Sort> Sorts { get; set; } = [];
+    public RawFilter[] Filters { get; set; } = [];
 }

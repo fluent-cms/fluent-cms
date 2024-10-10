@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using FluentCMS.Services;
 using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.QueryBuilder;
@@ -23,7 +24,7 @@ public sealed class QueryService(
     {
         var query = await querySchemaService.GetByNameAndCache(queryName, cancellationToken);
         var filters = CheckResult(query.Filters.Resolve(query.Entity!,  schemaService.CastToDatabaseType, querystringDictionary));
-        CheckResult(cursor.ResolveBoundaryItem(query.Entity!, schemaService.CastToDatabaseType));
+        var parsedCursor = CheckResult(cursor.Resolve(query.Entity!, schemaService.CastToDatabaseType));
         pagination ??= new Pagination (0,query.PageSize );
         if (pagination.Limit== 0 || pagination.Limit > query.PageSize)
         {
@@ -31,7 +32,7 @@ public sealed class QueryService(
         }
 
         pagination = pagination with { Limit = pagination.Limit + 1 };// add extra to check has more
-        var hookParam = new QueryPreGetListArgs( queryName, query.EntityName, filters,  query.Sorts, cursor, pagination);
+        var hookParam = new QueryPreGetListArgs( queryName, query.EntityName, filters,  query.Sorts, parsedCursor, pagination);
         var res = await hookRegistry.QueryPreGetList.Trigger(provider, hookParam);
         if (res.OutRecords is not null)
         {
@@ -42,7 +43,7 @@ public sealed class QueryService(
         var kateQuery = CheckResult(query.Entity!.ListQuery(res.Filters, res.Sorts, res.Pagination, res.Cursor, attributes));
         var items = await kateQueryExecutor.Many(kateQuery, cancellationToken);
         
-        if (!cursor.IsForward)
+        if (!cursor.IsForward())
         {
             items = items.Reverse().ToArray();
         }
@@ -111,7 +112,7 @@ public sealed class QueryService(
         return item;
     }
 
-    private QueryResult<Record> BuildRecordViewResult(Record[] items, Cursor cursor, Pagination pagination, Sort[]? sorts)
+    private QueryResult<Record> BuildRecordViewResult(Record[] items, Cursor cursor, Pagination pagination, ImmutableArray<Sort>? sorts)
     {
         if (items.Length == 0)
         {

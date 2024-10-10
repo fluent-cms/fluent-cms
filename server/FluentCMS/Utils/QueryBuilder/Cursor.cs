@@ -1,27 +1,28 @@
+using System.Collections.Immutable;
 using System.Text.Json;
 using FluentResults;
 using Microsoft.IdentityModel.Tokens;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
-public sealed class Cursor
+public sealed record Cursor(string First, string Last);
+
+public sealed record ValidCursor(Cursor Cursor, Record? BoundaryItem);
+public static class CursorHelper
 {
-    public string First { get; set; } = "";
-    public string Last { get; set; } = "";
-
-    public Record? BoundaryItem { get; set; }
-
-    public object? BoundaryValue(string fld) => BoundaryItem?[fld];
-    private bool IsEmpty => string.IsNullOrWhiteSpace(First) && string.IsNullOrWhiteSpace(Last);
-    public bool IsForward => !string.IsNullOrWhiteSpace(Last) || string.IsNullOrWhiteSpace(First);
+    public static object BoundaryValue(this ValidCursor c, string fld) => c.BoundaryItem![fld];
     
-    public string GetCompareOperator(Sort s)
+    private static bool IsEmpty(this Cursor c) => string.IsNullOrWhiteSpace(c.First) && string.IsNullOrWhiteSpace(c.Last);
+    
+    public static bool IsForward(this Cursor c) => !string.IsNullOrWhiteSpace(c.Last) || string.IsNullOrWhiteSpace(c.First);
+    
+    public static string GetCompareOperator(this Cursor c,Sort s)
     {
-        return  IsForward ? s.Order == SortOrder.Asc ? ">" : "<":
+        return  c.IsForward() ? s.Order == SortOrder.Asc ? ">" : "<":
             s.Order == SortOrder.Asc ? "<" : ">";
     }
 
-    public Result<Cursor> GetNextCursor(Record[] items, Sort[]? sorts, bool hasMore)
+    public static Result<Cursor> GetNextCursor(this Cursor c, Record[] items, ImmutableArray<Sort>? sorts, bool hasMore)
     {
         if (sorts is null)
         {
@@ -33,7 +34,7 @@ public sealed class Cursor
             return Result.Fail("No result, can not generate cursor");
         }
 
-        var (hasPrevious, hasNext) = (hasMore, First,Last) switch
+        var (hasPrevious, hasNext) = (hasMore, c.First,c.Last) switch
         {
             (true, "", "") => (false, true), // home page, should not has previous
             (false, "", "") => (false, false), // home page
@@ -44,13 +45,13 @@ public sealed class Cursor
         };
         
         return new Cursor
-        {
-            First = hasPrevious? EncodeRecord(items.First(), sorts):"",
-            Last = hasNext? EncodeRecord(items.Last(), sorts):""
-        };
+        (
+            First : hasPrevious? EncodeRecord(items.First(), sorts):"",
+            Last : hasNext? EncodeRecord(items.Last(), sorts):""
+        );
     }
 
-    private static string EncodeRecord(Record item, Sort[] sorts)
+    private static string EncodeRecord(Record item, IEnumerable<Sort> sorts)
     {
         var dict = new Dictionary<string, object>();
         foreach (var field in sorts.Select(x => x.FieldName))
@@ -65,21 +66,18 @@ public sealed class Cursor
         return Base64UrlEncoder.Encode(cursor);
     }
 
-    public Result ResolveBoundaryItem(Entity entity, Func<Attribute, string, object> cast)
+    
+    public static Result<ValidCursor> Resolve(this Cursor c,Entity entity, Func<Attribute, string, object> cast)
     {
-        if (IsEmpty) return Result.Ok();
+        if (c.IsEmpty()) return new ValidCursor(c, default);
+        
         try
         {
-            var recordStr = IsForward ? Last : First;
+            var recordStr = c.IsForward() ? c.Last : c.First;
             recordStr = Base64UrlEncoder.Decode(recordStr);
             var element = JsonSerializer.Deserialize<JsonElement>(recordStr);
             var parseRes = entity.Parse(element, cast);
-            if (parseRes.IsFailed)
-            {
-                return Result.Fail(parseRes.Errors);
-            }
-            BoundaryItem = parseRes.Value;
-            return Result.Ok();
+            return parseRes.IsFailed ? Result.Fail(parseRes.Errors) : Result.Ok(new ValidCursor(c,parseRes.Value));
         }
         catch (Exception e)
         {
