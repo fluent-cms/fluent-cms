@@ -3,7 +3,6 @@ using FluentCMS.Services;
 using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.QueryBuilder;
 using Microsoft.Extensions.Primitives;
-using FluentCMS.Utils.Cache;
 using FluentCMS.Utils.HookFactory;
 namespace FluentCMS.Cms.Services;
 
@@ -23,7 +22,7 @@ public sealed class QueryService(
         Dictionary<string, StringValues> querystringDictionary, CancellationToken cancellationToken)
     {
         var query = await querySchemaService.GetByNameAndCache(queryName, cancellationToken);
-        var filters = CheckResult(query.Filters.Resolve(query.Entity!,  schemaService.CastToDatabaseType, querystringDictionary));
+        var filters = CheckResult(query.Filters.Resolve(query.EntityName, query.Entity!.Attributes, schemaService.CastToDatabaseType, querystringDictionary));
         var parsedCursor = CheckResult(cursor.Resolve(query.Entity!, schemaService.CastToDatabaseType));
         pagination ??= new Pagination (0,query.PageSize );
         if (pagination.Limit== 0 || pagination.Limit > query.PageSize)
@@ -52,7 +51,7 @@ public sealed class QueryService(
         if (results.Items is not null && results.Items.Length > 0)
         {
             //here use result.Items instead of items, because result.Items omit last record
-            await entityService.AttachRelatedEntity(query.Selection, results.Items, cancellationToken);
+            await entityService.AttachRelatedEntity(query.Entity, query.Selection, results.Items, cancellationToken);
         }
 
         return results;
@@ -63,7 +62,7 @@ public sealed class QueryService(
         CancellationToken cancellationToken)
     {
         var query = await querySchemaService.GetByNameAndCache(queryName, cancellationToken);
-        var filters = CheckResult(query.Filters.Resolve(query.Entity!, schemaService.CastToDatabaseType,
+        var filters = CheckResult(query.Filters.Resolve(query.Entity.Name, query.Selection, schemaService.CastToDatabaseType,
             querystringDictionary));
 
         var res = await hookRegistry.QueryPreGetMany.Trigger(provider, new QueryPreGetManyArgs(queryName,query.EntityName, filters));
@@ -91,7 +90,7 @@ public sealed class QueryService(
 
         var kateQuery = CheckResult(query.Entity!.ListQuery(res.Filters, query.Sorts, pagination, null, attributes));
         var items = await kateQueryExecutor.Many(kateQuery, cancellationToken);
-        await entityService.AttachRelatedEntity(query.Selection, items, cancellationToken);
+        await entityService.AttachRelatedEntity(query.Entity,query.Selection, items, cancellationToken);
         return items;
     }
 
@@ -99,7 +98,7 @@ public sealed class QueryService(
         CancellationToken cancellationToken)
     {
         var query = await querySchemaService.GetByNameAndCache(queryName, cancellationToken);
-        var filters = CheckResult(query.Filters.Resolve(query.Entity!,  schemaService.CastToDatabaseType, querystringDictionary));
+        var filters = CheckResult(query.Filters.Resolve(query.Entity.Name, query.Selection,  schemaService.CastToDatabaseType, querystringDictionary));
         var res= await hookRegistry.QueryPreGetOne.Trigger(provider, new QueryPreGetOneArgs(queryName, query.EntityName,filters));
         if (res.OutRecord is not null)
         {
@@ -108,7 +107,7 @@ public sealed class QueryService(
 
         var kateQuery = CheckResult(query.Entity!.OneQuery(res.Filters, query.Selection.GetLocalAttributes()));
         var item = NotNull(await kateQueryExecutor.One(kateQuery, cancellationToken)).ValOrThrow("Not find record");
-        await entityService.AttachRelatedEntity(query.Selection, [item], cancellationToken);
+        await entityService.AttachRelatedEntity(query.Entity, query.Selection, [item], cancellationToken);
         return item;
     }
 

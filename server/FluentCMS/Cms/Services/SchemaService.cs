@@ -70,9 +70,9 @@ public sealed  class SchemaService(
         
         return res.IsSuccess ? res.Value : null;
     }
-    public object CastToDatabaseType(Attribute attribute, string str)
+    public object CastToDatabaseType(string dataType, string str)
     {
-        return definitionExecutor.CastToDatabaseType(attribute.DataType, str);
+        return definitionExecutor.CastToDatabaseType(dataType, str);
     }
 
     public async Task<Schema> Save(Schema dto, CancellationToken cancellationToken = default)
@@ -123,35 +123,23 @@ public sealed  class SchemaService(
         }
 
         var entity = new Entity
-        {
-            TableName = TableName,
-            Attributes =
+        (
+            TableName : TableName,
+            Attributes :
             [
+                new Attribute ( ColumnName ),
+                new Attribute (  ColumnType ),
                 new Attribute
-                {
-                    Field = ColumnName,
-                    DataType = DataType.String,
-                },
-                new Attribute
-                {
-                    Field = ColumnType,
-                    DataType = DataType.String,
-                },
-                new Attribute
-                {
-                    Field = ColumnSettings,
-                    DataType = DataType.Text,
-                },
-                new Attribute
-                {
-                    Field = ColumnCreatedBy,
-                    DataType = DataType.String,
-                }
+               ( 
+                    Field : ColumnSettings,
+                    DataType : DataType.Text
+                ),
+                new Attribute (ColumnCreatedBy)
             ]
-        };
-        entity.EnsureDefaultAttribute();
-        entity.EnsureDeleted();
-        await definitionExecutor.CreateTable(entity.TableName, entity.ColumnDefinitions(), cancellationToken);
+        );
+        entity = entity.WithDefaultAttr();
+        await definitionExecutor.CreateTable(entity.TableName, entity.ColumnDefinitions().EnsureDeleted(),
+            cancellationToken);
     }
     public async Task EnsureEntityInTopMenuBar(Entity entity, CancellationToken cancellationToken)
     {

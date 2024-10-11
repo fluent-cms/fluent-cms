@@ -1,106 +1,127 @@
 using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.KateQueryExt;
-using SqlKata;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
-public class Crosstable
+//can not save source entity, it will cause circular reference when marshal json
+public record Crosstable(
+    LoadedEntity CrossEntity,
+    LoadedEntity TargetEntity,
+    
+    LoadedAttribute SourceAttribute,
+    LoadedAttribute TargetAttribute
+);
+public static class CrosstableHelper
 {
-    public Entity CrossEntity { get; set; }
-    public Entity TargetEntity { get; set; }
-    public Attribute FromAttribute { get; set; }
-    public Attribute TargetAttribute { get; set; }
-
-    public ColumnDefinition[] GetColumnDefinitions()
+    public static ColumnDefinition[] GetColumnDefinitions(this Crosstable c)
     {
-        CrossEntity.Attributes = [FromAttribute, TargetAttribute];
-        CrossEntity.EnsureDefaultAttribute();
-        CrossEntity.EnsureDeleted();
-        return CrossEntity.ColumnDefinitions();
+        return
+        [
+            new ColumnDefinition(DefaultFields.Id, DataType.Int),
+            new ColumnDefinition(c.SourceAttribute.Field, DataType.Int),
+            new ColumnDefinition(c.TargetAttribute.Field, DataType.Int),
+            new ColumnDefinition(DefaultFields.CreatedAt, DataType.Datetime),
+            new ColumnDefinition(DefaultFields.UpdatedAt, DataType.Datetime),
+            new ColumnDefinition(DefaultFields.Deleted, DataType.Int),
+        ];
     }
     
-    public Crosstable(Entity fromEntity, Entity targetEntity)
+    public static Crosstable Crosstable(LoadedEntity sourceEntity, LoadedEntity targetEntity)
     {
-        TargetEntity = targetEntity;
-        string[] strs = [fromEntity.Name, targetEntity.Name];
-        var sorted = strs.OrderBy(x => x).ToArray();
-        var crossEntityName = $"{sorted[0]}_{sorted[1]}";
-        CrossEntity = new Entity
-        {
-            TableName = crossEntityName,
+        var tableName = GetTableName();
+        var id = new LoadedAttribute($"{tableName}.{DefaultFields.Id}", DefaultFields.Id);
+        var deleted = new LoadedAttribute($"{tableName}.{DefaultFields.Deleted}", DefaultFields.Deleted);
+        
+        var sourceAttribute = new LoadedAttribute
+        (
+            Field: $"{sourceEntity.Name}_id",
+            Fullname: $"{tableName}.{targetEntity.Name}_id"
+        );
+        var targetAttribute = new LoadedAttribute
+        (
+            Field : $"{targetEntity.Name}_id",
+            Fullname: $"{tableName}.{targetEntity.Name}_id"
+        );
+        var crossEntity = new LoadedEntity
+        (
+            Attributes: [sourceAttribute, targetAttribute],
+            PrimaryKeyAttribute: id,
+            LoadedTitleAttribute: id,
+            DeletedAttribute: deleted,
+            Name: tableName,
+            TableName: tableName
+        );
+        return new Crosstable(crossEntity, targetEntity, sourceAttribute, targetAttribute);
 
-        };
-        FromAttribute = new Attribute
+        string GetTableName()
         {
-            Field = $"{fromEntity.Name}_id",
-            Parent = CrossEntity,
-        };
-        TargetAttribute = new Attribute
-        {
-            Field = $"{targetEntity.Name}_id",
-            Parent = CrossEntity
-        };
+            string[] strs = [sourceEntity.Name, targetEntity.Name];
+            var sorted = strs.OrderBy(x => x).ToArray();
+
+            return $"{sorted[0]}_{sorted[1]}";
+        }
     }
 
-    public SqlKata.Query Delete(object id, Record[] targetItems)
+    public static SqlKata.Query Delete(this Crosstable c,object id, Record[] targetItems)
     {
-        var vals = targetItems.Select(x => x[TargetEntity.PrimaryKey]);
-        return new SqlKata.Query(CrossEntity.TableName).Where(FromAttribute.Field, id)
-            .WhereIn(TargetAttribute.Field, vals).AsUpdate([CrossEntity.DeleteAttribute().Field],[true]);
+        var vals = targetItems.Select(x => x[c.TargetEntity.PrimaryKey]);
+        return new SqlKata.Query(c.CrossEntity.TableName).Where(c.SourceAttribute.Field, id)
+            .WhereIn(c.TargetAttribute.Field, vals).AsUpdate([c.CrossEntity.DeletedAttribute.Field],[true]);
     }
     
-    public SqlKata.Query Insert(object id, Record[] targetItems)
+    public static SqlKata.Query Insert(this Crosstable c,object id, Record[] targetItems)
     {
-        string[] cols = [FromAttribute.Field, TargetAttribute.Field];
+        string[] cols = [c.SourceAttribute.Field, c.TargetAttribute.Field];
         var vals = targetItems.Select(x =>
         {
-            return new object[]{id, x[TargetEntity.PrimaryKey]};
+            return new []{id, x[c.TargetEntity.PrimaryKey]};
         });
 
-        return new SqlKata.Query(CrossEntity.TableName).AsInsert(cols, vals);
+        return new SqlKata.Query(c.CrossEntity.TableName).AsInsert(cols, vals);
     }
-     private SqlKata.Query Base(Attribute[] selectAttributes)
+     private static SqlKata.Query Base(this Crosstable c,LoadedAttribute[] selectAttributes)
      {
-          var lstFields = selectAttributes.Select(x => x.FullName()).ToList();
-          lstFields.Add(FromAttribute.FullName());
-          var qry = TargetEntity.Basic().Select(lstFields);
+          var lstFields = selectAttributes.Select(x => x.Fullname).ToList();
+          lstFields.Add(c.SourceAttribute.Fullname);
+          var qry = c.TargetEntity.Basic().Select(lstFields);
           return qry;
      }
-     public SqlKata.Query Filter(Attribute[] selectAttributes, bool exclude, object id)
+     
+     public static SqlKata.Query Filter(this Crosstable c, LoadedAttribute[] selectAttributes, bool exclude, object id)
      {
-         var baseQuery = Base(selectAttributes);
-         var (a, b) = (TargetEntity.PrimaryKeyAttribute().FullName(), TargetAttribute.FullName());
+         var baseQuery = c.Base(selectAttributes);
+         var (a, b) = (c.TargetEntity.PrimaryKeyAttribute.Fullname, c.TargetAttribute.Fullname);
          if (exclude)
          {
-             baseQuery.LeftJoin(CrossEntity.TableName,
+             baseQuery.LeftJoin(c.CrossEntity.TableName,
                  j => j.On(a, b)
-                     .Where(FromAttribute.FullName(), id)
-                     .Where(CrossEntity.DeleteAttribute().FullName(), false)
-             ).WhereNull(FromAttribute.FullName());
+                     .Where(c.SourceAttribute.Fullname, id)
+                     .Where(c.CrossEntity.DeletedAttribute.Fullname, false)
+             ).WhereNull(c.SourceAttribute.Fullname);
          }
          else
          {
-             baseQuery.Join(CrossEntity.TableName, a, b)
-                 .Where(FromAttribute.FullName(), id)
-                 .Where(CrossEntity.DeleteAttribute().FullName(), false);
+             baseQuery.Join(c.CrossEntity.TableName, a, b)
+                 .Where(c.SourceAttribute.Fullname, id)
+                 .Where(c.CrossEntity.DeletedAttribute.Fullname, false);
          }
          return baseQuery;
      }
 
-     public SqlKata.Query Many(Attribute[] selectAttributes, bool exclude, object id, Pagination? pagination)
+     public static SqlKata.Query Many(this Crosstable c, LoadedAttribute[] selectAttributes, bool exclude, object id, Pagination? pagination)
      {
-         var baseQuery = Filter(selectAttributes, exclude, id);
+         var baseQuery = c.Filter(selectAttributes, exclude, id);
          baseQuery.ApplyPagination(pagination);
          return baseQuery;
      }
 
-     public SqlKata.Query Many(Attribute[] selectAttributes, object[] ids)
+     public static SqlKata.Query Many(this Crosstable c, LoadedAttribute[] selectAttributes, object[] ids)
      {
-         var baseQuery = Base(selectAttributes);
-         var (a, b) = (TargetEntity.PrimaryKeyAttribute().FullName(), TargetAttribute.FullName());
-         baseQuery.Join(CrossEntity.TableName, a, b)
-             .WhereIn(FromAttribute.FullName(), ids)
-             .Where(CrossEntity.DeleteAttribute().FullName(), false);
+         var baseQuery = c.Base(selectAttributes);
+         var (a, b) = (c.TargetEntity.PrimaryKeyAttribute.Fullname, c.TargetAttribute.Fullname);
+         baseQuery.Join(c.CrossEntity.TableName, a, b)
+             .WhereIn(c.SourceAttribute.Fullname, ids)
+             .Where(c.CrossEntity.DeletedAttribute.Fullname, false);
          return baseQuery;
      }
 }

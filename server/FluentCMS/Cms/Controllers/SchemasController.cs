@@ -83,7 +83,7 @@ public class SchemasController(
     {
         var schema =
             InvalidParamExceptionFactory.CheckResult(
-                await entitySchemaService.GetByNameDefault(name, true, cancellationToken));
+                await entitySchemaService.GetLoadedEntity(name,  cancellationToken));
         return Ok(schema);
     }
 

@@ -3,7 +3,7 @@ using Microsoft.Extensions.Primitives;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
-public sealed record RawConstraint(string Match, string Value);
+public sealed record Constraint(string Match, string Value);
 public sealed record ValidConstraint(string Match, object[] Values);
 
 public static class ConstraintsHelper
@@ -11,11 +11,12 @@ public static class ConstraintsHelper
     private const string QuerystringPrefix = "qs.";
 
     public static Result<ValidConstraint[]> Resolve(
-        this RawConstraint[] constraints, 
+        this Constraint[] constraints, 
         bool ignoreResolveError,
-        Attribute attribute,  
+        string entityName,
+        BaseAttribute attribute,  
         Dictionary<string, StringValues>? querystringDictionary,
-        Func<Attribute, string, object> cast)
+        Func<string, string, object> cast)
     {
         var ret = new List<ValidConstraint>();
         foreach (var constraint in constraints)
@@ -23,7 +24,7 @@ public static class ConstraintsHelper
             var val = constraint.Value;
             if (string.IsNullOrWhiteSpace(val))
             {
-                return Result.Fail($"Fail to resolve Filter, value not set for field {attribute.FullName()}");
+                return Result.Fail($"Fail to resolve Filter, value not set for field {entityName}.{attribute.Field}");
             }
 
             if (val.StartsWith(QuerystringPrefix))
@@ -31,7 +32,7 @@ public static class ConstraintsHelper
                 var res = ResolveFromQueryString(val);
                 if (res.IsSuccess)
                 {
-                    var arr = res.Value.Select(x => cast(attribute, x)).ToArray();
+                    var arr = res.Value.Select(x => cast(attribute.Field, x)).ToArray();
                     ret.Add(new ValidConstraint(constraint.Match, arr));
                 }
                 else if (!ignoreResolveError)
@@ -41,7 +42,7 @@ public static class ConstraintsHelper
             }
             else
             {
-                ret.Add(new ValidConstraint(constraint.Match, [cast(attribute,val)]));
+                ret.Add(new ValidConstraint(constraint.Match, [cast(attribute.Field,val)]));
             }
         }
 

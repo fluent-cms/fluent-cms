@@ -7,7 +7,7 @@ namespace FluentCMS.Utils.QueryBuilder;
 
 public sealed record Cursor(string First, string Last);
 
-public sealed record ValidCursor(Cursor Cursor, Record? BoundaryItem);
+public sealed record ValidCursor(Cursor Cursor, ImmutableDictionary<string,object>? BoundaryItem);
 public static class CursorHelper
 {
     public static object BoundaryValue(this ValidCursor c, string fld) => c.BoundaryItem![fld];
@@ -67,7 +67,7 @@ public static class CursorHelper
     }
 
     
-    public static Result<ValidCursor> Resolve(this Cursor c,Entity entity, Func<Attribute, string, object> cast)
+    public static Result<ValidCursor> Resolve(this Cursor c,LoadedEntity entity, Func<string, string, object> cast)
     {
         if (c.IsEmpty()) return new ValidCursor(c, default);
         
@@ -77,7 +77,7 @@ public static class CursorHelper
             recordStr = Base64UrlEncoder.Decode(recordStr);
             var element = JsonSerializer.Deserialize<JsonElement>(recordStr);
             var parseRes = entity.Parse(element, cast);
-            return parseRes.IsFailed ? Result.Fail(parseRes.Errors) : Result.Ok(new ValidCursor(c,parseRes.Value));
+            return parseRes.IsFailed ? Result.Fail(parseRes.Errors) : Result.Ok(new ValidCursor(c,parseRes.Value.ToImmutableDictionary()));
         }
         catch (Exception e)
         {

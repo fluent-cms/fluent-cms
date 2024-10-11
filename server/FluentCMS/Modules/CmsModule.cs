@@ -67,8 +67,8 @@ public sealed class CmsModule(
                 return new Renderer(fileInfo.PhysicalPath??"");
             });
             builder.Services.AddSingleton<HookRegistry>(_ => new HookRegistry());
-            builder.Services.AddSingleton<ImmutableCache<Query>>(p =>
-                new ImmutableCache<Query>(p.GetRequiredService<IMemoryCache>(), 30, "view"));
+            builder.Services.AddSingleton<KeyValueCache<LoadedQuery>>(p =>
+                new KeyValueCache<LoadedQuery>(p.GetRequiredService<IMemoryCache>(), 30, "query"));
             builder.Services.AddSingleton<LocalFileStore>(p => new LocalFileStore(
                 Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/files"),
                 1200,

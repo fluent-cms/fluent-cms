@@ -7,6 +7,7 @@ using FluentCMS.Utils.IdentityExt;
 using FluentCMS.Utils.QueryBuilder;
 using FluentResults;
 using Microsoft.AspNetCore.Identity;
+using Npgsql.Internal.Postgres;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.Auth.Services;
@@ -63,7 +64,7 @@ public class SchemaPermissionService<TUser>(
         await CheckSchemaPermission(find, currentUserId);
     }
 
-    public async Task Save(Schema schema)
+    public async Task<Schema> Save(Schema schema)
     {
         var currentUserId = MustGetCurrentUserId();
         await CheckSchemaPermission(schema, currentUserId);
@@ -73,10 +74,11 @@ public class SchemaPermissionService<TUser>(
             schema.CreatedBy = currentUserId;
             if (schema.Type == SchemaType.Entity)
             {
-                CheckResult(EnsureCreatedByField(schema));
+                schema = CheckResult(EnsureCreatedByField(schema));
                 await EnsureUserHaveAccessEntity(schema);
             }
         }
+        return schema;
     }
 
     private async Task CheckSchemaPermission(Schema schema, string currentUserId)
@@ -113,19 +115,21 @@ public class SchemaPermissionService<TUser>(
         await signInManager.RefreshSignInAsync(user!);
     }
 
-    private static Result EnsureCreatedByField(Schema schema)
+    private static Result<Schema> EnsureCreatedByField(Schema schema)
     {
         var entity = schema.Settings.Entity;
         if (entity is null) return Result.Fail("Invalid Entity payload");
-        if (schema.Settings.Entity?.Attributes.FindOneAttribute(Constants.CreatedBy) is not null) return Result.Ok();
+        if (schema.Settings.Entity?.Attributes.FindOneAttribute(Constants.CreatedBy) is not null) return schema;
 
-        entity.Attributes = entity.Attributes.Append(new Attribute
+        schema.Settings.Entity = entity with
         {
-            Field = Constants.CreatedBy,
-            Header = Constants.CreatedBy,
-            DataType = DataType.String,
-        }).ToArray();
-        return Result.Ok();
+            Attributes =
+            [
+                ..entity.Attributes,
+                new Attribute(Field: Constants.CreatedBy, Header: Constants.CreatedBy, DataType: DataType.String)
+            ]
+        };
+        return schema;
     }
 
     private async Task SaOrAdminHaveAccessToSchema(Schema schema, string currentUserId)

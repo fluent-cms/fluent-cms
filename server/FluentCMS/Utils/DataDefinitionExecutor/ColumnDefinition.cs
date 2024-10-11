@@ -11,13 +11,20 @@ public static class DataType
     public const string Na = "na";
 }
 
+public static class DefaultFields{
+    public const string Id = "id";
+    public const string Deleted = "deleted";
+    public const string CreatedAt = "created_at";
+    public const string UpdatedAt = "updated_at";
+}
+
 public record ColumnDefinition(string ColumnName, string DataType);
 
 public static class ColumnDefinitionHelper
 {
     public static ColumnDefinition[] EnsureDeleted(this ColumnDefinition[] columnDefinitions)
     {
-        if (columnDefinitions.FirstOrDefault(x => x.ColumnName == "delete") is not null)
+        if (columnDefinitions.FirstOrDefault(x => x.ColumnName == DefaultFields.Deleted) is not null)
         {
             return columnDefinitions;
         }

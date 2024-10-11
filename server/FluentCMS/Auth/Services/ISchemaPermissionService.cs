@@ -9,5 +9,5 @@ public interface ISchemaPermissionService
     string[] GetAll();
     void GetOne(string schemaName);
     Task Delete(int schemaId);
-    Task Save(Schema schema); 
+    Task<Schema> Save(Schema schema); 
 }
