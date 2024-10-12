@@ -18,5 +18,5 @@ public interface IEntityService
     Task<ListResult> CrosstableList(string entityName, string strId, string field, bool exclude, Pagination? pagination, CancellationToken cancellationToken);
     Task<int> CrosstableAdd(string entityName, string strId, string field, JsonElement[] items, CancellationToken cancellationToken);
     Task<int> CrosstableDelete(string entityName, string strId, string attributeName, JsonElement[] elements, CancellationToken cancellationToken);
-    Task AttachRelatedEntity(LoadedEntity entity, LoadedAttribute[] attributes, Record[] items, CancellationToken cancellationToken);
+    Task AttachRelatedEntity(LoadedEntity entity, IEnumerable<LoadedAttribute> attributes, Record[] items, CancellationToken cancellationToken);
 }

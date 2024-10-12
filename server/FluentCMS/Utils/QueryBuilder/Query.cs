@@ -8,25 +8,25 @@ public sealed record Query(
     int PageSize,
     string SelectionSet,
     ImmutableArray<Sort> Sorts,
-    RawFilter[] Filters);
+    ImmutableArray<Filter> Filters);
 
 public sealed record LoadedQuery(
     string Name,
     string EntityName,
     int PageSize,
-    LoadedAttribute[] Selection ,
+    ImmutableArray<LoadedAttribute> Selection ,
     ImmutableArray<Sort> Sorts,
-    RawFilter[] Filters, // filter need to resolve according to user input
+    ImmutableArray<Filter> Filters, // filter need to resolve according to user input
     LoadedEntity Entity);
 
 public static class QueryHelper{
-    public static LoadedQuery ToLoadedQuery(this Query query, LoadedEntity entity, LoadedAttribute[] attributes)
+    public static LoadedQuery ToLoadedQuery(this Query query, LoadedEntity entity, IEnumerable<LoadedAttribute> attributes)
     {
         return new LoadedQuery(
             query.Name,
             query.EntityName,
             query.PageSize,
-            attributes,
+            [..attributes],
             query.Sorts,
             query.Filters,
             entity // LoadedEntity to be passed

@@ -1,17 +1,15 @@
 using System.Collections.Immutable;
-using System.Text.Json.Serialization;
 using FluentCMS.Utils.Qs;
 using FluentResults;
 using Microsoft.Extensions.Primitives;
 namespace FluentCMS.Utils.QueryBuilder;
-using System.Collections.Generic;
 
-public sealed record RawFilter(string FieldName, string Operator, Constraint[] Constraints, bool OmitFail);
+public sealed record Filter(string FieldName, string Operator, Constraint[] Constraints, bool OmitFail);
 public sealed record ValidFilter(string FieldName, string Operator, ValidConstraint[] Constraints);
 
-public static class FilterUtil
+public static class FilterHelper
 {
-    public static Result<ImmutableArray<ValidFilter>> Resolve(this RawFilter[] filters,string entityName, BaseAttribute[] attributes, Func<string, string, object> cast,  
+    public static Result<ImmutableArray<ValidFilter>> Resolve(this IEnumerable<Filter> filters,string entityName, ImmutableArray<LoadedAttribute> attributes, Func<string, string, object> cast,  
         Dictionary<string, StringValues>? querystringDictionary)
     {
         var ret = new List<ValidFilter>();

@@ -1,9 +1,10 @@
+using System.Collections.Immutable;
 using System.Globalization;
 using FluentCMS.Utils.DataDefinitionExecutor;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
-public abstract record BaseAttribute( string Field, string Type, bool InList, bool InDetail, string Option );
+public abstract record BaseAttribute(string Field, string Type, bool InList, bool InDetail, string Option);
 
 public record Attribute(
     string Field,
@@ -74,11 +75,9 @@ public record LoadedAttribute(
 
 public static class AttributeHelper
 {
-
     public static string GetLookupTarget(this BaseAttribute a) => a.Option;
     public static string GetCrosstableTarget(this BaseAttribute a) => a.Option;
-    
-    public static bool IsLocalAttribute(this BaseAttribute a) => a.Type != DisplayType.Crosstable;
+    private static bool IsLocalAttribute(this BaseAttribute a) => a.Type != DisplayType.Crosstable;
 
     public static LoadedAttribute ToLoaded(this ValidAttribute a, LoadedEntity? lookup = default, Crosstable? crosstable = default, LoadedAttribute[]? children  =default)
     {
@@ -120,7 +119,7 @@ public static class AttributeHelper
         );
     }
 
-    public static Attribute Attribute(this ColumnDefinition col)
+    public static Attribute ToAttribute(this ColumnDefinition col)
     {
         return new Attribute(
             Field:col.ColumnName,
@@ -143,48 +142,48 @@ public static class AttributeHelper
         }
     }
    
-    public static object[] GetUniqValues<T>(this T a, Record[] records)
+    public static ImmutableArray<object> GetUniqValues<T>(this T a, Record[] records)
     where T :BaseAttribute
     {
-        return records.Where(x=>x.ContainsKey(a.Field)).Select(x => x[a.Field]).Distinct().Where(x => x != null).ToArray();
+        return [..records.Where(x => x.ContainsKey(a.Field)).Select(x => x[a.Field]).Distinct().Where(x => x != null)];
     }
 
-    public static T? FindOneAttribute<T>(this T[]?  arr, string name)
+    public static T? FindOneAttribute<T>(this IEnumerable<T>?  arr, string name)
     where T :BaseAttribute
     {
         return arr?.FirstOrDefault(x => x.Field == name);
     }
-    public static T[] GetLocalAttributes<T>(this T[]? arr)
+    public static ImmutableArray<T> GetLocalAttributes<T>(this IEnumerable<T>? arr)
     where T :BaseAttribute
     {
-        return arr?.Where(x => x.IsLocalAttribute()).ToArray()??[];
+        return arr?.Where(x => x.IsLocalAttribute()).ToImmutableArray()??[];
     }
-    public static T[] GetLocalAttributes<T>(this T[]? arr, InListOrDetail listOrDetail)
+    public static ImmutableArray<T> GetLocalAttributes<T>(this IEnumerable<T>? arr, InListOrDetail listOrDetail)
     where T : BaseAttribute
     {
         return arr?.Where(x =>
                 x.Type != DisplayType.Crosstable &&
                 (listOrDetail == InListOrDetail.InList ? x.InList : x.InDetail))
-            .ToArray()??[];
+            .ToImmutableArray()??[];
     }
 
-    public static T[] GetLocalAttributes<T>(this T[]? arr, string[] attributes)
+    public static ImmutableArray<T> GetLocalAttributes<T>(this IEnumerable<T>? arr, string[] attributes)
     where T : BaseAttribute
     {
-        return arr?.Where(x => x.Type != DisplayType.Crosstable && attributes.Contains(x.Field)).ToArray()??[];
+        return arr?.Where(x => x.Type != DisplayType.Crosstable && attributes.Contains(x.Field)).ToImmutableArray()??[];
     }
 
-    public static T[] GetAttributesByType<T>(this T[]? arr, string displayType)
+    public static ImmutableArray<T> GetAttributesByType<T>(this IEnumerable<T>? arr, string displayType)
     where T : BaseAttribute
     {
-        return arr?.Where(x => x.Type == displayType).ToArray()??[];
+        return arr?.Where(x => x.Type == displayType).ToImmutableArray()??[];
     }
 
-    public static T[] GetAttributesByType<T>(this T[]? arr, string type, InListOrDetail listOrDetail)
+    public static ImmutableArray<T> GetAttributesByType<T>(this IEnumerable<T>? arr, string type, InListOrDetail listOrDetail)
     where T : BaseAttribute
     {
         return arr?.Where(x => x.Type == type && (listOrDetail == InListOrDetail.InList ? x.InList : x.InDetail))
-            .ToArray()??[];
+            .ToImmutableArray()??[];
     }
     
     

@@ -20,7 +20,7 @@ public sealed class EntitySchemaService( ISchemaService schemaService, IDefiniti
         return await LoadRelated(entity,  false, cancellationToken);
     }
 
-    public async Task<Result<ValidEntity>> GetValidEntity(string name, CancellationToken cancellationToken = default)
+    private async Task<Result<ValidEntity>> GetValidEntity(string name, CancellationToken cancellationToken = default)
     {
         var (_,isFailed,entity,errors) = await GetEntity(name,cancellationToken);
         if (isFailed)
@@ -31,7 +31,7 @@ public sealed class EntitySchemaService( ISchemaService schemaService, IDefiniti
         return entity.ToValid();
     }
 
-    public async Task<Result<Entity>> GetEntity(string name,CancellationToken cancellationToken = default)
+    private async Task<Result<Entity>> GetEntity(string name,CancellationToken cancellationToken = default)
     {
         var item = await schemaService.GetByNameDefault(name, SchemaType.Entity, cancellationToken);
         if (item is null)
@@ -51,7 +51,7 @@ public sealed class EntitySchemaService( ISchemaService schemaService, IDefiniti
         var cols = await definitionExecutor.GetColumnDefinitions(tableName, cancellationToken);
         return new Entity
         (
-            Attributes : cols.Select(AttributeHelper.Attribute).ToArray()
+            Attributes : [..cols.Select(AttributeHelper.ToAttribute)]
         );
     }
 
@@ -71,7 +71,7 @@ public sealed class EntitySchemaService( ISchemaService schemaService, IDefiniti
         var validEntity = entity.ToValid();
         foreach (var attribute in validEntity.Attributes.GetAttributesByType(DisplayType.Crosstable))
         {
-            await CreateCrosstable(validEntity.ToLoadedEntity(), attribute, cancellationToken);
+            await CreateCrosstable(validEntity.ToLoadedEntity([]), attribute, cancellationToken);
         }
 
         if (cols.Length > 0) //if table exists, alter table add columns
@@ -144,7 +144,7 @@ public sealed class EntitySchemaService( ISchemaService schemaService, IDefiniti
             DefaultPageSize : 10,
             PrimaryKey : "id",
             TitleAttribute : field,
-            Attributes :attr.ToArray()
+            Attributes :[..attr]
         );
         return await AddOrSaveEntity(entity, cancellationToken);
     }
@@ -164,7 +164,7 @@ public sealed class EntitySchemaService( ISchemaService schemaService, IDefiniti
                 {
                     return Result.Fail($"not find entity by name {validAttribute.GetLookupTarget()} for lookup {validAttribute.Fullname}");
                 }
-                lookup = value.ToLoadedEntity();
+                lookup = value.ToLoadedEntity([]);
             }
             
             if (validAttribute.Type == DisplayType.Crosstable && !omitCrosstable)
@@ -175,13 +175,18 @@ public sealed class EntitySchemaService( ISchemaService schemaService, IDefiniti
                 {
                     return Result.Fail($"not find entity by name {validAttribute.GetCrosstableTarget()} for crosstable {validAttribute.Fullname}");
                 }
-                await LoadRelated(targetEntity,  true, cancellationToken);
-                crosstable = CrosstableHelper.Crosstable(entity.ToLoadedEntity(), targetEntity.ToLoadedEntity());
+                var loadedTarget = await LoadRelated(targetEntity,  true, cancellationToken);
+                if (loadedTarget.IsFailed)
+                {
+                    return Result.Fail(loadedTarget.Errors);
+                    
+                }
+                crosstable = CrosstableHelper.Crosstable(entity.ToLoadedEntity([]), loadedTarget.Value);
             }
             lst.Add(validAttribute.ToLoaded(lookup,crosstable,default));
         }
 
-        return entity.ToLoadedEntity();
+        return entity.ToLoadedEntity(lst.ToArray());
     }
 
     private async Task CreateCrosstable(LoadedEntity entity, ValidAttribute attribute, CancellationToken cancellationToken)

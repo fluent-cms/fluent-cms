@@ -35,7 +35,7 @@ public static class CrosstableHelper
         var sourceAttribute = new LoadedAttribute
         (
             Field: $"{sourceEntity.Name}_id",
-            Fullname: $"{tableName}.{targetEntity.Name}_id"
+            Fullname: $"{tableName}.{sourceEntity.Name}_id"
         );
         var targetAttribute = new LoadedAttribute
         (
@@ -79,7 +79,7 @@ public static class CrosstableHelper
 
         return new SqlKata.Query(c.CrossEntity.TableName).AsInsert(cols, vals);
     }
-     private static SqlKata.Query Base(this Crosstable c,LoadedAttribute[] selectAttributes)
+     private static SqlKata.Query Base(this Crosstable c,IEnumerable<LoadedAttribute> selectAttributes)
      {
           var lstFields = selectAttributes.Select(x => x.Fullname).ToList();
           lstFields.Add(c.SourceAttribute.Fullname);
@@ -87,7 +87,7 @@ public static class CrosstableHelper
           return qry;
      }
      
-     public static SqlKata.Query Filter(this Crosstable c, LoadedAttribute[] selectAttributes, bool exclude, object id)
+     public static SqlKata.Query Filter(this Crosstable c, IEnumerable<LoadedAttribute> selectAttributes, bool exclude, object id)
      {
          var baseQuery = c.Base(selectAttributes);
          var (a, b) = (c.TargetEntity.PrimaryKeyAttribute.Fullname, c.TargetAttribute.Fullname);
@@ -108,14 +108,14 @@ public static class CrosstableHelper
          return baseQuery;
      }
 
-     public static SqlKata.Query Many(this Crosstable c, LoadedAttribute[] selectAttributes, bool exclude, object id, Pagination? pagination)
+     public static SqlKata.Query Many(this Crosstable c, IEnumerable<LoadedAttribute> selectAttributes, bool exclude, object id, Pagination? pagination)
      {
          var baseQuery = c.Filter(selectAttributes, exclude, id);
          baseQuery.ApplyPagination(pagination);
          return baseQuery;
      }
 
-     public static SqlKata.Query Many(this Crosstable c, LoadedAttribute[] selectAttributes, object[] ids)
+     public static SqlKata.Query Many(this Crosstable c, IEnumerable<LoadedAttribute> selectAttributes, IEnumerable<object> ids)
      {
          var baseQuery = c.Base(selectAttributes);
          var (a, b) = (c.TargetEntity.PrimaryKeyAttribute.Fullname, c.TargetAttribute.Fullname);

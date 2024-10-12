@@ -65,7 +65,7 @@ public sealed class EntityService(
     {
         var entity = CheckResult(await entitySchemaService.GetLoadedEntity(entityName,  cancellationToken));
         var qsDict = new QsDict(qs);
-        var filters = CheckResult(FilterUtil.Parse(entity, qsDict, schemaService.CastToDatabaseType));
+        var filters = CheckResult(FilterHelper.Parse(entity, qsDict, schemaService.CastToDatabaseType));
         var sorts = CheckResult(SortHelper.Parse(qsDict));
         return await List(entity, filters, sorts, pagination, cancellationToken);
     }
@@ -205,7 +205,7 @@ public sealed class EntityService(
             await queryKateQueryExecutor.Count(countQuery, cancellationToken));
     }
 
-    public async Task AttachRelatedEntity(LoadedEntity entity,LoadedAttribute[]? attributes, Record[] items, CancellationToken cancellationToken)
+    public async Task AttachRelatedEntity(LoadedEntity entity,IEnumerable<LoadedAttribute>? attributes, Record[] items, CancellationToken cancellationToken)
     {
         if (attributes is null)
         {
@@ -226,8 +226,8 @@ public sealed class EntityService(
     private async Task AttachCrosstable(LoadedEntity sourceEntity, LoadedAttribute attribute, Record[] items, CancellationToken cancellationToken)
     {
         //no need to attach, ignore
-        var ids = attribute.Crosstable?.SourceAttribute.GetUniqValues(items);
-        if (ids is null || ids.Length == 0)
+        var ids = sourceEntity.PrimaryKeyAttribute.GetUniqValues(items);
+        if (ids.Length == 0)
         {
             return;
         }

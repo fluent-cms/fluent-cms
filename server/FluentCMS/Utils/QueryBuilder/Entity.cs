@@ -12,32 +12,8 @@ public enum InListOrDetail
     InList,
     InDetail,
 }
-
-public record LoadedEntity(
-    LoadedAttribute[] Attributes,
-    LoadedAttribute PrimaryKeyAttribute,
-    LoadedAttribute LoadedTitleAttribute,
-    LoadedAttribute DeletedAttribute,
-    string Name,
-    string TableName,
-    string PrimaryKey = DefaultFields.Id,
-    string Title = "",
-    string TitleAttribute = "",
-    int DefaultPageSize = 100
-);
-
-public record ValidEntity(
-    ValidAttribute[] Attributes,
-    string Name,
-    string TableName,
-    string PrimaryKey,
-    string Title,
-    string TitleAttribute,
-    int DefaultPageSize
-);
-
 public record Entity(
-    Attribute[] Attributes ,
+    ImmutableArray<Attribute> Attributes ,
     string Name = "",
     string TableName = "",
     string PrimaryKey ="",
@@ -45,14 +21,34 @@ public record Entity(
     string TitleAttribute ="",
     int DefaultPageSize = 100
 );
-
+public record ValidEntity(
+    ImmutableArray<ValidAttribute> Attributes,
+    string Name,
+    string TableName,
+    string PrimaryKey,
+    string Title,
+    string TitleAttribute,
+    int DefaultPageSize
+);
+public record LoadedEntity(
+    ImmutableArray<LoadedAttribute> Attributes,
+    LoadedAttribute PrimaryKeyAttribute,
+    LoadedAttribute LoadedTitleAttribute,
+    LoadedAttribute DeletedAttribute,
+    string Name,
+    string TableName,
+    string PrimaryKey = DefaultFields.Id,
+    string Title = "", //needed by admin panel
+    string TitleAttribute = "",
+    int DefaultPageSize = 100
+);
 
 public static class EntityHelper
 {
     public static ValidEntity ToValid(this Entity entity)
     {
         return new ValidEntity(
-            Attributes: entity.Attributes.Select(x=>x.ToValid(entity.TableName)).ToArray(),
+            Attributes: [..entity.Attributes.Select(x=>x.ToValid(entity.TableName))],
             Name:entity.Name,
             TableName:entity.TableName,
             entity.PrimaryKey,
@@ -62,14 +58,14 @@ public static class EntityHelper
         );
     }
 
-    public static LoadedEntity ToLoadedEntity(this ValidEntity validEntity)
+    public static LoadedEntity ToLoadedEntity(this ValidEntity validEntity, IEnumerable<LoadedAttribute> attributes)
     {
         var primaryKey = validEntity.Attributes.FindOneAttribute(validEntity.PrimaryKey)!.ToLoaded();
         var titleAttribute = validEntity.Attributes.FindOneAttribute(validEntity.TitleAttribute)?.ToLoaded() ??
                              primaryKey;
         var deletedAttribute = new LoadedAttribute($"{validEntity.TableName}.{DefaultFields.Deleted}", DefaultFields.Deleted);
         return new LoadedEntity(
-            validEntity.Attributes.Select(x=>x.ToLoaded()).ToArray(),
+            [..attributes],
             PrimaryKeyAttribute:primaryKey,
             LoadedTitleAttribute: titleAttribute,
             DeletedAttribute:deletedAttribute,
@@ -82,7 +78,7 @@ public static class EntityHelper
         );
     }
 
-    public static Result<SqlKata.Query> OneQuery(this LoadedEntity e,IEnumerable<ValidFilter>? filters, LoadedAttribute[] attributes)
+    public static Result<SqlKata.Query> OneQuery(this LoadedEntity e,IEnumerable<ValidFilter>? filters, IEnumerable<LoadedAttribute> attributes)
     {
         var query = e.Basic().Select(attributes.Select(x => x.Fullname));
         var result = query.ApplyFilters(filters); //filters.Apply(this, query);
@@ -94,7 +90,7 @@ public static class EntityHelper
         return query;
     }
 
-    public static SqlKata.Query ByIdQuery(this LoadedEntity e,object id, LoadedAttribute[] attributes, ValidFilter[]? filters)
+    public static SqlKata.Query ByIdQuery(this LoadedEntity e,object id, IEnumerable<LoadedAttribute> attributes, IEnumerable<ValidFilter>? filters)
     {
         var query = e.Basic().Where(e.PrimaryKey, id)
             .Select(attributes.Select(x => x.Fullname));
@@ -103,7 +99,7 @@ public static class EntityHelper
     }
 
     public static Result<SqlKata.Query> ListQuery(this LoadedEntity e,IEnumerable<ValidFilter>? filters, ImmutableArray<Sort>? sorts, 
-        Pagination? pagination, ValidCursor? cursor, LoadedAttribute[] attributes)
+        Pagination? pagination, ValidCursor? cursor, IEnumerable<LoadedAttribute> attributes)
     {
         var query = e.Basic().Select(attributes.Select(x => x.Fullname));
 
@@ -132,9 +128,9 @@ public static class EntityHelper
     }
 
 
-    public static Result<SqlKata.Query> ManyQuery(this LoadedEntity e,object[] ids, LoadedAttribute[] attributes)
+    public static Result<SqlKata.Query> ManyQuery(this LoadedEntity e,ImmutableArray<object> ids, IEnumerable<LoadedAttribute> attributes)
     {
-        if (ids.Length == 0)
+        if (!ids.Any())
         {
             Result.Fail("ids is empty");
         }
@@ -227,7 +223,7 @@ public static class EntityHelper
             ));
         }
 
-        return e with { Attributes = list.ToArray() };
+        return e with { Attributes = [..list] };
     }
 
     public static Result ValidateTitleAttributes(this LoadedEntity e, Record record)
