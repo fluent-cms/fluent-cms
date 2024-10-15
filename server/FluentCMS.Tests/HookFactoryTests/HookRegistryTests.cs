@@ -28,21 +28,16 @@ public class HookRegistryTests
     [Fact]
     public async Task TestEntityPostListChangeTotal()
     {
-        _hookRegistry.EntityPostGetList.Register(People.EntityName, parameter =>
-        {
-            parameter.RefListResult.TotalRecords = 100;
-            parameter.Context.Add("abc",1);
-            return parameter;
-
-        });
+        _hookRegistry.EntityPostGetList.Register(People.EntityName,
+            parameter => parameter with { RefListResult = parameter.RefListResult with { TotalRecords = 100 } });
         var res = new ListResult
-        {
-            TotalRecords = 10,
-        };
+        (
+            Items:[],
+            TotalRecords : 10
+        );
         var args = new EntityPostGetListArgs(People.EntityName, res);
-        await _hookRegistry.EntityPostGetList.Trigger(_serviceProvider,args );
-        Assert.Equal(100, res.TotalRecords);
-        Assert.Equal(1, (int)args.Context["abc"]);
+        args = await _hookRegistry.EntityPostGetList.Trigger(_serviceProvider,args );
+        Assert.Equal(100, args.RefListResult.TotalRecords);
         
     }
 
@@ -51,7 +46,7 @@ public class HookRegistryTests
     {
         _hookRegistry.EntityPreGetList.Register(People.EntityName, args => args);
         await _hookRegistry.EntityPreGetList.Trigger(_serviceProvider,
-            new EntityPreGetListArgs(People.EntityName, [], new Sorts(), new Pagination()));
+            new EntityPreGetListArgs(People.EntityName, [], [] , new Pagination(0,5)));
     }
     
     [Fact]
@@ -59,16 +54,12 @@ public class HookRegistryTests
     {
         var offset = 100;
         _hookRegistry.EntityPreGetList.Register(People.EntityName, args =>
-        {
-            args.RefPagination.Offset = offset;
-            return args;
-        });
+             args with{ RefPagination = args.RefPagination with{Offset = offset}}
+        );
 
-        var args = new EntityPreGetListArgs(People.EntityName, [], [], new Pagination());
+        var args = new EntityPreGetListArgs(People.EntityName, [], [], new Pagination(0,2));
 
-        await _hookRegistry.EntityPreGetList.Trigger(_serviceProvider, args);
-        Assert.Single(args.RefFilters);
-        Assert.Single(args.RefSorts);
+        args = await _hookRegistry.EntityPreGetList.Trigger(_serviceProvider, args);
         Assert.Equal(offset, args.RefPagination.Offset);
     }
     [Fact]

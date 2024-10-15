@@ -3,12 +3,24 @@
   &lt;Assembly Path="/Users/jingshun/repos/fluent-cms/server/FluentCMS.App/bin/Debug/net8.0/FluentCMS.dll" /&gt;
 &lt;/AssemblyExplorer&gt;</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=4d4a5080_002Da26f_002D422d_002D8602_002Dc071836926df/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="InsertCollection" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+  &lt;And&gt;
+    &lt;TestAncestor&gt;
+      &lt;TestId&gt;xUnit::6716711C-BCA9-4ECD-A0F7-0F6B1F25B14C::net8.0::FluentCMS.Tests.Utils.Nosql.MongoDaoTests.InsertCollection&lt;/TestId&gt;
+      &lt;TestId&gt;xUnit::6716711C-BCA9-4ECD-A0F7-0F6B1F25B14C::net8.0::FluentCMS.Tests.Utils.Nosql.MongoDaoTests.GetTest&lt;/TestId&gt;
+      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net8.0::FluentCMS.IntegrationTests.IntegrationTest.BasicFlow&lt;/TestId&gt;
+      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net8.0::FluentCMS.IntegrationTests.IntegrationTest.Query&lt;/TestId&gt;
+      &lt;TestId&gt;xUnit::6716711C-BCA9-4ECD-A0F7-0F6B1F25B14C::net8.0::FluentCMS.Tests.HookFactoryTests.HookRegistryTests.TestEntityPostListChangeTotal&lt;/TestId&gt;
+      &lt;TestId&gt;xUnit::6716711C-BCA9-4ECD-A0F7-0F6B1F25B14C::net8.0::FluentCMS.Tests.HookFactoryTests.HookRegistryTests&lt;/TestId&gt;
+      &lt;TestId&gt;xUnit::6716711C-BCA9-4ECD-A0F7-0F6B1F25B14C::net8.0::FluentCMS.Tests.Services.SchemaServiceTests&lt;/TestId&gt;
+    &lt;/TestAncestor&gt;
+    &lt;Not&gt;
+      &lt;Project Location="/Users/jingshun/repos/fluent-cms/server/FluentCMS.Tests" Presentation="&amp;lt;FluentCMS.Tests&amp;gt;" /&gt;
+    &lt;/Not&gt;
+  &lt;/And&gt;
+&lt;/SessionState&gt;</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=f838c244_002Ddaac_002D44e1_002D9a36_002D39f69870fe77/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="SaveSchema_Update" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
   &lt;TestAncestor&gt;
-    &lt;TestId&gt;xUnit::6716711C-BCA9-4ECD-A0F7-0F6B1F25B14C::net8.0::FluentCMS.Tests.Utils.Nosql.MongoDaoTests.InsertCollection&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::6716711C-BCA9-4ECD-A0F7-0F6B1F25B14C::net8.0::FluentCMS.Tests.Utils.Nosql.MongoDaoTests.GetTest&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::6716711C-BCA9-4ECD-A0F7-0F6B1F25B14C::net8.0::FluentCMS.Tests.Services.SchemaServiceTests&lt;/TestId&gt;
     &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net8.0::FluentCMS.IntegrationTests.IntegrationTest.BasicFlow&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net8.0::FluentCMS.IntegrationTests.IntegrationTest.Query&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::6716711C-BCA9-4ECD-A0F7-0F6B1F25B14C::net8.0::FluentCMS.Tests.HookFactoryTests.HookRegistryTests.TestEntityPostListChangeTotal&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::6716711C-BCA9-4ECD-A0F7-0F6B1F25B14C::net8.0::FluentCMS.Tests.HookFactoryTests.HookRegistryTests&lt;/TestId&gt;
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

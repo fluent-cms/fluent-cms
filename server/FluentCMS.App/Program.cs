@@ -30,7 +30,7 @@ await app.UseCmsAsync();
 using var scope = app.Services.CreateScope();
 
 var schemaService = scope.ServiceProvider.GetRequiredService<IEntitySchemaService>();
-var entity = await schemaService.GetByNameDefault(TestEntity.EntityName, true);
+var entity = await schemaService.GetLoadedEntity(TestEntity.EntityName);
 if (entity.IsFailed)
 {
     await schemaService.AddOrSaveSimpleEntity(TestEntity.EntityName, TestEntity.FieldName, "", "");
@@ -115,15 +115,7 @@ void RegisterHooks()
             return param;
         });
     registry.EntityPreGetList.Register(TestEntity.EntityName,
-        param =>
-        {
-            param.RefSorts.Add(new Sort
-            {
-                FieldName = TestEntity.FieldName,
-                Order = SortOrder.Asc
-            });
-            return param;
-        });
+        param => param with { RefSorts = [..param.RefSorts, new Sort(TestEntity.FieldName, SortOrder.Asc)] });
 
     registry.EntityPostGetList.Register(TestEntity.EntityName, (param) =>
     {

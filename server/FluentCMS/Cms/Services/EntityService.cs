@@ -129,12 +129,6 @@ public sealed class EntityService(
         return await Update(entity, record, cancellationToken);
     }
 
-    public async Task<Record> Update(string entityName, Record record, CancellationToken cancellationToken)
-    {
-        var entity = CheckResult(await entitySchemaService.GetLoadedEntity(entityName, cancellationToken));
-        return await Update(entity, record, cancellationToken);
-    }
-
     public async Task<Record> Delete(string entityName, JsonElement ele, CancellationToken cancellationToken)
     {
         var entity = CheckResult(await entitySchemaService.GetLoadedEntity(entityName, cancellationToken));

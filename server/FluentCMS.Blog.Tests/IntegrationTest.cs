@@ -132,7 +132,7 @@ public class IntegrationTest
 
     private async Task GetTopMenuBar()
     {
-        var response = await _client.GetAsync("/api/schemas/top-menu-bar");
+        var response = await _client.GetAsync("/api/schemas/name/top-menu-bar/?type=menu");
         response.EnsureSuccessStatusCode();
     }
 

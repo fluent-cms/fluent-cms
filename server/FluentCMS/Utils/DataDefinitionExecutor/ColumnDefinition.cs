@@ -2,13 +2,13 @@ namespace FluentCMS.Utils.DataDefinitionExecutor;
 
 public static class DataType
 {
-    public const string Int = "int";
-    public const string Datetime = "datetime";
+    public const string Int = "Int";
+    public const string Datetime = "Datetime";
 
-    public const string Text = "text"; //slow performance compare to string
-    public const string String = "string"; //has length limit 255 
+    public const string Text = "Text"; //slow performance compare to string
+    public const string String = "String"; //has length limit 255 
 
-    public const string Na = "na";
+    public const string Na = "Na";
 }
 
 public static class DefaultFields{

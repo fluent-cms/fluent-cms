@@ -62,12 +62,12 @@ public sealed class EntitySchemaService( ISchemaService schemaService, IDefiniti
         var entity = NotNull(dto.Settings.Entity).ValOrThrow("invalid payload");
         entity = entity.WithDefaultAttr();
         var cols = await definitionExecutor.GetColumnDefinitions(entity.TableName, cancellationToken);
-        CheckResult(TableExistsWhenCreatingNewEntity());
+        CheckResult(EnsureTableNotExist());
         await VerifyEntity(entity, cancellationToken);
         
         //need  to save first because it will call trigger
+        dto.Settings.Entity = entity;
         var returnSchema = await schemaService.Save(dto, cancellationToken);
-
         var validEntity = entity.ToValid();
         foreach (var attribute in validEntity.Attributes.GetAttributesByType(DisplayType.Crosstable))
         {
@@ -85,12 +85,11 @@ public sealed class EntitySchemaService( ISchemaService schemaService, IDefiniti
         else
         {
             await definitionExecutor.CreateTable(entity.TableName, entity.ColumnDefinitions().EnsureDeleted(), cancellationToken);
-            //no need to expose deleted field to frontend 
         }
 
         await schemaService.EnsureEntityInTopMenuBar(entity, cancellationToken);
         return returnSchema;
-        Result TableExistsWhenCreatingNewEntity()
+        Result EnsureTableNotExist()
         {
             var creatingNewEntity = dto.Id == 0;
             var tableExists = cols.Length > 0;
@@ -153,10 +152,10 @@ public sealed class EntitySchemaService( ISchemaService schemaService, IDefiniti
     private async Task<Result<LoadedEntity>> LoadRelated(ValidEntity entity, bool omitCrosstable, CancellationToken cancellationToken)
     {
         var lst = new List<LoadedAttribute>();
-        LoadedEntity? lookup = default;
-        Crosstable? crosstable = default;
         foreach (var validAttribute in entity.Attributes)
         {
+            LoadedEntity? lookup = default;
+            Crosstable? crosstable = default;
             if (validAttribute.Type == DisplayType.Lookup )
             {
                 var (_,isFailed,value,_) = await GetValidEntity(validAttribute.GetLookupTarget(), cancellationToken);
@@ -183,7 +182,7 @@ public sealed class EntitySchemaService( ISchemaService schemaService, IDefiniti
                 }
                 crosstable = CrosstableHelper.Crosstable(entity.ToLoadedEntity([]), loadedTarget.Value);
             }
-            lst.Add(validAttribute.ToLoaded(lookup,crosstable,default));
+            lst.Add(validAttribute.ToLoaded(lookup,crosstable));
         }
 
         return entity.ToLoadedEntity(lst.ToArray());

@@ -64,7 +64,7 @@ public class SchemaServiceTests :IAsyncLifetime
         await _schemaService.EnsureSchemaTable();
         await _schemaService.EnsureTopMenuBar();
         await _schemaService.Save(TestSchema());
-        var entity = _entitySchemaService.GetByNameDefault(TestEntity().Name, false,default);
+        var entity = _entitySchemaService.GetLoadedEntity(TestEntity().Name, default);
         Assert.NotNull(entity);
         Assert.True(entity.Id > 0);
     }
@@ -83,10 +83,10 @@ public class SchemaServiceTests :IAsyncLifetime
         await _schemaService.EnsureSchemaTable();
         await _schemaService.EnsureTopMenuBar();
         var schema = await _schemaService.Save(TestSchema());
-        schema.Settings.Entity!.TableName = "test2";
+        schema.Settings.Entity = schema.Settings.Entity! with { TableName = "test2" };
         await _schemaService.Save(schema);
-        var entity = await _entitySchemaService.GetByNameDefault(TestEntity().Name, false,default);
-        Assert.False(entity.IsFailed);
+        var entity = await _entitySchemaService.GetLoadedEntity(TestEntity().Name);
+        Assert.True(entity.IsSuccess);
         Assert.Equal("test2",entity.Value.TableName);
     }
 
@@ -125,23 +125,30 @@ public class SchemaServiceTests :IAsyncLifetime
     }
 
     private static Entity TestEntity() => new Entity
-    {
-        Name = "Test",
-        TableName = "Test",
-        TitleAttribute = "Title",
-        Attributes =
+    (
+        Name: "Test",
+        PrimaryKey: "id",
+        TableName: "Test",
+        TitleAttribute: "Title",
+        Attributes:
         [
             new Attribute
-            {
-                Field = "Title",
-                DataType = DataType.String
-            }
+            (
+                Field: "id",
+                DataType: DataType.Int
+            ),
+
+            new Attribute
+            (
+                Field: "Title",
+                DataType: DataType.String
+            )
         ]
-    };
+    );
 
     private static Schema TestSchema() => new Schema
     {
-        Name = "test",
+        Name = TestEntity().Name,
         Type = SchemaType.Entity,
         Settings = new Settings
         {
