@@ -30,7 +30,7 @@ const UserAvatarDropdown = ({email}: { email: string }) => {
             command: async () => {
                 await logout();
                 await mutate();
-                window.location.href = configs.adminBaseRouter;
+                window.location.href = '/';
             }
         }
     ];

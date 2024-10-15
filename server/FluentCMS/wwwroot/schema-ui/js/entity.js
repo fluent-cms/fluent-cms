@@ -22,7 +22,7 @@ $(document).ready(function (){
 
     $('#editContent').on('click', function() {
         const val = editor.getValue();
-        window.open(`/admin/entities/${val.name}`,'_blank');
+        window.open(`../admin/entities/${val.name}`,'_blank');
     });
     
     $('#showAdvancedActions').change(function() {

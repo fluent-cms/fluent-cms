@@ -5,6 +5,9 @@ import {RoleListPage} from "./pages/RoleListPage";
 import {RoleDetailPage} from "./pages/RoleDetailPage";
 import {ChangePasswordPage} from "./pages/ChangePasswordPage";
 import React from "react";
+import {configs} from "../config";
+import {LoginPage} from "./pages/LoginPage";
+import {RegisterPage} from "./pages/RegisterPage";
 
 export const LoginRoute= "/login";
 export const RegisterRoute= "/register";
@@ -20,5 +23,13 @@ export function AccountRouter() {
         <Route path={RoleRoute} element={<RoleListPage/>}/>
         <Route path={`${RoleRoute}/:name`} element={<RoleDetailPage/>}/>
         <Route path={ChangePasswordRoute} element={<ChangePasswordPage/>}/>
+    </Routes>
+}
+
+export function NotLoginAccountRouter() {
+    return <Routes>
+        <Route path={`${LoginRoute}`} element={<LoginPage/>}/>
+        <Route path={`${RegisterRoute}`} element={<RegisterPage/>}/>
+        <Route path={`/`} element={<LoginPage/>}/>
     </Routes>
 }

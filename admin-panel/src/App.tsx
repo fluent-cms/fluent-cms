@@ -8,14 +8,12 @@ import React  from "react";
 import {setAPIUrlPrefix, setAssetsBaseURL} from "./cms-client/services/configs";
 import {configs} from "./config";
 import {EntityRouter} from "./cms-client/EntityRouter";
-import {Navigate, Route, Routes} from "react-router-dom";
+import {Route, Routes} from "react-router-dom";
 import axios from "axios";
 import {useUserInfo} from "./auth/services/auth";
-import {LoginPage} from "./auth/pages/LoginPage";
-import {RegisterPage} from "./auth/pages/RegisterPage";
 import UserAvatarDropdown from "./layout/UserAvatarDropDown";
 import {setFullAuthAPIUrl} from "./auth/configs";
-import {AccountRouter, LoginRoute} from "./auth/AccountRouter";
+import {AccountRouter, NotLoginAccountRouter} from "./auth/AccountRouter";
 setAPIUrlPrefix(configs.apiURL)
 setAssetsBaseURL(configs.assetURL);
 setFullAuthAPIUrl(configs.authAPIURL)
@@ -35,15 +33,13 @@ function App() {
             <TopMenuBar start={start} end={end} profile={profile}/>
             <Routes>
                 <Route path={`${configs.entityBaseRouter}/*`} element={<EntityRouter/>}/>
-                <Route path={`${configs.authBaseRouter}/*`} element={<AccountRouter/>}/>
                 <Route path={configs.adminBaseRouter} element={<EntityRouter />} />
-                <Route path={'/'} element={<EntityRouter />} />
+                <Route path={`${configs.authBaseRouter}/*`} element={<AccountRouter/>}/>
             </Routes>
         </>:<>
             <Routes>
-                <Route path={`${configs.adminBaseRouter}${LoginRoute}`} element={<LoginPage/>}/>
-                <Route path={`${configs.adminBaseRouter}${LoginRoute}`} element={<RegisterPage/>}/>
-                <Route path={configs.adminBaseRouter} element={<LoginPage />} />
+                <Route path={`${configs.authBaseRouter}/*`} element={<NotLoginAccountRouter/>}/>
+                <Route path={configs.adminBaseRouter} element={<NotLoginAccountRouter />} />
             </Routes>
             </>
     );

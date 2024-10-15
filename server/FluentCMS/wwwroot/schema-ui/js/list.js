@@ -12,7 +12,7 @@ $(document).ready(function() {
     {
         if (error){
             console.log(error)
-            window.location.href = "/admin";
+            window.location.href = "/admin?ref=/schema";
         }else {
             renderTable();
         }

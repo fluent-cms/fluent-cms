@@ -6,10 +6,16 @@ import { Card } from 'primereact/card';
 import 'primereact/resources/themes/saga-blue/theme.css';
 import 'primereact/resources/primereact.min.css';
 import 'primeicons/primeicons.css';
-import {Link} from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
 import {login, useUserInfo} from "../services/auth";
+import {configs} from "../../config";
+import {LoginRoute, RegisterRoute} from "../AccountRouter";
 
 export  const LoginPage: React.FC = () => {
+    const location = useLocation();
+    const queryParams = new URLSearchParams(location.search);
+    const ref = queryParams.get('ref'); // Replace 'myParam' with your actual query parameter name
+
     const [email, setEmail] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const [error, setError] = useState('');
@@ -21,6 +27,9 @@ export  const LoginPage: React.FC = () => {
             setError("login failed");
         }else {
             await mutate()
+            if (ref) {
+                window.location.href=ref;
+            }
         }
     };
 
@@ -71,7 +80,7 @@ export  const LoginPage: React.FC = () => {
                     <div className="p-field">&nbsp;</div>
 
                     <div className="p-mt-3">
-                        <Link to="/register">Don't have an account? Register</Link>
+                        <Link to={`${configs.authBaseRouter}${RegisterRoute}`}>Don't have an account? Register</Link>
                     </div>
                 </div>
             </Card>

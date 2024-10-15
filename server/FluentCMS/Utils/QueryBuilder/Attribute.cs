@@ -6,7 +6,7 @@ namespace FluentCMS.Utils.QueryBuilder;
 
 public abstract record BaseAttribute(string Field, string Type, bool InList, bool InDetail, string Option);
 
-public record Attribute(
+public sealed record Attribute(
     string Field,
     string Header = "",
     string DataType = DataType.String,
@@ -25,7 +25,7 @@ public record Attribute(
     Option: Options
 );
 
-public record ValidAttribute(
+public sealed record ValidAttribute(
     string Fullname,
     string Field,
     string Header = "",
@@ -46,7 +46,7 @@ public record ValidAttribute(
     Option: Options
 );
 
-public record LoadedAttribute(
+public sealed record LoadedAttribute(
     string Fullname,
     string Field,
     Crosstable? Crosstable = default,
