@@ -175,7 +175,7 @@ public sealed class EntityService(
         var res = await hookRegistry.CrosstablePreAdd.Trigger(provider,
             new CrosstablePreAddArgs(entityName, strId, attribute, items));
 
-        var query = crossTable.Insert(schemaService.CastToDatabaseType(crossTable.SourceAttribute.Field, strId), res.RefItems);
+        var query = crossTable.Insert(schemaService.CastToDatabaseType(crossTable.SourceAttribute.DataType, strId), res.RefItems);
         
         var ret = await queryKateQueryExecutor.Exec(query, cancellationToken);
         await hookRegistry.CrosstablePostAdd.Trigger(provider,
@@ -184,14 +184,14 @@ public sealed class EntityService(
     }
 
     public async Task<ListResult> CrosstableList(string entityName, string strId, string attributeName, bool exclude,
-        Pagination? pagination, CancellationToken cancellationToken)
+        Pagination pagination, CancellationToken cancellationToken)
     {
         var attribute = NotNull(await FindAttribute(entityName, attributeName, cancellationToken))
             .ValOrThrow($"not find {attributeName} in {entityName}");
 
         var crossTable = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable of {attributeName}");
         var selectAttributes = crossTable.TargetEntity.Attributes.GetLocalAttributes(InListOrDetail.InList);
-        var id = schemaService.CastToDatabaseType(crossTable.SourceAttribute.Field, strId);
+        var id = schemaService.CastToDatabaseType(crossTable.SourceAttribute.DataType, strId);
         var countQuery = crossTable.Filter(selectAttributes, exclude, id);
         var pagedListQuery = crossTable.Many(selectAttributes, exclude, id, pagination);
         return new ListResult(await queryKateQueryExecutor.Many(pagedListQuery, cancellationToken),

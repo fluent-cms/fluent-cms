@@ -86,7 +86,7 @@ public sealed  class SchemaService(
     public async Task Delete(int id, CancellationToken cancellationToken = default)
     {
         var res = await hookRegistry.SchemaPreDel.Trigger(provider,  new SchemaPreDelArgs(id) );
-        var query = new SqlKata.Query(TableName).Where(ColumnId, res.SchemaId).AsUpdate([ColumnDeleted], [1]);
+        var query = new SqlKata.Query(TableName).Where(ColumnId, res.SchemaId).AsUpdate([ColumnDeleted], [true]);
         await kateQueryExecutor.Exec(query, cancellationToken);
     }
 

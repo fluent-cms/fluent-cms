@@ -1,6 +1,7 @@
 using FluentCMS.Services;
 using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.Nosql;
+using FluentCMS.Utils.QueryBuilder;
 
 namespace FluentCMS.Modules;
 
@@ -20,7 +21,7 @@ public class MongoViewModule(ILogger<MongoViewModule> logger)
         hookRegistry.QueryPreGetList.RegisterDynamic(viewName,
             async (INosqlDao dao, QueryPreGetListArgs p) =>
             {
-                var res = InvalidParamExceptionFactory.CheckResult(await dao.Query(p.EntityName, p.Filters, p.Sorts, p.Cursor, p.Pagination));
+                var res = InvalidParamExceptionFactory.CheckResult(await dao.Query(p.EntityName, p.Filters,p.Pagination, p.Sorts, p.Cursor));
                 return p with { OutRecords = res };
             }
         );
@@ -29,7 +30,7 @@ public class MongoViewModule(ILogger<MongoViewModule> logger)
             viewName, 
             async (INosqlDao dao, QueryPreGetManyArgs p) =>
             {
-                var res = InvalidParamExceptionFactory.CheckResult(await dao.Query(p.EntityName, p.Filters));
+                var res = InvalidParamExceptionFactory.CheckResult(await dao.Query(p.EntityName, p.Filters,p.Pagination));
                 return p with { OutRecords = res };
             }
         );
@@ -38,7 +39,7 @@ public class MongoViewModule(ILogger<MongoViewModule> logger)
             viewName, 
             async (INosqlDao dao, QueryPreGetOneArgs p) =>
             {
-                var records = InvalidParamExceptionFactory.CheckResult(await dao.Query(p.EntityName, p.Filters));
+                var records = InvalidParamExceptionFactory.CheckResult(await dao.Query(p.EntityName, p.Filters, new ValidPagination(0,1)));
                 return p with { OutRecord = records.First() };
             }
         );

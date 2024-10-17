@@ -53,22 +53,23 @@ public sealed class QueryService(
         return results;
     }
 
-    public async Task<Record[]> Many(string queryName, Pagination pagination,
+    public async Task<Record[]> Many(string queryName, 
         Dictionary<string, StringValues> querystringDictionary,
         CancellationToken cancellationToken)
     {
         var query = await querySchemaService.GetByNameAndCache(queryName, cancellationToken);
+        var validPagination = new Pagination().ToValid(query.PageSize);
         var filters = CheckResult(query.Filters.Resolve(query.Entity.Name, query.Selection, schemaService.CastToDatabaseType,
             querystringDictionary));
 
-        var res = await hookRegistry.QueryPreGetMany.Trigger(provider, new QueryPreGetManyArgs(queryName,query.EntityName, filters));
+        var res = await hookRegistry.QueryPreGetMany.Trigger(provider, new QueryPreGetManyArgs(queryName,query.EntityName, filters,validPagination));
         if (res.OutRecords is not null)
         {
             return res.OutRecords;
         }
         
         var attributes = query.Selection.GetLocalAttributes();
-        var kateQuery = CheckResult(query.Entity.ListQuery(res.Filters, query.Sorts, pagination.ToValid(query.PageSize), null, attributes));
+        var kateQuery = CheckResult(query.Entity.ListQuery(res.Filters, query.Sorts, validPagination, null, attributes));
         var items = await kateQueryExecutor.Many(kateQuery, cancellationToken);
         await entityService.AttachRelatedEntity(query.Entity,query.Selection, items, cancellationToken);
         return items;

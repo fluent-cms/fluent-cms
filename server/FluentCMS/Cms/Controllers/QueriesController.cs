@@ -26,10 +26,10 @@ public class QueriesController(IQueryService queryService) : ControllerBase
     }
 
     [HttpGet("{pageName}/many")]
-    public async Task<ActionResult<IDictionary<string, object>[]>> GetMany(string pageName, [FromQuery] Pagination?pagination,
+    public async Task<ActionResult<IDictionary<string, object>[]>> GetMany(string pageName,
         CancellationToken cancellationToken)
     {
         var queryDictionary = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
-        return Ok(await queryService.Many(pageName,pagination, queryDictionary,cancellationToken));
+        return Ok(await queryService.Many(pageName, queryDictionary,cancellationToken));
     }
 }

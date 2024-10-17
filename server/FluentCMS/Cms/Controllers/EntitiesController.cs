@@ -51,7 +51,7 @@ public class EntitiesController(IEntityService entityService) : ControllerBase
         string entityName, 
         string id, 
         string attributeName, 
-        [FromQuery] Pagination? pagination,
+        [FromQuery] Pagination pagination,
         CancellationToken cancellationToken,
         [FromQuery] bool exclude) =>
         Ok(await entityService.CrosstableList(entityName, id, attributeName, exclude, pagination, cancellationToken));

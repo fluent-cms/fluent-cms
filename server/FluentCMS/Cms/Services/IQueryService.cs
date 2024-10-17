@@ -7,5 +7,5 @@ public interface IQueryService
 {
     Task<QueryResult<Record>> List(string queryName, Cursor cursor, Pagination pagination, Dictionary<string, StringValues> querystringDictionary, CancellationToken cancellationToken);
     Task<Record> One(string queryName, Dictionary<string, StringValues> querystringDictionary, CancellationToken cancellationToken);
-    Task<Record[]> Many(string queryName, Pagination pagination, Dictionary<string, StringValues> querystringDictionary, CancellationToken cancellationToken);
+    Task<Record[]> Many(string queryName,  Dictionary<string, StringValues> querystringDictionary, CancellationToken cancellationToken);
 }

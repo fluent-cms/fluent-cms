@@ -35,13 +35,16 @@ public static class CrosstableHelper
         var sourceAttribute = new LoadedAttribute
         (
             Field: $"{sourceEntity.Name}_id",
-            Fullname: $"{tableName}.{sourceEntity.Name}_id"
+            Fullname: $"{tableName}.{sourceEntity.Name}_id",
+            DataType:DataType.Int
         );
         var targetAttribute = new LoadedAttribute
         (
             Field : $"{targetEntity.Name}_id",
-            Fullname: $"{tableName}.{targetEntity.Name}_id"
+            Fullname: $"{tableName}.{targetEntity.Name}_id",
+            DataType:DataType.Int
         );
+        
         var crossEntity = new LoadedEntity
         (
             Attributes: [sourceAttribute, targetAttribute],
@@ -76,6 +79,7 @@ public static class CrosstableHelper
         {
             return new []{id, x[c.TargetEntity.PrimaryKey]};
         });
+        
 
         return new SqlKata.Query(c.CrossEntity.TableName).AsInsert(cols, vals);
     }
