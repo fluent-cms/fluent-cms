@@ -11,7 +11,7 @@ public class EntitiesController(IEntityService entityService) : ControllerBase
 {
     [HttpGet("{entityName}")]
     public async Task<ActionResult<ListResult>> List(string entityName, CancellationToken cancellationToken,
-        [FromQuery] Pagination? pagination)
+        [FromQuery] Pagination pagination)
     {
         var queryDictionary = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
         return Ok(await entityService.List(entityName, pagination, queryDictionary,cancellationToken));

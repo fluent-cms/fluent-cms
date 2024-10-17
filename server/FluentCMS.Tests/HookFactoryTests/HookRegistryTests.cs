@@ -1,12 +1,11 @@
 using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.QueryBuilder;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Moq;
 
 namespace FluentCMS.Tests.HookFactoryTests;
 using Record = IDictionary<string,object>;
 
-public class People
+public static class People
 {
     public const string EntityName = "people";
     public const string NameFieldName = "Name";
@@ -46,7 +45,7 @@ public class HookRegistryTests
     {
         _hookRegistry.EntityPreGetList.Register(People.EntityName, args => args);
         await _hookRegistry.EntityPreGetList.Trigger(_serviceProvider,
-            new EntityPreGetListArgs(People.EntityName, [], [] , new Pagination(0,5)));
+            new EntityPreGetListArgs(People.EntityName, [], [] , new ValidPagination(0,5)));
     }
     
     [Fact]
@@ -57,7 +56,7 @@ public class HookRegistryTests
              args with{ RefPagination = args.RefPagination with{Offset = offset}}
         );
 
-        var args = new EntityPreGetListArgs(People.EntityName, [], [], new Pagination(0,2));
+        var args = new EntityPreGetListArgs(People.EntityName, [], [], new ValidPagination(0,2));
 
         args = await _hookRegistry.EntityPreGetList.Trigger(_serviceProvider, args);
         Assert.Equal(offset, args.RefPagination.Offset);

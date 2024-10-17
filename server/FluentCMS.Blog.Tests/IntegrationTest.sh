@@ -2,6 +2,7 @@ test_sqlite(){
   local db_name=$1
   export DatabaseProvider=Sqlite
   export Sqlite="Data Source=${db_name}"
+  sleep 1
   dotnet test 
 }
 

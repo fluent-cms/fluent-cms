@@ -6,13 +6,8 @@ namespace FluentCMS.Utils.KateQueryExt;
 
 public static class KateQueryExt
 {
-    public static void ApplyPagination(this SqlKata.Query query, Pagination? pagination)
+    public static void ApplyPagination(this SqlKata.Query query, ValidPagination pagination)
     {
-        if (pagination is null)
-        {
-            return;
-        }
-
         query.Offset(pagination.Offset).Limit(pagination.Limit);
     }
     public static void ApplySorts(this SqlKata.Query query, IEnumerable<Sort>? sorts)

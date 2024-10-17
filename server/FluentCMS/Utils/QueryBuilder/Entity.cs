@@ -19,7 +19,7 @@ public record Entity(
     string PrimaryKey ="",
     string Title ="",
     string TitleAttribute ="",
-    int DefaultPageSize = 100
+    int DefaultPageSize = EntityHelper.DefaultPageSize
 );
 public record ValidEntity(
     ImmutableArray<ValidAttribute> Attributes,
@@ -45,6 +45,7 @@ public record LoadedEntity(
 
 public static class EntityHelper
 {
+    public const int DefaultPageSize = 50;
     public static ValidEntity ToValid(this Entity entity)
     {
         return new ValidEntity(
@@ -99,7 +100,7 @@ public static class EntityHelper
     }
 
     public static Result<SqlKata.Query> ListQuery(this LoadedEntity e,IEnumerable<ValidFilter>? filters, ImmutableArray<Sort>? sorts, 
-        Pagination? pagination, ValidCursor? cursor, IEnumerable<LoadedAttribute> attributes)
+        ValidPagination pagination, ValidCursor? cursor, IEnumerable<LoadedAttribute> attributes)
     {
         var query = e.Basic().Select(attributes.Select(x => x.Fullname));
 

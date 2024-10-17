@@ -11,7 +11,7 @@ public class QueriesController(IQueryService queryService) : ControllerBase
 {
     [HttpGet("{pageName}")]
     public async Task<ActionResult<ListResult>> Get(string pageName,
-        [FromQuery] Cursor cursor, [FromQuery] Pagination? pagination,CancellationToken cancellationToken)
+        [FromQuery] Cursor cursor, [FromQuery] Pagination pagination,CancellationToken cancellationToken)
     {
         var queryDictionary = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
         var res = await queryService.List(pageName, cursor,pagination, queryDictionary,cancellationToken);

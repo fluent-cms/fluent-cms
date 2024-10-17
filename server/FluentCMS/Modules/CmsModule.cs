@@ -121,6 +121,7 @@ public sealed class CmsModule(
 
     public async Task UseCmsAsync(WebApplication app)
     {
+        PrintVersion();
         await InitSchema();
         app.UseStaticFiles();
         var options = new RewriteOptions();
@@ -131,8 +132,6 @@ public sealed class CmsModule(
         UseSubApp("/admin");
         UseServerRouters();
         UseHomePage();
-        
-        PrintVersion();
         return;
 
         void UseServerRouters()
@@ -206,12 +205,12 @@ public sealed class CmsModule(
             .ToArray();
         
         logger.LogInformation($"""
-                               *********************************************************
-                               *********************************************************
+                               ***  ******************************************************
+                               ***  ******************************************************
                                {title}, Version {informationalVersion?.Split("+").First()}
                                Database : {databaseProvider} - {string.Join(";", parts)}
-                               *********************************************************
-                               *********************************************************
+                               ***  ******************************************************
+                               ***  ******************************************************
                                """);
     }
 }

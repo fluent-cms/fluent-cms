@@ -108,10 +108,10 @@ public static class CrosstableHelper
          return baseQuery;
      }
 
-     public static SqlKata.Query Many(this Crosstable c, IEnumerable<LoadedAttribute> selectAttributes, bool exclude, object id, Pagination? pagination)
+     public static SqlKata.Query Many(this Crosstable c, IEnumerable<LoadedAttribute> selectAttributes, bool exclude, object id, Pagination pagination)
      {
          var baseQuery = c.Filter(selectAttributes, exclude, id);
-         baseQuery.ApplyPagination(pagination);
+         baseQuery.ApplyPagination(pagination.ToValid(c.TargetEntity.DefaultPageSize));
          return baseQuery;
      }
 

@@ -18,28 +18,24 @@ public sealed class QueryService(
 ) : IQueryService
 {
 
-    public async Task<QueryResult<Record>> List(string queryName, Cursor cursor, Pagination? pagination,
+    public async Task<QueryResult<Record>> List(string queryName, Cursor cursor, Pagination pagination,
         Dictionary<string, StringValues> querystringDictionary, CancellationToken cancellationToken)
     {
         var query = await querySchemaService.GetByNameAndCache(queryName, cancellationToken);
-        var filters = CheckResult(query.Filters.Resolve(query.EntityName, query.Entity.Attributes, schemaService.CastToDatabaseType, querystringDictionary));
-        var parsedCursor = CheckResult(cursor.Resolve(query.Entity!, schemaService.CastToDatabaseType));
-        pagination ??= new Pagination (0,query.PageSize );
-        if (pagination.Limit== 0 || pagination.Limit > query.PageSize)
-        {
-            pagination = pagination with { Limit = query.PageSize };
-        }
-
-        pagination = pagination with { Limit = pagination.Limit + 1 };// add extra to check has more
-        var hookParam = new QueryPreGetListArgs( queryName, query.EntityName, filters,  query.Sorts, parsedCursor, pagination);
+        var filters = CheckResult(query.Filters.Resolve(query.EntityName, query.Entity.Attributes,
+            schemaService.CastToDatabaseType, querystringDictionary));
+        var parsedCursor =CheckResult(cursor.Resolve(query.Entity, schemaService.CastToDatabaseType));
+        var validPagination = pagination.ToValid(query.PageSize);
+        validPagination = validPagination with { Limit = validPagination.Limit + 1 };// add extra to check has more
+        var hookParam = new QueryPreGetListArgs( queryName, query.EntityName, filters,  query.Sorts, parsedCursor, validPagination);
         var res = await hookRegistry.QueryPreGetList.Trigger(provider, hookParam);
         if (res.OutRecords is not null)
         {
-            return BuildRecordViewResult(res.OutRecords, cursor, pagination, query.Sorts);
+            return BuildRecordViewResult(res.OutRecords, cursor, validPagination, query.Sorts);
         }
 
         var attributes = query.Selection.GetLocalAttributes();
-        var kateQuery = CheckResult(query.Entity!.ListQuery(res.Filters, res.Sorts, res.Pagination, res.Cursor, attributes));
+        var kateQuery = CheckResult(query.Entity.ListQuery(filters, query.Sorts, validPagination, parsedCursor, attributes));
         var items = await kateQueryExecutor.Many(kateQuery, cancellationToken);
         
         if (!cursor.IsForward())
@@ -47,7 +43,7 @@ public sealed class QueryService(
             items = items.Reverse().ToArray();
         }
 
-        var results = BuildRecordViewResult(items, cursor, pagination, query.Sorts);
+        var results = BuildRecordViewResult(items, cursor, validPagination, query.Sorts);
         if (results.Items is not null && results.Items.Length > 0)
         {
             //here use result.Items instead of items, because result.Items omit last record
@@ -57,7 +53,7 @@ public sealed class QueryService(
         return results;
     }
 
-    public async Task<Record[]> Many(string queryName, Pagination? pagination,
+    public async Task<Record[]> Many(string queryName, Pagination pagination,
         Dictionary<string, StringValues> querystringDictionary,
         CancellationToken cancellationToken)
     {
@@ -71,24 +67,8 @@ public sealed class QueryService(
             return res.OutRecords;
         }
         
-
         var attributes = query.Selection.GetLocalAttributes();
-        
-        pagination ??= new Pagination (0,query.PageSize );
-        if (pagination.Limit== 0 || pagination.Limit > query.PageSize)
-        {
-            pagination = pagination with { Limit = query.PageSize };
-        }
-
-        if (pagination.Offset > query.PageSize * 10)
-            throw new InvalidParamException(
-                $"invalid offset {pagination.Offset}, maximum value is {query.PageSize * 10}");
-
-        if (pagination.Limit > query.PageSize * 5)
-            throw new InvalidParamException(
-                $"invalid offset {pagination.Limit}, maximum value is {query.PageSize * 5}");
-
-        var kateQuery = CheckResult(query.Entity!.ListQuery(res.Filters, query.Sorts, pagination, null, attributes));
+        var kateQuery = CheckResult(query.Entity.ListQuery(res.Filters, query.Sorts, pagination.ToValid(query.PageSize), null, attributes));
         var items = await kateQueryExecutor.Many(kateQuery, cancellationToken);
         await entityService.AttachRelatedEntity(query.Entity,query.Selection, items, cancellationToken);
         return items;
@@ -111,7 +91,7 @@ public sealed class QueryService(
         return item;
     }
 
-    private QueryResult<Record> BuildRecordViewResult(Record[] items, Cursor cursor, Pagination pagination, ImmutableArray<Sort>? sorts)
+    private QueryResult<Record> BuildRecordViewResult(Record[] items, Cursor cursor, ValidPagination pagination, ImmutableArray<Sort>? sorts)
     {
         if (items.Length == 0)
         {
@@ -128,6 +108,6 @@ public sealed class QueryService(
 
         var nextCursor = CheckResult(cursor.GetNextCursor(items, sorts, hasMore));
 
-        return new QueryResult<Record>(items, nextCursor.First, nextCursor.Last);
+        return new QueryResult<Record>(items, nextCursor.First??"", nextCursor.Last??"");
     }
 }

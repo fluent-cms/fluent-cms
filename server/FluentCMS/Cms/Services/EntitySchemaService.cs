@@ -140,7 +140,7 @@ public sealed class EntitySchemaService( ISchemaService schemaService, IDefiniti
             Name : entityName,
             TableName : entityName,
             Title : entityName,
-            DefaultPageSize : 10,
+            DefaultPageSize : EntityHelper.DefaultPageSize,
             PrimaryKey : "id",
             TitleAttribute : field,
             Attributes :[..attr]

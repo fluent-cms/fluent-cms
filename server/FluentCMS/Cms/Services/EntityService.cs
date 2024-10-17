@@ -60,7 +60,7 @@ public sealed class EntityService(
         return record;
     }
 
-    public async Task<ListResult?> List(string entityName, Pagination? pagination, Dictionary<string, StringValues> qs,
+    public async Task<ListResult?> List(string entityName, Pagination pagination, Dictionary<string, StringValues> qs,
         CancellationToken cancellationToken)
     {
         var entity = CheckResult(await entitySchemaService.GetLoadedEntity(entityName,  cancellationToken));
@@ -72,15 +72,14 @@ public sealed class EntityService(
 
    
 
-    private async Task<ListResult?> List(LoadedEntity entity, ImmutableArray<ValidFilter>? filters, ImmutableArray<Sort>? sorts, Pagination? pagination,
+    private async Task<ListResult?> List(LoadedEntity entity, ImmutableArray<ValidFilter>? filters, ImmutableArray<Sort>? sorts, Pagination pagination,
         CancellationToken cancellationToken)
     {
-        pagination ??= new Pagination(0, entity.DefaultPageSize);
         filters ??= [];
         sorts ??= [];
 
         var res = await hookRegistry.EntityPreGetList.Trigger(provider,
-            new EntityPreGetListArgs(entity.Name, filters.Value, sorts.Value, pagination));
+            new EntityPreGetListArgs(entity.Name, filters.Value, sorts.Value, pagination.ToValid(entity.DefaultPageSize)));
         var attributes = entity.Attributes.GetLocalAttributes(InListOrDetail.InList);
         
         var query = CheckResult(entity.ListQuery(res.RefFilters, res.RefSorts, res.RefPagination, null, attributes));

@@ -7,7 +7,7 @@ namespace FluentCMS.Cms.Services;
 
 public interface IEntityService
 {
-    Task<ListResult?> List(string entityName,Pagination? pagination, Dictionary<string, StringValues> qs, CancellationToken cancellationToken);
+    Task<ListResult?> List(string entityName,Pagination pagination, Dictionary<string, StringValues> qs, CancellationToken cancellationToken);
     Task<Record> Insert(string entityName, JsonElement item, CancellationToken cancellationToken = default);
     Task<Record> Insert(string entityName, Record item, CancellationToken cancellationToken = default);
     Task<Record> Update(string entityName, JsonElement item, CancellationToken cancellationToken);

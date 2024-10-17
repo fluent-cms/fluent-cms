@@ -44,7 +44,7 @@ public sealed class MongoDao:INosqlDao
         _logger.LogInformation($"Inserted {docs.Count()} documents");
     }
 
-    public async Task<Result<Record[]>> Query(string collectionName, IEnumerable<ValidFilter> filters, ImmutableArray<Sort>? sorts, ValidCursor? cursor, Pagination? pagination)
+    public async Task<Result<Record[]>> Query(string collectionName, IEnumerable<ValidFilter> filters, ImmutableArray<Sort>? sorts, ValidCursor? cursor, ValidPagination pagination)
     {
         var collection = _mongoDatabase.GetCollection<BsonDocument>(collectionName);
         var filterRes = MongoExt.GetFiltersDefinition(filters);
