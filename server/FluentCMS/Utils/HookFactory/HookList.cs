@@ -16,7 +16,7 @@ public class HookList<TArgs>
     public void Register(string schemaName, Func<TArgs, TArgs> func) => RegisterDynamic(schemaName, func);
     public async Task<TArgs> Trigger(IServiceProvider provider, TArgs args)
     {
-        foreach (var hook in _hooks.Where(x => StartsWith(x.SchemaName, args.Name)))
+        foreach (var hook in _hooks.Where(x => StartsWith(args.Name,x.SchemaName)))
         {
             args = await hook.Trigger(provider, args);
         }
@@ -25,16 +25,11 @@ public class HookList<TArgs>
 
     private bool StartsWith(string str, string prefix)
     {
-        if (str == prefix || prefix == "*")
+        if (!prefix.EndsWith("*"))
         {
-            return true;
+            return str == prefix;
         }
 
-        if (prefix.EndsWith("*"))
-        {
-            prefix = prefix.Substring(0, prefix.Length - 1);
-            return str.StartsWith(prefix);
-        }
-        return false;
+        return str.StartsWith(prefix[..^1]);
     }
 }

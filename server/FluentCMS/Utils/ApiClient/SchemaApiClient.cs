@@ -1,62 +1,53 @@
 using FluentCMS.Cms.Models;
 using FluentCMS.Utils.HttpClientExt;
 using FluentCMS.Utils.QueryBuilder;
+using FluentResults;
 using Xunit;
 
 namespace FluentCMS.Utils.ApiClient;
 
 public class SchemaApiClient (HttpClient client) 
 {
-    public async Task DeleteSchema(int id)
+    public async Task<Result> DeleteSchema(int id)
     {
-        var res = await client.DeleteAsync($"/api/schemas/{id}");
-        res.EnsureSuccessStatusCode();
+        var url = $"/api/schemas/{id}";
+        var res = await client.DeleteAsync(url);
+        return await res.ToResult();
     }
-    public async Task<Schema> SaveEntityDefine(Schema schema)
+    
+    public async Task<Result<Schema>> SaveEntityDefine(Schema schema)
     {
-        var (success, _, ret) = await client.PostObject<Schema>("/api/schemas/entity/define", schema);
-        Assert.True(success);
-        Assert.NotNull(ret);
-        return ret;
-    }
-
-    public async Task GetLoadedEntityFail(string entityName)
-    {
-        var (_, fail, _) = await client.GetObject<Entity>($"/api/schemas/entity/{entityName}");
-        Assert.True(fail);
-    }
-    public async Task<Entity> GetLoadedEntitySucceed(string entityName)
-    {
-        var (success, _, entity) = await client.GetObject<Entity>($"/api/schemas/entity/{entityName}");
-        Assert.True(success);
-        Assert.Equal(entityName, entity.Name);
-        return entity;
+        return await client.PostObject<Schema>("/api/schemas/entity/define", schema);
     }
 
-    public async Task AddSimpleEntity(string entity, string field)
+    public async Task<Result<Entity>> GetLoadedEntity(string entityName)
     {
-        await AddSimpleEntity(entity, field, "", "");
+        return await client.GetObject<Entity>($"/api/schemas/entity/{entityName}");
+    }
+    
+    public async Task<Result> AddSimpleEntity(string entity, string field)
+    {
+        return await AddSimpleEntity(entity, field, "", "");
     }
 
-    public async Task AddSimpleEntity(string entity, string field, string lookup, string crosstable)
+    public async Task<Result> AddSimpleEntity(string entity, string field, string lookup, string crosstable)
     {
-        var result =
-            await client.PostObject(
-                $"/api/schemas/simple_entity_define?entity={entity}&field={field}&lookup={lookup}&crosstable={crosstable}",
-                new Dictionary<string, object>());
-        result.EnsureSuccessStatusCode();
+        var url =
+            $"/api/schemas/simple_entity_define?entity={entity}&field={field}&lookup={lookup}&crosstable={crosstable}"; 
+        var res = await client.PostObject(url , new Dictionary<string, object>());
+        return await res.ToResult();
     }
 
-    public async Task GetTopMenuBar()
+    public async Task<Result> GetTopMenuBar()
     {
-        var response = await client.GetAsync("/api/schemas/name/top-menu-bar/?type=menu");
-        response.EnsureSuccessStatusCode();
+        var url = "/api/schemas/name/top-menu-bar/?type=menu";
+        var res = await client.GetAsync(url);
+        return await res.ToResult();
     }
 
-    public async Task<Schema[]> GetAll(string type)
+    public async Task<Result<Schema[]>> GetAll(string type)
     {
-        var (success,_,schemas) = await client.GetObject<Schema[]>($"/api/schemas?type={type}");
-        Assert.True(success);
-        return schemas;
+        return await client.GetObject<Schema[]>($"/api/schemas?type={type}");
     }
 }
+

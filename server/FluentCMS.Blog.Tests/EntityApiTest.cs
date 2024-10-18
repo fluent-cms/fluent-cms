@@ -12,6 +12,12 @@ public class EntityApiTest
 
     public EntityApiTest()
     {
+        /*
+        Environment.SetEnvironmentVariable("DatabaseProvider", "Sqlite");
+        string dbName = Path.Combine(Directory.GetCurrentDirectory(),"_cms.db"); 
+        Environment.SetEnvironmentVariable("Sqlite", $"Data Source={dbName}");
+        */
+
         WebAppClient<Program> webAppClient = new();
         _entityApiClient = new EntityApiClient(webAppClient.GetHttpClient());
         _schemaApiClient = new SchemaApiClient(webAppClient.GetHttpClient());
@@ -22,19 +28,19 @@ public class EntityApiTest
     [Fact]
     public async Task EntityRetrieve()
     {
-        await _accountApiClient.Login();
-        await _schemaApiClient.AddSimpleEntity(Leaner, Name);
+        await _accountApiClient.EnsureLogin();
+        (await _schemaApiClient.AddSimpleEntity(Leaner, Name)).AssertSuccess();
         for (var i = 0; i < 5; i++)
         {
-            await _entityApiClient.AddSimpleData(Leaner, Name, $"student{i}");
+            (await _entityApiClient.AddSimpleData(Leaner, Name, $"student{i}")).AssertSuccess();
         }
 
-        await _entityApiClient.AddSimpleData(Leaner, Name, "good-student");
-        await _entityApiClient.AddSimpleData(Leaner, Name, "good-student");
+        (await _entityApiClient.AddSimpleData(Leaner, Name, "good-student")).AssertSuccess();
+        (await _entityApiClient.AddSimpleData(Leaner, Name, "good-student")).AssertSuccess();
 
         //get first page
-        await _entityApiClient.GetEntityList(Leaner, 0, 5, 7, 5);
+        Assert.Equal(5,(await _entityApiClient.GetEntityList(Leaner, 0, 5)).AssertSuccess().Items.Length);
         //get last page
-        await _entityApiClient.GetEntityList(Leaner, 5, 5, 7, 2);
+        Assert.Equal(2,(await _entityApiClient.GetEntityList(Leaner, 5, 5)).AssertSuccess().Items.Length);
     }
 }

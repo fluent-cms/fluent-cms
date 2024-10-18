@@ -1,43 +1,39 @@
 using System.Text.Json;
 using FluentCMS.Utils.HttpClientExt;
 using FluentCMS.Utils.QueryBuilder;
+using FluentResults;
 using Xunit;
 
 namespace FluentCMS.Utils.ApiClient;
 
 public class EntityApiClient(HttpClient client)
 {
-    public async Task GetEntityList(string entity, int offset, int limit, int shouldTotal, int itemCount)
+    public async Task<Result<ListResult>> GetEntityList(string entity, int offset, int limit)
     {
-        var (_, _, res) = await client.GetObject<ListResult>($"/api/entities/{entity}?offset={offset}&limit={limit}");
-        Assert.Equal(shouldTotal, res.TotalRecords);
-        Assert.Equal(itemCount, res.Items.Length);
+        return await client.GetObject<ListResult>($"/api/entities/{entity}?offset={offset}&limit={limit}");
     }
 
-    public async Task AddDataWithLookup(string entity, string field, object value, string lookupField,
+    public async Task<Result> AddDataWithLookup(string entity, string field, object value, string lookupField,
         object lookupTargetId)
     {
-        await AddData(entity, new Dictionary<string, object>
+        return await AddData(entity, new Dictionary<string, object>
         {
             { field, value },
             { lookupField, new { id = lookupTargetId } }
         });
     }
 
-    public async Task CrossTableCount(string source, string target, bool exclude, int sourceId, int count)
+    public async Task<Result<ListResult>> CrossTable(string source, string target, bool exclude, int sourceId)
     {
-        var (_, _, res) =
-            await client.GetObject<ListResult>($"/api/entities/{source}/{sourceId}/{target}?exclude={exclude}");
-        Assert.Equal(count, res.TotalRecords);
+        return await client.GetObject<ListResult>($"/api/entities/{source}/{sourceId}/{target}?exclude={exclude}");
     }
 
-    public async Task GetEntityValue(string entity, int id, string field, string value)
+    public async Task<Result<Dictionary<string,JsonElement>>> GetEntityValue(string entity, int id)
     {
-        var (_, _, item) = await client.GetObject<Dictionary<string, JsonElement>>($"/api/entities/{entity}/{id}");
-        Assert.Equal("TomUpdate", item[field].GetString());
+        return await client.GetObject<Dictionary<string, JsonElement>>($"/api/entities/{entity}/{id}");
     }
 
-    public async Task AddCrosstableData(string source, string crossField, int sourceId, int targetId)
+    public async Task<Result> AddCrosstableData(string source, string crossField, int sourceId, int targetId)
     {
         var item = new
         {
@@ -45,38 +41,38 @@ public class EntityApiClient(HttpClient client)
         };
         var payload = new object[] { item };
         var res = await client.PostObject($"/api/entities/{source}/{sourceId}/{crossField}/save", payload);
-        res.EnsureSuccessStatusCode();
-
+        return await res.ToResult();
     }
 
-    public async Task UpdateSimpleData(string entity, int id, string field, string val)
+    public async Task<Result> UpdateSimpleData(string entity, int id, string field, string val)
     {
         var payload = new Dictionary<string, object>
         {
             { "id", id },
             { field, val }
         };
-        await UpdateData(entity, payload);
+        return await UpdateData(entity, payload);
     }
 
-    private async Task UpdateData(string entity, Dictionary<string, object> payload)
+    private async Task<Result> UpdateData(string entity, Dictionary<string, object> payload)
     {
         var res = await client.PostObject($"/api/entities/{entity}/update", payload);
-        res.EnsureSuccessStatusCode();
+        return await res.ToResult();
     }
 
-    public async Task AddSimpleData(string entity, string field, string val)
+    public async Task<Result> AddSimpleData(string entity, string field, string val)
     {
         var payload = new Dictionary<string, object>
         {
             { field, val }
         };
-        await AddData(entity, payload);
+        return await AddData(entity, payload);
     }
 
-    private async Task AddData(string entity, Dictionary<string, object> payload)
+    private async Task<Result> AddData(string entity, Dictionary<string, object> payload)
     {
         var res = await client.PostObject($"/api/entities/{entity}/insert", payload);
-        res.EnsureSuccessStatusCode();
+        return await res.ToResult();
+
     }
 }

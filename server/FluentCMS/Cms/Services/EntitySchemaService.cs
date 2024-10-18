@@ -59,36 +59,50 @@ public sealed class EntitySchemaService( ISchemaService schemaService, IDefiniti
     public async Task<Schema> SaveTableDefine(Schema dto, CancellationToken cancellationToken = default)
     {
         CheckResult(await schemaService.NameNotTakenByOther(dto, cancellationToken));
-        var entity = NotNull(dto.Settings.Entity).ValOrThrow("invalid payload");
-        entity = entity.WithDefaultAttr();
+        var entity = NotNull(dto.Settings.Entity).ValOrThrow("invalid payload").WithDefaultAttr();
         var cols = await definitionExecutor.GetColumnDefinitions(entity.TableName, cancellationToken);
         CheckResult(EnsureTableNotExist());
         await VerifyEntity(entity, cancellationToken);
-        
-        //need  to save first because it will call trigger
-        dto.Settings.Entity = entity;
-        var returnSchema = await schemaService.Save(dto, cancellationToken);
-        var validEntity = entity.ToValid();
-        foreach (var attribute in validEntity.Attributes.GetAttributesByType(DisplayType.Crosstable))
+        await SaveSchema(); //need  to save first because it will call trigger
+        await CreateCrosstables();
+        await SaveMainTable();
+        await schemaService.EnsureEntityInTopMenuBar(entity, cancellationToken);
+        return dto;
+
+        async Task SaveSchema()
         {
-            await CreateCrosstable(validEntity.ToLoadedEntity([]), attribute, cancellationToken);
+            dto.Settings.Entity = entity;
+            dto = await schemaService.Save(dto, cancellationToken);
+            entity = dto.Settings.Entity!;
         }
 
-        if (cols.Length > 0) //if table exists, alter table add columns
+        async Task SaveMainTable()
         {
-            var columnDefinitions = entity.AddedColumnDefinitions(cols);
-            if (columnDefinitions.Length > 0)
+            if (cols.Length > 0) //if table exists, alter table add columns
             {
-                await definitionExecutor.AlterTableAddColumns(entity.TableName, columnDefinitions, cancellationToken);
+                var columnDefinitions = entity.AddedColumnDefinitions(cols);
+                if (columnDefinitions.Length > 0)
+                {
+                    await definitionExecutor.AlterTableAddColumns(entity.TableName, columnDefinitions,
+                        cancellationToken);
+                }
+            }
+            else
+            {
+                await definitionExecutor.CreateTable(entity.TableName, entity.ColumnDefinitions().EnsureDeleted(),
+                    cancellationToken);
             }
         }
-        else
+
+        async Task CreateCrosstables()
         {
-            await definitionExecutor.CreateTable(entity.TableName, entity.ColumnDefinitions().EnsureDeleted(), cancellationToken);
+            var validEntity = entity.ToValid();
+            foreach (var attribute in validEntity.Attributes.GetAttributesByType(DisplayType.Crosstable))
+            {
+                await CreateCrosstable(validEntity.ToLoadedEntity([]), attribute, cancellationToken);
+            }
         }
 
-        await schemaService.EnsureEntityInTopMenuBar(entity, cancellationToken);
-        return returnSchema;
         Result EnsureTableNotExist()
         {
             var creatingNewEntity = dto.Id == 0;

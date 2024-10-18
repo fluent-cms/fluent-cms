@@ -27,7 +27,7 @@ public static class BuilderExt
         where TRole : IdentityRole, new()
         where TContext : IdentityDbContext<TUser>
     {
-        AuthModuleModule<TUser>.AddCmsAuth<TUser, TRole, TContext>(builder);
+        AuthModule<TUser>.AddCmsAuth<TUser, TRole, TContext>(builder);
     }
 
     public static void AddKafkaMessageProducer(this WebApplicationBuilder builder, string brokerList)

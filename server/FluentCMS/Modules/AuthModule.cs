@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace FluentCMS.Modules;
 
-public sealed class AuthModuleModule<TCmsUser>(ILogger<IAuthModule> logger) : IAuthModule
+public sealed class AuthModule<TCmsUser>(ILogger<IAuthModule> logger) : IAuthModule
     where TCmsUser : IdentityUser, new()
 {
     public static void AddCmsAuth<TUser, TRole, TContext>(WebApplicationBuilder builder)
@@ -15,7 +15,7 @@ public sealed class AuthModuleModule<TCmsUser>(ILogger<IAuthModule> logger) : IA
         where TContext : IdentityDbContext<TUser>
     {
 
-        builder.Services.AddSingleton<IAuthModule, AuthModuleModule<TUser>>(); 
+        builder.Services.AddSingleton<IAuthModule, AuthModule<TUser>>(); 
 
         builder.Services.AddIdentityApiEndpoints<TUser>().AddRoles<TRole>().AddEntityFrameworkStores<TContext>();
         builder.Services.AddScoped<IAccountService, AccountService<TUser, TRole, TContext>>();

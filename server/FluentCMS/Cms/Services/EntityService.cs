@@ -205,12 +205,14 @@ public sealed class EntityService(
             return;
         }
 
-        foreach (var attribute in attributes.GetAttributesByType(DisplayType.Lookup))
+        var arr = attributes.ToArray();
+
+        foreach (var attribute in arr.GetAttributesByType(DisplayType.Lookup))
         {
             await AttachLookup(attribute, items, cancellationToken);
         }
 
-        foreach (var attribute in attributes.GetAttributesByType(DisplayType.Crosstable))
+        foreach (var attribute in arr.GetAttributesByType(DisplayType.Crosstable))
         {
             await AttachCrosstable(entity,attribute, items, cancellationToken);
         }

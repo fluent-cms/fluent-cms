@@ -4,7 +4,7 @@ namespace FluentCMS.Utils.ApiClient;
 
 public class AccountApiClient(HttpClient client)
 {
-    public async Task Login()
+    public async Task EnsureLogin()
     {
         var loginData = new
         {
@@ -12,6 +12,6 @@ public class AccountApiClient(HttpClient client)
             password = "Admin1!"
         };
         await client.PostObject("/api/register", loginData);
-        await client.PostAndSaveCookie("/api/login?useCookies=true", loginData);
+        (await client.PostAndSaveCookie("/api/login?useCookies=true", loginData)).EnsureSuccessStatusCode();
     } 
 }

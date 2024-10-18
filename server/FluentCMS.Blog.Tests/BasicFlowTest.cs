@@ -25,22 +25,22 @@ public class BasicFlowTest
     [Fact]
     public async Task BasicFlow()
     {
-        await _accountApiClient.Login();
-        await _schemaApiClient.GetTopMenuBar();
-        await _schemaApiClient.GetAll("");
+        await _accountApiClient.EnsureLogin();
+        (await _schemaApiClient.GetTopMenuBar()).AssertSuccess();
+        (await _schemaApiClient.GetAll("")).AssertSuccess();
 
-        await _schemaApiClient.AddSimpleEntity(Tutor, Name);
-        await _entityApiClient.AddSimpleData(Tutor, Name, "Tom");
-        await _entityApiClient.UpdateSimpleData(Tutor, 1, Name, "TomUpdate");
-        await _entityApiClient.GetEntityValue(Tutor, 1, Name, "TomUpdate");
+        (await _schemaApiClient.AddSimpleEntity(Tutor, Name)).AssertSuccess();
+        (await _entityApiClient.AddSimpleData(Tutor, Name, "Tom")).AssertSuccess();
+        (await _entityApiClient.UpdateSimpleData(Tutor, 1, Name, "TomUpdate")).AssertSuccess();
+        Assert.Equal("TomUpdate",(await _entityApiClient.GetEntityValue(Tutor, 1)).AssertSuccess()[Name].GetString());
 
-        await _schemaApiClient.AddSimpleEntity(Leaner, Name);
-        await _entityApiClient.AddSimpleData(Leaner, Name, "Bob");
+        (await _schemaApiClient.AddSimpleEntity(Leaner, Name)).AssertSuccess();
+        (await _entityApiClient.AddSimpleData(Leaner, Name, "Bob")).AssertSuccess();
 
-        await _schemaApiClient.AddSimpleEntity(Class, Name, Tutor, Leaner);
-        await _entityApiClient.AddDataWithLookup(Class, Name, "class1", Tutor, 1);
+        (await _schemaApiClient.AddSimpleEntity(Class, Name, Tutor, Leaner)).AssertSuccess();
+        (await _entityApiClient.AddDataWithLookup(Class, Name, "class1", Tutor, 1)).AssertSuccess();
 
-        await _entityApiClient.AddCrosstableData(Class, Leaner, 1, 1);
-        await _entityApiClient.CrossTableCount(Class, Leaner, false, 1, 1);
+        (await _entityApiClient.AddCrosstableData(Class, Leaner, 1, 1)).AssertSuccess();
+        Assert.Single((await _entityApiClient.CrossTable(Class, Leaner, false,1)).AssertSuccess().Items);
     }
 }
