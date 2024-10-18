@@ -64,7 +64,7 @@ public class SchemasController(
     }
  
     [HttpPost("entity/define")]
-    public async Task<ActionResult<Schema>> SaveEntityDefine(CancellationToken cancellationToken, [FromBody] Schema dto)
+    public async Task<ActionResult<Schema>> SaveTableDefine(CancellationToken cancellationToken, [FromBody] Schema dto)
     {
         var item = await entitySchemaService.SaveTableDefine(dto, cancellationToken);
         return Ok(item);
@@ -79,7 +79,7 @@ public class SchemasController(
 
     /// for admin panel
     [HttpGet("entity/{name}")]
-    public async Task<ActionResult<Entity>> GetOneEntity(string name, CancellationToken cancellationToken)
+    public async Task<ActionResult<Entity>> GetOne(string name, CancellationToken cancellationToken)
     {
         var schema =
             InvalidParamExceptionFactory.CheckResult(
@@ -87,13 +87,10 @@ public class SchemasController(
         return Ok(schema);
     }
 
-    [HttpPost("simple_entity_define")]
-    public async Task<ActionResult<Schema>> EnsureSimpleEntity(
-        [FromQuery] string entity,
-        [FromQuery] string field,
-        [FromQuery] string? lookup,
-        [FromQuery] string? crosstable,
+    [HttpPost("entity/add_or_update")]
+    public async Task<ActionResult<Schema>> AddOrUpdate(
+        [FromBody] Entity dto,
         CancellationToken cancellationToken
     ) =>
-        Ok(await entitySchemaService.AddOrSaveSimpleEntity(entity, field, lookup, crosstable, cancellationToken));
+        Ok(await entitySchemaService.AddOrUpdate(dto, cancellationToken));
 }

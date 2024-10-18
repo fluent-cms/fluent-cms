@@ -7,7 +7,10 @@ public static class ResultUtilExt
 {
     public static T AssertSuccess<T>(this Result<T> result)
     {
-        Assert.True(result.IsSuccess);
+        if (result.Errors.Count > 0)
+        {
+            throw new Exception(string.Join("\r\n", result.Errors));
+        }
         return result.Value;
     }
     
@@ -17,8 +20,6 @@ public static class ResultUtilExt
         {
             throw new Exception(string.Join("\r\n", result.Errors));
         }
-        
-        Assert.True(result.IsSuccess);
     }
     
     public static void AssertFail<T>(this Result<T> result)
@@ -30,6 +31,4 @@ public static class ResultUtilExt
     {
         Assert.True(result.IsFailed);
     }
-
-
 }

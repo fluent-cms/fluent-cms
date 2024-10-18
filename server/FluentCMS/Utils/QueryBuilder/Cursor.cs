@@ -5,7 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
-public sealed record Cursor(string? First, string? Last);
+public sealed record Cursor(string? First = default, string? Last = default);
 
 public sealed record ValidCursor(Cursor Cursor, ImmutableDictionary<string,object>? BoundaryItem = default);
 public static class CursorHelper

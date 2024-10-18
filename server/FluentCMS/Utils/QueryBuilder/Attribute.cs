@@ -4,7 +4,7 @@ using FluentCMS.Utils.DataDefinitionExecutor;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
-public abstract record BaseAttribute(string Field, string Type, bool InList, bool InDetail, string Option);
+public abstract record BaseAttribute(string Field, string Type, string DataType, bool InList, bool InDetail, string Option);
 
 public sealed record Attribute(
     string Field,
@@ -20,6 +20,7 @@ public sealed record Attribute(
 ) : BaseAttribute(
     Field: Field,
     Type: Type,
+    DataType:DataType,
     InList: InList,
     InDetail: InDetail,
     Option: Options
@@ -41,6 +42,7 @@ public sealed record ValidAttribute(
 ) : BaseAttribute(
     Field: Field,
     Type:Type,
+    DataType:DataType,
     InList:InList,
     InDetail:InDetail,
     Option: Options
@@ -67,6 +69,7 @@ public sealed record LoadedAttribute(
 ) : BaseAttribute(
     Field: Field,
     Type:Type,
+    DataType:DataType,
     InList:InList,
     InDetail:InDetail,
     Option: Options

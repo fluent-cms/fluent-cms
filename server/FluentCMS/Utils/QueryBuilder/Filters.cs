@@ -4,8 +4,8 @@ using FluentResults;
 using Microsoft.Extensions.Primitives;
 namespace FluentCMS.Utils.QueryBuilder;
 
-public sealed record Filter(string FieldName, string Operator, Constraint[] Constraints, bool OmitFail);
-public sealed record ValidFilter(string FieldName, string Operator, ValidConstraint[] Constraints);
+public sealed record Filter(string FieldName, string Operator, ImmutableArray<Constraint> Constraints, bool OmitFail);
+public sealed record ValidFilter(string FieldName, string Operator, ImmutableArray<ValidConstraint> Constraints);
 
 public static class FilterHelper
 {
@@ -67,6 +67,6 @@ public static class FilterHelper
         return new ValidFilter(field, op,
             (from pair in pairs.Where(x => x.Key != "operator")
                 from pairValue in pair.Values
-                select new ValidConstraint(pair.Key, [cast(attribute.Field, pairValue)])).ToArray());
+                select new ValidConstraint(pair.Key, [cast(attribute.Field, pairValue)])).ToImmutableArray());
     }
 }

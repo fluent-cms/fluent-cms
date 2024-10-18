@@ -1,40 +1,28 @@
 using FluentCMS.Cms.Models;
+using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.HttpClientExt;
 using FluentCMS.Utils.QueryBuilder;
 using FluentResults;
-using Xunit;
+using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.Utils.ApiClient;
 
 public class SchemaApiClient (HttpClient client) 
 {
+    public async Task<Result<Schema[]>> GetAll(string type)
+    {
+        return await client.GetObject<Schema[]>($"/api/schemas?type={type}");
+    }
+
+    public async Task<Result> SaveSchema(Schema schema)
+    {
+        return await (await client.PostObject("/api/schemas", schema)).ToResult();
+    }
+
     public async Task<Result> DeleteSchema(int id)
     {
         var url = $"/api/schemas/{id}";
         var res = await client.DeleteAsync(url);
-        return await res.ToResult();
-    }
-    
-    public async Task<Result<Schema>> SaveEntityDefine(Schema schema)
-    {
-        return await client.PostObject<Schema>("/api/schemas/entity/define", schema);
-    }
-
-    public async Task<Result<Entity>> GetLoadedEntity(string entityName)
-    {
-        return await client.GetObject<Entity>($"/api/schemas/entity/{entityName}");
-    }
-    
-    public async Task<Result> AddSimpleEntity(string entity, string field)
-    {
-        return await AddSimpleEntity(entity, field, "", "");
-    }
-
-    public async Task<Result> AddSimpleEntity(string entity, string field, string lookup, string crosstable)
-    {
-        var url =
-            $"/api/schemas/simple_entity_define?entity={entity}&field={field}&lookup={lookup}&crosstable={crosstable}"; 
-        var res = await client.PostObject(url , new Dictionary<string, object>());
         return await res.ToResult();
     }
 
@@ -45,9 +33,78 @@ public class SchemaApiClient (HttpClient client)
         return await res.ToResult();
     }
 
-    public async Task<Result<Schema[]>> GetAll(string type)
+
+    public async Task<Result<Schema>> SaveEntityDefine(Schema schema)
     {
-        return await client.GetObject<Schema[]>($"/api/schemas?type={type}");
+        return await client.PostObject<Schema>("/api/schemas/entity/define", schema);
     }
+
+    public async Task<Result<Entity>> GetLoadedEntity(string entityName)
+    {
+        return await client.GetObject<Entity>($"/api/schemas/entity/{entityName}");
+    }
+    
+    public async Task<Result> EnsureSimpleEntity(string entity, string field)
+    {
+        return await EnsureSimpleEntity(entity, field, "", "");
+    }
+
+    public async Task<Result> EnsureSimpleEntity(string entityName, string field, string lookup, string crosstable)
+    {
+        var attr = new List<Attribute>([
+            new Attribute
+            (
+                Field: field,
+                Header: field
+            )
+
+        ]);
+        if (!string.IsNullOrWhiteSpace(lookup))
+        {
+            attr.Add(new Attribute
+            (
+                Field: lookup,
+                Options: lookup,
+                Header: lookup,
+                InList: true,
+                InDetail: true,
+                DataType: DataType.Int,
+                Type: DisplayType.Lookup
+            ));
+        }
+
+        if (!string.IsNullOrWhiteSpace(crosstable))
+        {
+            attr.Add(new Attribute
+            (
+                Field: crosstable,
+                Options: crosstable,
+                Header: crosstable,
+                DataType: DataType.Na,
+                Type: DisplayType.Crosstable,
+                InDetail: true
+            ));
+        }
+
+        var entity = new Entity
+        (
+            Name: entityName,
+            TableName: entityName,
+            Title: entityName,
+            DefaultPageSize: EntityHelper.DefaultPageSize,
+            PrimaryKey: "id",
+            TitleAttribute: field,
+            Attributes: [..attr]
+        );
+
+        var url =
+            $"/api/schemas/entity/add_or_update";
+        var res = await client.PostObject(url, entity);
+        return await res.ToResult();
+    }
+
+
+
+
 }
 

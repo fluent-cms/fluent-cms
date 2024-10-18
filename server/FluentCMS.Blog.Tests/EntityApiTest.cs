@@ -3,8 +3,8 @@ using FluentCMS.Utils.ApiClient;
 namespace FluentCMS.IntegrationTests;
 public class EntityApiTest 
 {
-    private const string Leaner = "leaner1";
-    private const string Name = "name1";
+    private const string Leaner = "leaner_entity_test";
+    private const string Name = "name";
 
     private readonly AccountApiClient _accountApiClient;
     private readonly EntityApiClient _entityApiClient;
@@ -29,7 +29,7 @@ public class EntityApiTest
     public async Task EntityRetrieve()
     {
         await _accountApiClient.EnsureLogin();
-        (await _schemaApiClient.AddSimpleEntity(Leaner, Name)).AssertSuccess();
+        (await _schemaApiClient.EnsureSimpleEntity(Leaner, Name)).AssertSuccess();
         for (var i = 0; i < 5; i++)
         {
             (await _entityApiClient.AddSimpleData(Leaner, Name, $"student{i}")).AssertSuccess();

@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using FluentResults;
 using Microsoft.Extensions.Primitives;
 
@@ -10,8 +11,8 @@ public static class ConstraintsHelper
 {
     private const string QuerystringPrefix = "qs.";
 
-    public static Result<ValidConstraint[]> Resolve(
-        this Constraint[] constraints, 
+    public static Result<ImmutableArray<ValidConstraint>> Resolve(
+        this IEnumerable<Constraint> constraints, 
         bool ignoreResolveError,
         string entityName,
         BaseAttribute attribute,  
@@ -32,7 +33,7 @@ public static class ConstraintsHelper
                 var res = ResolveFromQueryString(val);
                 if (res.IsSuccess)
                 {
-                    var arr = res.Value.Select(x => cast(attribute.Field, x)).ToArray();
+                    var arr = res.Value.Select(x => cast(attribute.DataType, x)).ToArray();
                     ret.Add(new ValidConstraint(constraint.Match, arr));
                 }
                 else if (!ignoreResolveError)
@@ -42,11 +43,11 @@ public static class ConstraintsHelper
             }
             else
             {
-                ret.Add(new ValidConstraint(constraint.Match, [cast(attribute.Field,val)]));
+                ret.Add(new ValidConstraint(constraint.Match, [cast(attribute.DataType,val)]));
             }
         }
 
-        return ret.ToArray();
+        return ret.ToImmutableArray();
         
 
         Result<string[]> ResolveFromQueryString (string val)

@@ -33,7 +33,7 @@ var schemaService = scope.ServiceProvider.GetRequiredService<IEntitySchemaServic
 var entity = await schemaService.GetLoadedEntity(TestEntity.EntityName);
 if (entity.IsFailed)
 {
-    await schemaService.AddOrSaveSimpleEntity(TestEntity.EntityName, TestEntity.FieldName, "", "");
+    await schemaService.EnsureSimpleEntity(TestEntity.EntityName, TestEntity.FieldName, "", "");
     var entityService = scope.ServiceProvider.GetRequiredService<IEntityService>();
     await entityService.Insert(TestEntity.EntityName, new Dictionary<string, object>
     {

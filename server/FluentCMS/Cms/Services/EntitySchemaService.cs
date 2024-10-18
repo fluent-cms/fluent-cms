@@ -111,58 +111,6 @@ public sealed class EntitySchemaService( ISchemaService schemaService, IDefiniti
         } 
     }    
 
-    public async Task<Schema> AddOrSaveSimpleEntity(string entityName, string field, string? lookup, string? crossTable,
-        CancellationToken cancellationToken)
-    {
-        var attr = new List<Attribute>([
-            new Attribute
-            (
-                Field: field,
-                Header: field
-            )
-
-        ]);
-        if (!string.IsNullOrWhiteSpace(lookup))
-        {
-            attr.Add(new Attribute
-            (
-                Field: lookup,
-                Options: lookup,
-                Header: lookup,
-                InList: true,
-                InDetail: true,
-                DataType: DataType.Int,
-                Type: DisplayType.Lookup
-            ));
-        }
-        
-        if (!string.IsNullOrWhiteSpace(crossTable))
-        {
-            attr.Add(new Attribute
-            (
-                Field: crossTable,
-                Options: crossTable,
-                Header: crossTable,
-                DataType: DataType.Na,
-                Type: DisplayType.Crosstable,
-                InDetail: true
-            ));
-        }
-
-        var entity = new Entity
-        (
-            Name : entityName,
-            TableName : entityName,
-            Title : entityName,
-            DefaultPageSize : EntityHelper.DefaultPageSize,
-            PrimaryKey : "id",
-            TitleAttribute : field,
-            Attributes :[..attr]
-        );
-        return await AddOrSaveEntity(entity, cancellationToken);
-    }
-
-
     private async Task<Result<LoadedEntity>> LoadRelated(ValidEntity entity, bool omitCrosstable, CancellationToken cancellationToken)
     {
         var lst = new List<LoadedAttribute>();
@@ -237,7 +185,7 @@ public sealed class EntitySchemaService( ISchemaService schemaService, IDefiniti
         }
     }
 
-    private async Task<Schema> AddOrSaveEntity(Entity entity, CancellationToken cancellationToken)
+    public async Task<Schema> AddOrUpdate(Entity entity, CancellationToken cancellationToken)
     {
         var find = await schemaService.GetByNameDefault(entity.Name, SchemaType.Entity , cancellationToken);
         var schema = new Schema
