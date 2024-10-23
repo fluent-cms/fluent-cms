@@ -18,18 +18,18 @@ Because `Dyamic Expresso` doesn't support [Verbatim String](https://learn.micros
 You need to add your own Business logic, for examples, you want to verify if the email and phone number of entity `teacher` is valid.
 you can register a cook function before insert or update teacher
 ```
-app.RegisterCmsHook("teacher", [Occasion.BeforeInsert, Occasion.BeforeUpdate],(IDictionary<string,object> teacher) =>
+var registry = app.GetHookRegistry();
+registry.EntityPreAdd.Register("teacher", args =>
 {
-    var (email, phoneNumber) = ((string)teacher["email"], (string)teacher["phone_number"]);
-    if (!IsValidEmail())
-    {
-        throw new InvalidParamException($"email `{email}` is invalid");
-    }
-    if (!IsValidPhoneNumber())
-    {
-        throw new InvalidParamException($"phone number `{phoneNumber}` is invalid");
-    }
-}
+    VerifyTeacher(args.RefRecord);
+    return args;
+});
+registry.EntityPreUpdate.Register("teacher", args =>
+{
+    VerifyTeacher(args.RefRecord);
+    return args;
+});
+
 ```
 
 ### Produce Events to Event Broker(e.g.Kafka)

@@ -97,6 +97,11 @@
               <ul class="nav flex-column">
               </ul>
             </li>
+            
+            <li class="nav-item" data-bs-level="2"><a href="#test" class="nav-link">Test</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
         </ul>
     </div>
 </div></div>
@@ -342,18 +347,18 @@ Because <code>Dyamic Expresso</code> doesn't support <a href="https://learn.micr
 <h3 id="extent-functionality-by-add-hook-functions">Extent functionality by add Hook functions</h3>
 <p>You need to add your own Business logic, for examples, you want to verify if the email and phone number of entity <code>teacher</code> is valid.
 you can register a cook function before insert or update teacher</p>
-<pre><code>app.RegisterCmsHook(&quot;teacher&quot;, [Occasion.BeforeInsert, Occasion.BeforeUpdate],(IDictionary&lt;string,object&gt; teacher) =&gt;
+<pre><code>var registry = app.GetHookRegistry();
+registry.EntityPreAdd.Register(&quot;teacher&quot;, args =&gt;
 {
-    var (email, phoneNumber) = ((string)teacher[&quot;email&quot;], (string)teacher[&quot;phone_number&quot;]);
-    if (!IsValidEmail())
-    {
-        throw new InvalidParamException($&quot;email `{email}` is invalid&quot;);
-    }
-    if (!IsValidPhoneNumber())
-    {
-        throw new InvalidParamException($&quot;phone number `{phoneNumber}` is invalid&quot;);
-    }
-}
+    VerifyTeacher(args.RefRecord);
+    return args;
+});
+registry.EntityPreUpdate.Register(&quot;teacher&quot;, args =&gt;
+{
+    VerifyTeacher(args.RefRecord);
+    return args;
+});
+
 </code></pre>
 <h3 id="produce-events-to-event-brokeregkafka">Produce Events to Event Broker(e.g.Kafka)</h3>
 <p>You can also choose produce events to Event Broker(e.g.Kafka), so Consumer Application function can implement business logic in a async manner.
@@ -378,11 +383,8 @@ The built-in permission control in Fluent CMS offers four privilege types for ea
 builder.Services.AddDbContext&lt;AppDbContext&gt;(options =&gt; options.UseSqlite(connectionString));
 builder.AddCmsAuth&lt;IdentityUser, IdentityRole, AppDbContext&gt;();
 </code></pre>
-<p>And add the follow line after app was built</p>
-<pre><code>//user fluent permission control feature
-app.UseCmsAuth&lt;IdentityUser&gt;();
-InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser(&quot;sadmin@cms.com&quot;, &quot;Admin1!&quot;, [Roles.Sa]));
-InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser(&quot;admin@cms.com&quot;, &quot;Admin1!&quot;, [Roles.Admin]));
+<p>And add the follow line after app was built if you want to add  a default user.</p>
+<pre><code>InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser(&quot;sadmin@cms.com&quot;, &quot;Admin1!&quot;, [Roles.Sa]));
 </code></pre>
 <p>Behind the scene, fluentCMS leverage the hook mechanism.</p>
 <h2 id="designing-queries-in-fluentcms"><strong>Designing Queries in FluentCMS</strong></h2>
@@ -629,7 +631,23 @@ FluentCMS will call the query <code>https://fluent-cms-admin.azurewebsites.net/a
 </ul>
 </li>
 </ul>
-<p><img alt="Schema Builder Sequence" src="https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/schema-builder-sequence.png" /></p></div>
+<p><img alt="Schema Builder Sequence" src="https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/schema-builder-sequence.png" /></p>
+<h2 id="test">Test</h2>
+<p>Fluent CMS favors integration testing over unit testing because integration tests can catch more real-world issues. For example, when inserting a record into the database, multiple modules are involved:
+- <code>EntitiesController</code>
+- <code>EntitiesService</code>
+- <code>Entity</code> (in the query builder)
+- Query executors (e.g., <code>SqlLite</code>, <code>Postgres</code>, <code>SqlServer</code>)</p>
+<p>Writing unit tests for each individual function and mocking its upstream and downstream services can be tedious. Instead, Fluent CMS focuses on checking the input and output of RESTful API endpoints in its integration tests.</p>
+<p>However, certain cases, such as the Hook Registry or application bootstrap, are simpler to cover with unit tests.</p>
+<h3 id="unit-testing-fluent-cmsserverfluentcmstest">Unit Testing <code>/fluent-cms/server/FluentCMS.Test</code></h3>
+<p>This project focuses on testing specific modules, such as:
+- Hook Registry
+- Application Bootstrap</p>
+<h3 id="integration-testing-for-fluentcmsblog-fluent-cmsserverfluentcmsblogtests">Integration Testing for FluentCMS.Blog <code>/fluent-cms/server/FluentCMS.Blog.Tests</code></h3>
+<p>This project focuses on verifying the functionalities of the FluentCMS.Blog example project.</p>
+<h3 id="new-feature-testing-fluent-cmsserverfluentcmsapptests">New Feature Testing <code>/fluent-cms/server/FluentCMS.App.Tests</code></h3>
+<p>This project is dedicated to testing experimental functionalities, like MongoDB and Kafka plugins.</p></div>
             </div>
         </div>
 
@@ -711,5 +729,5 @@ FluentCMS will call the query <code>https://fluent-cms-admin.azurewebsites.net/a
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2024-10-03 18:38:29.082093+00:00
+Build Date UTC : 2024-10-23 18:12:35.585326+00:00
 -->
