@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text.Json.Serialization;
 using FluentCMS.Auth.Services;
 using FluentCMS.Cms.Models;
@@ -13,7 +14,7 @@ using Microsoft.AspNetCore.Rewrite;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Primitives;
 
-namespace FluentCMS.App;
+namespace FluentCMS.Modules;
 
 public enum DatabaseProvider
 {
@@ -22,15 +23,16 @@ public enum DatabaseProvider
     SqlServer,
 }
 
-public class CmsApp(
-    WebApplicationBuilder builder,
-    ILogger<CmsApp> logger, 
+public sealed class CmsModule(
+    ILogger<CmsModule> logger, 
     DatabaseProvider databaseProvider, 
     string connectionString 
 )
 {
     private const string FluentCmsContentRoot = "/_content/FluentCMS";
-    public static void Build(WebApplicationBuilder builder,DatabaseProvider databaseProvider, string connectionString)
+
+    public  HookRegistry GetHookRegistry(WebApplication app) => app.Services.GetRequiredService<HookRegistry>();
+    public static void AddCms(WebApplicationBuilder builder,DatabaseProvider databaseProvider, string connectionString)
     {
         AddRouters();
         InjectDbServices();
@@ -48,14 +50,16 @@ public class CmsApp(
 
         void InjectServices()
         {
-            builder.Services.AddMemoryCache();
-            builder.Services.AddSingleton<CmsApp>(p => new CmsApp(
-                    builder,
-                p.GetRequiredService<ILogger<CmsApp>>(), 
-                databaseProvider, 
-                connectionString
+            builder.Services.AddSingleton<CmsModule>(p => new CmsModule(
+                    p.GetRequiredService<ILogger<CmsModule>>(),
+                    databaseProvider,
+                    connectionString
                 )
             );
+
+            builder.Services.AddScoped<IProfileService, DummyProfileService>();
+            
+            builder.Services.AddMemoryCache();
             builder.Services.AddSingleton<Renderer>(p =>
             {
                 var provider = p.GetRequiredService<IWebHostEnvironment>().WebRootFileProvider;
@@ -63,8 +67,8 @@ public class CmsApp(
                 return new Renderer(fileInfo.PhysicalPath??"");
             });
             builder.Services.AddSingleton<HookRegistry>(_ => new HookRegistry());
-            builder.Services.AddSingleton<ImmutableCache<Query>>(p =>
-                new ImmutableCache<Query>(p.GetRequiredService<IMemoryCache>(), 30, "view"));
+            builder.Services.AddSingleton<KeyValueCache<LoadedQuery>>(p =>
+                new KeyValueCache<LoadedQuery>(p.GetRequiredService<IMemoryCache>(), 30, "query"));
             builder.Services.AddSingleton<LocalFileStore>(p => new LocalFileStore(
                 Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/files"),
                 1200,
@@ -72,12 +76,12 @@ public class CmsApp(
             );
             builder.Services.AddSingleton<KateQueryExecutor>(p =>
                 new KateQueryExecutor(p.GetRequiredService<IKateProvider>(), 30));
+
             builder.Services.AddScoped<ISchemaService, SchemaService>();
             builder.Services.AddScoped<IEntitySchemaService, EntitySchemaService>();
             builder.Services.AddScoped<IQuerySchemaService, QuerySchemaService>();
             builder.Services.AddScoped<IEntityService, EntityService>();
             builder.Services.AddScoped<IQueryService, QueryService>();
-            builder.Services.AddScoped<IProfileService, DummyProfileService>();
             builder.Services.AddScoped<IPageService, PageService>();
         }
 
@@ -189,16 +193,24 @@ public class CmsApp(
             });
         }
     }
+    
 
     private void PrintVersion()
     {
+        var assembly = Assembly.GetExecutingAssembly();
+        var title = assembly.GetCustomAttribute<AssemblyTitleAttribute>()?.Title;
+        var informationalVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
         var parts = connectionString.Split(";")
             .Where(x => !x.StartsWith("Password"))
             .ToArray();
-        logger.LogInformation("*********************************************************");
-        logger.LogInformation($"Fluent CMS, {builder.Environment.EnvironmentName}");
-        logger.LogInformation($"Resolved Database Provider: {databaseProvider}");
-        logger.LogInformation($"Connection String: {string.Join(";", parts)}");
-        logger.LogInformation("*********************************************************");
+        
+        logger.LogInformation($"""
+                               ***  ******************************************************
+                               ***  ******************************************************
+                               {title}, Version {informationalVersion?.Split("+").First()}
+                               Database : {databaseProvider} - {string.Join(";", parts)}
+                               ***  ******************************************************
+                               ***  ******************************************************
+                               """);
     }
 }

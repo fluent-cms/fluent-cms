@@ -154,18 +154,18 @@ Because `Dyamic Expresso` doesn't support [Verbatim String](https://learn.micros
 You need to add your own Business logic, for examples, you want to verify if the email and phone number of entity `teacher` is valid.
 you can register a cook function before insert or update teacher
 ```
-app.RegisterCmsHook("teacher", [Occasion.BeforeInsert, Occasion.BeforeUpdate],(IDictionary<string,object> teacher) =>
+var registry = app.GetHookRegistry();
+registry.EntityPreAdd.Register("teacher", args =>
 {
-    var (email, phoneNumber) = ((string)teacher["email"], (string)teacher["phone_number"]);
-    if (!IsValidEmail())
-    {
-        throw new InvalidParamException($"email `{email}` is invalid");
-    }
-    if (!IsValidPhoneNumber())
-    {
-        throw new InvalidParamException($"phone number `{phoneNumber}` is invalid");
-    }
-}
+    VerifyTeacher(args.RefRecord);
+    return args;
+});
+registry.EntityPreUpdate.Register("teacher", args =>
+{
+    VerifyTeacher(args.RefRecord);
+    return args;
+});
+
 ```
 
 ### Produce Events to Event Broker(e.g.Kafka)
@@ -199,12 +199,9 @@ To enable fluentCMS' build-in permission control feature, add the following line
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
 builder.AddCmsAuth<IdentityUser, IdentityRole, AppDbContext>();
 ```
-And add the follow line after app was built
+And add the follow line after app was built if you want to add  a default user.
 ```
-//user fluent permission control feature
-app.UseCmsAuth<IdentityUser>();
 InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]));
-InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]));
 ```
 Behind the scene, fluentCMS leverage the hook mechanism.
 
@@ -494,3 +491,29 @@ FluentCMS adds customized blocks to simplify web page design and data binding fo
     - **jsoneditor**: [JSON Editor](https://github.com/json-editor/json-editor)
 
 ![Schema Builder Sequence](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/schema-builder-sequence.png)
+
+
+## Test
+
+
+Fluent CMS favors integration testing over unit testing because integration tests can catch more real-world issues. For example, when inserting a record into the database, multiple modules are involved:
+- `EntitiesController`
+- `EntitiesService`
+- `Entity` (in the query builder)
+- Query executors (e.g., `SqlLite`, `Postgres`, `SqlServer`)
+
+Writing unit tests for each individual function and mocking its upstream and downstream services can be tedious. Instead, Fluent CMS focuses on checking the input and output of RESTful API endpoints in its integration tests.
+
+However, certain cases, such as the Hook Registry or application bootstrap, are simpler to cover with unit tests.
+
+### Unit Testing `/fluent-cms/server/FluentCMS.Test`
+This project focuses on testing specific modules, such as:
+- Hook Registry
+- Application Bootstrap
+
+### Integration Testing for FluentCMS.Blog `/fluent-cms/server/FluentCMS.Blog.Tests`
+This project focuses on verifying the functionalities of the FluentCMS.Blog example project.
+
+### New Feature Testing `/fluent-cms/server/FluentCMS.App.Tests`
+This project is dedicated to testing experimental functionalities, like MongoDB and Kafka plugins.
+

@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using FluentCMS.Utils.QueryBuilder;
 using FluentResults;
 
@@ -5,16 +6,11 @@ namespace FluentCMS.Utils.KateQueryExt;
 
 public static class KateQueryExt
 {
-    public static void ApplyPagination(this SqlKata.Query query, Pagination? pagination)
+    public static void ApplyPagination(this SqlKata.Query query, ValidPagination pagination)
     {
-        if (pagination is null)
-        {
-            return;
-        }
-
         query.Offset(pagination.Offset).Limit(pagination.Limit);
     }
-    public static void ApplySorts(this SqlKata.Query query, Sorts? sorts)
+    public static void ApplySorts(this SqlKata.Query query, IEnumerable<Sort>? sorts)
     {
         if (sorts is null)
         {
@@ -34,7 +30,7 @@ public static class KateQueryExt
         }
     }
 
-    public static Result ApplyFilters(this SqlKata.Query query, Filters? filters)
+    public static Result ApplyFilters(this SqlKata.Query query, IEnumerable<ValidFilter>? filters)
     {
         var result = Result.Ok();
         if (filters is null) return result;
@@ -44,9 +40,9 @@ public static class KateQueryExt
             {
                 foreach (var c in filter.Constraints)
                 {
-                    var ret = filter.IsOr
-                        ? q.ApplyOrConstraint(filter.FieldName, c.Match, c.ResolvedValues)
-                        : q.ApplyAndConstraint(filter.FieldName, c.Match, c.ResolvedValues);
+                    var ret = filter.Operator=="or"
+                        ? q.ApplyOrConstraint(filter.FieldName, c.Match, c.Values)
+                        : q.ApplyAndConstraint(filter.FieldName, c.Match, c.Values);
                     if (ret.IsFailed)
                     {
                         result = Result.Fail(ret.Errors);
@@ -115,10 +111,10 @@ public static class KateQueryExt
         };
     }
 
-    public static Result ApplyCursor(this SqlKata.Query? query,  Cursor? cursor,Sorts? sorts)
+    public static Result ApplyCursor(this SqlKata.Query? query,  ValidCursor? cursor,ImmutableArray<Sort>? sorts)
     {
         if (query is null || cursor?.BoundaryItem is null) return Result.Ok();
-        return sorts?.Count switch
+        return sorts?.Length switch
         {
             0 => Result.Fail("Sorts was not provided, can not perform cursor filter"),
             1 => HandleOneField(),
@@ -126,15 +122,16 @@ public static class KateQueryExt
             _=> Result.Fail("More than two field in sorts is not supported")
         };
 
+        
         Result HandleOneField()
         {
-            ApplyCompare(query,sorts[0]);
+            ApplyCompare(query,sorts.Value[0]);
             return Result.Ok();
         }
 
         Result HandleTwoFields()
         {
-            var (first,last) = (sorts.First(),sorts.Last());
+            var (first,last) = (sorts.Value.First(),sorts.Value.Last());
             query.Where(q =>
             {
                 ApplyCompare(q, first);
@@ -152,8 +149,7 @@ public static class KateQueryExt
         }
         void ApplyCompare(SqlKata.Query q, Sort sort)
         {
-            q.Where(sort.FieldName, cursor.GetCompareOperator(sort), cursor.BoundaryValue(sort.FieldName));
+            q.Where(sort.FieldName, cursor.Cursor.GetCompareOperator(sort), cursor.BoundaryValue(sort.FieldName));
         }
-
     }
 }

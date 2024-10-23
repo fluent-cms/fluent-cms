@@ -1,25 +1,10 @@
 namespace FluentCMS.Utils.QueryBuilder;
 
 //keep lower case to respect the naming convention of js
-public enum DisplayType
+public static class DisplayType
 {
-    text,
-    textarea,
-    editor,
-    
-    number,
-    
-    datetime,
-    date,
-    
-    image,
-    gallery,
-    file,
-    json,
-    
-    dropdown,
-    lookup,
-    multiselect,
-    
-    crosstable,
+    public const string Text = "text";
+    public const string Number = "number";
+    public const string Lookup = "lookup";
+    public const string Crosstable = "crosstable";
 }

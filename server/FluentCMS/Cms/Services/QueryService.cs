@@ -1,8 +1,8 @@
+using System.Collections.Immutable;
 using FluentCMS.Services;
 using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.QueryBuilder;
 using Microsoft.Extensions.Primitives;
-using FluentCMS.Utils.Cache;
 using FluentCMS.Utils.HookFactory;
 namespace FluentCMS.Cms.Services;
 
@@ -18,116 +18,85 @@ public sealed class QueryService(
 ) : IQueryService
 {
 
-    public async Task<RecordQueryResult> List(string queryName, Cursor cursor, Pagination? pagination,
+    public async Task<QueryResult<Record>> List(string queryName, Cursor cursor, Pagination pagination,
         Dictionary<string, StringValues> querystringDictionary, CancellationToken cancellationToken)
     {
-        var view = await querySchemaService.GetByNameAndCache(queryName, cancellationToken);
-        CheckResult(view.Filters.ResolveValues(view.Entity!,  schemaService.CastToDatabaseType, querystringDictionary));
-        CheckResult(cursor.ResolveBoundaryItem(view.Entity!, schemaService.CastToDatabaseType));
-        pagination ??= new Pagination { Limit = view.PageSize };
-        if (pagination.Limit== 0 || pagination.Limit > view.PageSize)
+        var query = await querySchemaService.GetByNameAndCache(queryName, cancellationToken);
+        var filters = CheckResult(query.Filters.Resolve(query.EntityName, query.Entity.Attributes,
+            schemaService.CastToDatabaseType, querystringDictionary));
+        var parsedCursor =CheckResult(cursor.Resolve(query.Entity, schemaService.CastToDatabaseType));
+        var validPagination = pagination.ToValid(query.PageSize);
+        validPagination = validPagination with { Limit = validPagination.Limit + 1 };// add extra to check has more
+        var hookParam = new QueryPreGetListArgs( queryName, query.EntityName, filters,  query.Sorts, parsedCursor, validPagination);
+        var res = await hookRegistry.QueryPreGetList.Trigger(provider, hookParam);
+        if (res.OutRecords is not null)
         {
-            pagination.Limit = view.PageSize;
+            return BuildRecordViewResult(res.OutRecords, cursor, validPagination, query.Sorts);
         }
 
-        pagination.Limit++;// add extra to check has more
-        var (exit, hookResult) = await TriggerHook(Occasion.BeforeQueryList, view, view.Filters, view.Sorts, cursor, pagination);
-        if (exit)
-        {
-            return BuildRecordViewResult(hookResult.Records, cursor, pagination, view.Sorts);
-        }
-
-        var attributes = view.Selection.GetLocalAttributes();
+        var attributes = query.Selection.GetLocalAttributes();
+        var kateQuery = CheckResult(query.Entity.ListQuery(filters, query.Sorts, validPagination, parsedCursor, attributes));
+        var items = await kateQueryExecutor.Many(kateQuery, cancellationToken);
         
-        var query = CheckResult(view.Entity!.ListQuery(view.Filters, view.Sorts, pagination, cursor, attributes,
-            schemaService.CastToDatabaseType));
-        var items = await kateQueryExecutor.Many(query, cancellationToken);
-        
-        if (!cursor.IsForward)
+        if (!cursor.IsForward())
         {
             items = items.Reverse().ToArray();
         }
 
-        var results = BuildRecordViewResult(items, cursor, pagination, view.Sorts);
+        var results = BuildRecordViewResult(items, cursor, validPagination, query.Sorts);
         if (results.Items is not null && results.Items.Length > 0)
         {
             //here use result.Items instead of items, because result.Items omit last record
-            await entityService.AttachRelatedEntity(view.Selection, results.Items, cancellationToken);
+            await entityService.AttachRelatedEntity(query.Entity, query.Selection, results.Items, cancellationToken);
         }
 
         return results;
     }
 
-    public async Task<Record[]> Many(string queryName, Pagination? pagination,
+    public async Task<Record[]> Many(string queryName, 
         Dictionary<string, StringValues> querystringDictionary,
         CancellationToken cancellationToken)
     {
         var query = await querySchemaService.GetByNameAndCache(queryName, cancellationToken);
-        CheckResult(query.Filters.ResolveValues(query.Entity!, schemaService.CastToDatabaseType,
+        var validPagination = new Pagination().ToValid(query.PageSize);
+        var filters = CheckResult(query.Filters.Resolve(query.Entity.Name, query.Selection, schemaService.CastToDatabaseType,
             querystringDictionary));
 
-        var (exit, hookResult) = await TriggerHook(Occasion.BeforeQueryMany, query, query.Filters);
-        if (exit)
+        var res = await hookRegistry.QueryPreGetMany.Trigger(provider, new QueryPreGetManyArgs(queryName,query.EntityName, filters,validPagination));
+        if (res.OutRecords is not null)
         {
-            return hookResult.Records;
+            return res.OutRecords;
         }
-
-        var attributes = query.Selection.GetLocalAttributes();
         
-        pagination ??= new Pagination { Limit = query.PageSize };
-        if (pagination.Limit == 0) pagination.Limit = query.PageSize;
-
-        if (pagination.Offset > query.PageSize * 10)
-            throw new InvalidParamException(
-                $"invalid offset {pagination.Offset}, maximum value is {query.PageSize * 10}");
-
-        if (pagination.Limit > query.PageSize * 5)
-            throw new InvalidParamException(
-                $"invalid offset {pagination.Limit}, maximum value is {query.PageSize * 5}");
-
-
-        //var pagination = new Pagination { Limit = view.PageSize };
-        var kateQuery = CheckResult(query.Entity!.ListQuery(query.Filters, query.Sorts, pagination, null, attributes,
-            schemaService.CastToDatabaseType));
+        var attributes = query.Selection.GetLocalAttributes();
+        var kateQuery = CheckResult(query.Entity.ListQuery(res.Filters, query.Sorts, validPagination, null, attributes));
         var items = await kateQueryExecutor.Many(kateQuery, cancellationToken);
-        await entityService.AttachRelatedEntity(query.Selection, items, cancellationToken);
+        await entityService.AttachRelatedEntity(query.Entity,query.Selection, items, cancellationToken);
         return items;
     }
 
     public async Task<Record> One(string queryName, Dictionary<string, StringValues> querystringDictionary,
         CancellationToken cancellationToken)
     {
-        var view = await querySchemaService.GetByNameAndCache(queryName, cancellationToken);
-        CheckResult(view.Filters.ResolveValues(view.Entity!,  schemaService.CastToDatabaseType, querystringDictionary));
-        var (exit, hookResult) = await TriggerHook(Occasion.BeforeQueryOne,view, view.Filters);
-        if (exit)
+        var query = await querySchemaService.GetByNameAndCache(queryName, cancellationToken);
+        var filters = CheckResult(query.Filters.Resolve(query.Entity.Name, query.Entity.Attributes,  schemaService.CastToDatabaseType, querystringDictionary));
+        var res= await hookRegistry.QueryPreGetOne.Trigger(provider, new QueryPreGetOneArgs(queryName, query.EntityName,filters));
+        if (res.OutRecord is not null)
         {
-            return hookResult.Record;
+            return res.OutRecord;
         }
 
-        var query = CheckResult(view.Entity!.OneQuery(view.Filters, view.Selection.GetLocalAttributes()));
-        var item = NotNull(await kateQueryExecutor.One(query, cancellationToken)).ValOrThrow("Not find record");
-        await entityService.AttachRelatedEntity(view.Selection, [item], cancellationToken);
+        var kateQuery = CheckResult(query.Entity.OneQuery(res.Filters, query.Selection.GetLocalAttributes()));
+        var item = NotNull(await kateQueryExecutor.One(kateQuery, cancellationToken)).ValOrThrow("Not find record");
+        await entityService.AttachRelatedEntity(query.Entity, query.Selection, [item], cancellationToken);
         return item;
     }
 
-    private async Task<(bool, HookReturn)> TriggerHook(Occasion occasion,Query query, Filters filters, Sorts? sorts = null,
-        Cursor? cursor = null, Pagination? pagination = null)
-    {
-        var hookParam = new HookParameter
-            { Filters = filters, Sorts = sorts, Cursor = cursor, Pagination = pagination };
-        var hookReturn = new HookReturn();
-        var exit = await hookRegistry.Trigger(provider, occasion, query, hookParam, hookReturn);
-        return (exit, hookReturn);
-    }
-
-
-
-    private RecordQueryResult BuildRecordViewResult(Record[] items, Cursor cursor, Pagination pagination, Sorts? sorts)
+    private QueryResult<Record> BuildRecordViewResult(Record[] items, Cursor cursor, ValidPagination pagination, ImmutableArray<Sort>? sorts)
     {
         if (items.Length == 0)
         {
-            return new RecordQueryResult();
+            return new QueryResult<Record>([],"","");
         }
         
         var hasMore = items.Length == pagination.Limit;
@@ -140,11 +109,6 @@ public sealed class QueryService(
 
         var nextCursor = CheckResult(cursor.GetNextCursor(items, sorts, hasMore));
 
-        return new RecordQueryResult
-        {
-            Items = items,
-            First = nextCursor.First,
-            Last = nextCursor.Last,
-        };
+        return new QueryResult<Record>(items, nextCursor.First??"", nextCursor.Last??"");
     }
 }

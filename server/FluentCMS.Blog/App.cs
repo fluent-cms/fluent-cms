@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FluentCMS.Blog;
 
+
 public static class App
 {
    const string CorsPolicyName = "AllowAllOrigins";
@@ -19,7 +20,7 @@ public static class App
       var (databaseProvider, connectionString) = GetProviderAndConnectionString(builder);
       AddCms(builder, databaseProvider,connectionString);
       AddDbContext(builder, databaseProvider, connectionString);
-      builder.AddCmsAuth<IdentityUser, IdentityRole, AppDbContext>();
+      builder.AddCmsAuth<MyUser, IdentityRole, AppDbContext>();
 
       var app = builder.Build();
       app.UseHttpsRedirection();
@@ -31,7 +32,6 @@ public static class App
       }
       await Migrate(app);
       await app.UseCmsAsync();
-      app.UseCmsAuth<IdentityUser>();
       InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]));
       InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]));
       app.Run();

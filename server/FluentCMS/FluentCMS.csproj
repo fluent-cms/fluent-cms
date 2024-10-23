@@ -9,6 +9,8 @@
         <IsPackable>true</IsPackable>
         <OutputType>Library</OutputType>
         <AssemblyName>FluentCms</AssemblyName>
+        <PackageReadmeFile>readme.md</PackageReadmeFile>
+        <TargetFramework>net8.0</TargetFramework>
     </PropertyGroup>
 
     <ItemGroup>
@@ -22,6 +24,7 @@
         <PackageReference Include="Handlebars.Net" Version="2.1.6" />
         <PackageReference Include="HtmlAgilityPack" Version="1.11.65" />
         <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.8" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.7" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.6" />
         <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="8.0.6" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.6">
@@ -37,7 +40,8 @@
         <PackageReference Include="SqlKata.Execution" Version="2.4.0" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
         <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
-        <PackageReference Include="System.Runtime.Caching" Version="8.0.0" />
+        <PackageReference Include="System.Runtime.Caching" Version="8.0.1" />
+        <PackageReference Include="xunit.assert" Version="2.5.3" />
     </ItemGroup>
 
     <ItemGroup>
@@ -85,24 +89,24 @@
       <_ContentIncludedByDefault Remove="wwwroot\schema-ui\toast\jquery.toast.min.js" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Content Include="wwwroot\static-assets\.idea\.gitignore" />
-      <Content Include="wwwroot\static-assets\.idea\modules.xml" />
-      <Content Include="wwwroot\static-assets\.idea\static-assets.iml" />
-      <Content Include="wwwroot\static-assets\.idea\vcs.xml" />
-      <Content Include="wwwroot\static-assets\.idea\workspace.xml" />
-    </ItemGroup>
     
     <PropertyGroup>
         <PackageReadmeFile>readme.md</PackageReadmeFile>
         <TargetFramework>net8.0</TargetFramework>
         <PackageId>FluentCMS</PackageId>
-        <Version>0.2.3</Version>
+        <Version>0.2.4</Version>
         <Authors>Jason C</Authors>
         <Company>fluent-cms</Company>
         <Description>CRUD (Create, Read, Update, Delete) for any entities</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageProjectUrl>https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS</PackageProjectUrl>
         <RepositoryUrl>https://github.com/fluent-cms/fluent-cms</RepositoryUrl>
+        
+        <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+        <!-- Add metadata to assembly -->
+        <AssemblyTitle>$(PackageId)</AssemblyTitle>
+        <AssemblyInformationalVersion>$(Version)</AssemblyInformationalVersion>
     </PropertyGroup>
+   
+
 </Project>

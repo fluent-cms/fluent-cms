@@ -16,7 +16,7 @@ export function DataListPage(){
 export function DataListPageComponent({schema}:{schema:any}){
     const columns = getListColumns(schema,schema.name,schema.name)
     const {primaryKey,titleAttribute} = schema;
-    const {lazyState, eventHandlers} = useLazyStateHandlers(50,columns)
+    const {lazyState, eventHandlers} = useLazyStateHandlers(schema.defaultPageSize,columns)
     const {data, error, isLoading}= useListData(schema.name,lazyState)
     return <>
         <FetchingStatus isLoading={isLoading} error={error}/>

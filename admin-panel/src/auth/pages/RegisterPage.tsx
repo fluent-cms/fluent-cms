@@ -8,6 +8,8 @@ import 'primereact/resources/themes/saga-blue/theme.css';
 import 'primereact/resources/primereact.min.css';
 import 'primeicons/primeicons.css';
 import {register} from "../services/auth";
+import {configs} from "../../config";
+import {LoginRoute} from "../AccountRouter";
 
 export const RegisterPage: React.FC = () => {
     const [email, setEmail] = useState<string>('');
@@ -92,7 +94,7 @@ export const RegisterPage: React.FC = () => {
                             className="p-mt-2"
                         />
                         <div className="p-mt-3">
-                            <Link to="/login">Already have an account? Login</Link>
+                            <Link to={`${configs.authBaseRouter}${LoginRoute}`}>Already have an account? Login</Link>
                         </div>
                     </>)
                     }

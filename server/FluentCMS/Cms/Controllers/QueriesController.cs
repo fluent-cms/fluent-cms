@@ -9,12 +9,12 @@ namespace FluentCMS.Cms.Controllers;
 [Route("api/[controller]")]
 public class QueriesController(IQueryService queryService) : ControllerBase
 {
-    [HttpGet("{pageName}")]
-    public async Task<ActionResult<ListResult>> Get(string pageName,
-        [FromQuery] Cursor cursor, [FromQuery] Pagination? pagination,CancellationToken cancellationToken)
+    [HttpGet("{queryName}")]
+    public async Task<ActionResult<QueryResult<Record>>> Get(string queryName,
+        [FromQuery] Cursor cursor, [FromQuery] Pagination pagination,CancellationToken cancellationToken)
     {
         var queryDictionary = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
-        var res = await queryService.List(pageName, cursor,pagination, queryDictionary,cancellationToken);
+        var res = await queryService.List(queryName, cursor,pagination, queryDictionary,cancellationToken);
         return Ok( res);
    
     }
@@ -26,10 +26,10 @@ public class QueriesController(IQueryService queryService) : ControllerBase
     }
 
     [HttpGet("{pageName}/many")]
-    public async Task<ActionResult<IDictionary<string, object>[]>> GetMany(string pageName, [FromQuery] Pagination?pagination,
+    public async Task<ActionResult<IDictionary<string, object>[]>> GetMany(string pageName,
         CancellationToken cancellationToken)
     {
         var queryDictionary = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
-        return Ok(await queryService.Many(pageName,pagination, queryDictionary,cancellationToken));
+        return Ok(await queryService.Many(pageName, queryDictionary,cancellationToken));
     }
 }

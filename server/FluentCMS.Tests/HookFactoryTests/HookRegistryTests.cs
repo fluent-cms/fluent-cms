@@ -5,21 +5,11 @@ using Moq;
 namespace FluentCMS.Tests.HookFactoryTests;
 using Record = IDictionary<string,object>;
 
-public class People
+public static class People
 {
     public const string EntityName = "people";
     public const string NameFieldName = "Name";
     public const string NameValue = "Alice";
-    public int id { get; set; }
-    public string Name { get; set; } = "";
-}
-
-public class PeopleService
-{
-    public void ModifyRecord(Record dictionary, string s)
-    {
-        dictionary[People.NameFieldName] += s;
-    }
 }
 
 public class HookRegistryTests
@@ -30,86 +20,60 @@ public class HookRegistryTests
     public HookRegistryTests()
     {
         var mockServiceProvider = new Mock<IServiceProvider>();
-        mockServiceProvider.Setup(sp => sp.GetService(typeof(PeopleService)))
-            .Returns(new PeopleService());
-
         _serviceProvider = mockServiceProvider.Object;
         _hookRegistry = new HookRegistry();
     }
 
     [Fact]
-    public async Task TestExecuteAfterQuery()
+    public async Task TestEntityPostListChangeTotal()
     {
-        var occasion = Occasion.AfterReadList;
-        _hookRegistry.AddHooks(People.EntityName, [occasion], (ListResult res) => { res.TotalRecords = 100; });
-
+        _hookRegistry.EntityPostGetList.Register(People.EntityName,
+            parameter => parameter with { RefListResult = parameter.RefListResult with { TotalRecords = 100 } });
         var res = new ListResult
-        {
-            TotalRecords = 10,
-        };
-        var meta = new EntityMeta(People.EntityName, "3");
-         
-        await _hookRegistry.Trigger(_serviceProvider, occasion,meta, new HookParameter{ListResult = res});
-        Assert.Equal(100, res.TotalRecords);
+        (
+            Items:[],
+            TotalRecords : 10
+        );
+        var args = new EntityPostGetListArgs(People.EntityName, res);
+        args = await _hookRegistry.EntityPostGetList.Trigger(_serviceProvider,args );
+        Assert.Equal(100, args.RefListResult.TotalRecords);
+        
     }
 
     [Fact]
-    public async Task TestExecuteBeforeQueryReplace()
+    public async Task TestEntityPreList()
     {
-        var occasion = Occasion.AfterReadList;
-        _hookRegistry.AddHooks(People.EntityName, [occasion], () => new People
-        {
-            id = 3, Name = People.NameValue
-        });
-        var meta = new EntityMeta(People.EntityName, "3");
-
-        var (filters, sorts, pagination) = (new Filters(), new Sorts(), new Pagination());
-        var hookData = new HookParameter
-        {
-            Filters = filters,
-            Sorts = sorts,
-            Pagination = pagination
-        };
-        await _hookRegistry.Trigger(_serviceProvider, occasion, meta, hookData);
+        _hookRegistry.EntityPreGetList.Register(People.EntityName, args => args);
+        await _hookRegistry.EntityPreGetList.Trigger(_serviceProvider,
+            new EntityPreGetListArgs(People.EntityName, [], [] , new ValidPagination(0,5)));
     }
+    
     [Fact]
     public async Task TestModifyQuery()
     {
-        var occasion = Occasion.AfterReadList;
-        _hookRegistry.AddHooks(People.EntityName, [occasion],
-            (Filters filters1, Sorts sorts1, Pagination pagination1) =>
-            {
-                filters1.Add(new Filter());
-                sorts1.Add(new Sort());
-                pagination1.Offset = 100;
-            });
-        var meta = new EntityMeta(People.EntityName );
-        var (filters, sorts, pagination) = (new Filters(), new Sorts(), new Pagination());
-        var hookData = new HookParameter
-        {
-            Filters = filters,
-            Sorts = sorts,
-            Pagination = pagination
-        };
-        await _hookRegistry.Trigger(_serviceProvider, occasion, meta, hookData);
-        Assert.Single(filters);
-        Assert.Single(sorts);
-        Assert.Equal(100, pagination.Offset);
+        var offset = 100;
+        _hookRegistry.EntityPreGetList.Register(People.EntityName, args =>
+             args with{ RefPagination = args.RefPagination with{Offset = offset}}
+        );
 
+        var args = new EntityPreGetListArgs(People.EntityName, [], [], new ValidPagination(0,2));
+
+        args = await _hookRegistry.EntityPreGetList.Trigger(_serviceProvider, args);
+        Assert.Equal(offset, args.RefPagination.Offset);
     }
     [Fact]
-    public async Task TestModifyRecord()
+    public async Task TestEntityPreAddModifyRecord()
     {
         Record records = new Dictionary<string, object>
         {
             ["id"] = 1,
             [People.NameFieldName] = People.NameValue
         };
-
-        _hookRegistry.AddHooks(People.EntityName, [Occasion.BeforeInsert],
-            (PeopleService service, Record record) => service.ModifyRecord(record, "ModifyRecord"));
-
-        var meta = new EntityMeta(People.EntityName, "1");
-        await _hookRegistry.Trigger(_serviceProvider, Occasion.BeforeInsert, meta, new HookParameter{Record = records});
+        _hookRegistry.EntityPreAdd.Register(People.EntityName, args =>
+        {
+            args.RefRecord[People.NameFieldName] = People.NameValue + "1";
+            return args;
+        });
+        await _hookRegistry.EntityPreAdd.Trigger(_serviceProvider, new EntityPreAddArgs(People.EntityName, records));
     }
 }

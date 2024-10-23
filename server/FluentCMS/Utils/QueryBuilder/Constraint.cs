@@ -1,13 +1,65 @@
-using System.Text.Json.Serialization;
+using System.Collections.Immutable;
+using FluentResults;
+using Microsoft.Extensions.Primitives;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
-public sealed class Constraint
+public sealed record Constraint(string Match, string Value);
+public sealed record ValidConstraint(string Match, object[] Values);
+
+public static class ConstraintsHelper
 {
-    public string Match { get; set; } = "";
-    public string Value { get; set; } = "";
-    [JsonIgnore]
-    public object[] ResolvedValues { get; set; } = [];
+    private const string QuerystringPrefix = "qs.";
+
+    public static Result<ImmutableArray<ValidConstraint>> Resolve(
+        this IEnumerable<Constraint> constraints, 
+        bool ignoreResolveError,
+        string entityName,
+        BaseAttribute attribute,  
+        Dictionary<string, StringValues>? querystringDictionary,
+        Func<string, string, object> cast)
+    {
+        var ret = new List<ValidConstraint>();
+        foreach (var constraint in constraints)
+        {
+            var val = constraint.Value;
+            if (string.IsNullOrWhiteSpace(val))
+            {
+                return Result.Fail($"Fail to resolve Filter, value not set for field {entityName}.{attribute.Field}");
+            }
+
+            if (val.StartsWith(QuerystringPrefix))
+            {
+                var res = ResolveFromQueryString(val);
+                if (res.IsSuccess)
+                {
+                    var arr = res.Value.Select(x => cast(attribute.DataType, x)).ToArray();
+                    ret.Add(new ValidConstraint(constraint.Match, arr));
+                }
+                else if (!ignoreResolveError)
+                {
+                    return Result.Fail(res.Errors);
+                }//else ignore this constraint  
+            }
+            else
+            {
+                ret.Add(new ValidConstraint(constraint.Match, [cast(attribute.DataType,val)]));
+            }
+        }
+
+        return ret.ToImmutableArray();
+        
+
+        Result<string[]> ResolveFromQueryString (string val)
+        {
+            var key = val[QuerystringPrefix.Length..];
+            if (querystringDictionary is null||!querystringDictionary.TryGetValue(key, out var vals))
+            {
+                return Result.Fail($"Fail to resolve filter: no key {key} in query string");
+            }
+            return vals.ToArray()!;
+        } 
+    }
 }
 
 public static class Matches

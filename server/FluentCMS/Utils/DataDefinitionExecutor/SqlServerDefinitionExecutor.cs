@@ -5,7 +5,7 @@ namespace FluentCMS.Utils.DataDefinitionExecutor;
 
 public class SqlServerDefinitionExecutor(string connectionString, ILogger<SqlServerDefinitionExecutor> logger ) : IDefinitionExecutor
 {
-    public object CastToDatabaseType(DataType dataType, string str)
+    public object CastToDatabaseType(string dataType, string str)
     {
         return dataType switch
         {
@@ -72,17 +72,17 @@ public class SqlServerDefinitionExecutor(string connectionString, ILogger<SqlSer
             while (await reader.ReadAsync())
             {
                 columnDefinitions.Add(new ColumnDefinition
-                {
-                    ColumnName = reader.GetString(0),
-                    DataType = StringToDataType(reader.GetString(1))
-                });
+                ( 
+                    ColumnName : reader.GetString(0),
+                    DataType : StringToDataType(reader.GetString(1))
+                ));
             }
 
             return columnDefinitions.ToArray();
         }, ("tableName", tableName));
     }
 
-    private string DataTypeToString(DataType dataType)
+    private string DataTypeToString(string dataType)
     {
         return dataType switch
         {
@@ -94,7 +94,7 @@ public class SqlServerDefinitionExecutor(string connectionString, ILogger<SqlSer
         };
     }
 
-    private DataType StringToDataType(string s)
+    private string StringToDataType(string s)
     {
         s = s.ToLower();
         return s switch

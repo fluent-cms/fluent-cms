@@ -16,12 +16,12 @@ public sealed class KafkaProducer:IProducer, IDisposable
         _logger = logger;
     }
     
-    public async Task ProduceRecord(string topic, string operation, EntityMeta meta, Record record)
+    public async Task ProduceRecord(string topic, string operation, string entityName, string recordId, Record record)
     {
-        var message = new RecordMessage(operation, meta.EntityName, meta.RecordId, record); 
+        var message = new RecordMessage(operation, entityName, recordId, record); 
         await _producer.ProduceAsync(topic,
             new Message<string, string> { Key = message.Key, Value = JsonSerializer.Serialize(message) });
-        _logger.LogInformation($"Produced Message: topic={topic}, entity={meta.EntityName}, record id={meta.RecordId}");
+        _logger.LogInformation($"Produced Message: topic={topic}, entity={entityName}, record id={recordId}");
     }
     
     public void Dispose()

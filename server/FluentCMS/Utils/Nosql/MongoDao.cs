@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using FluentCMS.Utils.QueryBuilder;
 using FluentResults;
 using MongoDB.Bson;
@@ -43,7 +44,7 @@ public sealed class MongoDao:INosqlDao
         _logger.LogInformation($"Inserted {docs.Count()} documents");
     }
 
-    public async Task<Result<Record[]>> Query(string collectionName, Filters filters, Sorts? sorts, Cursor? cursor, Pagination? pagination)
+    public async Task<Result<Record[]>> Query(string collectionName, IEnumerable<ValidFilter> filters, ValidPagination pagination,ImmutableArray<Sort>? sorts, ValidCursor? cursor)
     {
         var collection = _mongoDatabase.GetCollection<BsonDocument>(collectionName);
         var filterRes = MongoExt.GetFiltersDefinition(filters);
@@ -55,7 +56,7 @@ public sealed class MongoDao:INosqlDao
 
         if (cursor is not null && sorts is not null)
         {
-            var cursorRes = MongoExt.GetCursorFilters(cursor, sorts);
+            var cursorRes = MongoExt.GetCursorFilters(cursor, sorts.Value);
             if (cursorRes.IsFailed)
             {
                 return Result.Fail(cursorRes.Errors);
@@ -63,9 +64,9 @@ public sealed class MongoDao:INosqlDao
             filterDefinitions.Add(cursorRes.Value);
         }
         var query = collection.Find(Builders<BsonDocument>.Filter.And(filterDefinitions));
-        if (sorts?.Count > 0)
+        if (sorts?.Count() > 0)
         {
-            var sd = MongoExt.GetSortDefinition<BsonDocument>(sorts);
+            var sd = MongoExt.GetSortDefinition<BsonDocument>(sorts.Value);
             query = query.Sort(sd);
         }
 

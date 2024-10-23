@@ -1,7 +1,6 @@
 using System.Text.RegularExpressions;
 using FluentCMS.Auth.Services;
 using FluentCMS.Services;
-using FluentCMS.Utils.HookFactory;
 using FluentCMS.WebAppExt;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -23,12 +22,21 @@ var app = builder.Build();
 //use fluent cms' CRUD 
 await app.UseCmsAsync();
 
-//user fluent permission control feature
-app.UseCmsAuth<IdentityUser>();
 InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]));
 InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]));
 
-app.RegisterCmsHook("teacher", [Occasion.BeforeInsert, Occasion.BeforeUpdate], VerifyTeacher);
+var registry = app.GetHookRegistry();
+registry.EntityPreAdd.Register("teacher", addArgs =>
+{
+    VerifyTeacher(addArgs.RefRecord);
+    return addArgs;
+});
+registry.EntityPreUpdate.Register("teacher", addArgs =>
+{
+    VerifyTeacher(addArgs.RefRecord);
+    return addArgs;
+});
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -38,6 +46,7 @@ if (app.Environment.IsDevelopment())
 }
 app.UseHttpsRedirection();
 app.Run();
+return;
 
 /////
 

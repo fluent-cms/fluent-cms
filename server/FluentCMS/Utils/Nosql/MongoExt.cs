@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using FluentCMS.Utils.QueryBuilder;
 using FluentResults;
 using MongoDB.Bson;
@@ -7,16 +8,16 @@ namespace FluentCMS.Utils.Nosql;
 
 public static class MongoExt
 {
-    public static SortDefinition<T>? GetSortDefinition<T>(Sorts sorts)
+    public static SortDefinition<T>? GetSortDefinition<T>(ImmutableArray<Sort> sorts)
     {
         var sortBuilder = Builders<T>.Sort;
-        if (sorts.Count == 0) return null;
+        if (sorts.Length == 0) return null;
         
         var ret = sorts[0].Order == SortOrder.Asc
                                   ? sortBuilder.Ascending(sorts[0].FieldName)
                                   : sortBuilder.Descending(sorts[0].FieldName);
         
-        for (var i = 1; i < sorts.Count; i++)
+        for (var i = 1; i < sorts.Length; i++)
         {
             ret = sorts[i].Order == SortOrder.Asc
                 ? ret.Ascending(sorts[i].FieldName)
@@ -25,12 +26,12 @@ public static class MongoExt
         return ret;
     }
 
-    public static Result<FilterDefinition<BsonDocument>> GetCursorFilters(Cursor cursor, Sorts sorts)
+    public static Result<FilterDefinition<BsonDocument>> GetCursorFilters(ValidCursor cursor, ImmutableArray<Sort> sorts)
     {
         var builder = Builders<BsonDocument>.Filter;
-        if (cursor.BoundaryItem is null) return builder.Empty;
+        if (cursor.BoundaryItem?.Count == 0) return builder.Empty;
         
-        return sorts.Count switch
+        return sorts.Length switch
         {
             0 => Result.Fail("Sorts was not provided, can not perform cursor filter"),
             1 => GetCompare(sorts[0]),
@@ -47,10 +48,10 @@ public static class MongoExt
         FilterDefinition<BsonDocument> GetCompare(Sort sort)
         {
             var (fld, val) = (sort.FieldName, cursor.BoundaryValue(sort.FieldName));
-            return cursor.GetCompareOperator(sort) == ">" ? builder.Gt(fld, val) : builder.Lt(fld, val);
+            return cursor.Cursor.GetCompareOperator(sort) == ">" ? builder.Gt(fld, val) : builder.Lt(fld, val);
         } 
     }
-    public static Result<List<FilterDefinition<BsonDocument>>> GetFiltersDefinition(Filters? filters)
+    public static Result<List<FilterDefinition<BsonDocument>>> GetFiltersDefinition(IEnumerable<ValidFilter> filters)
     {
         var builder = Builders<BsonDocument>.Filter;
         List<FilterDefinition<BsonDocument>> definitions = new();
@@ -66,14 +67,14 @@ public static class MongoExt
         return  definitions;
     }
 
-    private static Result<FilterDefinition<BsonDocument>> GetFilterDefinition(Filter filter)
+    private static Result<FilterDefinition<BsonDocument>> GetFilterDefinition(ValidFilter filter)
     {
         var builder = Builders<BsonDocument>.Filter;
         List<FilterDefinition<BsonDocument>> definitions = new();
         foreach (var filterConstraint in filter.Constraints)
         {
             var resConstraint = GetConstraintDefinition(
-                filter.FieldName, filterConstraint.Match, filterConstraint.ResolvedValues);
+                filter.FieldName, filterConstraint.Match, filterConstraint.Values);
             if (resConstraint.IsFailed)
             {
                 return Result.Fail(resConstraint.Errors);
@@ -81,7 +82,7 @@ public static class MongoExt
             definitions.Add(resConstraint.Value);
         }
 
-        return filter.IsOr ? builder.Or(definitions) : builder.And(definitions);
+        return filter.Operator=="or" ? builder.Or(definitions) : builder.And(definitions);
     }
 
     private static Result<FilterDefinition<BsonDocument>> GetConstraintDefinition(string fieldName, string match, object[]values)

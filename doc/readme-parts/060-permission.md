@@ -18,12 +18,9 @@ To enable fluentCMS' build-in permission control feature, add the following line
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
 builder.AddCmsAuth<IdentityUser, IdentityRole, AppDbContext>();
 ```
-And add the follow line after app was built
+And add the follow line after app was built if you want to add  a default user.
 ```
-//user fluent permission control feature
-app.UseCmsAuth<IdentityUser>();
 InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]));
-InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]));
 ```
 Behind the scene, fluentCMS leverage the hook mechanism.
 </details>

@@ -17,37 +17,37 @@ public sealed  class SchemaService(
     IServiceProvider provider
 ) : ISchemaService
 {
-    public async Task<Result> NameNotTakenByOther(Schema schema, CancellationToken cancellationToken)
-    {
-        var query = BaseQuery().Where(ColumnName, schema.Name).Where(ColumnType, schema.Type)
-            .WhereNot(ColumnId, schema.Id);
-        var count = await kateQueryExecutor.Count(query, cancellationToken);
-        return count == 0 ? Result.Ok() : Result.Fail($"the schema name {schema.Name} was taken by other schema");
-    }
-
     public async Task<Schema[]> GetAll(string type, CancellationToken cancellationToken = default)
     {
+        var res = await hookRegistry.SchemaPreGetAll.Trigger(provider, new SchemaPreGetAllArgs(default));
         var query = BaseQuery();
         if (!string.IsNullOrWhiteSpace(type))
         {
             query = query.Where(ColumnType, type);
         }
 
+        if (res.OutSchemaNames?.Length > 0)
+        {
+            query.WhereIn(ColumnName,res.OutSchemaNames);
+        }
+
         var items = await kateQueryExecutor.Many(query, cancellationToken);
         return items.Select(x => CheckResult(ParseSchema(x))).ToArray();
     }
 
+    public async Task<Schema?> GetByIdWithTrigger(int id, CancellationToken cancellationToken = default)
+    {
+        var schema = await GetByIdDefault(id, cancellationToken);
+        if (schema is not null)
+        {
+            await hookRegistry.SchemaPostGetOne.Trigger(provider, new SchemaPostGetOneArgs(schema));
+        }
+        return schema;
+
+    }
     public async Task<Schema?> GetByIdDefault(int id, CancellationToken cancellationToken = default)
     {
         var query = BaseQuery().Where(ColumnId, id);
-        var item = await kateQueryExecutor.One(query, cancellationToken);
-        var res = ParseSchema(item);
-        return res.IsSuccess ? res.Value : null;
-    }
-
-    public async Task<Schema?> GetByNamePrefixDefault(string name, string type, CancellationToken cancellationToken = default)
-    {
-        var query = BaseQuery().WhereStarts(ColumnName ,name).Where(ColumnType, type);
         var item = await kateQueryExecutor.One(query, cancellationToken);
         var res = ParseSchema(item);
         return res.IsSuccess ? res.Value : null;
@@ -60,34 +60,33 @@ public sealed  class SchemaService(
         var res = ParseSchema(item);
         return res.IsSuccess ? res.Value : null;
     }
-
-    public object CastToDatabaseType(Attribute attribute, string str)
+    public async Task<Schema?> GetByNamePrefixDefault(string name, string type,
+        CancellationToken cancellationToken = default)
     {
-        return definitionExecutor.CastToDatabaseType(attribute.DataType, str);
+        var query = BaseQuery().WhereStarts(ColumnName, name).Where(ColumnType, type);
+        var item = await kateQueryExecutor.One(query, cancellationToken);
+
+        var res = ParseSchema(item);
+        
+        return res.IsSuccess ? res.Value : null;
+    }
+    public object CastToDatabaseType(string dataType, string str)
+    {
+        return definitionExecutor.CastToDatabaseType(dataType, str);
     }
 
     public async Task<Schema> Save(Schema dto, CancellationToken cancellationToken = default)
     {
         CheckResult(await NameNotTakenByOther(dto, cancellationToken));
-        var exit = await hookRegistry.Trigger(provider, Occasion.BeforeSaveSchema, new SchemaMeta(dto.Id), dto);
-        if (exit)
-        {
-            return dto;
-        }
-
-        await SaveSchema(dto, cancellationToken);
+        var res = await hookRegistry.SchemaPreSave.Trigger(provider, new SchemaPreSaveArgs(dto));
+        await SaveSchema(res.RefSchema, cancellationToken);
         return dto;
     }
 
     public async Task Delete(int id, CancellationToken cancellationToken = default)
     {
-        var exit = await hookRegistry.Trigger(provider, Occasion.BeforeDeleteSchema, new SchemaMeta(id), null);
-        if (exit)
-        {
-            return;
-        }
-
-        var query = new SqlKata.Query(TableName).Where(ColumnId, id).AsUpdate([ColumnDeleted], [1]);
+        var res = await hookRegistry.SchemaPreDel.Trigger(provider,  new SchemaPreDelArgs(id) );
+        var query = new SqlKata.Query(TableName).Where(ColumnId, res.SchemaId).AsUpdate([ColumnDeleted], [true]);
         await kateQueryExecutor.Exec(query, cancellationToken);
     }
 
@@ -124,35 +123,23 @@ public sealed  class SchemaService(
         }
 
         var entity = new Entity
-        {
-            TableName = TableName,
-            Attributes =
+        (
+            TableName : TableName,
+            Attributes :
             [
+                new Attribute ( ColumnName ),
+                new Attribute (  ColumnType ),
                 new Attribute
-                {
-                    Field = ColumnName,
-                    DataType = DataType.String,
-                },
-                new Attribute
-                {
-                    Field = ColumnType,
-                    DataType = DataType.String,
-                },
-                new Attribute
-                {
-                    Field = ColumnSettings,
-                    DataType = DataType.Text,
-                },
-                new Attribute
-                {
-                    Field = ColumnCreatedBy,
-                    DataType = DataType.String,
-                }
+               ( 
+                    Field : ColumnSettings,
+                    DataType : DataType.Text
+                ),
+                new Attribute (ColumnCreatedBy)
             ]
-        };
-        entity.EnsureDefaultAttribute();
-        entity.EnsureDeleted();
-        await definitionExecutor.CreateTable(entity.TableName, entity.ColumnDefinitions(), cancellationToken);
+        );
+        entity = entity.WithDefaultAttr();
+        await definitionExecutor.CreateTable(entity.TableName, entity.ColumnDefinitions().EnsureDeleted(),
+            cancellationToken);
     }
     public async Task EnsureEntityInTopMenuBar(Entity entity, CancellationToken cancellationToken)
     {
@@ -247,5 +234,12 @@ public sealed  class SchemaService(
             };
 
         });
+    }
+    public async Task<Result> NameNotTakenByOther(Schema schema, CancellationToken cancellationToken)
+    {
+        var query = BaseQuery().Where(ColumnName, schema.Name).Where(ColumnType, schema.Type)
+            .WhereNot(ColumnId, schema.Id);
+        var count = await kateQueryExecutor.Count(query, cancellationToken);
+        return count == 0 ? Result.Ok() : Result.Fail($"the schema name {schema.Name} was taken by other schema");
     }
 }

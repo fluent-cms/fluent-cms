@@ -1,4 +1,3 @@
-
 $(document).ready(function() {
     const searchParams = new URLSearchParams(window.location.search);
     const schema = searchParams.get("schema");
@@ -9,7 +8,15 @@ $(document).ready(function() {
     if (schema){
         $('title').text(`${schema} list - Fluent CMS Schema Builder`);
     }
-
+    getUserInfo().then(({data,error})=>
+    {
+        if (error){
+            console.log(error)
+            window.location.href = "/admin?ref=/schema";
+        }else {
+            renderTable();
+        }
+    });
     async function deleteSchema(e) {
         if (confirm("Do you want to delete schema: " + e.getAttribute('data-name'))) {
             $.LoadingOverlay("show");
@@ -51,7 +58,5 @@ $(document).ready(function() {
         }
         $.LoadingOverlay("hide");
     }
-
-
-    renderTable();
+    
 });

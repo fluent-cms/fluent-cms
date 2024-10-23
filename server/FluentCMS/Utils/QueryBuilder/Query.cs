@@ -1,18 +1,35 @@
-using System.Text.Json.Serialization;
+using System.Collections.Immutable;
+
 namespace FluentCMS.Utils.QueryBuilder;
 
-public sealed class Query
-{
-    public string Name { get; set; } = "";
-    public string EntityName { get; set; } = "";
-    public int PageSize { get; set; }
+public sealed record Query(
+    string Name,
+    string EntityName,
+    int PageSize,
+    string SelectionSet,
+    ImmutableArray<Sort> Sorts,
+    ImmutableArray<Filter> Filters);
 
-    public string SelectionSet { get; set; } = "";
-    [JsonIgnore] public Attribute[] Selection { get; set; } = [];
-    
-    [JsonIgnore]
-    public Entity? Entity { get; set; }
+public sealed record LoadedQuery(
+    string Name,
+    string EntityName,
+    int PageSize,
+    ImmutableArray<LoadedAttribute> Selection ,
+    ImmutableArray<Sort> Sorts,
+    ImmutableArray<Filter> Filters, // filter need to resolve according to user input
+    LoadedEntity Entity);
 
-    public Sorts Sorts { get; set; } = [];
-    public Filters Filters { get; set; } = [];
+public static class QueryHelper{
+    public static LoadedQuery ToLoadedQuery(this Query query, LoadedEntity entity, IEnumerable<LoadedAttribute> attributes)
+    {
+        return new LoadedQuery(
+            query.Name,
+            query.EntityName,
+            query.PageSize,
+            [..attributes],
+            query.Sorts,
+            query.Filters,
+            entity // LoadedEntity to be passed
+        );
+    }
 }

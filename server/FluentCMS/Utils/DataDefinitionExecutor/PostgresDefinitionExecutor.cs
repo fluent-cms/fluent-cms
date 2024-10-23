@@ -4,7 +4,7 @@ namespace FluentCMS.Utils.DataDefinitionExecutor;
 
 public class PostgresDefinitionExecutor(string connectionString, ILogger<PostgresDefinitionExecutor> logger):IDefinitionExecutor
 {
-    public object CastToDatabaseType(DataType dataType, string str)
+    public object CastToDatabaseType(string dataType, string str)
     {
         return dataType switch
         {
@@ -64,18 +64,13 @@ public class PostgresDefinitionExecutor(string connectionString, ILogger<Postgre
             var columnDefinitions = new List<ColumnDefinition>();
             while (await reader.ReadAsync(cancellationToken))
             {
-                columnDefinitions.Add(new ColumnDefinition
-                {
-                    ColumnName = reader.GetString(0),
-                    DataType = StringToDataType(reader.GetString(1))
-                });
+                columnDefinitions.Add(new ColumnDefinition(reader.GetString(0),reader.GetString(1)));
             }
             return columnDefinitions.ToArray();
         }, ("tableName", tableName));
     }
     
-    
-    private string DataTypeToString(DataType dataType)
+    private string DataTypeToString(string dataType)
     {
         return dataType switch
         {
@@ -87,7 +82,7 @@ public class PostgresDefinitionExecutor(string connectionString, ILogger<Postgre
         };
     }
 
-    private DataType StringToDataType(string s)
+    private string StringToDataType(string s)
     {
         s = s.ToLower();
         return s switch

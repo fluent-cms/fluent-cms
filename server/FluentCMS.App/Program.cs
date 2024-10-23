@@ -30,10 +30,10 @@ await app.UseCmsAsync();
 using var scope = app.Services.CreateScope();
 
 var schemaService = scope.ServiceProvider.GetRequiredService<IEntitySchemaService>();
-var entity = await schemaService.GetByNameDefault(TestEntity.EntityName, true);
+var entity = await schemaService.GetLoadedEntity(TestEntity.EntityName);
 if (entity.IsFailed)
 {
-    await schemaService.AddOrSaveSimpleEntity(TestEntity.EntityName, TestEntity.FieldName, "", "");
+    await schemaService.EnsureSimpleEntity(TestEntity.EntityName, TestEntity.FieldName, "", "");
     var entityService = scope.ServiceProvider.GetRequiredService<IEntityService>();
     await entityService.Insert(TestEntity.EntityName, new Dictionary<string, object>
     {
@@ -56,54 +56,73 @@ app.Run();
 return;
 void RegisterHooks()
 {
+    var registry = app.GetHookRegistry();
 
-    app.RegisterCmsHook(TestEntity.EntityName, [Occasion.BeforeInsert], 
-        (IDictionary<string,object> test) => { test[TestEntity.FieldName] += "BeforeInsert"; });
-    app.RegisterCmsHook(TestEntity.EntityName, [Occasion.AfterInsert], 
-        (IDictionary<string,object> test) => { test[TestEntity.FieldName] += "AfterInsert"; });
-
-    app.RegisterCmsHook(TestEntity.EntityName, [Occasion.BeforeUpdate], 
-        (IDictionary<string,object> test) => { test[TestEntity.FieldName] += "BeforeUpdate"; });
-
-    app.RegisterCmsHook(TestEntity.EntityName, [Occasion.AfterUpdate], 
-        (IDictionary<string,object>test) => { test[TestEntity.FieldName] += "AfterUpdate"; });
-
-    app.RegisterCmsHook(TestEntity.EntityName, [Occasion.BeforeDelete], 
-        (IDictionary<string,object> test) => { test[TestEntity.FieldName] += "BeforeDelete"; });
-
-    app.RegisterCmsHook(TestEntity.EntityName, [Occasion.AfterDelete], 
-        (IDictionary<string,object> test) => { test[TestEntity.FieldName] += "AfterDelete"; });
-
-    app.RegisterCmsHook(TestEntity.EntityName, [Occasion.BeforeReadOne], (EntityMeta meta) =>
-    {
-        if (meta.RecordId == "1000")
+    registry.EntityPreAdd.Register(TestEntity.EntityName, 
+        args => { 
+            args.RefRecord[TestEntity.FieldName] += "BeforeInsert";
+            return args;
+        });
+    
+    registry.EntityPostAdd.Register(TestEntity.EntityName,
+        args => { 
+            args.Record[TestEntity.FieldName] += "AfterInsert";
+            return args;
+        });
+    
+    registry.EntityPreUpdate.Register(TestEntity.EntityName,
+        args =>
         {
-            throw new FluentCMS.Services.InvalidParamException("1000");
-        }
-    });
-
-    app.RegisterCmsHook(TestEntity.EntityName, [Occasion.AfterReadOne],
-        (IDictionary<string,object> test) =>
+            args.RefRecord[TestEntity.FieldName] += "BeforeUpdate";
+            return args;
+        });
+    
+    registry.EntityPostUpdate.Register(TestEntity.EntityName,
+        args =>
         {
-            test[TestEntity.FieldName] += "AfterQueryOne";
+            args.Record[TestEntity.FieldName] += "AfterUpdate"; 
+            return args;
         });
 
-    app.RegisterCmsHook(TestEntity.EntityName, [Occasion.BeforeReadList], 
-        (Filters _, Sorts sorts) =>
+    registry.EntityPreDel.Register(TestEntity.EntityName,
+        param =>
         {
-            sorts.Add(new Sort
+            param.RefRecord[TestEntity.FieldName] += "BeforeDelete";
+            return param;
+        });
+
+    registry.EntityPostDel.Register(TestEntity.EntityName,
+        param =>
+        {
+            param.Record[TestEntity.FieldName] += "AfterDelete";
+            return param;
+        });
+
+    registry.EntityPreGetOne.Register(TestEntity.EntityName,
+        (param )=>
+        {
+            if (param.RecordId == "1000")
             {
-                FieldName = TestEntity.FieldName,
-                Order = SortOrder.Asc
-            });
+                throw new FluentCMS.Services.InvalidParamException("1000");
+            }
+            return param;
         });
 
-    app.RegisterCmsHook(TestEntity.EntityName, [Occasion.AfterReadList], (ListResult result) =>
+    registry.EntityPostGetOne.Register(TestEntity.EntityName,
+        param =>
+        {
+            param.Record[TestEntity.FieldName] += "AfterQueryOne";
+            return param;
+        });
+    registry.EntityPreGetList.Register(TestEntity.EntityName,
+        param => param with { RefSorts = [..param.RefSorts, new Sort(TestEntity.FieldName, SortOrder.Asc)] });
+
+    registry.EntityPostGetList.Register(TestEntity.EntityName, (param) =>
     {
-        foreach (var item in result.Items)
+        foreach (var item in param.RefListResult.Items)
         {
             item[TestEntity.FieldName] +=  " AfterQueryMany";
         }
-
+        return param;
     });
 }

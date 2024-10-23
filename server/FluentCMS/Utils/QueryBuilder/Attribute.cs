@@ -1,55 +1,134 @@
+using System.Collections.Immutable;
 using System.Globalization;
-using System.Text.Json.Serialization;
 using FluentCMS.Utils.DataDefinitionExecutor;
-using FluentResults;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
-public class Attribute
-{
+public abstract record BaseAttribute(string Field, string Type, string DataType, bool InList, bool InDetail, string Option);
 
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public DataType DataType { get; set; }
+public sealed record Attribute(
+    string Field,
+    string Header = "",
+    string DataType = DataType.String,
+    string Type = DisplayType.Text,
+    bool InList = true,
+    bool InDetail = true,
+    bool IsDefault = false,
+    string Options = "",
+    string Validation = "",
+    string ValidationMessage = ""
+) : BaseAttribute(
+    Field: Field,
+    Type: Type,
+    DataType:DataType,
+    InList: InList,
+    InDetail: InDetail,
+    Option: Options
+);
 
-    private string _field = "";
-    public string Field
-    {
-        get => _field;
-        set => _field = value.Trim();
-    }
-    public string Header { get; set; } = "";
-    public bool InList { get; set; } 
-    public bool InDetail { get; set; }
-    public bool IsDefault { get; set; } //for admin panel
+public sealed record ValidAttribute(
+    string Fullname,
+    string Field,
+    string Header = "",
+    string DataType = DataType.String,
+    string Type = DisplayType.Text,
+    bool InList = true,
+    bool InDetail = true,
+    bool IsDefault = false,
+    string Options = "",
+    string Validation = "",
+    string ValidationMessage = ""
 
+) : BaseAttribute(
+    Field: Field,
+    Type:Type,
+    DataType:DataType,
+    InList:InList,
+    InDetail:InDetail,
+    Option: Options
+);
+
+public sealed record LoadedAttribute(
+    string Fullname,
+    string Field,
+    Crosstable? Crosstable = default,
+    LoadedEntity? Lookup = default,
+    LoadedAttribute[]? Children =default,
     
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public DisplayType Type { get; set; }
+    string Header = "",
+    string DataType = DataType.String,
+    string Type = DisplayType.Text,
+    
+    bool InList = true,
+    bool InDetail = true,
+    bool IsDefault = false,
+    
+    string Options = "", //frontend need this ,can not delete
+    string Validation = "",
+    string ValidationMessage = ""
+) : BaseAttribute(
+    Field: Field,
+    Type:Type,
+    DataType:DataType,
+    InList:InList,
+    InDetail:InDetail,
+    Option: Options
 
-    public string Options { get; set; } = "";
-    public string Validation { get; set; } = "";
-    public string ValidationMessage { get; set; } = "";
+);
 
-    [JsonIgnore]
-    public bool IsLocalAttribute => Type != DisplayType.crosstable;
-    [JsonIgnore]
-    public Entity? Parent { get; set; }
-    // not input in json designer, 
-    public Crosstable? Crosstable { get; set; } 
-    public Entity? Lookup { get; set; }
+public static class AttributeHelper
+{
+    public static string GetLookupTarget(this BaseAttribute a) => a.Option;
+    public static string GetCrosstableTarget(this BaseAttribute a) => a.Option;
+    private static bool IsLocalAttribute(this BaseAttribute a) => a.Type != DisplayType.Crosstable;
 
-    [JsonIgnore] public Attribute[]? Children { get; set; } 
-    public Attribute() {}
-
-    public Attribute(ColumnDefinition col)
+    public static LoadedAttribute ToLoaded(this ValidAttribute a, LoadedEntity? lookup = default, Crosstable? crosstable = default, LoadedAttribute[]? children  =default)
     {
-        Field = col.ColumnName;
-        Header = SnakeToTitle(col.ColumnName);
-        InList = true;
-        InDetail = true;
-        Type = DisplayType.text;
-        DataType = col.DataType;
-        return;
+        return new LoadedAttribute(
+            Fullname: a.Fullname,
+            Field: a.Field,
+            Crosstable: crosstable,
+            Lookup: lookup,
+            Children: children,
+            Header: a.Header,
+            DataType: a.DataType,
+            Type: a.Type,
+            InList: a.InList,
+            InDetail: a.InDetail,
+            IsDefault: a.IsDefault,
+            Options: a.Options,
+            Validation: a.Validation,
+            ValidationMessage: a.ValidationMessage
+        );
+    }
+
+    public static ValidAttribute ToValid(this Attribute a, string tableName)
+    {
+        var fullname = $"{tableName}.{a.Field}";
+
+        // Create and return a ParsedAttr object
+        return new ValidAttribute(
+            Fullname: fullname,
+            Field: a.Field,
+            Header: a.Header,
+            DataType: a.DataType,
+            Type: a.Type,
+            InList: a.InList,
+            InDetail: a.InDetail,
+            IsDefault: a.IsDefault,
+            Options: a.Options,
+            Validation: a.Validation,
+            ValidationMessage: a.ValidationMessage
+        );
+    }
+
+    public static Attribute ToAttribute(this ColumnDefinition col)
+    {
+        return new Attribute(
+            Field:col.ColumnName,
+            Header : SnakeToTitle(col.ColumnName),
+            DataType : col.DataType
+        );
         string SnakeToTitle(string snakeStr)
         {
             // Split the snake_case string by underscores
@@ -65,59 +144,50 @@ public class Attribute
             return string.Join(" ", components);
         }
     }
+   
+    public static ImmutableArray<object> GetUniqValues<T>(this T a, Record[] records)
+    where T :BaseAttribute
+    {
+        return [..records.Where(x => x.ContainsKey(a.Field)).Select(x => x[a.Field]).Distinct().Where(x => x != null)];
+    }
 
-    public string FullName()
-    {
-        ArgumentNullException.ThrowIfNull(Parent);
-        return Parent.TableName + "." + Field;
-    }
-    public Result<string> GetCrossEntityName()
-    {
-        return string.IsNullOrWhiteSpace(Options) ? Result.Fail($"not find corsstable for {FullName()}") : Options;
-    }
- 
-    public Result<string> GetLookupEntityName()
-    {
-        return string.IsNullOrWhiteSpace(Options) ? Result.Fail($"not find lookup for {FullName()}") : Options;
-    }
-    
-    public object[] GetValues(Record[] records)
-    {
-        return records.Where(x=>x.ContainsKey(Field)).Select(x => x[Field]).Distinct().Where(x => x != null).ToArray();
-    }
-}
-
-public static class AttributeNodeHelper
-{
-    public static Attribute? FindOneAttribute(this Attribute[]?  arr, string name)
+    public static T? FindOneAttribute<T>(this IEnumerable<T>?  arr, string name)
+    where T :BaseAttribute
     {
         return arr?.FirstOrDefault(x => x.Field == name);
     }
-    public static Attribute[] GetLocalAttributes(this Attribute[]? arr)
+    public static ImmutableArray<T> GetLocalAttributes<T>(this IEnumerable<T>? arr)
+    where T :BaseAttribute
     {
-        return arr?.Where(x => x.IsLocalAttribute).ToArray()??[];
+        return arr?.Where(x => x.IsLocalAttribute()).ToImmutableArray()??[];
     }
-    public static Attribute[] GetLocalAttributes(this Attribute[]? arr, InListOrDetail listOrDetail)
+    public static ImmutableArray<T> GetLocalAttributes<T>(this IEnumerable<T>? arr, InListOrDetail listOrDetail)
+    where T : BaseAttribute
     {
         return arr?.Where(x =>
-                x.Type != DisplayType.crosstable &&
+                x.Type != DisplayType.Crosstable &&
                 (listOrDetail == InListOrDetail.InList ? x.InList : x.InDetail))
-            .ToArray()??[];
+            .ToImmutableArray()??[];
     }
 
-    public static Attribute[] GetLocalAttributes(this Attribute[]? arr, string[] attributes)
+    public static ImmutableArray<T> GetLocalAttributes<T>(this IEnumerable<T>? arr, string[] attributes)
+    where T : BaseAttribute
     {
-        return arr?.Where(x => x.Type != DisplayType.crosstable && attributes.Contains(x.Field)).ToArray()??[];
+        return arr?.Where(x => x.Type != DisplayType.Crosstable && attributes.Contains(x.Field)).ToImmutableArray()??[];
     }
 
-    public static Attribute[] GetAttributesByType(this Attribute[]? arr, DisplayType displayType)
+    public static ImmutableArray<T> GetAttributesByType<T>(this IEnumerable<T>? arr, string displayType)
+    where T : BaseAttribute
     {
-        return arr?.Where(x => x.Type == displayType).ToArray()??[];
+        return arr?.Where(x => x.Type == displayType).ToImmutableArray()??[];
     }
 
-    public static Attribute[] GetAttributesByType(this Attribute[]? arr, DisplayType type, InListOrDetail listOrDetail)
+    public static ImmutableArray<T> GetAttributesByType<T>(this IEnumerable<T>? arr, string type, InListOrDetail listOrDetail)
+    where T : BaseAttribute
     {
         return arr?.Where(x => x.Type == type && (listOrDetail == InListOrDetail.InList ? x.InList : x.InDetail))
-            .ToArray()??[];
+            .ToImmutableArray()??[];
     }
+    
+    
 }
