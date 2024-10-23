@@ -71,7 +71,7 @@ public sealed class EntitySchemaService( ISchemaService schemaService, IDefiniti
 
         async Task SaveSchema()
         {
-            dto.Settings.Entity = entity;
+            dto = dto with { Settings = new Settings(entity) };
             dto = await schemaService.Save(dto, cancellationToken);
             entity = dto.Settings.Entity!;
         }
@@ -189,19 +189,16 @@ public sealed class EntitySchemaService( ISchemaService schemaService, IDefiniti
     {
         var find = await schemaService.GetByNameDefault(entity.Name, SchemaType.Entity , cancellationToken);
         var schema = new Schema
-        {
-            Name = entity.Name,
-            Type = SchemaType.Entity,
-            Settings = new Settings
-            {
-                Entity = entity
-            }
-        };
-
-        if (find is not null)
-        {
-            schema.Id = find.Id;
-        }
+        (
+            Id: find?.Id ?? 0,
+            Name: entity.Name,
+            Type: SchemaType.Entity,
+            Settings: new Settings
+            (
+                Entity: entity
+            ),
+            CreatedBy: ""
+        );
         return await SaveTableDefine(schema, cancellationToken);
     }
 }

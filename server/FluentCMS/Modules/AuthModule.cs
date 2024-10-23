@@ -35,10 +35,9 @@ public sealed class AuthModule<TCmsUser>(ILogger<IAuthModule> logger) : IAuthMod
         var registry = app.Services.GetRequiredService<CmsModule>().GetHookRegistry(app);
 
         registry.SchemaPreSave.RegisterDynamic("*",
-            async (ISchemaPermissionService schemaPermissionService, SchemaPreSaveArgs args) =>
+            async (ISchemaPermissionService schemaPermissionService, SchemaPreSaveArgs args) => args with
             {
-                await schemaPermissionService.Save(args.RefSchema);
-                return args;
+                RefSchema = await schemaPermissionService.Save(args.RefSchema)
             });
 
         registry.SchemaPreDel.RegisterDynamic("*",

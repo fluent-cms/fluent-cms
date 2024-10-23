@@ -22,6 +22,7 @@ public sealed class PageService(ISchemaService schemaService, IQueryService quer
             NotNull(await schemaService.GetByNamePrefixDefault(pageName + "/{", SchemaType.Page, cancellationToken))
                 .ValOrThrow($"Can not find page [{pageName}]");
         var page = NotNull(schema.Settings.Page).ValOrThrow("Invalid page payload");
+        var query = StrNotEmpty(page.Query).ValOrThrow($"Query of page {pageName} is not set");
         var bracedName = schema.Name.Split("/").Last();
         var routerName = RemoveBrace(bracedName);
         if (bracedName != paramValue)
@@ -29,7 +30,7 @@ public sealed class PageService(ISchemaService schemaService, IQueryService quer
             qsDictionary[routerName] = paramValue;
         }
 
-        var data = await queryService.One(page.Query, qsDictionary, cancellationToken);
+        var data = await queryService.One(query, qsDictionary, cancellationToken);
         return await RenderPage(page, data, qsDictionary, cancellationToken);
     }
 

@@ -1,15 +1,6 @@
+using System.Collections.Immutable;
+
 namespace FluentCMS.Cms.Models;
 
-public sealed class Menu
-{
-    public string Name { get; set; } = "";
-    public MenuItem[] MenuItems { get; set; } = [];
-}
-
-public sealed class MenuItem
-{
-    public string Icon { get; set; } = "";
-    public string Label { get; set; } = "";
-    public string Url { get; set; } = "";
-    public bool IsHref { get; set; } = false;
-}
+public sealed record Menu(string Name, ImmutableArray<MenuItem> MenuItems);
+public sealed record MenuItem(string Icon, string Label, string Url, bool IsHef = false);

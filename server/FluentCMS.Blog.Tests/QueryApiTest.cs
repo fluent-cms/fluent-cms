@@ -69,14 +69,14 @@ public class QueryApiTest
         var query = new Query(tableName + suffix, tableName, QueryPageSize, "{id," + FieldName + "}",
             [new Sort("id", SortOrder.Asc)], [filter]);
         return new Schema
-        {
-            Name = query.Name,
-            Type = SchemaType.Query,
-            Settings = new Settings
+        (
+            Name : query.Name,
+            Type : SchemaType.Query,
+            Settings : new Settings
             {
                 Query = query
             }
-        };
+        );
     }
  
 }

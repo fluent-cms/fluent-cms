@@ -1,9 +1,3 @@
 namespace FluentCMS.Cms.Models;
-public class Schema
-{
-    public int Id { get; set; } 
-    public string Name { get; set; } = "";
-    public string Type { get; set; } = "";
-    public Settings Settings { get; set; } = null!;
-    public string CreatedBy { get; set; } = "";
-}
+
+public record Schema(string Name, string Type, Settings Settings, int Id = 0, string CreatedBy ="");

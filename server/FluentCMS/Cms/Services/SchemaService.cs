@@ -79,8 +79,7 @@ public sealed  class SchemaService(
     {
         CheckResult(await NameNotTakenByOther(dto, cancellationToken));
         var res = await hookRegistry.SchemaPreSave.Trigger(provider, new SchemaPreSaveArgs(dto));
-        await SaveSchema(res.RefSchema, cancellationToken);
-        return dto;
+        return await SaveSchema(res.RefSchema, cancellationToken);
     }
 
     public async Task Delete(int id, CancellationToken cancellationToken = default)
@@ -100,17 +99,19 @@ public sealed  class SchemaService(
         }
 
         var menuBarSchema = new Schema
-        {
-            Name = SchemaName.TopMenuBar,
-            Type = SchemaType.Menu,
-            Settings = new Settings
-            {
-                Menu = new Menu
-                {
-                    Name = SchemaName.TopMenuBar,
-                }
-            }
-        };
+        (
+            Name:  SchemaName.TopMenuBar,
+            Type : SchemaType.Menu,
+            Settings : new Settings
+            (
+                Menu : new Menu
+                (
+                    Name : SchemaName.TopMenuBar,
+                    MenuItems:[]
+                )
+            )
+        );
+
         await SaveSchema(menuBarSchema, cancellationToken);
     }
 
@@ -152,17 +153,16 @@ public sealed  class SchemaService(
             var menuItem = menuBar.MenuItems.FirstOrDefault(me => me.Url == link);
             if (menuItem is null)
             {
-                menuBar.MenuItems =
-                [
-                    ..menuBar.MenuItems, new MenuItem
-                    {
-                        Icon = "pi-bolt",
-                        Url = link,
-                        Label = entity.Title
-                    }
-                ];
+                menuBar = menuBar with
+                {
+                    MenuItems =
+                    [
+                        ..menuBar.MenuItems, new MenuItem(Icon: "pi-bolt", Url: link, Label: entity.Title)
+                    ]
+                };
             }
 
+            menuBarSchema = menuBarSchema with { Settings = new Settings(Menu:menuBar) };
             await SaveSchema(menuBarSchema, cancellationToken);
         }
     }
@@ -182,7 +182,7 @@ public sealed  class SchemaService(
         return new SqlKata.Query(TableName).Select(Fields()).Where(ColumnDeleted, false);
     }
 
-    private async Task SaveSchema(Schema dto, CancellationToken cancellationToken)
+    private async Task<Schema> SaveSchema(Schema dto, CancellationToken cancellationToken) 
     {
         if (dto.Id == 0)
         {
@@ -194,7 +194,7 @@ public sealed  class SchemaService(
                 { ColumnCreatedBy, dto.CreatedBy }
             };
             var query = new SqlKata.Query(TableName).AsInsert(record, true);
-            dto.Id = await kateQueryExecutor.Exec(query, cancellationToken);
+            dto = dto with{Id =  await kateQueryExecutor.Exec(query, cancellationToken)};
         }
         else
         {
@@ -206,6 +206,8 @@ public sealed  class SchemaService(
                 );
             await kateQueryExecutor.Exec(query, cancellationToken);
         }
+
+        return dto;
     }
 
     private static Result<Schema> ParseSchema(Record? record)
@@ -220,19 +222,18 @@ public sealed  class SchemaService(
             record = record.ToDictionary(pair => pair.Key.ToLower(), pair => pair.Value);
             var s = JsonSerializer.Deserialize<Settings>((string)record[ColumnSettings]);
             return new Schema
-            {
-                Name = (string)record[ColumnName],
-                Type = (string)record[ColumnType],
-                Settings = s!,
-                CreatedBy = (string)record[ColumnCreatedBy],
-                Id = record[ColumnId] switch
+            (
+                Name : (string)record[ColumnName],
+                Type : (string)record[ColumnType],
+                Settings : s!,
+                CreatedBy : (string)record[ColumnCreatedBy],
+                Id : record[ColumnId] switch
                 {
                     int val => val,
                     long val => (int)val,
                     _ => 0
                 }
-            };
-
+            );
         });
     }
     public async Task<Result> NameNotTakenByOther(Schema schema, CancellationToken cancellationToken)

@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Security.Claims;
 using FluentCMS.Cms.Services;
 using FluentCMS.Cms.Models;
@@ -7,7 +8,6 @@ using FluentCMS.Utils.IdentityExt;
 using FluentCMS.Utils.QueryBuilder;
 using FluentResults;
 using Microsoft.AspNetCore.Identity;
-using Npgsql.Internal.Postgres;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.Auth.Services;
@@ -71,7 +71,7 @@ public class SchemaPermissionService<TUser>(
         //create
         if (schema.Id == 0)
         {
-            schema.CreatedBy = currentUserId;
+            schema = schema with { CreatedBy = currentUserId };
             if (schema.Type == SchemaType.Entity)
             {
                 await EnsureUserHaveAccessEntity(schema);
@@ -121,15 +121,13 @@ public class SchemaPermissionService<TUser>(
         if (entity is null) return Result.Fail("Invalid Entity payload");
         if (schema.Settings.Entity?.Attributes.FindOneAttribute(Constants.CreatedBy) is not null) return schema;
 
-        schema.Settings.Entity = entity with
-        {
-            Attributes =
-            [
-                ..entity.Attributes,
+        ImmutableArray<Attribute> attributes =
+        [
+            ..entity.Attributes,
                 new Attribute(Field: Constants.CreatedBy, Header: Constants.CreatedBy, DataType: DataType.String)
-            ]
-        };
-        return schema;
+            
+        ];
+        return schema with{Settings = new Settings(Entity: entity with{Attributes = attributes})};
     }
 
     private async Task SaOrAdminHaveAccessToSchema(Schema schema, string currentUserId)

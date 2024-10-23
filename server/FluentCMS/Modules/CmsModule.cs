@@ -157,7 +157,7 @@ public sealed class CmsModule(
                                     """;
                         try
                         {
-                            html = await pageService.Get(Page.HomePage, new Dictionary<string, StringValues>());
+                            html = await pageService.Get(PageConstants.HomePage, new Dictionary<string, StringValues>());
                         }
                         catch (Exception e)
                         {

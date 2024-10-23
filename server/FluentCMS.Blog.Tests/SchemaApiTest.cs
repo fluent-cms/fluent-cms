@@ -61,7 +61,7 @@ public class SchemaApiTest
         var schema = TestSchema();
         await _accountApiClient.EnsureLogin();
         schema = (await _schemaApiClient.SaveEntityDefine(schema)).AssertSuccess();
-        schema.Settings.Entity = schema.Settings.Entity! with { DefaultPageSize = 10 };
+        schema = schema with { Settings = new Settings(Entity: schema.Settings.Entity! with { DefaultPageSize = 10 }) };
         (await _schemaApiClient.SaveEntityDefine(schema)).AssertSuccess();
         var entity = (await _schemaApiClient.GetLoadedEntity(schema.Name)).AssertSuccess();
         Assert.Equal(10,entity.DefaultPageSize);
@@ -121,13 +121,14 @@ public class SchemaApiTest
     {
         var entity = RandomTestEntity();
         return new Schema
-        {
-            Name = entity.Name,
-            Type = SchemaType.Entity,
-            Settings = new Settings
+        (
+            Id:0,
+            Name : entity.Name,
+            Type : SchemaType.Entity,
+            Settings : new Settings
             {
                 Entity = entity
             }
-        };
+        );
     }
 }

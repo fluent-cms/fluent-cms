@@ -1,17 +1,16 @@
 namespace FluentCMS.Cms.Models;
 
-public sealed class Page
-{
-    
-    public string Name { get; set; } = "";
-    public string Title { get; set; } = "";
-    public string Query { get; set; } = "";
-    public string Html { get; set; } = "";
-    public string Css { get; set; } = "";
-
-    public const string HomePage = "home";
-    
+public sealed record Page(
+    string Name,
+    string Title,
+    string? Query,
+    string Html,
+    string Css,
     /*for grapes.js restore last configure */
-    public string Components { get; set; } = "";
-    public string Styles { get; set; } = "";
+    string Components,
+    string Styles);
+
+public static class PageConstants
+{
+    public const string HomePage = "home";
 }
