@@ -47,7 +47,7 @@ public sealed class QuerySchemaService(
 
     private async Task<Result<LoadedAttribute[]>> InitViewSelection(Query query, LoadedEntity entity, CancellationToken cancellationToken)
     {
-        GraphQLDocument document = Parser.Parse(query.SelectionSet);
+        var document = Parser.Parse(query.SelectionSet);
         List<LoadedAttribute> fieldNodes = new();
 
         foreach (var definition in document.Definitions)

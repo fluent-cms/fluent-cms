@@ -1,4 +1,4 @@
-using FluentCMS.Auth.Services;
+using FluentCMS.Auth.models;
 using FluentCMS.Blog.Data;
 using FluentCMS.Services;
 using FluentCMS.WebAppExt;
@@ -32,8 +32,8 @@ public static class App
       }
       await Migrate(app);
       await app.UseCmsAsync();
-      InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]));
-      InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]));
+      InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [RoleConstants.Sa]));
+      InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("admin@cms.com", "Admin1!", [RoleConstants.Admin]));
       app.Run();
    }
 

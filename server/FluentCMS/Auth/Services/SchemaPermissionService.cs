@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Security.Claims;
+using FluentCMS.Auth.models;
 using FluentCMS.Cms.Services;
 using FluentCMS.Cms.Models;
 using FluentCMS.Services;
@@ -25,12 +26,12 @@ public class SchemaPermissionService<TUser>(
 {
     public string[] GetAll()
     {
-        if (contextAccessor.HttpContext.HasRole(Roles.Sa))
+        if (contextAccessor.HttpContext.HasRole(RoleConstants.Sa))
         {
             return [];
         }
 
-        if (contextAccessor.HttpContext.HasRole(Roles.Admin))
+        if (contextAccessor.HttpContext.HasRole(RoleConstants.Admin))
         {
             return contextAccessor.HttpContext!.User.Claims
                 .Where(x=>x.Type is AccessScope.RestrictedAccess or AccessScope.FullAccess or AccessScope.FullRead or AccessScope.RestrictedRead)
@@ -43,7 +44,7 @@ public class SchemaPermissionService<TUser>(
 
     public void GetOne(string schemaName)
     {
-        if (contextAccessor.HttpContext.HasRole(Roles.Sa) 
+        if (contextAccessor.HttpContext.HasRole(RoleConstants.Sa) 
             || contextAccessor.HttpContext.HasClaims(AccessScope.FullAccess,schemaName)
             || contextAccessor.HttpContext.HasClaims(AccessScope.FullRead,schemaName)
             || contextAccessor.HttpContext.HasClaims(AccessScope.RestrictedAccess,schemaName)
@@ -86,7 +87,7 @@ public class SchemaPermissionService<TUser>(
         switch (schema.Type)
         {
             case SchemaType.Menu:
-                True(contextAccessor.HttpContext.HasRole(Roles.Sa))
+                True(contextAccessor.HttpContext.HasRole(RoleConstants.Sa))
                     .ThrowNotTrue("Only Supper Admin has the permission to modify menu");
                 break;
             default:
@@ -97,7 +98,7 @@ public class SchemaPermissionService<TUser>(
 
     private async Task EnsureUserHaveAccessEntity(Schema schema)
     {
-        if (contextAccessor.HttpContext.HasRole(Roles.Sa))
+        if (contextAccessor.HttpContext.HasRole(RoleConstants.Sa))
         {
             return;
         }
@@ -132,12 +133,12 @@ public class SchemaPermissionService<TUser>(
 
     private async Task SaOrAdminHaveAccessToSchema(Schema schema, string currentUserId)
     {
-        if (contextAccessor.HttpContext.HasRole(Roles.Sa))
+        if (contextAccessor.HttpContext.HasRole(RoleConstants.Sa))
         {
             return;
         }
 
-        if (!contextAccessor.HttpContext.HasRole(Roles.Admin))
+        if (!contextAccessor.HttpContext.HasRole(RoleConstants.Admin))
         {
             throw new InvalidParamException("Only Admin and Super Admin can has this permission");
         }

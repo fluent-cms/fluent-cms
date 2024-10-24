@@ -1,3 +1,4 @@
+using FluentCMS.Auth.models;
 using FluentCMS.Auth.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -5,7 +6,7 @@ namespace FluentCMS.Auth.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = $"{Roles.Sa},{Roles.Admin}")]
+[Authorize(Roles = $"{RoleConstants.Sa},{RoleConstants.Admin}")]
 public class AccountsController(IAccountService accountService) : ControllerBase
 {
     [HttpGet("users")]

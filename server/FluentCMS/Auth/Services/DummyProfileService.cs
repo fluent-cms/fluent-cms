@@ -1,3 +1,4 @@
+using FluentCMS.Auth.models;
 using FluentCMS.Services;
 
 namespace FluentCMS.Auth.Services;
@@ -7,11 +8,11 @@ public class DummyProfileService: IProfileService
     public UserDto GetInfo()
     {
         return new UserDto
-        {
-            Email = "sadmin@cms.com",
-            Roles = [Roles.Sa],
-            AllowedMenus = [UserDto.MenuSchemaBuilder]
-        };
+        (
+            Email : "sadmin@cms.com",
+            Roles : [RoleConstants.Sa],
+            AllowedMenus : [UserConstants.MenuSchemaBuilder]
+        );
     }
     
     public Task ChangePassword(ProfileDto dto)
