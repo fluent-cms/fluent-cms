@@ -51,9 +51,10 @@ public sealed record ValidAttribute(
 public sealed record LoadedAttribute(
     string Fullname,
     string Field,
+    ImmutableArray<LoadedAttribute> Children ,
+    
     Crosstable? Crosstable = default,
     LoadedEntity? Lookup = default,
-    LoadedAttribute[]? Children =default,
     
     string Header = "",
     string DataType = DataType.String,
@@ -82,14 +83,14 @@ public static class AttributeHelper
     public static string GetCrosstableTarget(this BaseAttribute a) => a.Option;
     private static bool IsLocalAttribute(this BaseAttribute a) => a.Type != DisplayType.Crosstable;
 
-    public static LoadedAttribute ToLoaded(this ValidAttribute a, LoadedEntity? lookup = default, Crosstable? crosstable = default, LoadedAttribute[]? children  =default)
+    public static LoadedAttribute ToLoaded(this ValidAttribute a, LoadedEntity? lookup = default, Crosstable? crosstable = default, ImmutableArray<LoadedAttribute> children  =default)
     {
         return new LoadedAttribute(
             Fullname: a.Fullname,
             Field: a.Field,
             Crosstable: crosstable,
             Lookup: lookup,
-            Children: children,
+            Children: [..children],
             Header: a.Header,
             DataType: a.DataType,
             Type: a.Type,

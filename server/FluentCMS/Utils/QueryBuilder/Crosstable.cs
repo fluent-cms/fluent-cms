@@ -29,19 +29,23 @@ public static class CrosstableHelper
     public static Crosstable Crosstable(LoadedEntity sourceEntity, LoadedEntity targetEntity)
     {
         var tableName = GetTableName();
-        var id = new LoadedAttribute($"{tableName}.{DefaultFields.Id}", DefaultFields.Id);
-        var deleted = new LoadedAttribute($"{tableName}.{DefaultFields.Deleted}", DefaultFields.Deleted);
+        var id = new LoadedAttribute($"{tableName}.{DefaultFields.Id}", DefaultFields.Id,[]);
+        var deleted = new LoadedAttribute($"{tableName}.{DefaultFields.Deleted}", DefaultFields.Deleted,[]);
         
         var sourceAttribute = new LoadedAttribute
         (
             Field: $"{sourceEntity.Name}_id",
             Fullname: $"{tableName}.{sourceEntity.Name}_id",
+            Children:[],
             DataType:DataType.Int
+            
+            
         );
         var targetAttribute = new LoadedAttribute
         (
             Field : $"{targetEntity.Name}_id",
             Fullname: $"{tableName}.{targetEntity.Name}_id",
+            Children:[],
             DataType:DataType.Int
         );
         

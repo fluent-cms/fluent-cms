@@ -152,8 +152,8 @@ public sealed class CmsModule(
                         using var scope = app.Services.CreateScope();
                         var pageService = scope.ServiceProvider.GetRequiredService<IPageService>();
                         var html = $"""
-                                    <a href="{FluentCmsContentRoot}/admin">Log in to Admin</a><br/>
-                                    <a href="{FluentCmsContentRoot}/schema-ui">Go to Schema Builder</a>
+                                    <a href="/admin">Log in to Admin</a><br/>
+                                    <a href="/schema">Go to Schema Builder</a>
                                     """;
                         try
                         {

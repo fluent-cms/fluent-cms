@@ -13,7 +13,7 @@ public enum InListOrDetail
     InDetail,
 }
 public record Entity(
-    ImmutableArray<Attribute> Attributes ,
+    ImmutableArray<Attribute> Attributes = default,
     string Name = "",
     string TableName = "",
     string PrimaryKey ="",
@@ -64,7 +64,7 @@ public static class EntityHelper
         var primaryKey = validEntity.Attributes.FindOneAttribute(validEntity.PrimaryKey)!.ToLoaded();
         var titleAttribute = validEntity.Attributes.FindOneAttribute(validEntity.TitleAttribute)?.ToLoaded() ??
                              primaryKey;
-        var deletedAttribute = new LoadedAttribute($"{validEntity.TableName}.{DefaultFields.Deleted}", DefaultFields.Deleted);
+        var deletedAttribute = new LoadedAttribute($"{validEntity.TableName}.{DefaultFields.Deleted}", DefaultFields.Deleted,[]);
         return new LoadedEntity(
             [..attributes],
             PrimaryKeyAttribute:primaryKey,
