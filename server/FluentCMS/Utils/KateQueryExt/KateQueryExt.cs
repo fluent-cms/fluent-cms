@@ -36,13 +36,26 @@ public static class KateQueryExt
         if (filters is null) return result;
         foreach (var filter in filters)
         {
+            for (var i = 0; i < filter.Attributes.Length - 1; i++)
+            {
+                var attr = filter.Attributes[i];
+                switch (attr.Type)
+                {
+                    case DisplayType.Lookup:
+                        query.Join(attr.Lookup!.TableName, attr.GetFullName(),
+                        attr.Lookup.PrimaryKeyAttribute.GetFullName());
+                        break;
+                }
+            }
+
+            var filedName = filter.Attributes.Last().GetFullName();
             query.Where(q =>
             {
                 foreach (var c in filter.Constraints)
                 {
-                    var ret = filter.Operator=="or"
-                        ? q.ApplyOrConstraint(filter.FieldName, c.Match, c.Values)
-                        : q.ApplyAndConstraint(filter.FieldName, c.Match, c.Values);
+                    var ret = filter.Operator == "or"
+                        ? q.ApplyOrConstraint(filedName, c.Match, c.Values)
+                        : q.ApplyAndConstraint(filedName, c.Match, c.Values);
                     if (ret.IsFailed)
                     {
                         result = Result.Fail(ret.Errors);

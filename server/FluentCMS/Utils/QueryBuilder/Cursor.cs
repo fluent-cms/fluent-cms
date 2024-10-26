@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Text.Json;
+using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentResults;
 using Microsoft.IdentityModel.Tokens;
 
@@ -67,7 +68,7 @@ public static class CursorHelper
     }
 
     
-    public static Result<ValidCursor> Resolve(this Cursor c,LoadedEntity entity, Func<string, string, object> cast)
+    public static Result<ValidCursor> Resolve(this Cursor c,LoadedEntity entity, CastDelegate cast)
     {
         if (c.IsEmpty()) return new ValidCursor(c, default);
         

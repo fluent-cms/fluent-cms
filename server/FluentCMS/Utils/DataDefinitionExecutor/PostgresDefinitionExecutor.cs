@@ -4,16 +4,16 @@ namespace FluentCMS.Utils.DataDefinitionExecutor;
 
 public class PostgresDefinitionExecutor(string connectionString, ILogger<PostgresDefinitionExecutor> logger):IDefinitionExecutor
 {
-    public object CastToDatabaseType(string dataType, string str)
+    public CastDelegate GetCastDelegate()
     {
-        return dataType switch
+        return (s, type) => type switch
         {
-            DataType.Int => int.Parse(str),
-            DataType.Datetime=> DateTime.Parse(str),
-            _ => str,
+            DataType.Int => int.Parse(s),
+            DataType.Datetime => DateTime.Parse(s),
+            _ => s
         };
     }
-    
+
     public async Task CreateTable(string tableName, ColumnDefinition[] columnDefinitions, CancellationToken cancellationToken)
     {
         var columnDefinitionStrs = columnDefinitions.Select(column => column.ColumnName.ToLower() switch

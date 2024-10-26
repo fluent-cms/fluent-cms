@@ -14,7 +14,7 @@ public class EntityPermissionService(
 
 ):IEntityPermissionService
 {
-    public ImmutableArray<ValidFilter> List(string entityName, ImmutableArray<ValidFilter> filters)
+    public ImmutableArray<ValidFilter> List(string entityName, LoadedEntity entity, ImmutableArray<ValidFilter> filters)
     {
         if (contextAccessor.HttpContext.HasRole(RoleConstants.Sa))
         {
@@ -33,10 +33,11 @@ public class EntityPermissionService(
             throw new InvalidParamException($"You don't have permission to read [{entityName}]");
         }
 
+        var createBy = new LoadedAttribute(Children:[],TableName: entity.TableName, Constants.CreatedBy);
         return
         [
             ..filters,
-            new ValidFilter(Constants.CreatedBy, "and",
+            new ValidFilter([createBy], "and",
                 [new ValidConstraint(Matches.EqualsTo, [MustGetCurrentUserId()])])
         ];
     }

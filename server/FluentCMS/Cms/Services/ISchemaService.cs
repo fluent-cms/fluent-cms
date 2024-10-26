@@ -30,5 +30,4 @@ public interface ISchemaService
     Task Delete(int id, CancellationToken cancellationToken);
     Task EnsureTopMenuBar(CancellationToken cancellationToken);
     Task EnsureSchemaTable(CancellationToken cancellationToken);
-    object CastToDatabaseType(string dataType, string str);
 }

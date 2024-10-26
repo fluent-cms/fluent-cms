@@ -70,10 +70,6 @@ public sealed  class SchemaService(
         
         return res.IsSuccess ? res.Value : null;
     }
-    public object CastToDatabaseType(string dataType, string str)
-    {
-        return definitionExecutor.CastToDatabaseType(dataType, str);
-    }
 
     public async Task<Schema> Save(Schema dto, CancellationToken cancellationToken = default)
     {

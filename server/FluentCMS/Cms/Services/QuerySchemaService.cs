@@ -72,7 +72,7 @@ public sealed class QuerySchemaService(
     private async Task<Result<ImmutableArray<LoadedAttribute>>> SelectionSetToNode(
         IEnumerable<GraphQLField> graphQlFields,
         LoadedEntity entity,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
 
         List<LoadedAttribute> attributes = new();
@@ -84,29 +84,30 @@ public sealed class QuerySchemaService(
                 return Result.Fail($"Verifying `SectionSet` fail, can not find {fldName} in {entity.Name}");
 
             var res =
-                await entitySchemaService.LoadOneRelated(entity, attribute, false,
-                    cancellationToken); //GetAttribute(field);
+                await entitySchemaService.LoadOneRelated(entity, attribute, ct); 
             if (res.IsFailed)
             {
                 return Result.Fail(res.Errors);
             }
 
             attribute = res.Value;
-
-            var children = attribute.Type switch
+            var targetEntity =  attribute.Type switch
             {
-                DisplayType.Crosstable => await SelectionSetToNode(field.SelectionSet!.SubFields(),
-                    attribute.Crosstable!.TargetEntity, cancellationToken),
-                DisplayType.Lookup => await SelectionSetToNode(field.SelectionSet!.SubFields(), attribute.Lookup!,
-                    cancellationToken),
-                _ => Result.Ok(new ImmutableArray<LoadedAttribute>())
+                DisplayType.Crosstable => attribute.Crosstable!.TargetEntity,
+                DisplayType.Lookup => attribute.Lookup,
+                _ => null
             };
-
-            if (children.IsFailed)
+            
+            if (targetEntity is not null && field.SelectionSet is not null)
             {
-                return Result.Fail($"Fail to get subfield of {attribute.Fullname}");
-            }
+                var children = await SelectionSetToNode(field.SelectionSet.SubFields(), targetEntity, ct);
+                if (children.IsFailed)
+                {
+                    return Result.Fail($"Fail to get subfield of {attribute.GetFullName()}");
+                }
 
+                attribute = attribute with { Children = children.Value };
+            }
             attributes.Add(attribute);
         }
 

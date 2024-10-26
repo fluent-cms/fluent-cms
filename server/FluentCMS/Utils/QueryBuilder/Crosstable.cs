@@ -29,13 +29,13 @@ public static class CrosstableHelper
     public static Crosstable Crosstable(LoadedEntity sourceEntity, LoadedEntity targetEntity)
     {
         var tableName = GetTableName();
-        var id = new LoadedAttribute($"{tableName}.{DefaultFields.Id}", DefaultFields.Id,[]);
-        var deleted = new LoadedAttribute($"{tableName}.{DefaultFields.Deleted}", DefaultFields.Deleted,[]);
+        var id = new LoadedAttribute([],tableName, DefaultFields.Id);
+        var deleted = new LoadedAttribute([],tableName, DefaultFields.Deleted);
         
         var sourceAttribute = new LoadedAttribute
         (
             Field: $"{sourceEntity.Name}_id",
-            Fullname: $"{tableName}.{sourceEntity.Name}_id",
+            TableName:tableName,
             Children:[],
             DataType:DataType.Int
             
@@ -44,7 +44,7 @@ public static class CrosstableHelper
         var targetAttribute = new LoadedAttribute
         (
             Field : $"{targetEntity.Name}_id",
-            Fullname: $"{tableName}.{targetEntity.Name}_id",
+            TableName: tableName,
             Children:[],
             DataType:DataType.Int
         );
@@ -89,8 +89,8 @@ public static class CrosstableHelper
     }
      private static SqlKata.Query Base(this Crosstable c,IEnumerable<LoadedAttribute> selectAttributes)
      {
-          var lstFields = selectAttributes.Select(x => x.Fullname).ToList();
-          lstFields.Add(c.SourceAttribute.Fullname);
+          var lstFields = selectAttributes.Select(x => x.GetFullName()).ToList();
+          lstFields.Add(c.SourceAttribute.GetFullName());
           var qry = c.TargetEntity.Basic().Select(lstFields);
           return qry;
      }
@@ -98,20 +98,20 @@ public static class CrosstableHelper
      public static SqlKata.Query Filter(this Crosstable c, IEnumerable<LoadedAttribute> selectAttributes, bool exclude, object id)
      {
          var baseQuery = c.Base(selectAttributes);
-         var (a, b) = (c.TargetEntity.PrimaryKeyAttribute.Fullname, c.TargetAttribute.Fullname);
+         var (a, b) = (c.TargetEntity.PrimaryKeyAttribute.GetFullName(), c.TargetAttribute.GetFullName());
          if (exclude)
          {
              baseQuery.LeftJoin(c.CrossEntity.TableName,
                  j => j.On(a, b)
-                     .Where(c.SourceAttribute.Fullname, id)
-                     .Where(c.CrossEntity.DeletedAttribute.Fullname, false)
-             ).WhereNull(c.SourceAttribute.Fullname);
+                     .Where(c.SourceAttribute.GetFullName(), id)
+                     .Where(c.CrossEntity.DeletedAttribute.GetFullName(), false)
+             ).WhereNull(c.SourceAttribute.GetFullName());
          }
          else
          {
              baseQuery.Join(c.CrossEntity.TableName, a, b)
-                 .Where(c.SourceAttribute.Fullname, id)
-                 .Where(c.CrossEntity.DeletedAttribute.Fullname, false);
+                 .Where(c.SourceAttribute.GetFullName(), id)
+                 .Where(c.CrossEntity.DeletedAttribute.GetFullName(), false);
          }
          return baseQuery;
      }
@@ -126,10 +126,10 @@ public static class CrosstableHelper
      public static SqlKata.Query Many(this Crosstable c, IEnumerable<LoadedAttribute> selectAttributes, IEnumerable<object> ids)
      {
          var baseQuery = c.Base(selectAttributes);
-         var (a, b) = (c.TargetEntity.PrimaryKeyAttribute.Fullname, c.TargetAttribute.Fullname);
+         var (a, b) = (c.TargetEntity.PrimaryKeyAttribute.GetFullName(), c.TargetAttribute.GetFullName());
          baseQuery.Join(c.CrossEntity.TableName, a, b)
-             .WhereIn(c.SourceAttribute.Fullname, ids)
-             .Where(c.CrossEntity.DeletedAttribute.Fullname, false);
+             .WhereIn(c.SourceAttribute.GetFullName(), ids)
+             .Where(c.CrossEntity.DeletedAttribute.GetFullName(), false);
          return baseQuery;
      }
 }

@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using FluentCMS.Services;
+using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.QueryBuilder;
 using Microsoft.Extensions.Primitives;
@@ -9,8 +10,10 @@ namespace FluentCMS.Cms.Services;
 using static InvalidParamExceptionFactory;
 
 public sealed class QueryService(
+    IDefinitionExecutor definitionExecutor,
     KateQueryExecutor kateQueryExecutor,
     ISchemaService schemaService,
+    IEntitySchemaService entitySchemaService,
     IQuerySchemaService querySchemaService,
     IEntityService entityService,
     IServiceProvider provider,
@@ -22,9 +25,12 @@ public sealed class QueryService(
         Dictionary<string, StringValues> querystringDictionary, CancellationToken cancellationToken)
     {
         var query = await querySchemaService.GetByNameAndCache(queryName, cancellationToken);
-        var filters = CheckResult(query.Filters.Resolve(query.EntityName, query.Entity.Attributes,
-            schemaService.CastToDatabaseType, querystringDictionary));
-        var parsedCursor =CheckResult(cursor.Resolve(query.Entity, schemaService.CastToDatabaseType));
+        var filters = CheckResult(await query.Filters.Resolve(
+            query.Entity, 
+            querystringDictionary,
+            entitySchemaService.ResolveAttribute,
+            definitionExecutor.GetCastDelegate()));
+        var parsedCursor =CheckResult(cursor.Resolve(query.Entity, definitionExecutor.GetCastDelegate()));
         var validPagination = pagination.ToValid(query.PageSize);
         validPagination = validPagination with { Limit = validPagination.Limit + 1 };// add extra to check has more
         var hookParam = new QueryPreGetListArgs( queryName, query.EntityName, filters,  query.Sorts, parsedCursor, validPagination);
@@ -59,10 +65,12 @@ public sealed class QueryService(
     {
         var query = await querySchemaService.GetByNameAndCache(queryName, cancellationToken);
         var validPagination = new Pagination().ToValid(query.PageSize);
-        var filters = CheckResult(query.Filters.Resolve(query.Entity.Name, query.Selection, schemaService.CastToDatabaseType,
-            querystringDictionary));
+        var filters = CheckResult(await query.Filters.Resolve(
+            query.Entity, querystringDictionary, entitySchemaService.ResolveAttribute,
+            definitionExecutor.GetCastDelegate()));
 
-        var res = await hookRegistry.QueryPreGetMany.Trigger(provider, new QueryPreGetManyArgs(queryName,query.EntityName, filters,validPagination));
+        var res = await hookRegistry.QueryPreGetMany.Trigger(provider,
+            new QueryPreGetManyArgs(queryName, query.EntityName, filters, validPagination));
         if (res.OutRecords is not null)
         {
             return res.OutRecords;
@@ -79,8 +87,11 @@ public sealed class QueryService(
         CancellationToken cancellationToken)
     {
         var query = await querySchemaService.GetByNameAndCache(queryName, cancellationToken);
-        var filters = CheckResult(query.Filters.Resolve(query.Entity.Name, query.Entity.Attributes,  schemaService.CastToDatabaseType, querystringDictionary));
-        var res= await hookRegistry.QueryPreGetOne.Trigger(provider, new QueryPreGetOneArgs(queryName, query.EntityName,filters));
+        var filters = CheckResult(await query.Filters.Resolve(
+            query.Entity, querystringDictionary, entitySchemaService.ResolveAttribute,
+            definitionExecutor.GetCastDelegate()));
+        var res = await hookRegistry.QueryPreGetOne.Trigger(provider,
+            new QueryPreGetOneArgs(queryName, query.EntityName, filters));
         if (res.OutRecord is not null)
         {
             return res.OutRecord;

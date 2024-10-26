@@ -64,7 +64,7 @@ public class SchemaApiClient (HttpClient client)
             attr.Add(new Attribute
             (
                 Field: lookup,
-                Options: lookup,
+                Option: lookup,
                 Header: lookup,
                 InList: true,
                 InDetail: true,
@@ -78,7 +78,7 @@ public class SchemaApiClient (HttpClient client)
             attr.Add(new Attribute
             (
                 Field: crosstable,
-                Options: crosstable,
+                Option: crosstable,
                 Header: crosstable,
                 DataType: DataType.Na,
                 Type: DisplayType.Crosstable,
@@ -91,7 +91,7 @@ public class SchemaApiClient (HttpClient client)
             Name: entityName,
             TableName: entityName,
             Title: entityName,
-            DefaultPageSize: EntityHelper.DefaultPageSize,
+            DefaultPageSize: EntityConstants.DefaultPageSize,
             PrimaryKey: "id",
             TitleAttribute: field,
             Attributes: [..attr]

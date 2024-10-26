@@ -68,7 +68,7 @@ public sealed class AuthModule<TCmsUser>(ILogger<IAuthModule> logger) : IAuthMod
 
         registry.EntityPreGetList.RegisterDynamic("*", 
             (IEntityPermissionService service, EntityPreGetListArgs args) =>
-                args with {RefFilters = service.List(args.Name, args.RefFilters)});
+                args with {RefFilters = service.List(args.Name, args.Entity, args.RefFilters)});
                 
         registry.CrosstablePreAdd.RegisterDynamic("*",
             async (IEntityPermissionService service, CrosstablePreAddArgs args ) =>

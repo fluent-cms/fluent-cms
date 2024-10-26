@@ -1,8 +1,10 @@
+using System.Collections.Immutable;
 using FluentCMS.Cms.Models;
 using FluentCMS.Services;
 using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.QueryBuilder;
 using FluentResults;
+using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.Cms.Services;
 using static InvalidParamExceptionFactory;
@@ -10,18 +12,48 @@ using static InvalidParamExceptionFactory;
 public sealed class EntitySchemaService(ISchemaService schemaService, IDefinitionExecutor definitionExecutor)
     : IEntitySchemaService
 {
-    public async Task<Result<LoadedEntity>> GetLoadedEntity(string name, CancellationToken cancellationToken = default)
+    public async Task<Result<ImmutableArray<LoadedAttribute>>> ResolveAttribute(LoadedEntity entity, string fieldName)
     {
-        var (_, isFailed, entity, errors) = await GetValidEntity(name, cancellationToken);
-        if (isFailed)
+        var attributes = new List<LoadedAttribute>();
+        var fields = fieldName.Split(".");
+        for (var i = 0; i < fields.Length; i++)
         {
-            return Result.Fail(errors);
+            if (entity is null)
+            {
+                continue;
+            }
+            var attr = entity.Attributes.FindOneAttribute(fields[i]);
+            if (attr is null)
+            {
+                return Result.Fail($"Fail to resolve filter: no field ${fieldName} ");
+            }
+            var res  = await LoadOneRelated(entity,attr, default);
+            if (res.IsFailed)
+            {
+                return Result.Fail(res.Errors);
+            }
+
+            attr = res.Value;
+            attributes.Add(attr);
+            if (i < fields.Length - 1)
+            {
+                switch (attr.Type)
+                {
+                    case DisplayType.Crosstable:
+                        entity = attr.Crosstable!.TargetEntity;
+                        break;
+                    case DisplayType.Lookup:
+                        entity = attr.Lookup!;
+                        break;
+                    default:
+                        return Result.Fail($"Can not resolve {fieldName}, {attr.Field} is not a composite type");
+                }
+            }
         }
-
-        return await LoadAllRelated(entity, false, cancellationToken);
+        return attributes.ToImmutableArray();
     }
-
-    private async Task<Result<ValidEntity>> GetValidEntity(string name, CancellationToken cancellationToken = default)
+    
+    public async Task<Result<LoadedEntity>> GetLoadedEntity(string name, CancellationToken cancellationToken = default)
     {
         var (_, isFailed, entity, errors) = await GetEntity(name, cancellationToken);
         if (isFailed)
@@ -29,7 +61,9 @@ public sealed class EntitySchemaService(ISchemaService schemaService, IDefinitio
             return Result.Fail(errors);
         }
 
-        return entity.ToValid();
+
+        var ret = await LoadAllRelated(entity.ToLoadedEntity(), false, cancellationToken);
+        return ret;
     }
 
     private async Task<Result<Entity>> GetEntity(string name, CancellationToken cancellationToken = default)
@@ -99,10 +133,9 @@ public sealed class EntitySchemaService(ISchemaService schemaService, IDefinitio
 
         async Task CreateCrosstables()
         {
-            var validEntity = entity.ToValid();
-            foreach (var attribute in validEntity.Attributes.GetAttributesByType(DisplayType.Crosstable))
+            foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.Crosstable))
             {
-                await CreateCrosstable(validEntity.ToLoadedEntity([]), attribute, cancellationToken);
+                await CreateCrosstable(entity.ToLoadedEntity(), attribute.ToLoaded(entity.TableName), cancellationToken);
             }
         }
 
@@ -119,28 +152,28 @@ public sealed class EntitySchemaService(ISchemaService schemaService, IDefinitio
     private async Task<Result<LoadedAttribute>> LoadLookup(LoadedAttribute attribute,
         CancellationToken cancellationToken)
     {
-        var (_, isFailed, value, _) = await GetValidEntity(attribute.GetLookupTarget(), cancellationToken);
+        var (_, isFailed, value, _) = await GetEntity(attribute.GetLookupTarget(), cancellationToken);
         if (isFailed)
         {
             return Result.Fail(
-                $"not find entity by name {attribute.GetLookupTarget()} for lookup {attribute.Fullname}");
+                $"not find entity by name {attribute.GetLookupTarget()} for lookup {attribute.GetFullName()}");
         }
 
-        return attribute with { Lookup = value.ToLoadedEntity(value.Attributes.Select(x=>x.ToLoaded())) };
+        return attribute with { Lookup = value.ToLoadedEntity() };
     }
 
     private async Task<Result<LoadedAttribute>> LoadCrosstable(LoadedEntity entity, LoadedAttribute attribute,
         CancellationToken cancellationToken)
     {
         var (_, isFailed, targetEntity, _) =
-            await GetValidEntity(attribute.GetCrosstableTarget(), cancellationToken);
+            await GetEntity(attribute.GetCrosstableTarget(), cancellationToken);
         if (isFailed)
         {
             return Result.Fail(
-                $"not find entity by name {attribute.GetCrosstableTarget()} for crosstable {attribute.Fullname}");
+                $"not find entity by name {attribute.GetCrosstableTarget()} for crosstable {attribute.GetFullName()}");
         }
 
-        var loadedTarget = await LoadAllRelated(targetEntity, true, cancellationToken);
+        var loadedTarget = await LoadAllRelated(targetEntity.ToLoadedEntity(), true, cancellationToken);
         if (loadedTarget.IsFailed)
         {
             return Result.Fail(loadedTarget.Errors);
@@ -149,42 +182,45 @@ public sealed class EntitySchemaService(ISchemaService schemaService, IDefinitio
         return attribute with { Crosstable = CrosstableHelper.Crosstable(entity, loadedTarget.Value) };
     }
 
-    public async Task<Result<LoadedAttribute>> LoadOneRelated(LoadedEntity entity, LoadedAttribute attribute,
-        bool omitCrosstable,
-        CancellationToken cancellationToken)
+    public async Task<Result<LoadedAttribute>> LoadOneRelated(LoadedEntity entity, LoadedAttribute attribute, CancellationToken cancellationToken)
     {
         return attribute.Type switch
         {
-            DisplayType.Crosstable => omitCrosstable
-                ? attribute
-                : await LoadCrosstable(entity, attribute, cancellationToken),
+            DisplayType.Crosstable => await LoadCrosstable(entity, attribute, cancellationToken),
             DisplayType.Lookup => await LoadLookup(attribute, cancellationToken),
             _ => attribute
         };
     }
-
-    private async Task<Result<LoadedEntity>> LoadAllRelated(ValidEntity entity, bool omitCrosstable,
+    //omitCrosstable: omit  circular reference
+    private async Task<Result<LoadedEntity>> LoadAllRelated(LoadedEntity entity, bool omitCrosstable,
         CancellationToken cancellationToken)
     {
         var lst = new List<LoadedAttribute>();
-        foreach (var validAttribute in entity.Attributes)
+        foreach (var attribute in entity.Attributes)
         {
-            var (isSuccess, _, value, errors) = await LoadOneRelated(entity.ToLoadedEntity([]), validAttribute.ToLoaded(),
-                omitCrosstable, cancellationToken);
-            if (isSuccess)
+            if (attribute.Type == DisplayType.Lookup || attribute.Type == DisplayType.Crosstable && !omitCrosstable)
             {
-                lst.Add(value);
+                var (isSuccess, _, value, errors) =
+                    await LoadOneRelated(entity, attribute, cancellationToken);
+                if (isSuccess)
+                {
+                    lst.Add(value);
+                }
+                else
+                {
+                    return Result.Fail(errors);
+                }
             }
             else
             {
-                return Result.Fail(errors);
+                lst.Add(attribute);
             }
         }
 
-        return entity.ToLoadedEntity(lst.ToArray());
+        return entity with { Attributes = [..lst] };
     }
 
-    private async Task CreateCrosstable(LoadedEntity entity, ValidAttribute attribute,
+    private async Task CreateCrosstable(LoadedEntity entity, LoadedAttribute attribute,
         CancellationToken cancellationToken)
     {
         var targetEntity = CheckResult(await GetLoadedEntity(attribute.GetCrosstableTarget(), cancellationToken));
@@ -198,7 +234,7 @@ public sealed class EntitySchemaService(ISchemaService schemaService, IDefinitio
         }
     }
 
-    private async Task CheckLookup(ValidAttribute attribute, CancellationToken cancellationToken)
+    private async Task CheckLookup(Attribute attribute, CancellationToken cancellationToken)
     {
         True(attribute.DataType == DataType.Int).ThrowNotTrue("lookup datatype should be int");
         NotNull(await GetEntity(attribute.GetLookupTarget(), cancellationToken))
@@ -210,7 +246,7 @@ public sealed class EntitySchemaService(ISchemaService schemaService, IDefinitio
         CheckResult(TitleAttributeExists());
         foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.Lookup))
         {
-            await CheckLookup(attribute.ToValid(entity.TableName), cancellationToken);
+            await CheckLookup(attribute, cancellationToken);
         }
 
         return;

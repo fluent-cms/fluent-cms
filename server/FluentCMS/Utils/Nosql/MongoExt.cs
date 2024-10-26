@@ -74,7 +74,7 @@ public static class MongoExt
         foreach (var filterConstraint in filter.Constraints)
         {
             var resConstraint = GetConstraintDefinition(
-                filter.FieldName, filterConstraint.Match, filterConstraint.Values);
+                string.Join(".", filter.Attributes.Select(x=>x.Field)), filterConstraint.Match, filterConstraint.Values);
             if (resConstraint.IsFailed)
             {
                 return Result.Fail(resConstraint.Errors);

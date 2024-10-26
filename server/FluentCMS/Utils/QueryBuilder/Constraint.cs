@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentResults;
 using Microsoft.Extensions.Primitives;
 
@@ -14,10 +15,9 @@ public static class ConstraintsHelper
     public static Result<ImmutableArray<ValidConstraint>> Resolve(
         this IEnumerable<Constraint> constraints, 
         bool ignoreResolveError,
-        string entityName,
-        BaseAttribute attribute,  
+        Attribute attribute,  
         Dictionary<string, StringValues>? querystringDictionary,
-        Func<string, string, object> cast)
+        CastDelegate cast)
     {
         var ret = new List<ValidConstraint>();
         foreach (var constraint in constraints)
@@ -25,7 +25,7 @@ public static class ConstraintsHelper
             var val = constraint.Value;
             if (string.IsNullOrWhiteSpace(val))
             {
-                return Result.Fail($"Fail to resolve Filter, value not set for field {entityName}.{attribute.Field}");
+                return Result.Fail($"Fail to resolve Filter, value not set for field {attribute.Field}");
             }
 
             if (val.StartsWith(QuerystringPrefix))
@@ -33,7 +33,7 @@ public static class ConstraintsHelper
                 var res = ResolveFromQueryString(val);
                 if (res.IsSuccess)
                 {
-                    var arr = res.Value.Select(x => cast(attribute.DataType, x)).ToArray();
+                    var arr = res.Value.Select(x => cast(x,attribute.DataType)).ToArray();
                     ret.Add(new ValidConstraint(constraint.Match, arr));
                 }
                 else if (!ignoreResolveError)
@@ -43,7 +43,7 @@ public static class ConstraintsHelper
             }
             else
             {
-                ret.Add(new ValidConstraint(constraint.Match, [cast(attribute.DataType,val)]));
+                ret.Add(new ValidConstraint(constraint.Match, [cast(val,attribute.DataType)]));
             }
         }
 

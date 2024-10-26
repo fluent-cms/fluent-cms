@@ -6,6 +6,10 @@ export function textColumn({primaryKey, column, titleAttribute}:{
     titleAttribute: string;
     column:  {type :string, field:string, header:any, linkToEntity:string,lookup:any}
 }){
+    let field = column.field;
+    if (column.type == "lookup"){
+        field = column.field + "." + column.lookup.titleAttribute;
+    }
     var dataType = 'text';
     switch (column.type){
         case 'number':
@@ -29,5 +33,5 @@ export function textColumn({primaryKey, column, titleAttribute}:{
             return <>{val}</>
         }
     };
-    return <Column dataType={dataType} key={column.field} field={column.field} header={column.header} sortable filter body={bodyTemplate}></Column>
+    return <Column dataType={dataType} key={column.field} field={field} header={column.header} sortable filter body={bodyTemplate}></Column>
 }
