@@ -11,7 +11,7 @@ public sealed record Cursor(string? First = default, string? Last = default);
 public sealed record ValidCursor(Cursor Cursor, ImmutableDictionary<string,object>? BoundaryItem = default);
 public static class CursorHelper
 {
-    public static object BoundaryValue(this ValidCursor c, string fld) => c.BoundaryItem!.GetValue(fld);
+    public static Result<object> BoundaryValue(this ValidCursor c, string fld) => c.BoundaryItem!.GetValue(fld);
     
     private static bool IsEmpty(this Cursor c) => string.IsNullOrWhiteSpace(c.First) && string.IsNullOrWhiteSpace(c.Last);
     

@@ -137,12 +137,21 @@ public static class KateQueryExt
     
     public static Result ApplyCursor(this SqlKata.Query? query,  ValidCursor? cursor,ImmutableArray<ValidSort> sorts)
     {
-        if (query is null || cursor?.BoundaryItem is null) return Result.Ok();
+        if (query is null || cursor?.BoundaryItem is null)
+        {
+            return Result.Ok();
+        }
+
+        var res = Result.Ok();
         query.Where(q =>
         {
             for (var i = 0; i < sorts.Length; i++)
             {
-                ApplyFilter(q, i);
+                res =ApplyFilter(q, i);
+                if (res.IsFailed)
+                {
+                    break;
+                }
                 if (i < sorts.Length - 1)
                 {
                     q.Or();
@@ -150,25 +159,43 @@ public static class KateQueryExt
             }
             return q;
         });
-        return Result.Ok();
+        return res;
 
-        void ApplyFilter(SqlKata.Query q,int idx)
+        Result ApplyFilter(SqlKata.Query q,int idx)
         {
             for (var i = 0; i < idx; i++)
             {
-                ApplyEq(q, sorts[i]);
+                var res = ApplyEq(q, sorts[i]);
+                if (res.IsFailed)
+                {
+                    return Result.Fail(res.Errors);
+                }
             }
-            ApplyCompare(q,sorts[idx]);
+            var r = ApplyCompare(q,sorts[idx]);
+            return r.IsFailed ? Result.Fail(r.Errors) : Result.Ok();
         }
 
-        void ApplyEq(SqlKata.Query q, ValidSort sort)
+        Result ApplyEq(SqlKata.Query q, ValidSort sort)
         {
-            q.Where(sort.Attributes.Last().GetFullName(), cursor.BoundaryValue(sort.FullPath));
+            var res = cursor.BoundaryValue(sort.FullPath);
+            if (res.IsFailed)
+            {
+                return Result.Fail(res.Errors);
+            }
+
+            q.Where(sort.Attributes.Last().GetFullName(), res.Value);
+            return Result.Ok();
         }
-        void ApplyCompare(SqlKata.Query q, ValidSort sort)
+
+        Result ApplyCompare(SqlKata.Query q, ValidSort sort)
         {
-            q.Where(sort.Attributes.Last().GetFullName(), cursor.Cursor.GetCompareOperator(sort.Order),
-                cursor.BoundaryValue(sort.FullPath));
+            var res = cursor.BoundaryValue(sort.FullPath);
+            if (res.IsFailed)
+            {
+                return Result.Fail(res.Errors);
+            }
+            q.Where(sort.Attributes.Last().GetFullName(), cursor.Cursor.GetCompareOperator(sort.Order),res.Value );
+            return Result.Ok();
         }
         
     }

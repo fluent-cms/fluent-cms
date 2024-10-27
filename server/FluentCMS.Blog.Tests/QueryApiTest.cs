@@ -33,6 +33,11 @@ public class QueryApiTest
         var query = GetQuery(TableName);
         (await _schemaApiClient.SaveSchema(query)).AssertSuccess();
         var res = (await _queryApiClient.GetList(query.Name, new Cursor(), new Pagination())).AssertSuccess();
+        if (string.IsNullOrWhiteSpace(res.Last))
+        {
+            (await _queryApiClient.GetList(query.Name, new Cursor(Last: res.Last), new Pagination()))
+                .AssertSuccess();
+        }
     }
 
     [Fact]
@@ -43,6 +48,7 @@ public class QueryApiTest
         (await _schemaApiClient.SaveSchema(query)).AssertSuccess();
         var ids = Enumerable.Range(1, 5).ToArray().Select(x=>x as object).ToArray();
         Assert.Equal(QueryPageSize,(await _queryApiClient.GetMany(query.Name,ids )).AssertSuccess().Length);
+        
     }
     [Fact]
     public async void One()
@@ -52,6 +58,7 @@ public class QueryApiTest
         (await _schemaApiClient.SaveSchema(query)).AssertSuccess();
         Assert.NotNull((await _queryApiClient.GetOne(query.Name,1)).AssertSuccess());
     }
+    
     async Task PrepareEntity()
     {
          await _accountApiClient.EnsureLogin();
