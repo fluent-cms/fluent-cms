@@ -1,53 +1,63 @@
 using System.Collections.Immutable;
 using FluentCMS.Utils.QueryBuilder;
 using FluentResults;
+using Attribute = System.Attribute;
 
 namespace FluentCMS.Utils.KateQueryExt;
 
 public static class KateQueryExt
 {
+    public static void ApplyJoin(this SqlKata.Query query, IEnumerable<AttributeVector> vectors)
+    {
+        var lst = new List<AttributeVector>();
+        var set = new HashSet<string>();
+        foreach (var vector in vectors)
+        {
+            if (set.Contains(vector.FullPath))
+            {
+                continue;
+            }
+            lst.Add(vector);
+            set.Add(vector.FullPath);
+        }
+        
+        foreach (var attribute in lst.SelectMany(arr => arr.Attributes))
+        {
+            switch (attribute.Type)
+            {
+                case DisplayType.Lookup:
+                    query.Join(attribute.Lookup!.TableName, attribute.GetFullName(),
+                        attribute.Lookup.PrimaryKeyAttribute.GetFullName());
+                    break;
+            }
+        }
+    }
+
     public static void ApplyPagination(this SqlKata.Query query, ValidPagination pagination)
     {
         query.Offset(pagination.Offset).Limit(pagination.Limit);
     }
-    public static void ApplySorts(this SqlKata.Query query, IEnumerable<Sort>? sorts)
+    public static void ApplySorts(this SqlKata.Query query, IEnumerable<ValidSort> sorts)
     {
-        if (sorts is null)
-        {
-            return;
-        }
-
         foreach (var sort in sorts)
         {
+       
             if (sort.Order == SortOrder.Desc)
             {
-                query.OrderByDesc(sort.FieldName);
+                query.OrderByDesc(sort.Attributes.Last().GetFullName());
             }
             else
             {
-                query.OrderBy(sort.FieldName);
+                query.OrderBy(sort.Attributes.Last().GetFullName());
             }
         }
     }
 
-    public static Result ApplyFilters(this SqlKata.Query query, IEnumerable<ValidFilter>? filters)
+    public static Result ApplyFilters(this SqlKata.Query query, IEnumerable<ValidFilter> filters)
     {
         var result = Result.Ok();
-        if (filters is null) return result;
         foreach (var filter in filters)
         {
-            for (var i = 0; i < filter.Attributes.Length - 1; i++)
-            {
-                var attr = filter.Attributes[i];
-                switch (attr.Type)
-                {
-                    case DisplayType.Lookup:
-                        query.Join(attr.Lookup!.TableName, attr.GetFullName(),
-                        attr.Lookup.PrimaryKeyAttribute.GetFullName());
-                        break;
-                }
-            }
-
             var filedName = filter.Attributes.Last().GetFullName();
             query.Where(q =>
             {
@@ -124,45 +134,42 @@ public static class KateQueryExt
         };
     }
 
-    public static Result ApplyCursor(this SqlKata.Query? query,  ValidCursor? cursor,ImmutableArray<Sort>? sorts)
+    
+    public static Result ApplyCursor(this SqlKata.Query? query,  ValidCursor? cursor,ImmutableArray<ValidSort> sorts)
     {
         if (query is null || cursor?.BoundaryItem is null) return Result.Ok();
-        return sorts?.Length switch
+        query.Where(q =>
         {
-            0 => Result.Fail("Sorts was not provided, can not perform cursor filter"),
-            1 => HandleOneField(),
-            2 => HandleTwoFields(),
-            _=> Result.Fail("More than two field in sorts is not supported")
-        };
-
-        
-        Result HandleOneField()
-        {
-            ApplyCompare(query,sorts.Value[0]);
-            return Result.Ok();
-        }
-
-        Result HandleTwoFields()
-        {
-            var (first,last) = (sorts.Value.First(),sorts.Value.Last());
-            query.Where(q =>
+            for (var i = 0; i < sorts.Length; i++)
             {
-                ApplyCompare(q, first);
-                q.Or();
-                ApplyEq(q, first);
-                ApplyCompare(q, last);
-                return q;
-            });
-            return Result.Ok();
+                ApplyFilter(q, i);
+                if (i < sorts.Length - 1)
+                {
+                    q.Or();
+                }
+            }
+            return q;
+        });
+        return Result.Ok();
+
+        void ApplyFilter(SqlKata.Query q,int idx)
+        {
+            for (var i = 0; i < idx; i++)
+            {
+                ApplyEq(q, sorts[i]);
+            }
+            ApplyCompare(q,sorts[idx]);
         }
 
-        void ApplyEq(SqlKata.Query q, Sort sort)
+        void ApplyEq(SqlKata.Query q, ValidSort sort)
         {
-            q.Where(sort.FieldName, cursor.BoundaryValue(sort.FieldName));
+            q.Where(sort.Attributes.Last().GetFullName(), cursor.BoundaryValue(sort.FullPath));
         }
-        void ApplyCompare(SqlKata.Query q, Sort sort)
+        void ApplyCompare(SqlKata.Query q, ValidSort sort)
         {
-            q.Where(sort.FieldName, cursor.Cursor.GetCompareOperator(sort), cursor.BoundaryValue(sort.FieldName));
+            q.Where(sort.Attributes.Last().GetFullName(), cursor.Cursor.GetCompareOperator(sort.Order),
+                cursor.BoundaryValue(sort.FullPath));
         }
+        
     }
 }

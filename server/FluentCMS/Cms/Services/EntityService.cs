@@ -15,7 +15,6 @@ public sealed class EntityService(
     IDefinitionExecutor definitionExecutor,
     IServiceProvider provider,
     KateQueryExecutor queryKateQueryExecutor,
-    ISchemaService schemaService,
     IEntitySchemaService entitySchemaService,
     HookRegistry hookRegistry) : IEntityService
 {
@@ -23,8 +22,8 @@ public sealed class EntityService(
         CancellationToken cancellationToken)
     {
         var entity = CheckResult(await entitySchemaService.GetLoadedEntity(entityName, cancellationToken));
-        var idValue = definitionExecutor.GetCastDelegate()(entity.PrimaryKeyAttribute.DataType, id);
-        var query = entity.ByIdQuery(idValue, entity.Attributes.GetLocalAttributes(attributes), null);
+        var idValue = definitionExecutor.Cast(id,entity.PrimaryKeyAttribute.DataType);
+        var query = entity.ByIdQuery(idValue, entity.Attributes.GetLocalAttributes(attributes), []);
         return NotNull(await queryKateQueryExecutor.One(query, cancellationToken))
             .ValOrThrow($"not find record by [{id}]");
     }
@@ -39,8 +38,8 @@ public sealed class EntityService(
             return res.OutRecord;
         }
 
-        var idValue = definitionExecutor.GetCastDelegate()(entity.PrimaryKeyAttribute.DataType, id);
-        var query = entity.ByIdQuery(idValue, entity.Attributes.GetLocalAttributes(InListOrDetail.InDetail), null);
+        var idValue = definitionExecutor.Cast(id,entity.PrimaryKeyAttribute.DataType);
+        var query = entity.ByIdQuery(idValue, entity.Attributes.GetLocalAttributes(InListOrDetail.InDetail), []);
         var record = NotNull(await queryKateQueryExecutor.One(query, cancellationToken))
             .ValOrThrow($"not find record by [{id}]");
 
@@ -67,21 +66,17 @@ public sealed class EntityService(
     {
         var entity = CheckResult(await entitySchemaService.GetLoadedEntity(entityName,  cancellationToken));
         var qsDict = new QsDict(qs);
-        var filters = CheckResult(await FilterHelper.Parse(entity, qsDict, entitySchemaService.ResolveAttribute,  definitionExecutor.GetCastDelegate()));
-        var sorts = CheckResult(SortHelper.Parse(qsDict));
+        var filters = CheckResult(await FilterHelper.Parse(entity, qsDict, entitySchemaService.ResolveAttribute));
+        var sorts = CheckResult(await SortHelper.Parse(qsDict,entity, entitySchemaService.ResolveAttribute));
         return await List(entity, filters, sorts, pagination, cancellationToken);
     }
 
-   
-
-    private async Task<ListResult?> List(LoadedEntity entity, ImmutableArray<ValidFilter>? filters, ImmutableArray<Sort>? sorts, Pagination pagination,
+    private async Task<ListResult?> List(LoadedEntity entity, ImmutableArray<ValidFilter> filters, ImmutableArray<ValidSort> sorts, Pagination pagination,
         CancellationToken cancellationToken)
     {
-        filters ??= [];
-        sorts ??= [];
 
         var res = await hookRegistry.EntityPreGetList.Trigger(provider,
-            new EntityPreGetListArgs(entity.Name, entity, filters.Value, sorts.Value, pagination.ToValid(entity.DefaultPageSize)));
+            new EntityPreGetListArgs(entity.Name, entity, filters, sorts, pagination.ToValid(entity.DefaultPageSize)));
         var attributes = entity.Attributes.GetLocalAttributes(InListOrDetail.InList);
         
         var query = CheckResult(entity.ListQuery(res.RefFilters, res.RefSorts, res.RefPagination, null, attributes));
@@ -113,7 +108,7 @@ public sealed class EntityService(
     public async Task<Record> Insert(string entityName, JsonElement ele, CancellationToken cancellationToken)
     {
         var entity = CheckResult(await entitySchemaService.GetLoadedEntity(entityName,  cancellationToken));
-        var record = CheckResult(entity.Parse(ele, definitionExecutor.GetCastDelegate()));
+        var record = CheckResult(entity.Parse(ele));
         return await Insert(entity, record, cancellationToken);
     }
 
@@ -126,20 +121,14 @@ public sealed class EntityService(
     public async Task<Record> Update(string entityName, JsonElement ele, CancellationToken cancellationToken)
     {
         var entity = CheckResult(await entitySchemaService.GetLoadedEntity(entityName, cancellationToken));
-        var record = CheckResult(entity.Parse(ele, definitionExecutor.GetCastDelegate()));
+        var record = CheckResult(entity.Parse(ele));
         return await Update(entity, record, cancellationToken);
     }
 
     public async Task<Record> Delete(string entityName, JsonElement ele, CancellationToken cancellationToken)
     {
         var entity = CheckResult(await entitySchemaService.GetLoadedEntity(entityName, cancellationToken));
-        var record = CheckResult(entity.Parse(ele,definitionExecutor.GetCastDelegate()));
-        return await Delete(entity, record, cancellationToken);
-    }
-
-    public async Task<Record> Delete(string entityName, Record record, CancellationToken cancellationToken)
-    {
-        var entity = CheckResult(await entitySchemaService.GetLoadedEntity(entityName, cancellationToken));
+        var record = CheckResult(entity.Parse(ele));
         return await Delete(entity, record, cancellationToken);
     }
 
@@ -152,12 +141,12 @@ public sealed class EntityService(
         var crossTable = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable of {attributeName}");
 
         var items = elements.Select(ele =>
-            CheckResult(crossTable.TargetEntity.Parse(ele,definitionExecutor.GetCastDelegate()))).ToArray();
+            CheckResult(crossTable.TargetEntity.Parse(ele))).ToArray();
 
         var res = await hookRegistry.CrosstablePreDel.Trigger(provider,
             new CrosstablePreDelArgs(entityName, strId, attribute, items));
 
-        var query = crossTable.Delete(definitionExecutor.GetCastDelegate()(crossTable.SourceAttribute.Field, strId), res.RefItems);
+        var query = crossTable.Delete(definitionExecutor.Cast(strId,crossTable.SourceAttribute.Field), res.RefItems);
         var ret = await queryKateQueryExecutor.Exec(query, cancellationToken);
         await hookRegistry.CrosstablePostDel.Trigger(provider,
             new CrosstablePostDelArgs(entityName, strId, attribute, items));
@@ -173,11 +162,11 @@ public sealed class EntityService(
         var crossTable = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable of {attributeName}");
 
         var items = elements
-            .Select(ele => CheckResult(crossTable.TargetEntity.Parse(ele,definitionExecutor.GetCastDelegate()))).ToArray();
+            .Select(ele => CheckResult(crossTable.TargetEntity.Parse(ele))).ToArray();
         var res = await hookRegistry.CrosstablePreAdd.Trigger(provider,
             new CrosstablePreAddArgs(entityName, strId, attribute, items));
 
-        var query = crossTable.Insert(definitionExecutor.GetCastDelegate()(crossTable.SourceAttribute.DataType, strId), res.RefItems);
+        var query = crossTable.Insert(definitionExecutor.Cast(strId,crossTable.SourceAttribute.DataType), res.RefItems);
         
         var ret = await queryKateQueryExecutor.Exec(query, cancellationToken);
         await hookRegistry.CrosstablePostAdd.Trigger(provider,
@@ -193,7 +182,7 @@ public sealed class EntityService(
 
         var crossTable = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable of {attributeName}");
         var selectAttributes = crossTable.TargetEntity.Attributes.GetLocalAttributes(InListOrDetail.InList);
-        var id =definitionExecutor.GetCastDelegate()(crossTable.SourceAttribute.DataType, strId);
+        var id =definitionExecutor.Cast(strId,crossTable.SourceAttribute.DataType);
         var countQuery = crossTable.Filter(selectAttributes, exclude, id);
         var pagedListQuery = crossTable.Many(selectAttributes, exclude, id, pagination);
         return new ListResult(await queryKateQueryExecutor.Many(pagedListQuery, cancellationToken),

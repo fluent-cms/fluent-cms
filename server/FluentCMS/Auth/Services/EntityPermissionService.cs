@@ -37,7 +37,7 @@ public class EntityPermissionService(
         return
         [
             ..filters,
-            new ValidFilter([createBy], "and",
+            new ValidFilter(Constants.CreatedBy,[createBy], "and",
                 [new ValidConstraint(Matches.EqualsTo, [MustGetCurrentUserId()])])
         ];
     }

@@ -44,7 +44,8 @@ public sealed class MongoDao:INosqlDao
         _logger.LogInformation($"Inserted {docs.Count()} documents");
     }
 
-    public async Task<Result<Record[]>> Query(string collectionName, IEnumerable<ValidFilter> filters, ValidPagination pagination,ImmutableArray<Sort>? sorts, ValidCursor? cursor)
+    public async Task<Result<Record[]>> Query(string collectionName, IEnumerable<ValidFilter> filters, ValidPagination pagination,
+        ImmutableArray<ValidSort> sorts, ValidCursor? cursor)
     {
         var collection = _mongoDatabase.GetCollection<BsonDocument>(collectionName);
         var filterRes = MongoExt.GetFiltersDefinition(filters);
@@ -54,9 +55,9 @@ public sealed class MongoDao:INosqlDao
         }
         var filterDefinitions = filterRes.Value;
 
-        if (cursor is not null && sorts is not null)
+        if (cursor is not null && sorts.Length > 0)
         {
-            var cursorRes = MongoExt.GetCursorFilters(cursor, sorts.Value);
+            var cursorRes = MongoExt.GetCursorFilters(cursor, sorts);
             if (cursorRes.IsFailed)
             {
                 return Result.Fail(cursorRes.Errors);
@@ -64,9 +65,9 @@ public sealed class MongoDao:INosqlDao
             filterDefinitions.Add(cursorRes.Value);
         }
         var query = collection.Find(Builders<BsonDocument>.Filter.And(filterDefinitions));
-        if (sorts?.Count() > 0)
+        if (sorts.Length > 0)
         {
-            var sd = MongoExt.GetSortDefinition<BsonDocument>(sorts.Value);
+            var sd = MongoExt.GetSortDefinition<BsonDocument>(sorts);
             query = query.Sort(sd);
         }
 

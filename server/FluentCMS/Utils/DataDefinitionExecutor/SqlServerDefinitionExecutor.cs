@@ -5,9 +5,9 @@ namespace FluentCMS.Utils.DataDefinitionExecutor;
 
 public class SqlServerDefinitionExecutor(string connectionString, ILogger<SqlServerDefinitionExecutor> logger ) : IDefinitionExecutor
 {
-    public CastDelegate GetCastDelegate()
+    public object Cast(string s, string type)
     {
-        return (s, type) => type switch
+        return type switch
         {
             DataType.Int => int.Parse(s),
             _ => s

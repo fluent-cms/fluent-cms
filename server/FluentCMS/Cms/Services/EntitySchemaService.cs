@@ -61,8 +61,7 @@ public sealed class EntitySchemaService(ISchemaService schemaService, IDefinitio
             return Result.Fail(errors);
         }
 
-
-        var ret = await LoadAllRelated(entity.ToLoadedEntity(), false, cancellationToken);
+        var ret = await LoadAllRelated(entity.ToLoadedEntity(definitionExecutor.Cast), false, cancellationToken);
         return ret;
     }
 
@@ -135,7 +134,7 @@ public sealed class EntitySchemaService(ISchemaService schemaService, IDefinitio
         {
             foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.Crosstable))
             {
-                await CreateCrosstable(entity.ToLoadedEntity(), attribute.ToLoaded(entity.TableName), cancellationToken);
+                await CreateCrosstable(entity.ToLoadedEntity(definitionExecutor.Cast), attribute.ToLoaded(entity.TableName), cancellationToken);
             }
         }
 
@@ -159,7 +158,7 @@ public sealed class EntitySchemaService(ISchemaService schemaService, IDefinitio
                 $"not find entity by name {attribute.GetLookupTarget()} for lookup {attribute.GetFullName()}");
         }
 
-        return attribute with { Lookup = value.ToLoadedEntity() };
+        return attribute with { Lookup = value.ToLoadedEntity(definitionExecutor.Cast) };
     }
 
     private async Task<Result<LoadedAttribute>> LoadCrosstable(LoadedEntity entity, LoadedAttribute attribute,
@@ -173,7 +172,7 @@ public sealed class EntitySchemaService(ISchemaService schemaService, IDefinitio
                 $"not find entity by name {attribute.GetCrosstableTarget()} for crosstable {attribute.GetFullName()}");
         }
 
-        var loadedTarget = await LoadAllRelated(targetEntity.ToLoadedEntity(), true, cancellationToken);
+        var loadedTarget = await LoadAllRelated(targetEntity.ToLoadedEntity(definitionExecutor.Cast), true, cancellationToken);
         if (loadedTarget.IsFailed)
         {
             return Result.Fail(loadedTarget.Errors);

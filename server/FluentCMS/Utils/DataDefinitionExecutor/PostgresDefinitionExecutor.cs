@@ -4,9 +4,9 @@ namespace FluentCMS.Utils.DataDefinitionExecutor;
 
 public class PostgresDefinitionExecutor(string connectionString, ILogger<PostgresDefinitionExecutor> logger):IDefinitionExecutor
 {
-    public CastDelegate GetCastDelegate()
+    public object Cast(string s, string type)
     {
-        return (s, type) => type switch
+        return type switch
         {
             DataType.Int => int.Parse(s),
             DataType.Datetime => DateTime.Parse(s),

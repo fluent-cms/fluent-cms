@@ -12,7 +12,6 @@ using static InvalidParamExceptionFactory;
 public sealed class QueryService(
     IDefinitionExecutor definitionExecutor,
     KateQueryExecutor kateQueryExecutor,
-    ISchemaService schemaService,
     IEntitySchemaService entitySchemaService,
     IQuerySchemaService querySchemaService,
     IEntityService entityService,
@@ -28,12 +27,12 @@ public sealed class QueryService(
         var filters = CheckResult(await query.Filters.Resolve(
             query.Entity, 
             querystringDictionary,
-            entitySchemaService.ResolveAttribute,
-            definitionExecutor.GetCastDelegate()));
-        var parsedCursor =CheckResult(cursor.Resolve(query.Entity, definitionExecutor.GetCastDelegate()));
+            entitySchemaService.ResolveAttribute));
+        var parsedCursor =CheckResult(cursor.Resolve(query.Entity));
         var validPagination = pagination.ToValid(query.PageSize);
         validPagination = validPagination with { Limit = validPagination.Limit + 1 };// add extra to check has more
-        var hookParam = new QueryPreGetListArgs( queryName, query.EntityName, filters,  query.Sorts, parsedCursor, validPagination);
+        var sorts = CheckResult(await query.Sorts.ToValidSorts(query.Entity, entitySchemaService.ResolveAttribute));
+        var hookParam = new QueryPreGetListArgs( queryName, query.EntityName, filters,  sorts, parsedCursor, validPagination);
         var res = await hookRegistry.QueryPreGetList.Trigger(provider, hookParam);
         if (res.OutRecords is not null)
         {
@@ -41,7 +40,7 @@ public sealed class QueryService(
         }
 
         var attributes = query.Selection.GetLocalAttributes();
-        var kateQuery = CheckResult(query.Entity.ListQuery(filters, query.Sorts, validPagination, parsedCursor, attributes));
+        var kateQuery = CheckResult(query.Entity.ListQuery(filters, sorts, validPagination, parsedCursor, attributes));
         var items = await kateQueryExecutor.Many(kateQuery, cancellationToken);
         
         if (!cursor.IsForward())
@@ -66,8 +65,7 @@ public sealed class QueryService(
         var query = await querySchemaService.GetByNameAndCache(queryName, cancellationToken);
         var validPagination = new Pagination().ToValid(query.PageSize);
         var filters = CheckResult(await query.Filters.Resolve(
-            query.Entity, querystringDictionary, entitySchemaService.ResolveAttribute,
-            definitionExecutor.GetCastDelegate()));
+            query.Entity, querystringDictionary, entitySchemaService.ResolveAttribute ));
 
         var res = await hookRegistry.QueryPreGetMany.Trigger(provider,
             new QueryPreGetManyArgs(queryName, query.EntityName, filters, validPagination));
@@ -77,7 +75,8 @@ public sealed class QueryService(
         }
         
         var attributes = query.Selection.GetLocalAttributes();
-        var kateQuery = CheckResult(query.Entity.ListQuery(res.Filters, query.Sorts, validPagination, null, attributes));
+        var sorts = CheckResult(await query.Sorts.ToValidSorts(query.Entity, entitySchemaService.ResolveAttribute));
+        var kateQuery = CheckResult(query.Entity.ListQuery(res.Filters, sorts, validPagination, null, attributes));
         var items = await kateQueryExecutor.Many(kateQuery, cancellationToken);
         await entityService.AttachRelatedEntity(query.Entity,query.Selection, items, cancellationToken);
         return items;
@@ -88,8 +87,7 @@ public sealed class QueryService(
     {
         var query = await querySchemaService.GetByNameAndCache(queryName, cancellationToken);
         var filters = CheckResult(await query.Filters.Resolve(
-            query.Entity, querystringDictionary, entitySchemaService.ResolveAttribute,
-            definitionExecutor.GetCastDelegate()));
+            query.Entity, querystringDictionary, entitySchemaService.ResolveAttribute ));
         var res = await hookRegistry.QueryPreGetOne.Trigger(provider,
             new QueryPreGetOneArgs(queryName, query.EntityName, filters));
         if (res.OutRecord is not null)

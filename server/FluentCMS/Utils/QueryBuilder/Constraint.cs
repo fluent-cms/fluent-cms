@@ -14,10 +14,11 @@ public static class ConstraintsHelper
 
     public static Result<ImmutableArray<ValidConstraint>> Resolve(
         this IEnumerable<Constraint> constraints, 
-        bool ignoreResolveError,
+        LoadedEntity entity,
         Attribute attribute,  
-        Dictionary<string, StringValues>? querystringDictionary,
-        CastDelegate cast)
+        bool ignoreResolveError,
+        Dictionary<string, StringValues>? querystringDictionary
+        )
     {
         var ret = new List<ValidConstraint>();
         foreach (var constraint in constraints)
@@ -27,13 +28,12 @@ public static class ConstraintsHelper
             {
                 return Result.Fail($"Fail to resolve Filter, value not set for field {attribute.Field}");
             }
-
             if (val.StartsWith(QuerystringPrefix))
             {
                 var res = ResolveFromQueryString(val);
                 if (res.IsSuccess)
                 {
-                    var arr = res.Value.Select(x => cast(x,attribute.DataType)).ToArray();
+                    var arr = res.Value.Select(attribute.Cast).ToArray();
                     ret.Add(new ValidConstraint(constraint.Match, arr));
                 }
                 else if (!ignoreResolveError)
@@ -43,7 +43,7 @@ public static class ConstraintsHelper
             }
             else
             {
-                ret.Add(new ValidConstraint(constraint.Match, [cast(val,attribute.DataType)]));
+                ret.Add(new ValidConstraint(constraint.Match, [attribute.Cast(val)]));
             }
         }
 

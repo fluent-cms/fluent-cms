@@ -15,7 +15,9 @@ public record Attribute(
     string Option = "",
     string Validation = "",
     string ValidationMessage = ""
-); 
+);
+
+public record AttributeVector(string FullPath, ImmutableArray<LoadedAttribute> Attributes);
 
 public sealed record LoadedAttribute(
     ImmutableArray<LoadedAttribute> Children ,
@@ -52,6 +54,18 @@ public sealed record LoadedAttribute(
 
 public static class AttributeHelper
 {
+    private static Func<Attribute, string, object> _castToDbType = (_, s) => s;
+
+    public static void SetCastToDbType(Func<string, string, object> func)
+    {
+        _castToDbType = (a, s) => func(s, a.DataType);
+    }
+
+    public static object Cast(this Attribute attribute, string s)
+    {
+        return _castToDbType(attribute, s);
+    }
+    
     public static string GetFullName(this LoadedAttribute attribute)
     {
         return $"{attribute.TableName}.{attribute.Field}";
@@ -103,6 +117,7 @@ public static class AttributeHelper
             return string.Join(" ", components);
         }
     }
+    
    
     public static ImmutableArray<object> GetUniqValues<T>(this T a, Record[] records)
     where T :Attribute

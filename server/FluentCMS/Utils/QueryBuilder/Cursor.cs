@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
 using System.Text.Json;
-using FluentCMS.Utils.DataDefinitionExecutor;
+using FluentCMS.Utils.DictionaryExt;
 using FluentResults;
 using Microsoft.IdentityModel.Tokens;
 
@@ -11,16 +11,16 @@ public sealed record Cursor(string? First = default, string? Last = default);
 public sealed record ValidCursor(Cursor Cursor, ImmutableDictionary<string,object>? BoundaryItem = default);
 public static class CursorHelper
 {
-    public static object BoundaryValue(this ValidCursor c, string fld) => c.BoundaryItem![fld];
+    public static object BoundaryValue(this ValidCursor c, string fld) => c.BoundaryItem!.GetValue(fld);
     
     private static bool IsEmpty(this Cursor c) => string.IsNullOrWhiteSpace(c.First) && string.IsNullOrWhiteSpace(c.Last);
     
     public static bool IsForward(this Cursor c) => !string.IsNullOrWhiteSpace(c.Last) || string.IsNullOrWhiteSpace(c.First);
     
-    public static string GetCompareOperator(this Cursor c,Sort s)
+    public static string GetCompareOperator(this Cursor c,string order)
     {
-        return  c.IsForward() ? s.Order == SortOrder.Asc ? ">" : "<":
-            s.Order == SortOrder.Asc ? "<" : ">";
+        return  c.IsForward() ? order == SortOrder.Asc ? ">" : "<":
+            order == SortOrder.Asc ? "<" : ">";
     }
 
     public static Result<Cursor> GetNextCursor(this Cursor c, Record[] items, ImmutableArray<Sort>? sorts, bool hasMore)
@@ -68,7 +68,7 @@ public static class CursorHelper
     }
 
     
-    public static Result<ValidCursor> Resolve(this Cursor c,LoadedEntity entity, CastDelegate cast)
+    public static Result<ValidCursor> Resolve(this Cursor c,LoadedEntity entity)
     {
         if (c.IsEmpty()) return new ValidCursor(c, default);
         
@@ -77,7 +77,7 @@ public static class CursorHelper
             var recordStr = c.IsForward() ? c.Last : c.First;
             recordStr = Base64UrlEncoder.Decode(recordStr);
             var element = JsonSerializer.Deserialize<JsonElement>(recordStr);
-            var parseRes = entity.Parse(element, cast);
+            var parseRes = entity.Parse(element);
             return parseRes.IsFailed ? Result.Fail(parseRes.Errors) : Result.Ok(new ValidCursor(c,parseRes.Value.ToImmutableDictionary()));
         }
         catch (Exception e)

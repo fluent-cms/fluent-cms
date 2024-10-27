@@ -43,9 +43,11 @@ public class HookRegistryTests
     [Fact]
     public async Task TestEntityPreList()
     {
+        var attr = new LoadedAttribute([], "", "");
+        var entity = new LoadedEntity([], attr, attr, attr, "", ""); 
         _hookRegistry.EntityPreGetList.Register(People.EntityName, args => args);
         await _hookRegistry.EntityPreGetList.Trigger(_serviceProvider,
-            new EntityPreGetListArgs(People.EntityName, [], [] , new ValidPagination(0,5)));
+            new EntityPreGetListArgs(People.EntityName, entity ,[], [] , new ValidPagination(0,5)));
     }
     
     [Fact]
@@ -56,7 +58,9 @@ public class HookRegistryTests
              args with{ RefPagination = args.RefPagination with{Offset = offset}}
         );
 
-        var args = new EntityPreGetListArgs(People.EntityName, [], [], new ValidPagination(0,2));
+        var attr = new LoadedAttribute([], "", "");
+        var entity = new LoadedEntity([], attr, attr, attr, "", ""); 
+        var args = new EntityPreGetListArgs(People.EntityName,entity, [], [], new ValidPagination(0,2));
 
         args = await _hookRegistry.EntityPreGetList.Trigger(_serviceProvider, args);
         Assert.Equal(offset, args.RefPagination.Offset);

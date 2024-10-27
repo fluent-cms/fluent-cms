@@ -121,6 +121,7 @@ public sealed class CmsModule(
 
     public async Task UseCmsAsync(WebApplication app)
     {
+        AttributeHelper.SetCastToDbType(app.Services.GetRequiredService<IDefinitionExecutor>().Cast);
         PrintVersion();
         await InitSchema();
         app.UseStaticFiles();
