@@ -52,21 +52,9 @@ public sealed class QuerySchemaService(
 
         var entity = CheckResult(await entitySchemaService.GetLoadedEntity(query.EntityName, cancellationToken));
         var fields = CheckResult(GraphQlExt.GetRootGraphQlFields(query.SelectionSet));
-        var attributes = CheckResult(await SelectionSetToNode(fields, entity, cancellationToken));
-
-        var listAttributes = attributes.GetLocalAttributes();
-        foreach (var viewSort in query.Sorts)
-        {
-            var find = listAttributes.FirstOrDefault(x => x.Field == viewSort.FieldName);
-            NotNull(find).ValOrThrow($"sort field {viewSort.FieldName} should in list attributes");
-        }
-
-        var attr = attributes.GetLocalAttributes();
-        foreach (var viewFilter in query.Filters)
-        {
-            var find = attr.FirstOrDefault(x => x.Field == viewFilter.FieldName);
-            NotNull(find).ValOrThrow($"filter field {viewFilter.FieldName} should in entity's attribute list");
-        }
+        CheckResult(await SelectionSetToNode(fields, entity, cancellationToken));
+        CheckResult(await query.Sorts.ToValidSorts(entity, entitySchemaService.ResolveAttributeVector));
+        CheckResult(await query.Filters.Resolve(entity, null, entitySchemaService.ResolveAttributeVector));
     }
 
     private async Task<Result<ImmutableArray<LoadedAttribute>>> SelectionSetToNode(

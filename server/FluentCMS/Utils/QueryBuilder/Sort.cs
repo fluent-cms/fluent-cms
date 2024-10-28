@@ -11,46 +11,47 @@ public static class SortOrder
 
 public sealed record Sort(string FieldName, string Order);
 
-public sealed record ValidSort(string FullPath, string Order, ImmutableArray<LoadedAttribute> Attributes)
-    : AttributeVector(FullPath: FullPath,Attributes: Attributes);
-    
+public sealed record ValidSort(AttributeVector Vector,string Order);
+
+public static class SortConstant
+{
+    public const string SortKey = "sort";
+}
 
 public static class SortHelper
 {
-    public const string SortKey = "sort";
-
     public static async Task<Result<ImmutableArray<ValidSort>>> ToValidSorts(this IEnumerable<Sort> sorts, LoadedEntity entity,
-        ResolveAttributeDelegate attributeDelegate)
+        ResolveVectorDelegate vectorDelegate)
     {
         var ret = new List<ValidSort>();
         foreach (var sort in sorts)
         {
-            var attributesRes = await attributeDelegate(entity, sort.FieldName);
-            if (attributesRes.IsFailed)
+            var res = await vectorDelegate(entity, sort.FieldName);
+            if (res.IsFailed)
             {
-                return Result.Fail(attributesRes.Errors);
+                return Result.Fail(res.Errors);
             }
-            ret.Add(new ValidSort(sort.FieldName,sort.Order,attributesRes.Value));
+            ret.Add(new ValidSort(res.Value,sort.Order));
         }
         return ret.ToImmutableArray();
     }
     
-    public static async Task<Result<ImmutableArray<ValidSort>>> Parse(Qs.QsDict qsDict, LoadedEntity entity, ResolveAttributeDelegate attributeDelegate)
+    public static async Task<Result<ImmutableArray<ValidSort>>> Parse(Qs.QsDict qsDict, LoadedEntity entity, ResolveVectorDelegate vectorDelegate)
     {
         var ret = new List<ValidSort>();
 
-        if (qsDict.Dict.TryGetValue(SortKey, out var pairs))
+        if (qsDict.Dict.TryGetValue(SortConstant.SortKey, out var pairs))
         {
             foreach (var p in pairs)
             {
-                var res = await attributeDelegate(entity, p.Key);
-                if (res.IsFailed)
+                var (_, _, vector, errors) = await vectorDelegate(entity, p.Key);
+                if (errors is not null)
                 {
-                    return Result.Fail(res.Errors);
+                    return Result.Fail(errors);
                 }
-
+                
                 var order = p.Values.FirstOrDefault() == "1" ? SortOrder.Asc : SortOrder.Desc;
-                ret.Add(new ValidSort(p.Key, order,res.Value));
+                ret.Add(new ValidSort(vector,order));
             }
         }
         return ret.ToImmutableArray();

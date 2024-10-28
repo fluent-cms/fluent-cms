@@ -14,7 +14,6 @@ public static class ConstraintsHelper
 
     public static Result<ImmutableArray<ValidConstraint>> Resolve(
         this IEnumerable<Constraint> constraints, 
-        LoadedEntity entity,
         Attribute attribute,  
         bool ignoreResolveError,
         Dictionary<string, StringValues>? querystringDictionary

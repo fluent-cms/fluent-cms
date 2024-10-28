@@ -34,7 +34,6 @@ public record LoadedEntity(
     string TitleAttribute = "",
     int DefaultPageSize = EntityConstants.DefaultPageSize
     ) ;
-public delegate Task<Result<ImmutableArray<LoadedAttribute>>> ResolveAttributeDelegate(LoadedEntity entity, string attributeName);
 
 public static class EntityConstants
 {
@@ -67,7 +66,7 @@ public static class EntityHelper
     public static Result<SqlKata.Query> OneQuery(this LoadedEntity e,ImmutableArray<ValidFilter> filters, IEnumerable<LoadedAttribute> attributes)
     {
         var query = e.Basic().Select(attributes.Select(x => x.GetFullName()));
-        query.ApplyJoin(filters);
+        query.ApplyJoin(filters.Select(x=>x.Vector));
         var result = query.ApplyFilters(filters); //filters.Apply(this, query);
         if (result.IsFailed)
         {
@@ -89,7 +88,7 @@ public static class EntityHelper
         ValidPagination pagination, ValidCursor? cursor, IEnumerable<LoadedAttribute> attributes)
     {
         var query = e.Basic().Select(attributes.Select(x => x.GetFullName()));
-        query.ApplyJoin([..filters,..sorts]);
+        query.ApplyJoin([..filters.Select(x=>x.Vector),..sorts.Select(x=>x.Vector)]);
         var cursorResult = query.ApplyCursor(cursor, sorts);
         if (cursorResult.IsFailed) return Result.Fail(cursorResult.Errors);
         query.ApplyPagination(pagination);
@@ -109,7 +108,7 @@ public static class EntityHelper
     public static SqlKata.Query CountQuery(this LoadedEntity e,ImmutableArray<ValidFilter> filters)
     {
         var query = e.Basic();
-        query.ApplyJoin(filters);
+        query.ApplyJoin(filters.Select(x=>x.Vector));
         query.ApplyFilters(filters);
         return query;
     }

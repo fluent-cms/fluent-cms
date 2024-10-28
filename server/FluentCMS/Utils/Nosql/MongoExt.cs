@@ -15,14 +15,14 @@ public static class MongoExt
         
         
         var ret = sorts[0].Order == SortOrder.Asc
-                                  ? sortBuilder.Ascending(sorts[0].FullPath)
-                                  : sortBuilder.Descending(sorts[0].FullPath);
+                                  ? sortBuilder.Ascending(sorts[0].Vector.Field)
+                                  : sortBuilder.Descending(sorts[0].Vector.Field);
         
         for (var i = 1; i < sorts.Length; i++)
         {
             ret = sorts[i].Order == SortOrder.Asc
-                ? ret.Ascending(sorts[i].FullPath)
-                : ret.Descending(sorts[i].FullPath);
+                ? ret.Ascending(sorts[i].Vector.Field)
+                : ret.Descending(sorts[i].Vector.Field);
         }
         return ret;
     }
@@ -51,13 +51,13 @@ public static class MongoExt
         
         FilterDefinition<BsonDocument> GetEq(ValidSort sort)
         {
-            var (fld, val) = (sort.FullPath, cursor.BoundaryValue(sort.FullPath));
+            var (fld, val) = (sort.Vector.Field, cursor.BoundaryValue(sort.Vector.Field));
             return builder.Eq(fld, val);
         }
   
         FilterDefinition<BsonDocument> GetCompare(ValidSort sort)
         {
-            var (fld, val) = (sort.FullPath, cursor.BoundaryValue(sort.FullPath));
+            var (fld, val) = (sort.Vector.Field, cursor.BoundaryValue(sort.Vector.Field));
             return cursor.Cursor.GetCompareOperator(sort.Order) == ">" ? builder.Gt(fld, val) : builder.Lt(fld, val);
         } 
     }
@@ -83,8 +83,7 @@ public static class MongoExt
         List<FilterDefinition<BsonDocument>> definitions = new();
         foreach (var filterConstraint in filter.Constraints)
         {
-            var resConstraint = GetConstraintDefinition(
-                string.Join(".", filter.Attributes.Select(x=>x.Field)), filterConstraint.Match, filterConstraint.Values);
+            var resConstraint = GetConstraintDefinition(filter.Vector.Field, filterConstraint.Match, filterConstraint.Values);
             if (resConstraint.IsFailed)
             {
                 return Result.Fail(resConstraint.Errors);

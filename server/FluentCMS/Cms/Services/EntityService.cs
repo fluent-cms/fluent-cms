@@ -66,8 +66,8 @@ public sealed class EntityService(
     {
         var entity = CheckResult(await entitySchemaService.GetLoadedEntity(entityName,  cancellationToken));
         var qsDict = new QsDict(qs);
-        var filters = CheckResult(await FilterHelper.Parse(entity, qsDict, entitySchemaService.ResolveAttribute));
-        var sorts = CheckResult(await SortHelper.Parse(qsDict,entity, entitySchemaService.ResolveAttribute));
+        var filters = CheckResult(await FilterHelper.Parse(entity, qsDict, entitySchemaService.ResolveAttributeVector));
+        var sorts = CheckResult(await SortHelper.Parse(qsDict,entity, entitySchemaService.ResolveAttributeVector));
         return await List(entity, filters, sorts, pagination, cancellationToken);
     }
 

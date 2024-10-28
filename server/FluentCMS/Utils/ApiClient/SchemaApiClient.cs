@@ -64,7 +64,7 @@ public class SchemaApiClient (HttpClient client)
             attr.Add(new Attribute
             (
                 Field: lookup,
-                Option: lookup,
+                Options: lookup,
                 Header: lookup,
                 InList: true,
                 InDetail: true,
@@ -78,7 +78,7 @@ public class SchemaApiClient (HttpClient client)
             attr.Add(new Attribute
             (
                 Field: crosstable,
-                Option: crosstable,
+                Options: crosstable,
                 Header: crosstable,
                 DataType: DataType.Na,
                 Type: DisplayType.Crosstable,

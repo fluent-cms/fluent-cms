@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Globalization;
 using FluentCMS.Utils.DataDefinitionExecutor;
+using FluentResults;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
@@ -12,12 +13,11 @@ public record Attribute(
     bool InList = true,
     bool InDetail = true,
     bool IsDefault = false,
-    string Option = "",
+    string Options = "",
     string Validation = "",
     string ValidationMessage = ""
 );
 
-public record AttributeVector(string FullPath, ImmutableArray<LoadedAttribute> Attributes);
 
 public sealed record LoadedAttribute(
     ImmutableArray<LoadedAttribute> Children ,
@@ -32,7 +32,7 @@ public sealed record LoadedAttribute(
     bool InDetail = true,
     bool IsDefault = false,
 
-    string Option = "", 
+    string Options = "", 
     string Validation = "",
     string ValidationMessage = "",
     
@@ -48,9 +48,8 @@ public sealed record LoadedAttribute(
     IsDefault:IsDefault,
     Validation:Validation,
     ValidationMessage:ValidationMessage,
-    Option: Option
+    Options: Options
 );
-
 
 public static class AttributeHelper
 {
@@ -66,9 +65,13 @@ public static class AttributeHelper
         return _castToDbType(attribute, s);
     }
     
-    public static string GetFullName(this LoadedAttribute attribute)
+    public static string GetFullName(this LoadedAttribute attribute, string prefix = "")
     {
-        return $"{attribute.TableName}.{attribute.Field}";
+        if (prefix == "")
+        {
+            prefix = attribute.TableName;
+        }
+        return $"{prefix}.{attribute.Field}";
     }
 
     public static LoadedAttribute ToLoaded(this Attribute a, string tableName)
@@ -83,17 +86,15 @@ public static class AttributeHelper
             InList: a.InList,
             InDetail: a.InDetail,
             IsDefault: a.IsDefault,
-            Option: a.Option,
+            Options: a.Options,
             Validation: a.Validation,
             ValidationMessage: a.ValidationMessage
         );
     }
 
-    public static string GetLookupTarget(this Attribute a) => a.Option;
-    public static string GetCrosstableTarget(this Attribute a) => a.Option;
+    public static string GetLookupTarget(this Attribute a) => a.Options;
+    public static string GetCrosstableTarget(this Attribute a) => a.Options;
     private static bool IsLocalAttribute(this Attribute a) => a.Type != DisplayType.Crosstable;
-
-    
 
     public static Attribute ToAttribute(this ColumnDefinition col)
     {
@@ -162,4 +163,6 @@ public static class AttributeHelper
         return arr?.Where(x => x.Type == type && (listOrDetail == InListOrDetail.InList ? x.InList : x.InDetail))
             .ToImmutableArray()??[];
     }
+
+   
 }

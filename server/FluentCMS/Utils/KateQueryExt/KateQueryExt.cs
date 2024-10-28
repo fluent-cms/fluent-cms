@@ -1,7 +1,6 @@
 using System.Collections.Immutable;
 using FluentCMS.Utils.QueryBuilder;
 using FluentResults;
-using Attribute = System.Attribute;
 
 namespace FluentCMS.Utils.KateQueryExt;
 
@@ -9,26 +8,46 @@ public static class KateQueryExt
 {
     public static void ApplyJoin(this SqlKata.Query query, IEnumerable<AttributeVector> vectors)
     {
-        var lst = new List<AttributeVector>();
-        var set = new HashSet<string>();
-        foreach (var vector in vectors)
+        var root = AttributeTreeNode.Parse(vectors);
+        Bfs(root, "");
+
+        void Bfs(AttributeTreeNode node, string prefix)
         {
-            if (set.Contains(vector.FullPath))
+            var nextPrefix = prefix;
+            if (node.Attribute is not null)
             {
-                continue;
-            }
-            lst.Add(vector);
-            set.Add(vector.FullPath);
-        }
-        
-        foreach (var attribute in lst.SelectMany(arr => arr.Attributes))
-        {
-            switch (attribute.Type)
-            {
-                case DisplayType.Lookup:
-                    query.Join(attribute.Lookup!.TableName, attribute.GetFullName(),
-                        attribute.Lookup.PrimaryKeyAttribute.GetFullName());
+                if (nextPrefix != "")
+                {
+                    nextPrefix += AttributeVectorConstants.Separator;
+                }
+                nextPrefix += node.Attribute.Field;
+
+                switch (node.Attribute.Type)
+                {
+                    case DisplayType.Lookup:
+                        var lookup = node.Attribute.Lookup!;
+                        query.LeftJoin($"{lookup.TableName} as {nextPrefix}",
+                            node.Attribute.GetFullName(prefix),
+                            lookup.PrimaryKeyAttribute.GetFullName(nextPrefix));
+                        break;
+                    case DisplayType.Crosstable:
+                        var cross = node.Attribute.Crosstable;
+                        var crossAlias = $"{nextPrefix}_{cross!.CrossEntity.TableName}";
+                        query
+                            .LeftJoin($"{cross.CrossEntity.TableName} as {crossAlias}",
+                                cross.SourceEntity.PrimaryKeyAttribute.GetFullName(prefix),
+                                cross.SourceAttribute.GetFullName(crossAlias))
+                            .LeftJoin($"{cross.TargetEntity.TableName} as {nextPrefix}",
+                                cross.TargetAttribute.GetFullName(crossAlias),
+                                cross.TargetEntity.PrimaryKeyAttribute.GetFullName(nextPrefix)
+                            );
                     break;
+                }
+            }
+
+            foreach (var sub in node.Children)
+            {
+                Bfs(sub, nextPrefix);
             }
         }
     }
@@ -41,14 +60,14 @@ public static class KateQueryExt
     {
         foreach (var sort in sorts)
         {
-       
+            var vector = sort.Vector;
             if (sort.Order == SortOrder.Desc)
             {
-                query.OrderByDesc(sort.Attributes.Last().GetFullName());
+                query.OrderByDesc(vector.Attribute.GetFullName(vector.TableAlias));
             }
             else
             {
-                query.OrderBy(sort.Attributes.Last().GetFullName());
+                query.OrderBy(vector.Attribute.GetFullName(vector.TableAlias));
             }
         }
     }
@@ -58,7 +77,7 @@ public static class KateQueryExt
         var result = Result.Ok();
         foreach (var filter in filters)
         {
-            var filedName = filter.Attributes.Last().GetFullName();
+            var filedName = filter.Vector.Attribute.GetFullName(filter.Vector.TableAlias);
             query.Where(q =>
             {
                 foreach (var c in filter.Constraints)
@@ -165,8 +184,8 @@ public static class KateQueryExt
         {
             for (var i = 0; i < idx; i++)
             {
-                var res = ApplyEq(q, sorts[i]);
-                if (res.IsFailed)
+                var (_,_,errors) = ApplyEq(q, sorts[i]);
+                if (errors?.Count >0)
                 {
                     return Result.Fail(res.Errors);
                 }
@@ -177,24 +196,24 @@ public static class KateQueryExt
 
         Result ApplyEq(SqlKata.Query q, ValidSort sort)
         {
-            var res = cursor.BoundaryValue(sort.FullPath);
-            if (res.IsFailed)
+            var (_,_, value, errors) = cursor.BoundaryValue(sort.Vector.Field);
+            if (errors?.Count > 0 )
             {
-                return Result.Fail(res.Errors);
+                return Result.Fail(errors);
             }
 
-            q.Where(sort.Attributes.Last().GetFullName(), res.Value);
+            q.Where(sort.Vector.Attribute.GetFullName(sort.Vector.TableAlias), value);
             return Result.Ok();
         }
 
         Result ApplyCompare(SqlKata.Query q, ValidSort sort)
         {
-            var res = cursor.BoundaryValue(sort.FullPath);
-            if (res.IsFailed)
+            var (_,_, v,err) = cursor.BoundaryValue(sort.Vector.Field);
+            if (err?.Count > 0)
             {
-                return Result.Fail(res.Errors);
+                return Result.Fail(err);
             }
-            q.Where(sort.Attributes.Last().GetFullName(), cursor.Cursor.GetCompareOperator(sort.Order),res.Value );
+            q.Where(sort.Vector.Attribute.GetFullName(sort.Vector.TableAlias), cursor.Cursor.GetCompareOperator(sort.Order),v);
             return Result.Ok();
         }
         

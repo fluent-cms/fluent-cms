@@ -13,5 +13,5 @@ public interface IEntitySchemaService
     Task<Schema> SaveTableDefine(Schema schemaDto, CancellationToken cancellationToken);
     Task<Schema> AddOrUpdate(Entity entity, CancellationToken cancellationToken);
     Task<Result<LoadedAttribute>> LoadOneRelated(LoadedEntity entity, LoadedAttribute attribute, CancellationToken cancellationToken);
-    Task<Result<ImmutableArray<LoadedAttribute>>> ResolveAttribute(LoadedEntity entity, string fieldName);
+    Task<Result<AttributeVector>> ResolveAttributeVector(LoadedEntity entity, string fieldName);
 }

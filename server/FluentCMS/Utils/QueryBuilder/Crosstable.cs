@@ -3,10 +3,10 @@ using FluentCMS.Utils.KateQueryExt;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
-//can not save source entity, it will cause circular reference when marshal json
 public record Crosstable(
     LoadedEntity CrossEntity,
     LoadedEntity TargetEntity,
+    LoadedEntity SourceEntity,
     
     LoadedAttribute SourceAttribute,
     LoadedAttribute TargetAttribute
@@ -26,11 +26,16 @@ public static class CrosstableHelper
         ];
     }
     
-    public static Crosstable Crosstable(LoadedEntity sourceEntity, LoadedEntity targetEntity)
+    public static Crosstable Crosstable(LoadedEntity sourceEntity, LoadedEntity targetEntity, LoadedAttribute crossAttribute)
     {
         var tableName = GetTableName();
         var id = new LoadedAttribute([],tableName, DefaultFields.Id);
         var deleted = new LoadedAttribute([],tableName, DefaultFields.Deleted);
+        sourceEntity = sourceEntity with
+        {
+            Attributes =
+            [..sourceEntity.Attributes.Select(x => x.Field == crossAttribute.Field ? x with { Crosstable = null } : x)]
+        };
         
         var sourceAttribute = new LoadedAttribute
         (
@@ -38,9 +43,8 @@ public static class CrosstableHelper
             TableName:tableName,
             Children:[],
             DataType:DataType.Int
-            
-            
         );
+        
         var targetAttribute = new LoadedAttribute
         (
             Field : $"{targetEntity.Name}_id",
@@ -58,7 +62,13 @@ public static class CrosstableHelper
             Name: tableName,
             TableName: tableName
         );
-        return new Crosstable(crossEntity, targetEntity, sourceAttribute, targetAttribute);
+        return new Crosstable(
+            CrossEntity: crossEntity,
+            TargetEntity: targetEntity,
+            SourceEntity: sourceEntity,
+            SourceAttribute: sourceAttribute,
+            TargetAttribute: targetAttribute
+            );
 
         string GetTableName()
         {

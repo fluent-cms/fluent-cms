@@ -12,47 +12,53 @@ using static InvalidParamExceptionFactory;
 public sealed class EntitySchemaService(ISchemaService schemaService, IDefinitionExecutor definitionExecutor)
     : IEntitySchemaService
 {
-    public async Task<Result<ImmutableArray<LoadedAttribute>>> ResolveAttribute(LoadedEntity entity, string fieldName)
+    public async Task<Result<AttributeVector>> ResolveAttributeVector(LoadedEntity entity, string fieldName)
     {
-        var attributes = new List<LoadedAttribute>();
         var fields = fieldName.Split(".");
-        for (var i = 0; i < fields.Length; i++)
+        var lastField = fields.Last();
+
+        fields = fields[..^1];
+        string prefix = string.Join(AttributeVectorConstants.Separator, fields);
+
+        var attributes = new List<LoadedAttribute>();
+        foreach (var field in fields)
         {
-            if (entity is null)
-            {
-                continue;
-            }
-            var attr = entity.Attributes.FindOneAttribute(fields[i]);
+            var attr = entity.Attributes.FindOneAttribute(field);
             if (attr is null)
             {
-                return Result.Fail($"Fail to resolve filter: no field ${fieldName} ");
+                return Result.Fail($"Fail to resolve filter: no field {fieldName} ");
             }
-            var res  = await LoadOneRelated(entity,attr, default);
+
+            var res = await LoadOneRelated(entity, attr, default);
             if (res.IsFailed)
             {
                 return Result.Fail(res.Errors);
             }
 
             attr = res.Value;
-            attributes.Add(attr);
-            if (i < fields.Length - 1)
+            switch (attr.Type)
             {
-                switch (attr.Type)
-                {
-                    case DisplayType.Crosstable:
-                        entity = attr.Crosstable!.TargetEntity;
-                        break;
-                    case DisplayType.Lookup:
-                        entity = attr.Lookup!;
-                        break;
-                    default:
-                        return Result.Fail($"Can not resolve {fieldName}, {attr.Field} is not a composite type");
-                }
+                case DisplayType.Crosstable:
+                    entity = attr.Crosstable!.TargetEntity;
+                    break;
+                case DisplayType.Lookup:
+                    entity = attr.Lookup!;
+                    break;
+                default:
+                    return Result.Fail($"Can not resolve {fieldName}, {attr.Field} is not a composite type");
             }
+
+            attributes.Add(attr);
         }
-        return attributes.ToImmutableArray();
+
+        var last = entity.Attributes.FindOneAttribute(lastField);
+        if (last is null)
+        {
+            return Result.Fail($"Fail to resolve filter: no field ${fieldName} ");
+        }
+        return new AttributeVector(fieldName, prefix, [..attributes], last);
     }
-    
+
     public async Task<Result<LoadedEntity>> GetLoadedEntity(string name, CancellationToken cancellationToken = default)
     {
         var (_, isFailed, entity, errors) = await GetEntity(name, cancellationToken);
@@ -134,7 +140,8 @@ public sealed class EntitySchemaService(ISchemaService schemaService, IDefinitio
         {
             foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.Crosstable))
             {
-                await CreateCrosstable(entity.ToLoadedEntity(definitionExecutor.Cast), attribute.ToLoaded(entity.TableName), cancellationToken);
+                await CreateCrosstable(entity.ToLoadedEntity(definitionExecutor.Cast),
+                    attribute.ToLoaded(entity.TableName), cancellationToken);
             }
         }
 
@@ -172,16 +179,18 @@ public sealed class EntitySchemaService(ISchemaService schemaService, IDefinitio
                 $"not find entity by name {attribute.GetCrosstableTarget()} for crosstable {attribute.GetFullName()}");
         }
 
-        var loadedTarget = await LoadAllRelated(targetEntity.ToLoadedEntity(definitionExecutor.Cast), true, cancellationToken);
+        var loadedTarget =
+            await LoadAllRelated(targetEntity.ToLoadedEntity(definitionExecutor.Cast), true, cancellationToken);
         if (loadedTarget.IsFailed)
         {
             return Result.Fail(loadedTarget.Errors);
         }
 
-        return attribute with { Crosstable = CrosstableHelper.Crosstable(entity, loadedTarget.Value) };
+        return attribute with { Crosstable = CrosstableHelper.Crosstable(entity, loadedTarget.Value, attribute) };
     }
 
-    public async Task<Result<LoadedAttribute>> LoadOneRelated(LoadedEntity entity, LoadedAttribute attribute, CancellationToken cancellationToken)
+    public async Task<Result<LoadedAttribute>> LoadOneRelated(LoadedEntity entity, LoadedAttribute attribute,
+        CancellationToken cancellationToken)
     {
         return attribute.Type switch
         {
@@ -190,6 +199,7 @@ public sealed class EntitySchemaService(ISchemaService schemaService, IDefinitio
             _ => attribute
         };
     }
+
     //omitCrosstable: omit  circular reference
     private async Task<Result<LoadedEntity>> LoadAllRelated(LoadedEntity entity, bool omitCrosstable,
         CancellationToken cancellationToken)
@@ -223,7 +233,7 @@ public sealed class EntitySchemaService(ISchemaService schemaService, IDefinitio
         CancellationToken cancellationToken)
     {
         var targetEntity = CheckResult(await GetLoadedEntity(attribute.GetCrosstableTarget(), cancellationToken));
-        var crossTable = CrosstableHelper.Crosstable(entity, targetEntity);
+        var crossTable = CrosstableHelper.Crosstable(entity, targetEntity,attribute);
         var columns =
             await definitionExecutor.GetColumnDefinitions(crossTable.CrossEntity.TableName, cancellationToken);
         if (columns.Length == 0)
