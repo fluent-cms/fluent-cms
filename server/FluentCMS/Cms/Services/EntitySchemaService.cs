@@ -15,20 +15,20 @@ public sealed class EntitySchemaService(ISchemaService schemaService, IDefinitio
     public async Task<Result<AttributeVector>> ResolveAttributeVector(LoadedEntity entity, string fieldName)
     {
         var fields = fieldName.Split(".");
-        var lastField = fields.Last();
-
-        fields = fields[..^1];
-        string prefix = string.Join(AttributeVectorConstants.Separator, fields);
-
+        var prefix = string.Join(AttributeVectorConstants.Separator, fields[..^1]);
         var attributes = new List<LoadedAttribute>();
-        foreach (var field in fields)
+        LoadedAttribute? attr = null;
+        for(var i = 0; i < fields.Length; i++)
         {
-            var attr = entity.Attributes.FindOneAttribute(field);
+            var field = fields[i];
+            attr = entity.Attributes.FindOneAttribute(field);
             if (attr is null)
             {
-                return Result.Fail($"Fail to resolve filter: no field {fieldName} ");
+                return Result.Fail($"Fail to attribute vector: can not find {field} in {entity.Name} ");
             }
 
+            if (i == fields.Length - 1) break;
+            
             var res = await LoadOneRelated(entity, attr, default);
             if (res.IsFailed)
             {
@@ -47,16 +47,9 @@ public sealed class EntitySchemaService(ISchemaService schemaService, IDefinitio
                 default:
                     return Result.Fail($"Can not resolve {fieldName}, {attr.Field} is not a composite type");
             }
-
             attributes.Add(attr);
         }
-
-        var last = entity.Attributes.FindOneAttribute(lastField);
-        if (last is null)
-        {
-            return Result.Fail($"Fail to resolve filter: no field ${fieldName} ");
-        }
-        return new AttributeVector(fieldName, prefix, [..attributes], last);
+        return new AttributeVector(fieldName, prefix, [..attributes], attr!);
     }
 
     public async Task<Result<LoadedEntity>> GetLoadedEntity(string name, CancellationToken cancellationToken = default)

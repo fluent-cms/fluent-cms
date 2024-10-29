@@ -1,6 +1,5 @@
 using System.Collections.Immutable;
 using FluentCMS.Services;
-using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.QueryBuilder;
 using Microsoft.Extensions.Primitives;
@@ -10,7 +9,6 @@ namespace FluentCMS.Cms.Services;
 using static InvalidParamExceptionFactory;
 
 public sealed class QueryService(
-    IDefinitionExecutor definitionExecutor,
     KateQueryExecutor kateQueryExecutor,
     IEntitySchemaService entitySchemaService,
     IQuerySchemaService querySchemaService,

@@ -157,7 +157,7 @@ public static class EntityHelper
     }
 
     public static SqlKata.Query Basic(this LoadedEntity e) =>
-        new SqlKata.Query(e.TableName).Where(e.TableName + $".{DefaultFields.Deleted}", false);
+        new SqlKata.Query(e.TableName).Where(e.DeletedAttribute.GetFullName(), false);
      
 
     public static ColumnDefinition[] AddedColumnDefinitions(this Entity e, ColumnDefinition[] columnDefinitions)

@@ -26,9 +26,11 @@ public static class KateQueryExt
                 {
                     case DisplayType.Lookup:
                         var lookup = node.Attribute.Lookup!;
-                        query.LeftJoin($"{lookup.TableName} as {nextPrefix}",
+                        query
+                            .LeftJoin($"{lookup.TableName} as {nextPrefix}",
                             node.Attribute.GetFullName(prefix),
-                            lookup.PrimaryKeyAttribute.GetFullName(nextPrefix));
+                            lookup.PrimaryKeyAttribute.GetFullName(nextPrefix))
+                            .Where(lookup.DeletedAttribute.GetFullName(nextPrefix), false);
                         break;
                     case DisplayType.Crosstable:
                         var cross = node.Attribute.Crosstable;
@@ -39,8 +41,9 @@ public static class KateQueryExt
                                 cross.SourceAttribute.GetFullName(crossAlias))
                             .LeftJoin($"{cross.TargetEntity.TableName} as {nextPrefix}",
                                 cross.TargetAttribute.GetFullName(crossAlias),
-                                cross.TargetEntity.PrimaryKeyAttribute.GetFullName(nextPrefix)
-                            );
+                                cross.TargetEntity.PrimaryKeyAttribute.GetFullName(nextPrefix))
+                            .Where(cross.CrossEntity.DeletedAttribute.GetFullName(crossAlias),false)
+                            .Where(cross.TargetEntity.DeletedAttribute.GetFullName(nextPrefix),false);
                     break;
                 }
             }
