@@ -7,8 +7,8 @@ public sealed record Query(
     string EntityName,
     int PageSize,
     string SelectionSet,
-    ImmutableArray<Sort> Sorts,
-    ImmutableArray<Filter> Filters);
+    ImmutableArray<Sort>? Sorts,
+    ImmutableArray<Filter>? Filters);
 
 public sealed record LoadedQuery(
     string Name,
@@ -27,8 +27,8 @@ public static class QueryHelper{
             query.EntityName,
             query.PageSize,
             [..attributes],
-            query.Sorts,
-            query.Filters,
+            query.Sorts??[] ,
+            query.Filters??[],
             entity // LoadedEntity to be passed
         );
     }

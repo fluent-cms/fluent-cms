@@ -53,8 +53,8 @@ public sealed class QuerySchemaService(
         var entity = CheckResult(await entitySchemaService.GetLoadedEntity(query.EntityName, cancellationToken));
         var fields = CheckResult(GraphQlExt.GetRootGraphQlFields(query.SelectionSet));
         CheckResult(await SelectionSetToNode(fields, entity, cancellationToken));
-        CheckResult(await query.Sorts.ToValidSorts(entity, entitySchemaService.ResolveAttributeVector));
-        CheckResult(await query.Filters.Resolve(entity, null, entitySchemaService.ResolveAttributeVector));
+        CheckResult(await (query.Sorts??[]).ToValidSorts(entity, entitySchemaService.ResolveAttributeVector));
+        CheckResult(await (query.Filters??[]).Resolve(entity, null, entitySchemaService.ResolveAttributeVector));
     }
 
     private async Task<Result<ImmutableArray<LoadedAttribute>>> SelectionSetToNode(

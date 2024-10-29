@@ -42,7 +42,6 @@ public static class EntityConstants
 
 public static class EntityHelper
 {
-
     public static LoadedEntity ToLoadedEntity(this Entity entity, Func<string, string,object> cast)
     {
         var primaryKey = entity.Attributes.FindOneAttribute(entity.PrimaryKey)!.ToLoaded(entity.TableName);
@@ -150,15 +149,14 @@ public static class EntityHelper
     }
 
     public static Result<SqlKata.Query> DeleteQuery(this LoadedEntity e,Record item)
-    {
-        return item.TryGetValue(e.PrimaryKey, out var key)
+         => item.TryGetValue(e.PrimaryKey, out var key)
             ? Result.Ok(new SqlKata.Query(e.TableName).Where(e.PrimaryKey, key).AsUpdate([DefaultFields.Deleted], [true]))
             : Result.Fail($"Failed to get value with primary key [${e.PrimaryKey}]");
-    }
 
     public static SqlKata.Query Basic(this LoadedEntity e) =>
-        new SqlKata.Query(e.TableName).Where(e.DeletedAttribute.GetFullName(), false);
-     
+        new SqlKata.Query(e.TableName)
+            .Where(e.DeletedAttribute.GetFullName(), false)
+            .Distinct();
 
     public static ColumnDefinition[] AddedColumnDefinitions(this Entity e, ColumnDefinition[] columnDefinitions)
     {
@@ -168,11 +166,9 @@ public static class EntityHelper
     }
 
     public static ColumnDefinition[] ColumnDefinitions(this Entity e)
-    {
-        return e.Attributes.GetLocalAttributes()
+        => e.Attributes.GetLocalAttributes()
             .Select(x => new ColumnDefinition (ColumnName : x.Field, DataType : x.DataType ))
             .ToArray();
-    }
 
     public static Entity WithDefaultAttr(this Entity e)
     {
