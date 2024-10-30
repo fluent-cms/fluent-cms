@@ -25,7 +25,15 @@ public class QueryApiTest
         _accountApiClient = new AccountApiClient(webAppClient.GetHttpClient());
         _queryApiClient = new QueryApiClient(webAppClient.GetHttpClient());
     }
-    
+     [Fact]
+     public async void One()
+     {
+         await PrepareEntity();
+         var query = GetQuery(TableName);
+         (await _schemaApiClient.SaveSchema(query)).AssertSuccess();
+         Assert.NotNull((await _queryApiClient.GetOne(query.Name,1)).AssertSuccess());
+     }
+     
     [Fact]
     public async void List()
     {
@@ -33,6 +41,11 @@ public class QueryApiTest
         var query = GetQuery(TableName);
         (await _schemaApiClient.SaveSchema(query)).AssertSuccess();
         var res = (await _queryApiClient.GetList(query.Name, new Cursor(), new Pagination())).AssertSuccess();
+        if (string.IsNullOrWhiteSpace(res.Last))
+        {
+            (await _queryApiClient.GetList(query.Name, new Cursor(Last: res.Last), new Pagination()))
+                .AssertSuccess();
+        }
     }
 
     [Fact]
@@ -43,15 +56,9 @@ public class QueryApiTest
         (await _schemaApiClient.SaveSchema(query)).AssertSuccess();
         var ids = Enumerable.Range(1, 5).ToArray().Select(x=>x as object).ToArray();
         Assert.Equal(QueryPageSize,(await _queryApiClient.GetMany(query.Name,ids )).AssertSuccess().Length);
+        
     }
-    [Fact]
-    public async void One()
-    {
-        await PrepareEntity();
-        var query = GetQuery(TableName);
-        (await _schemaApiClient.SaveSchema(query)).AssertSuccess();
-        Assert.NotNull((await _queryApiClient.GetOne(query.Name,1)).AssertSuccess());
-    }
+   
     async Task PrepareEntity()
     {
          await _accountApiClient.EnsureLogin();
@@ -65,18 +72,23 @@ public class QueryApiTest
     Schema GetQuery(string tableName)
     {
         var suffix = Guid.NewGuid().ToString("N");
-        var filter = new Filter("id", "and", [new Constraint(Matches.In, "qs.id")], true);
-        var query = new Query(tableName + suffix, tableName, QueryPageSize, "{id," + FieldName + "}",
-            [new Sort("id", SortOrder.Asc)], [filter]);
+        var query = new Query(
+            Name: tableName + suffix,
+            EntityName: tableName,
+            PageSize: QueryPageSize,
+            SelectionSet: "{id," + FieldName + "}",
+            Sorts: [new Sort("id", SortOrder.Asc)],
+            Filters: [new Filter("id", "and", [new Constraint(Matches.In, "qs.id")], true)]
+        );
         return new Schema
-        {
-            Name = query.Name,
-            Type = SchemaType.Query,
-            Settings = new Settings
+        (
+            Name : query.Name,
+            Type : SchemaType.Query,
+            Settings : new Settings
             {
                 Query = query
             }
-        };
+        );
     }
  
 }

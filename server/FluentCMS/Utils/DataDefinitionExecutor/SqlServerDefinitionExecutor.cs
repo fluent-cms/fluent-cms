@@ -5,14 +5,15 @@ namespace FluentCMS.Utils.DataDefinitionExecutor;
 
 public class SqlServerDefinitionExecutor(string connectionString, ILogger<SqlServerDefinitionExecutor> logger ) : IDefinitionExecutor
 {
-    public object CastToDatabaseType(string dataType, string str)
+    public object Cast(string s, string type)
     {
-        return dataType switch
+        return type switch
         {
-            DataType.Int => int.Parse(str),
-            _ => str,
+            DataType.Int => int.Parse(s),
+            _ => s
         };
     }
+    
     public async Task CreateTable(string tableName, ColumnDefinition[] columnDefinitions, CancellationToken cancellationToken)
     {
         var columnDefinitionStrs = columnDefinitions.Select(column => column.ColumnName.ToLower() switch

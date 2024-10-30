@@ -91,7 +91,7 @@ public class SchemaApiClient (HttpClient client)
             Name: entityName,
             TableName: entityName,
             Title: entityName,
-            DefaultPageSize: EntityHelper.DefaultPageSize,
+            DefaultPageSize: EntityConstants.DefaultPageSize,
             PrimaryKey: "id",
             TitleAttribute: field,
             Attributes: [..attr]

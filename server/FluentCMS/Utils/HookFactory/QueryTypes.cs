@@ -6,7 +6,7 @@ public record QueryPreGetListArgs(
     string Name,
     string EntityName,
     ImmutableArray<ValidFilter> Filters,
-    ImmutableArray<Sort> Sorts,
+    ImmutableArray<ValidSort> Sorts,
     ValidCursor Cursor,
     ValidPagination Pagination,
     Record[]? OutRecords = default) : BaseArgs(Name);

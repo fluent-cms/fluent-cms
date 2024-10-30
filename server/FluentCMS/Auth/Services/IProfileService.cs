@@ -1,3 +1,5 @@
+using FluentCMS.Auth.models;
+
 namespace FluentCMS.Auth.Services;
 
 

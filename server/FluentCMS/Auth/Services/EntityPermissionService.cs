@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using FluentCMS.Auth.models;
 using FluentCMS.Cms.Services;
 using FluentCMS.Services;
 using FluentCMS.Utils.IdentityExt;
@@ -13,9 +14,9 @@ public class EntityPermissionService(
 
 ):IEntityPermissionService
 {
-    public ImmutableArray<ValidFilter> List(string entityName, ImmutableArray<ValidFilter> filters)
+    public ImmutableArray<ValidFilter> List(string entityName, LoadedEntity entity, ImmutableArray<ValidFilter> filters)
     {
-        if (contextAccessor.HttpContext.HasRole(Roles.Sa))
+        if (contextAccessor.HttpContext.HasRole(RoleConstants.Sa))
         {
             return filters;
         }
@@ -32,17 +33,17 @@ public class EntityPermissionService(
             throw new InvalidParamException($"You don't have permission to read [{entityName}]");
         }
 
+        var createBy = new LoadedAttribute(Children:[],TableName: entity.TableName, Constants.CreatedBy);
         return
         [
             ..filters,
-            new ValidFilter(Constants.CreatedBy, "and",
-                [new ValidConstraint(Matches.EqualsTo, [MustGetCurrentUserId()])])
+            new ValidFilter(new AttributeVector("","",[],createBy),"and", [new ValidConstraint(Matches.EqualsTo, [MustGetCurrentUserId()])])
         ];
     }
 
     public async Task GetOne(string entityName, string recordId)
     {
-        if (contextAccessor.HttpContext.HasRole(Roles.Sa) ||
+        if (contextAccessor.HttpContext.HasRole(RoleConstants.Sa) ||
             contextAccessor.HttpContext.HasClaims(AccessScope.FullAccess, entityName) ||
             contextAccessor.HttpContext.HasClaims(AccessScope.FullRead,entityName))
         {
@@ -68,7 +69,7 @@ public class EntityPermissionService(
 
     public void Create(string entityName)
     {
-        if (!(contextAccessor.HttpContext.HasRole(Roles.Sa) || contextAccessor.HttpContext.HasClaims(AccessScope.FullAccess, entityName) ||
+        if (!(contextAccessor.HttpContext.HasRole(RoleConstants.Sa) || contextAccessor.HttpContext.HasClaims(AccessScope.FullAccess, entityName) ||
             contextAccessor.HttpContext.HasClaims(AccessScope.RestrictedAccess, entityName)))
         {
             throw new InvalidParamException($"You don't have permission to save [{entityName}]");
@@ -78,7 +79,7 @@ public class EntityPermissionService(
     public async Task Change(string entityName, string recordId)
     {
 
-        if (contextAccessor.HttpContext.HasRole(Roles.Sa) ||
+        if (contextAccessor.HttpContext.HasRole(RoleConstants.Sa) ||
             contextAccessor.HttpContext.HasClaims(AccessScope.FullAccess, entityName))
         {
             return;

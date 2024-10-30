@@ -6,43 +6,94 @@ namespace FluentCMS.Utils.KateQueryExt;
 
 public static class KateQueryExt
 {
+    public static void ApplyJoin(this SqlKata.Query query, IEnumerable<AttributeVector> vectors)
+    {
+        var root = AttributeTreeNode.Parse(vectors);
+        bool hasCrosstable = false;
+        Bfs(root, "");
+        if (hasCrosstable)
+        {
+            query.Distinct();
+        }
+
+        void Bfs(AttributeTreeNode node, string prefix)
+        {
+            var nextPrefix = prefix;
+            if (node.Attribute is not null)
+            {
+                if (nextPrefix != "")
+                {
+                    nextPrefix += AttributeVectorConstants.Separator;
+                }
+                nextPrefix += node.Attribute.Field;
+
+                switch (node.Attribute.Type)
+                {
+                    case DisplayType.Lookup:
+                        var lookup = node.Attribute.Lookup!;
+                        query
+                            .LeftJoin($"{lookup.TableName} as {nextPrefix}",
+                            node.Attribute.GetFullName(prefix),
+                            lookup.PrimaryKeyAttribute.GetFullName(nextPrefix))
+                            .Where(lookup.DeletedAttribute.GetFullName(nextPrefix), false);
+                        break;
+                    case DisplayType.Crosstable:
+                        hasCrosstable = true;
+                        var cross = node.Attribute.Crosstable;
+                        var crossAlias = $"{nextPrefix}_{cross!.CrossEntity.TableName}";
+                        query
+                            .LeftJoin($"{cross.CrossEntity.TableName} as {crossAlias}",
+                                cross.SourceEntity.PrimaryKeyAttribute.GetFullName(prefix),
+                                cross.SourceAttribute.GetFullName(crossAlias))
+                            .LeftJoin($"{cross.TargetEntity.TableName} as {nextPrefix}",
+                                cross.TargetAttribute.GetFullName(crossAlias),
+                                cross.TargetEntity.PrimaryKeyAttribute.GetFullName(nextPrefix))
+                            .Where(cross.CrossEntity.DeletedAttribute.GetFullName(crossAlias),false)
+                            .Where(cross.TargetEntity.DeletedAttribute.GetFullName(nextPrefix),false);
+                    break;
+                }
+            }
+
+            foreach (var sub in node.Children)
+            {
+                Bfs(sub, nextPrefix);
+            }
+        }
+    }
+
     public static void ApplyPagination(this SqlKata.Query query, ValidPagination pagination)
     {
         query.Offset(pagination.Offset).Limit(pagination.Limit);
     }
-    public static void ApplySorts(this SqlKata.Query query, IEnumerable<Sort>? sorts)
+    public static void ApplySorts(this SqlKata.Query query, IEnumerable<ValidSort> sorts)
     {
-        if (sorts is null)
-        {
-            return;
-        }
-
         foreach (var sort in sorts)
         {
+            var vector = sort.Vector;
             if (sort.Order == SortOrder.Desc)
             {
-                query.OrderByDesc(sort.FieldName);
+                query.OrderByDesc(vector.Attribute.GetFullName(vector.TableAlias));
             }
             else
             {
-                query.OrderBy(sort.FieldName);
+                query.OrderBy(vector.Attribute.GetFullName(vector.TableAlias));
             }
         }
     }
 
-    public static Result ApplyFilters(this SqlKata.Query query, IEnumerable<ValidFilter>? filters)
+    public static Result ApplyFilters(this SqlKata.Query query, IEnumerable<ValidFilter> filters)
     {
         var result = Result.Ok();
-        if (filters is null) return result;
         foreach (var filter in filters)
         {
+            var filedName = filter.Vector.Attribute.GetFullName(filter.Vector.TableAlias);
             query.Where(q =>
             {
                 foreach (var c in filter.Constraints)
                 {
-                    var ret = filter.Operator=="or"
-                        ? q.ApplyOrConstraint(filter.FieldName, c.Match, c.Values)
-                        : q.ApplyAndConstraint(filter.FieldName, c.Match, c.Values);
+                    var ret = filter.Operator == "or"
+                        ? q.ApplyOrConstraint(filedName, c.Match, c.Values)
+                        : q.ApplyAndConstraint(filedName, c.Match, c.Values);
                     if (ret.IsFailed)
                     {
                         result = Result.Fail(ret.Errors);
@@ -111,45 +162,69 @@ public static class KateQueryExt
         };
     }
 
-    public static Result ApplyCursor(this SqlKata.Query? query,  ValidCursor? cursor,ImmutableArray<Sort>? sorts)
+    
+    public static Result ApplyCursor(this SqlKata.Query? query,  ValidCursor? cursor,ImmutableArray<ValidSort> sorts)
     {
-        if (query is null || cursor?.BoundaryItem is null) return Result.Ok();
-        return sorts?.Length switch
+        if (query is null || cursor?.BoundaryItem is null)
         {
-            0 => Result.Fail("Sorts was not provided, can not perform cursor filter"),
-            1 => HandleOneField(),
-            2 => HandleTwoFields(),
-            _=> Result.Fail("More than two field in sorts is not supported")
-        };
-
-        
-        Result HandleOneField()
-        {
-            ApplyCompare(query,sorts.Value[0]);
             return Result.Ok();
         }
 
-        Result HandleTwoFields()
+        var res = Result.Ok();
+        query.Where(q =>
         {
-            var (first,last) = (sorts.Value.First(),sorts.Value.Last());
-            query.Where(q =>
+            for (var i = 0; i < sorts.Length; i++)
             {
-                ApplyCompare(q, first);
-                q.Or();
-                ApplyEq(q, first);
-                ApplyCompare(q, last);
-                return q;
-            });
+                res =ApplyFilter(q, i);
+                if (res.IsFailed)
+                {
+                    break;
+                }
+                if (i < sorts.Length - 1)
+                {
+                    q.Or();
+                }
+            }
+            return q;
+        });
+        return res;
+
+        Result ApplyFilter(SqlKata.Query q,int idx)
+        {
+            for (var i = 0; i < idx; i++)
+            {
+                var (_,_,errors) = ApplyEq(q, sorts[i]);
+                if (errors?.Count >0)
+                {
+                    return Result.Fail(res.Errors);
+                }
+            }
+            var r = ApplyCompare(q,sorts[idx]);
+            return r.IsFailed ? Result.Fail(r.Errors) : Result.Ok();
+        }
+
+        Result ApplyEq(SqlKata.Query q, ValidSort sort)
+        {
+            var (_,_, value, errors) = cursor.BoundaryValue(sort.Vector.Field);
+            if (errors?.Count > 0 )
+            {
+                return Result.Fail(errors);
+            }
+
+            q.Where(sort.Vector.Attribute.GetFullName(sort.Vector.TableAlias), value);
             return Result.Ok();
         }
 
-        void ApplyEq(SqlKata.Query q, Sort sort)
+        Result ApplyCompare(SqlKata.Query q, ValidSort sort)
         {
-            q.Where(sort.FieldName, cursor.BoundaryValue(sort.FieldName));
+            var (_,_, v,err) = cursor.BoundaryValue(sort.Vector.Field);
+            if (err?.Count > 0)
+            {
+                return Result.Fail(err);
+            }
+            q.Where(sort.Vector.Attribute.GetFullName(sort.Vector.TableAlias), cursor.Cursor.GetCompareOperator(sort.Order),v);
+            return Result.Ok();
         }
-        void ApplyCompare(SqlKata.Query q, Sort sort)
-        {
-            q.Where(sort.FieldName, cursor.Cursor.GetCompareOperator(sort), cursor.BoundaryValue(sort.FieldName));
-        }
+        
     }
 }

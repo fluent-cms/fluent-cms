@@ -1,3 +1,4 @@
+using FluentCMS.Auth.models;
 using FluentCMS.Auth.Services;
 using Microsoft.AspNetCore.Mvc;
 

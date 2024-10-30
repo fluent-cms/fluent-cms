@@ -121,6 +121,7 @@ public sealed class CmsModule(
 
     public async Task UseCmsAsync(WebApplication app)
     {
+        AttributeHelper.SetCastToDbType(app.Services.GetRequiredService<IDefinitionExecutor>().Cast);
         PrintVersion();
         await InitSchema();
         app.UseStaticFiles();
@@ -152,12 +153,12 @@ public sealed class CmsModule(
                         using var scope = app.Services.CreateScope();
                         var pageService = scope.ServiceProvider.GetRequiredService<IPageService>();
                         var html = $"""
-                                    <a href="{FluentCmsContentRoot}/admin">Log in to Admin</a><br/>
-                                    <a href="{FluentCmsContentRoot}/schema-ui">Go to Schema Builder</a>
+                                    <a href="/admin">Log in to Admin</a><br/>
+                                    <a href="/schema">Go to Schema Builder</a>
                                     """;
                         try
                         {
-                            html = await pageService.Get(Page.HomePage, new Dictionary<string, StringValues>());
+                            html = await pageService.Get(PageConstants.HomePage, new Dictionary<string, StringValues>());
                         }
                         catch (Exception e)
                         {

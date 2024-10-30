@@ -6,12 +6,12 @@ namespace FluentCMS.Utils.DataDefinitionExecutor;
 
 public sealed class SqliteDefinitionExecutor(string connectionString, ILogger<SqliteDefinitionExecutor> logger) : IDefinitionExecutor
 {
-    public object CastToDatabaseType(string dataType, string str)
+    public object Cast(string s, string type)
     {
-        return dataType switch
+        return type switch
         {
-            DataType.Int => int.Parse(str),
-            _ => str,
+            DataType.Int => int.Parse(s),
+            _ => s
         };
     }
 

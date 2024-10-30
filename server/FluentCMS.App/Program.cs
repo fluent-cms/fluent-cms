@@ -1,9 +1,9 @@
 using FluentCMS.App;
 using FluentCMS.Cms.Services;
-using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.Nosql;
 using FluentCMS.Utils.QueryBuilder;
 using FluentCMS.WebAppExt;
+using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,17 +30,21 @@ await app.UseCmsAsync();
 using var scope = app.Services.CreateScope();
 
 var schemaService = scope.ServiceProvider.GetRequiredService<IEntitySchemaService>();
-var entity = await schemaService.GetLoadedEntity(TestEntity.EntityName);
-if (entity.IsFailed)
-{
-    await schemaService.EnsureSimpleEntity(TestEntity.EntityName, TestEntity.FieldName, "", "");
-    var entityService = scope.ServiceProvider.GetRequiredService<IEntityService>();
-    await entityService.Insert(TestEntity.EntityName, new Dictionary<string, object>
-    {
-        { TestEntity.FieldName, TestEntity.TestValue }
-    });
-}
-
+var entity = new Entity
+(
+    Name: TestEntity.EntityName,
+    TableName: TestEntity.EntityName,
+    Title: TestEntity.FieldName,
+    DefaultPageSize: EntityHelper.DefaultPageSize,
+    PrimaryKey: "id",
+    TitleAttribute: TestEntity.FieldName,
+    Attributes: [ new Attribute
+    (
+        Field: TestEntity.FieldName,
+        Header:TestEntity.FieldName 
+    )]
+);
+await schemaService.AddOrUpdate(entity,default);
 RegisterHooks();
 
 // Configure the HTTP request pipeline.

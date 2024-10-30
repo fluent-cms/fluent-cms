@@ -22,7 +22,12 @@ function createDefaultFilter(cols:any[]) {
     const filters:any = {}
 
     cols.forEach(col =>{
-        filters[col.field] = {operator: 'and', constraints: [{ value: null, matchMode: getMathMode(col) }]}
+        if (col.type == "lookup"){
+            filters[col.field + "." + col.lookup.titleAttribute] = {operator: 'and', constraints: [{ value: null, matchMode: getMathMode(col) }]}
+
+        }else {
+            filters[col.field] = {operator: 'and', constraints: [{ value: null, matchMode: getMathMode(col) }]}
+        }
     });
     return filters
 }

@@ -13,23 +13,15 @@ public enum InListOrDetail
     InDetail,
 }
 public record Entity(
-    ImmutableArray<Attribute> Attributes ,
+    ImmutableArray<Attribute> Attributes,
     string Name = "",
     string TableName = "",
     string PrimaryKey ="",
     string Title ="",
     string TitleAttribute ="",
-    int DefaultPageSize = EntityHelper.DefaultPageSize
+    int DefaultPageSize = EntityConstants.DefaultPageSize
 );
-public record ValidEntity(
-    ImmutableArray<ValidAttribute> Attributes,
-    string Name,
-    string TableName,
-    string PrimaryKey,
-    string Title,
-    string TitleAttribute,
-    int DefaultPageSize
-);
+
 public record LoadedEntity(
     ImmutableArray<LoadedAttribute> Attributes,
     LoadedAttribute PrimaryKeyAttribute,
@@ -40,77 +32,68 @@ public record LoadedEntity(
     string PrimaryKey = DefaultFields.Id,
     string Title = "", //needed by admin panel
     string TitleAttribute = "",
-    int DefaultPageSize = 100
-);
+    int DefaultPageSize = EntityConstants.DefaultPageSize
+    ) ;
+
+public static class EntityConstants
+{
+    public const int DefaultPageSize = 50;
+}
 
 public static class EntityHelper
 {
-    public const int DefaultPageSize = 50;
-    public static ValidEntity ToValid(this Entity entity)
+    public static LoadedEntity ToLoadedEntity(this Entity entity, Func<string, string,object> cast)
     {
-        return new ValidEntity(
-            Attributes: [..entity.Attributes.Select(x=>x.ToValid(entity.TableName))],
-            Name:entity.Name,
-            TableName:entity.TableName,
+        var primaryKey = entity.Attributes.FindOneAttribute(entity.PrimaryKey)!.ToLoaded(entity.TableName);
+        var titleAttribute = entity.Attributes.FindOneAttribute(entity.TitleAttribute)?.ToLoaded(entity.TableName) ?? primaryKey;
+        var attributes = entity.Attributes.Select(x => x.ToLoaded(entity.TableName));
+        var deletedAttribute = new LoadedAttribute([],entity.TableName, DefaultFields.Deleted);
+        return new LoadedEntity(
+            [..attributes],
+            PrimaryKeyAttribute:primaryKey,
+            LoadedTitleAttribute: titleAttribute,
+            DeletedAttribute:deletedAttribute,
+            entity.Name,
+            entity.TableName,
             entity.PrimaryKey,
             entity.Title,
             entity.TitleAttribute,
             entity.DefaultPageSize
         );
     }
-
-    public static LoadedEntity ToLoadedEntity(this ValidEntity validEntity, IEnumerable<LoadedAttribute> attributes)
+    
+    public static Result<SqlKata.Query> OneQuery(this LoadedEntity e,ImmutableArray<ValidFilter> filters, ImmutableArray<ValidSort> sorts,IEnumerable<LoadedAttribute> attributes)
     {
-        var primaryKey = validEntity.Attributes.FindOneAttribute(validEntity.PrimaryKey)!.ToLoaded();
-        var titleAttribute = validEntity.Attributes.FindOneAttribute(validEntity.TitleAttribute)?.ToLoaded() ??
-                             primaryKey;
-        var deletedAttribute = new LoadedAttribute($"{validEntity.TableName}.{DefaultFields.Deleted}", DefaultFields.Deleted);
-        return new LoadedEntity(
-            [..attributes],
-            PrimaryKeyAttribute:primaryKey,
-            LoadedTitleAttribute: titleAttribute,
-            DeletedAttribute:deletedAttribute,
-            validEntity.Name,
-            validEntity.TableName,
-            validEntity.PrimaryKey,
-            validEntity.Title,
-            validEntity.TitleAttribute,
-            validEntity.DefaultPageSize
-        );
-    }
-
-    public static Result<SqlKata.Query> OneQuery(this LoadedEntity e,IEnumerable<ValidFilter>? filters, IEnumerable<LoadedAttribute> attributes)
-    {
-        var query = e.Basic().Select(attributes.Select(x => x.Fullname));
+        var query = e.Basic().Select(attributes.Select(x => x.GetFullName()));
+        query.ApplyJoin([..filters.Select(x=>x.Vector),..sorts.Select(x=>x.Vector)]);
         var result = query.ApplyFilters(filters); //filters.Apply(this, query);
         if (result.IsFailed)
         {
             return Result.Fail(result.Errors);
         }
-
+        query.ApplySorts(sorts);
         return query;
     }
 
-    public static SqlKata.Query ByIdQuery(this LoadedEntity e,object id, IEnumerable<LoadedAttribute> attributes, IEnumerable<ValidFilter>? filters)
+    public static SqlKata.Query ByIdQuery(this LoadedEntity e,object id, IEnumerable<LoadedAttribute> attributes, IEnumerable<ValidFilter> filters)
     {
         var query = e.Basic().Where(e.PrimaryKey, id)
-            .Select(attributes.Select(x => x.Fullname));
+            .Select(attributes.Select(x => x.GetFullName()));
         query.ApplyFilters(filters);
         return query;
     }
 
-    public static Result<SqlKata.Query> ListQuery(this LoadedEntity e,IEnumerable<ValidFilter>? filters, ImmutableArray<Sort>? sorts, 
+    public static Result<SqlKata.Query> ListQuery(this LoadedEntity e,ImmutableArray<ValidFilter> filters, ImmutableArray<ValidSort> sorts, 
         ValidPagination pagination, ValidCursor? cursor, IEnumerable<LoadedAttribute> attributes)
     {
-        var query = e.Basic().Select(attributes.Select(x => x.Fullname));
-
+        var query = e.Basic().Select(attributes.Select(x => x.GetFullName()));
+        query.ApplyJoin([..filters.Select(x=>x.Vector),..sorts.Select(x=>x.Vector)]);
         var cursorResult = query.ApplyCursor(cursor, sorts);
         if (cursorResult.IsFailed) return Result.Fail(cursorResult.Errors);
-
         query.ApplyPagination(pagination);
         if (cursor?.Cursor.IsForward() == false && sorts != null)
         {
-            query.ApplySorts(sorts.Value.Reverse());
+            query.ApplySorts(sorts.ReverseOrder());
         }
         else
         {
@@ -121,9 +104,10 @@ public static class EntityHelper
         return query;
     }
 
-    public static SqlKata.Query CountQuery(this LoadedEntity e,IEnumerable<ValidFilter>? filters)
+    public static SqlKata.Query CountQuery(this LoadedEntity e,ImmutableArray<ValidFilter> filters)
     {
         var query = e.Basic();
+        query.ApplyJoin(filters.Select(x=>x.Vector));
         query.ApplyFilters(filters);
         return query;
     }
@@ -165,15 +149,13 @@ public static class EntityHelper
     }
 
     public static Result<SqlKata.Query> DeleteQuery(this LoadedEntity e,Record item)
-    {
-        return item.TryGetValue(e.PrimaryKey, out var key)
+         => item.TryGetValue(e.PrimaryKey, out var key)
             ? Result.Ok(new SqlKata.Query(e.TableName).Where(e.PrimaryKey, key).AsUpdate([DefaultFields.Deleted], [true]))
             : Result.Fail($"Failed to get value with primary key [${e.PrimaryKey}]");
-    }
 
     public static SqlKata.Query Basic(this LoadedEntity e) =>
-        new SqlKata.Query(e.TableName).Where(e.TableName + $".{DefaultFields.Deleted}", false);
-     
+        new SqlKata.Query(e.TableName)
+            .Where(e.DeletedAttribute.GetFullName(), false);
 
     public static ColumnDefinition[] AddedColumnDefinitions(this Entity e, ColumnDefinition[] columnDefinitions)
     {
@@ -183,11 +165,9 @@ public static class EntityHelper
     }
 
     public static ColumnDefinition[] ColumnDefinitions(this Entity e)
-    {
-        return e.Attributes.GetLocalAttributes()
+        => e.Attributes.GetLocalAttributes()
             .Select(x => new ColumnDefinition (ColumnName : x.Field, DataType : x.DataType ))
             .ToArray();
-    }
 
     public static Entity WithDefaultAttr(this Entity e)
     {
@@ -278,8 +258,8 @@ public static class EntityHelper
             }
         }
     }
-    
-    public static Result<Record> Parse (this LoadedEntity e, JsonElement jsonElement, Func<string, string, object> cast)
+
+    public static Result<Record> Parse (this LoadedEntity e, JsonElement jsonElement)
     {
         Dictionary<string, object> ret = new();
         foreach (var property in jsonElement.EnumerateObject())
@@ -310,7 +290,7 @@ public static class EntityHelper
             return Result.Ok<JsonElement?>(null!);
         }
         
-        Result<object> Convert(JsonElement? element, BaseAttribute attribute)
+        Result<object> Convert(JsonElement? element, Attribute attribute)
         {
             if (element is null)
             {
@@ -318,7 +298,7 @@ public static class EntityHelper
             }
             return element.Value.ValueKind switch
             {
-                JsonValueKind.String => cast(attribute.Field, element.Value.GetString()!),
+                JsonValueKind.String => attribute.Cast(element.Value.GetString()!),
                 JsonValueKind.Number when element.Value.TryGetInt32(out var intValue) => intValue,
                 JsonValueKind.Number when element.Value.TryGetInt64(out var longValue) => longValue,
                 JsonValueKind.Number when element.Value.TryGetDouble(out var doubleValue) => doubleValue,

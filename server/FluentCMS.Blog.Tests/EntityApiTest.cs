@@ -12,12 +12,6 @@ public class EntityApiTest
 
     public EntityApiTest()
     {
-        /*
-        Environment.SetEnvironmentVariable("DatabaseProvider", "Sqlite");
-        string dbName = Path.Combine(Directory.GetCurrentDirectory(),"_cms.db"); 
-        Environment.SetEnvironmentVariable("Sqlite", $"Data Source={dbName}");
-        */
-
         WebAppClient<Program> webAppClient = new();
         _entityApiClient = new EntityApiClient(webAppClient.GetHttpClient());
         _schemaApiClient = new SchemaApiClient(webAppClient.GetHttpClient());

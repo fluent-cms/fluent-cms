@@ -79,7 +79,7 @@ public class SchemasController(
 
     /// for admin panel
     [HttpGet("entity/{name}")]
-    public async Task<ActionResult<Entity>> GetOne(string name, CancellationToken cancellationToken)
+    public async Task<ActionResult<LoadedEntity>> GetOne(string name, CancellationToken cancellationToken)
     {
         var schema =
             InvalidParamExceptionFactory.CheckResult(
