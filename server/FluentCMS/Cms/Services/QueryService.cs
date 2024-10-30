@@ -93,7 +93,8 @@ public sealed class QueryService(
             return res.OutRecord;
         }
 
-        var kateQuery = CheckResult(query.Entity.OneQuery(res.Filters, query.Selection.GetLocalAttributes()));
+        var sorts = CheckResult(await query.Sorts.ToValidSorts(query.Entity, entitySchemaService.ResolveAttributeVector));
+        var kateQuery = CheckResult(query.Entity.OneQuery(res.Filters, sorts, query.Selection.GetLocalAttributes()));
         var item = NotNull(await kateQueryExecutor.One(kateQuery, cancellationToken)).ValOrThrow("Not find record");
         await entityService.AttachRelatedEntity(query.Entity, query.Selection, [item], cancellationToken);
         return item;

@@ -9,7 +9,12 @@ public static class KateQueryExt
     public static void ApplyJoin(this SqlKata.Query query, IEnumerable<AttributeVector> vectors)
     {
         var root = AttributeTreeNode.Parse(vectors);
+        bool hasCrosstable = false;
         Bfs(root, "");
+        if (hasCrosstable)
+        {
+            query.Distinct();
+        }
 
         void Bfs(AttributeTreeNode node, string prefix)
         {
@@ -33,6 +38,7 @@ public static class KateQueryExt
                             .Where(lookup.DeletedAttribute.GetFullName(nextPrefix), false);
                         break;
                     case DisplayType.Crosstable:
+                        hasCrosstable = true;
                         var cross = node.Attribute.Crosstable;
                         var crossAlias = $"{nextPrefix}_{cross!.CrossEntity.TableName}";
                         query

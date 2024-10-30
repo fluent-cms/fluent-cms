@@ -25,7 +25,15 @@ public class QueryApiTest
         _accountApiClient = new AccountApiClient(webAppClient.GetHttpClient());
         _queryApiClient = new QueryApiClient(webAppClient.GetHttpClient());
     }
-    
+     [Fact]
+     public async void One()
+     {
+         await PrepareEntity();
+         var query = GetQuery(TableName);
+         (await _schemaApiClient.SaveSchema(query)).AssertSuccess();
+         Assert.NotNull((await _queryApiClient.GetOne(query.Name,1)).AssertSuccess());
+     }
+     
     [Fact]
     public async void List()
     {
@@ -50,15 +58,7 @@ public class QueryApiTest
         Assert.Equal(QueryPageSize,(await _queryApiClient.GetMany(query.Name,ids )).AssertSuccess().Length);
         
     }
-    [Fact]
-    public async void One()
-    {
-        await PrepareEntity();
-        var query = GetQuery(TableName);
-        (await _schemaApiClient.SaveSchema(query)).AssertSuccess();
-        Assert.NotNull((await _queryApiClient.GetOne(query.Name,1)).AssertSuccess());
-    }
-    
+   
     async Task PrepareEntity()
     {
          await _accountApiClient.EnsureLogin();
@@ -72,9 +72,14 @@ public class QueryApiTest
     Schema GetQuery(string tableName)
     {
         var suffix = Guid.NewGuid().ToString("N");
-        var filter = new Filter("id", "and", [new Constraint(Matches.In, "qs.id")], true);
-        var query = new Query(tableName + suffix, tableName, QueryPageSize, "{id," + FieldName + "}",
-            [new Sort("id", SortOrder.Asc)], [filter]);
+        var query = new Query(
+            Name: tableName + suffix,
+            EntityName: tableName,
+            PageSize: QueryPageSize,
+            SelectionSet: "{id," + FieldName + "}",
+            Sorts: [new Sort("id", SortOrder.Asc)],
+            Filters: [new Filter("id", "and", [new Constraint(Matches.In, "qs.id")], true)]
+        );
         return new Schema
         (
             Name : query.Name,

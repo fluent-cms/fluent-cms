@@ -62,16 +62,16 @@ public static class EntityHelper
         );
     }
     
-    public static Result<SqlKata.Query> OneQuery(this LoadedEntity e,ImmutableArray<ValidFilter> filters, IEnumerable<LoadedAttribute> attributes)
+    public static Result<SqlKata.Query> OneQuery(this LoadedEntity e,ImmutableArray<ValidFilter> filters, ImmutableArray<ValidSort> sorts,IEnumerable<LoadedAttribute> attributes)
     {
         var query = e.Basic().Select(attributes.Select(x => x.GetFullName()));
-        query.ApplyJoin(filters.Select(x=>x.Vector));
+        query.ApplyJoin([..filters.Select(x=>x.Vector),..sorts.Select(x=>x.Vector)]);
         var result = query.ApplyFilters(filters); //filters.Apply(this, query);
         if (result.IsFailed)
         {
             return Result.Fail(result.Errors);
         }
-
+        query.ApplySorts(sorts);
         return query;
     }
 
@@ -155,8 +155,7 @@ public static class EntityHelper
 
     public static SqlKata.Query Basic(this LoadedEntity e) =>
         new SqlKata.Query(e.TableName)
-            .Where(e.DeletedAttribute.GetFullName(), false)
-            .Distinct();
+            .Where(e.DeletedAttribute.GetFullName(), false);
 
     public static ColumnDefinition[] AddedColumnDefinitions(this Entity e, ColumnDefinition[] columnDefinitions)
     {

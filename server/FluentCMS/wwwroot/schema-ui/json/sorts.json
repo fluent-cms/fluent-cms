@@ -3,6 +3,7 @@
   "type": "array",
   "title": "Sorts",
   "format": "table",
+  "minItems": 1,
   "items": {
     "$ref": "./sort.json"
   }
