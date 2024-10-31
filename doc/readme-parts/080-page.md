@@ -3,7 +3,7 @@
 
 ## Designing Web Page in FluentCMS
 
-<details> <summary> The page designer is built using the open-source project GrapesJS and Handlebars, allowing you to bind `GrapesJS Components` with `FluentCMS Queries` for dynamic content rendering. </summary>
+<details> <summary> The page designer utilizes the open-source GrapesJS and Handlebars, enabling seamless binding of `GrapesJS Components` with `FluentCMS Queries` for dynamic content rendering. </summary>
 
 ### Introduction to GrapesJS Panels
 The GrapesJS Page Designer UI provides a toolbox with four main panels:  
