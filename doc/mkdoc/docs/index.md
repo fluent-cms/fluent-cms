@@ -7,7 +7,7 @@ Fluent CMS is an open-source Content Management System designed to streamline we
 It proves valuable even for non-CMS projects by eliminating the need for tedious CRUD API and page development.  
 - **CRUD:** Fluent CMS offers built-in RESTful CRUD (Create, Read, Update, Delete) APIs along with an Admin Panel that supports a wide range of input types, including datetime, dropdown, image, and rich text, all configurable to suit your needs.  
 - **GraphQL-style Query** Retrieve multiple related entities in a single call, enhancing security, performance, and flexibility on the client side.  
-- **Wysiwyg Web Page Designer:** Leveraging [Grapes.js](https://grapesjs.com/) and [HandleBars](https://handlebarsjs.com/), the page designer allows you to create pages and bind query data without coding.  
+- **Drag and Drop Web Page Designer:** Leveraging [Grapes.js](https://grapesjs.com/) and [HandleBars](https://handlebarsjs.com/), the page designer allows you to create pages and bind query data without coding.  
 - **Permission Control** Assign read/write, read-only, access to entities based on user roles or individual permissions.  
 - **Integration and extension** Fluent CMS can be integrated into projects via a NuGet package.  
   Validation logic can be implemented using C# statements through [DynamicExpresso](https://github.com/dynamicexpresso/DynamicExpresso),
@@ -49,7 +49,7 @@ When the web server is up and running,  you can access Admin Panel by url `/admi
 The example project can be found at [Example Project](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).
 
 
-## Developing a simple online course system use Fluent CMS
+## Developing backend of a simple online course system use Fluent CMS
 The following chapter will guide you through developing a simple online course system, starts with three entity `Teachers`, `Courses`, and `Students`. 
 
 ### Database Schema
@@ -503,6 +503,135 @@ FluentCMS adds customized blocks to simplify web page design and data binding fo
 - **Multiple Records**: Components in this category contain subcomponents with a `Multiple-Records` trait.
 - **Card**: Typically used in detail pages.
 - **Header**: Represents a navigation bar or page header.
+
+
+
+## Developing Frontend of a online course website
+Having established our understanding of Fluent CMS essentials like Entity Schemas, GraphQL-style Querying, and GrapeJS-based Page Design, we’re ready to build a frontend for an online course website.
+
+### Introduction of online course website
+The online course website is designed to help users easily find courses tailored to their interests and goals. 
+
+- **Home Page(`home`)**: This is the main entry point, providing `Featured Course`, `Advanced Course`, etc. Each course in these sections links to its Course Details page.
+
+- **Latest Courses(`course`)**: A curated list of the newest courses. Each course in this section links to its Course Details page.
+
+- **Course Details(`course/{course_id}`)**: This page provides a comprehensive view of a selected course. Users can navigate to the **Teacher Details** page to learn more about the instructor. 
+
+- **Teacher Details(`teacher/{teacher_id}`)**: Here, users can explore the profile of the instructor, This page contains a `teacher's latest course section`, each course in the sections links back to **Course Details** 
+---
+
+```plaintext
+             Home Page
+                 |
+                 |
+       +-------------------+
+       |                   |
+       v                   v
+ Latest Courses       Course Details 
+       |                   |        
+       |                   |       
+       v                   v            
+Course Details <-------> Teacher Details 
+
+```
+### Designing the Home Page
+The home page's screenshot shows below.
+![Page](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/page-home-course.png)
+
+In the page designer, we drag a component `Content-B`, set it's `multiple-records` component's data source to Query  `course`.  
+The query might return data like
+```json
+[
+  {
+    "name": "Object-Oriented Programming(OOP)",
+    "id": 20,
+    "teacher":{
+      "id": 3,
+      "firstname": "jane"
+    }
+  }
+]
+```
+We set link href of each course item to `/pages/course/{{id}}`. 
+![Link](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-link.png)   
+HandleBar rendering engine renders the link as  `/pages/course/20` by replacing `{{id}}` to `20`.
+
+### Creating Course Detail Page
+We name this page `course/{course_id}` to capture the path parameter course_id. 
+For example, with the URL `/pages/course/20`, we obtain `{course_id: 20}`. This parameter is passed to the Query Service, which then filters data to match:
+
+```json
+{
+  "fieldName": "id",
+  "operator": "and",
+  "omitFail": true,
+  "constraints": [
+    {
+      "match": "in",
+      "value": "qs.course_id"
+    }
+  ]
+}
+```
+The query service produces a where clause as  `where id in (20)`.
+
+### Link to Teacher Detail Page
+We set the link of each teacher item as  `/pages/teacher/{{teacher.id}}`, allowing navigation from Course Details to Teacher Details:
+For below example data, HandlerBar render the link as `/pages/teacher/3`.
+```json
+[
+  {
+    "name": "Object-Oriented Programming(OOP)",
+    "id": 20,
+    "teacher":{
+      "id": 3,
+      "firstname": "jane"
+    }
+  }
+]
+```
+### Creating Teacher's Detail Page
+![](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/page-teacher.png)
+
+Similarly, we name this page as `teacher/{teacher_id}` and set its data source Query to `teacher`. For the URL /pages/teacher/3, the query returns:
+```json
+{
+  "id": 3,
+  "firstname": "Jane",
+  "lastname": "Debuggins",
+  "image": "/2024-10/b44dcb4c.jpg",
+  "bio": "<p><strong>Ms. Debuggins</strong> is a seasoned software developer with over a decade of experience in full-stack development and system architecture. </p>",
+  "skills": [
+    {
+      "id": 1,
+      "name": "C++",
+      "years": 3,
+      "teacher_id": 3
+    }
+  ]
+}
+```
+
+To add a list of courses by the teacher, we set a `multiple-records` component with Query `course`. 
+![](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-teacher.png)
+When rendering the Teacher Page, PageService sends `{teacher_id: 3}` to Query `course`. 
+The QueryService Apply below filter, resulting in  `WHERE teacher in (3)`.
+
+``` json
+    {
+      "fieldName": "teacher",
+      "operator": "and",
+      "omitFail": true,
+      "constraints": [
+        {
+          "match": "in",
+          "value": "qs.teacher_id"
+        }
+      ]
+    }
+```
+This design creates an interconnected online course site, ensuring users can explore course details, instructors.
 
 
 ## Development Guide

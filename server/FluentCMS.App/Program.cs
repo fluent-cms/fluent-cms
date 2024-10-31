@@ -35,7 +35,7 @@ var entity = new Entity
     Name: TestEntity.EntityName,
     TableName: TestEntity.EntityName,
     Title: TestEntity.FieldName,
-    DefaultPageSize: EntityHelper.DefaultPageSize,
+    DefaultPageSize: EntityConstants.DefaultPageSize,
     PrimaryKey: "id",
     TitleAttribute: TestEntity.FieldName,
     Attributes: [ new Attribute
@@ -118,8 +118,10 @@ void RegisterHooks()
             param.Record[TestEntity.FieldName] += "AfterQueryOne";
             return param;
         });
+    var attr = new LoadedAttribute([], TestEntity.EntityName, TestEntity.FieldName);
+    var vector = new AttributeVector(TestEntity.FieldName, "", [], attr);
     registry.EntityPreGetList.Register(TestEntity.EntityName,
-        param => param with { RefSorts = [..param.RefSorts, new Sort(TestEntity.FieldName, SortOrder.Asc)] });
+        param => param with { RefSorts = [..param.RefSorts, new ValidSort(vector, SortOrder.Asc)] });
 
     registry.EntityPostGetList.Register(TestEntity.EntityName, (param) =>
     {

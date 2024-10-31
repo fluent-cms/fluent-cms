@@ -4,7 +4,7 @@ Fluent CMS is an open-source Content Management System designed to streamline we
 It proves valuable even for non-CMS projects by eliminating the need for tedious CRUD API and page development.  
 - **CRUD:** Fluent CMS offers built-in RESTful CRUD (Create, Read, Update, Delete) APIs along with an Admin Panel that supports a wide range of input types, including datetime, dropdown, image, and rich text, all configurable to suit your needs.  
 - **GraphQL-style Query** Retrieve multiple related entities in a single call, enhancing security, performance, and flexibility on the client side.  
-- **Wysiwyg Web Page Designer:** Leveraging [Grapes.js](https://grapesjs.com/) and [HandleBars](https://handlebarsjs.com/), the page designer allows you to create pages and bind query data without coding.  
+- **Drag and Drop Web Page Designer:** Leveraging [Grapes.js](https://grapesjs.com/) and [HandleBars](https://handlebarsjs.com/), the page designer allows you to create pages and bind query data without coding.  
 - **Permission Control** Assign read/write, read-only, access to entities based on user roles or individual permissions.  
 - **Integration and extension** Fluent CMS can be integrated into projects via a NuGet package.  
   Validation logic can be implemented using C# statements through [DynamicExpresso](https://github.com/dynamicexpresso/DynamicExpresso),
