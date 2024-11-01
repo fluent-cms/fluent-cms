@@ -1,7 +1,6 @@
 using System.Collections.Immutable;
 using System.Globalization;
 using FluentCMS.Utils.DataDefinitionExecutor;
-using FluentResults;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
@@ -19,8 +18,7 @@ public record Attribute(
 );
 
 
-public sealed record LoadedAttribute(
-    ImmutableArray<LoadedAttribute> Children ,
+public record LoadedAttribute(
     string TableName,
     string Field,
 
@@ -50,11 +48,88 @@ public sealed record LoadedAttribute(
     ValidationMessage:ValidationMessage,
     Options: Options
 );
+public record GraphAttribute(
+    ImmutableArray<GraphAttribute> Selection,
+    ImmutableArray<ValidFilter> Filters,
+    ImmutableArray<ValidSort> Sorts,
+    
+    string TableName,
+    string Field,
+
+    string Header = "",
+    string DataType = DataType.String,
+    string Type = DisplayType.Text,
+
+    bool InList = true,
+    bool InDetail = true,
+    bool IsDefault = false,
+
+    string Options = "", 
+    string Validation = "",
+    string ValidationMessage = "",
+    
+    Crosstable? Crosstable = default,
+    LoadedEntity? Lookup = default
+) : LoadedAttribute(
+    TableName:TableName,
+    Field:Field,
+
+    Header :Header,
+    DataType : DataType,
+    Type : Type,
+
+    InList : InList,
+    InDetail : InDetail,
+    IsDefault : IsDefault,
+
+    Options :Options, 
+    Validation : Validation,
+    ValidationMessage : ValidationMessage,
+    
+    Crosstable:Crosstable,
+    Lookup :Lookup
+);
 
 public static class AttributeHelper
 {
     private static Func<Attribute, string, object> _castToDbType = (_, s) => s;
 
+    public static LoadedAttribute ToLoaded(this Attribute a, string tableName)
+    {
+        return new LoadedAttribute(
+            TableName: tableName,
+            Field: a.Field,
+            Header: a.Header,
+            DataType: a.DataType,
+            Type: a.Type,
+            InList: a.InList,
+            InDetail: a.InDetail,
+            IsDefault: a.IsDefault,
+            Options: a.Options,
+            Validation: a.Validation,
+            ValidationMessage: a.ValidationMessage
+        );
+    }
+    public static GraphAttribute ToGraph( this LoadedAttribute a ){
+        return new GraphAttribute(
+            Selection: [],
+            Filters: [],
+            Sorts: [],
+            Lookup: a.Lookup,
+            Crosstable:a.Crosstable,
+            TableName: a.TableName,
+            Field: a.Field,
+            Header: a.Header,
+            DataType: a.DataType,
+            Type: a.Type,
+            InList: a.InList,
+            InDetail: a.InDetail,
+            IsDefault: a.IsDefault,
+            Options: a.Options,
+            Validation: a.Validation,
+            ValidationMessage: a.ValidationMessage
+        );
+    }
     public static void SetCastToDbType(Func<string, string, object> func)
     {
         _castToDbType = (a, s) => func(s, a.DataType);
@@ -74,23 +149,7 @@ public static class AttributeHelper
         return $"{prefix}.{attribute.Field}";
     }
 
-    public static LoadedAttribute ToLoaded(this Attribute a, string tableName)
-    {
-        return new LoadedAttribute(
-            TableName: tableName,
-            Field: a.Field,
-            Children: [],
-            Header: a.Header,
-            DataType: a.DataType,
-            Type: a.Type,
-            InList: a.InList,
-            InDetail: a.InDetail,
-            IsDefault: a.IsDefault,
-            Options: a.Options,
-            Validation: a.Validation,
-            ValidationMessage: a.ValidationMessage
-        );
-    }
+
 
     public static string GetLookupTarget(this Attribute a) => a.Options;
     public static string GetCrosstableTarget(this Attribute a) => a.Options;

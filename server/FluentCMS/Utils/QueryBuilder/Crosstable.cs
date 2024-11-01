@@ -29,8 +29,8 @@ public static class CrosstableHelper
     public static Crosstable Crosstable(LoadedEntity sourceEntity, LoadedEntity targetEntity, LoadedAttribute crossAttribute)
     {
         var tableName = GetTableName();
-        var id = new LoadedAttribute([],tableName, DefaultFields.Id);
-        var deleted = new LoadedAttribute([],tableName, DefaultFields.Deleted);
+        var id = new LoadedAttribute(tableName, DefaultFields.Id);
+        var deleted = new LoadedAttribute(tableName, DefaultFields.Deleted);
         sourceEntity = sourceEntity with
         {
             Attributes =
@@ -41,7 +41,6 @@ public static class CrosstableHelper
         (
             Field: $"{sourceEntity.Name}_id",
             TableName:tableName,
-            Children:[],
             DataType:DataType.Int
         );
         
@@ -49,7 +48,6 @@ public static class CrosstableHelper
         (
             Field : $"{targetEntity.Name}_id",
             TableName: tableName,
-            Children:[],
             DataType:DataType.Int
         );
         
@@ -122,7 +120,8 @@ public static class CrosstableHelper
          ValidPagination pagination,
          IEnumerable<object> sourceIds)
      {
-         var baseQuery = c.TargetEntity.Basic().Select(selectAttributes.Select(x => x.GetFullName()));
+         List<LoadedAttribute> attrs = [..selectAttributes, c.SourceAttribute];
+         var baseQuery = c.TargetEntity.Basic().Select(attrs.Select(x => x.GetFullName()));
          c.ApplyRelatedFilter(baseQuery,sourceIds);
          baseQuery.ApplyPagination(pagination);
          baseQuery.ApplyFilters(filters);

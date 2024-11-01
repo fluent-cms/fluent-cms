@@ -6,8 +6,8 @@ namespace FluentCMS.Utils.QueryBuilder;
 
 public static class SortOrder
 {
-    public const string Asc = "ASC";
-    public const string Desc = "Desc";
+    public const string Asc = "asc";
+    public const string Desc = "desc";
 }
 
 public sealed record Sort(string FieldName, string Order);

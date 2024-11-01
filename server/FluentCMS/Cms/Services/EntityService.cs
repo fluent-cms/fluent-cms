@@ -45,16 +45,7 @@ public sealed class EntityService(
 
         foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.Lookup, InListOrDetail.InDetail))
         {
-            var attr = attribute with
-            {
-                Children =
-                [
-                    attribute.Lookup!.PrimaryKeyAttribute,
-                    attribute.Lookup.LoadedTitleAttribute
-                ]
-            };
-            
-            await AttachLookup(attr, [record], cancellationToken);
+            await AttachLookup( attribute, [record], cancellationToken);
         }
 
         await hookRegistry.EntityPostGetOne.Trigger(provider, new EntityPostGetOneArgs(entityName, id, record));
@@ -86,17 +77,9 @@ public sealed class EntityService(
         var ret = new ListResult(records, records.Length);
         if (records.Length > 0)
         {
-            foreach (var listLookupsAttribute in entity.Attributes.GetAttributesByType(DisplayType.Lookup,
-                         InListOrDetail.InList))
+            foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.Lookup, InListOrDetail.InList))
             {
-                var attr = listLookupsAttribute with
-                {
-                    Children = [
-                        listLookupsAttribute.Lookup!.PrimaryKeyAttribute,
-                        listLookupsAttribute.Lookup.LoadedTitleAttribute
-                    ]
-                };
-                await AttachLookup(attr, records, cancellationToken);
+                await AttachLookup(attribute, records, cancellationToken);
             }
             ret = ret with{TotalRecords = await queryKateQueryExecutor.Count(entity.CountQuery(filters), cancellationToken)};
         }
@@ -104,6 +87,8 @@ public sealed class EntityService(
         var postRes = await hookRegistry.EntityPostGetList.Trigger(provider, new EntityPostGetListArgs(entity.Name, ret));
         return postRes.RefListResult;
     }
+
+
 
     public async Task<Record> Insert(string entityName, JsonElement ele, CancellationToken cancellationToken)
     {
@@ -204,7 +189,7 @@ public sealed class EntityService(
             await queryKateQueryExecutor.Count(countQuery, cancellationToken));
     }
 
-    public async Task AttachRelatedEntity(LoadedEntity entity,IEnumerable<LoadedAttribute>? attributes, Record[] items, CancellationToken cancellationToken)
+    public async Task AttachRelatedEntity(LoadedEntity entity,IEnumerable<GraphAttribute>? attributes, Record[] items, CancellationToken cancellationToken)
     {
         if (attributes is null)
         {
@@ -224,7 +209,7 @@ public sealed class EntityService(
         }
     }
 
-    private async Task AttachCrosstable(LoadedEntity sourceEntity, LoadedAttribute attribute, Record[] items, CancellationToken cancellationToken)
+    private async Task AttachCrosstable(LoadedEntity sourceEntity, GraphAttribute attribute, Record[] items, CancellationToken cancellationToken)
     {
         //no need to attach, ignore
         var ids = sourceEntity.PrimaryKeyAttribute.GetUniqValues(items);
@@ -234,18 +219,13 @@ public sealed class EntityService(
         }
 
         var cross = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable of {attribute.GetFullName()}");
-        var fields = attribute.Children.GetLocalAttributes();
-        if (fields.Length == 0)
-        {
-            fields = cross.TargetEntity.Attributes.GetLocalAttributes();
-        }
-
-        var query = cross.GetRelatedItems(fields, [], [], 
+        var fields = attribute.Selection.GetLocalAttributes();
+        var query = cross.GetRelatedItems(fields, attribute.Filters, attribute.Sorts, 
             new Pagination().ToValid(cross.TargetEntity.DefaultPageSize),
             ids);
         var targetRecords = await queryKateQueryExecutor.Many(query, cancellationToken);
         
-        await AttachRelatedEntity(cross.TargetEntity,attribute.Children, targetRecords, cancellationToken);
+        await AttachRelatedEntity(cross.TargetEntity,attribute.Selection, targetRecords, cancellationToken);
         
         var group = targetRecords.GroupBy(x => x[cross.SourceAttribute.Field], x => x);
         foreach (var grouping in group)
@@ -257,31 +237,36 @@ public sealed class EntityService(
             }
         }
     }
-
-    private async Task AttachLookup(LoadedAttribute attribute, Record[] items, CancellationToken cancellationToken)
+    private async Task AttachLookup(LoadedAttribute attribute, Record[] records, CancellationToken cancellationToken)
+    {
+        var lookup = attribute.Lookup!;
+        await AttachLookup(
+            attribute.ToGraph() with
+            {
+                Selection = [lookup.PrimaryKeyAttribute.ToGraph(), lookup.LoadedTitleAttribute.ToGraph()]
+            }, records, cancellationToken);
+    }
+    
+    private async Task AttachLookup(GraphAttribute attribute, Record[] items, CancellationToken cancellationToken)
     {
         var lookupEntity = NotNull(attribute.Lookup)
             .ValOrThrow($"not find lookup entity from {attribute.GetFullName()}");
 
-        var children = attribute.Children.GetLocalAttributes(); 
-        if (children.Length == 0)
-        {
-            children = lookupEntity.Attributes.GetLocalAttributes();
-        }
-
+        var children = attribute.Selection.GetLocalAttributes(); 
         if (children.FindOneAttribute(lookupEntity.PrimaryKey) == null)
         {
-            children = [..children, lookupEntity.PrimaryKeyAttribute];
+            children = [..children, lookupEntity.PrimaryKeyAttribute.ToGraph()];
         }
 
-        var manyQuery = lookupEntity.ManyQuery(attribute.GetUniqValues(items), children);
-        if (manyQuery.IsFailed)
+        var ids = attribute.GetUniqValues(items);
+        if (ids.Length == 0)
         {
             return;
         }
-
-        var targetRecords = await queryKateQueryExecutor.Many(manyQuery.Value, cancellationToken);
-        await AttachRelatedEntity(lookupEntity,attribute.Children, targetRecords, cancellationToken);
+        
+        var query = lookupEntity.ManyQuery(ids, children);
+        var targetRecords = await queryKateQueryExecutor.Many(query, cancellationToken);
+        await AttachRelatedEntity(lookupEntity,attribute.Selection, targetRecords, cancellationToken);
 
         foreach (var lookupRecord in targetRecords)
         {
@@ -293,8 +278,6 @@ public sealed class EntityService(
             }
         }
     }
-
-   
 
     private async Task<Record> Update(LoadedEntity entity, Record record, CancellationToken cancellationToken)
     {

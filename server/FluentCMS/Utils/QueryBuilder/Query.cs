@@ -14,13 +14,13 @@ public sealed record LoadedQuery(
     string Name,
     string EntityName,
     int PageSize,
-    ImmutableArray<LoadedAttribute> Selection ,
+    ImmutableArray<GraphAttribute> Selection ,
     ImmutableArray<Sort> Sorts,
     ImmutableArray<Filter> Filters, // filter need to resolve according to user input
     LoadedEntity Entity);
 
 public static class QueryHelper{
-    public static LoadedQuery ToLoadedQuery(this Query query, LoadedEntity entity, IEnumerable<LoadedAttribute> attributes)
+    public static LoadedQuery ToLoadedQuery(this Query query, LoadedEntity entity, IEnumerable<GraphAttribute> attributes)
     {
         return new LoadedQuery(
             query.Name,

@@ -6,12 +6,14 @@ using FluentCMS.Utils.QueryBuilder;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.IntegrationTests;
-[Collection("Sequential")]
 
 public class SchemaApiTest
 {
     private readonly SchemaApiClient _schemaApiClient;
     private readonly AccountApiClient _accountApiClient;
+    
+    private const string TableName = "schema_api_test";
+    private const string TitleAttribute = "title";
 
 
     public SchemaApiTest()
@@ -102,15 +104,15 @@ public class SchemaApiTest
     {
         var name = Guid.NewGuid().ToString("N");
         return new Entity(
-            Name: $"IntegrationTest{name}",
+            Name: $"{TableName}{name}",
             PrimaryKey: "id",
-            TableName: $"integration_test{name}",
-            TitleAttribute: "Title",
+            TableName: $"{TableName}_{name}",
+            TitleAttribute: TitleAttribute,
             Attributes:
             [
                 new Attribute
                 (
-                    Field: "Title",
+                    Field: TitleAttribute,
                     DataType: DataType.String
                 )
             ]

@@ -11,7 +11,7 @@
     "order": {
       "title":"Order Direction",
       "type": "string",
-      "enum": ["Asc", "Desc"]
+      "enum": ["asc", "desc"]
     }
   }
 } 

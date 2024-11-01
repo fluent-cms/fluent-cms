@@ -53,52 +53,124 @@ public sealed class QuerySchemaService(
         var entity = CheckResult(await entitySchemaService.GetLoadedEntity(query.EntityName, cancellationToken));
         var fields = CheckResult(GraphQlExt.GetRootGraphQlFields(query.SelectionSet));
         CheckResult(await SelectionSetToNode(fields, entity, cancellationToken));
-        CheckResult(await (query.Sorts??[]).ToValidSorts(entity, entitySchemaService.ResolveAttributeVector));
-        CheckResult(await (query.Filters??[]).Resolve(entity, null, entitySchemaService.ResolveAttributeVector));
+        CheckResult(await (query.Sorts ?? []).ToValidSorts(entity, entitySchemaService.ResolveAttributeVector));
+        CheckResult(await (query.Filters ?? []).Resolve(entity, null, entitySchemaService.ResolveAttributeVector));
     }
 
-    private async Task<Result<ImmutableArray<LoadedAttribute>>> SelectionSetToNode(
+    private async Task<Result<ImmutableArray<GraphAttribute>>> SelectionSetToNode(
         IEnumerable<GraphQLField> graphQlFields,
         LoadedEntity entity,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
 
-        List<LoadedAttribute> attributes = new();
+        List<GraphAttribute> attributes = new();
         foreach (var field in graphQlFields)
         {
-            var fldName = field.Name.StringValue;
-            var attribute = entity.Attributes.FindOneAttribute(fldName);
-            if (attribute is null)
-                return Result.Fail($"Verifying `SectionSet` fail, can not find {fldName} in {entity.Name}");
-
-            var res =
-                await entitySchemaService.LoadOneRelated(entity, attribute, ct); 
-            if (res.IsFailed)
+            var (_, _, graphAttr, err) = await LoadAttribute(entity, field.Name.StringValue,cancellationToken);
+            if (err is not null)
             {
-                return Result.Fail(res.Errors);
+                return Result.Fail(err);
             }
 
-            attribute = res.Value;
-            var targetEntity =  attribute.Type switch
+            (_, _, graphAttr, err) = await LoadSelection(graphAttr, field,cancellationToken);
+            if (err is not null)
             {
-                DisplayType.Crosstable => attribute.Crosstable!.TargetEntity,
-                DisplayType.Lookup => attribute.Lookup,
-                _ => null
-            };
+                return Result.Fail(err);
+            }
             
-            if (targetEntity is not null && field.SelectionSet is not null)
+            (_, _, graphAttr, err) = await LoadSorts(graphAttr, field,cancellationToken);
+            if (err is not null)
             {
-                var children = await SelectionSetToNode(field.SelectionSet.SubFields(), targetEntity, ct);
-                if (children.IsFailed)
-                {
-                    return Result.Fail($"Fail to get subfield of {attribute.GetFullName()}");
-                }
-
-                attribute = attribute with { Children = children.Value };
+                return Result.Fail(err);
             }
-            attributes.Add(attribute);
+
+            attributes.Add(graphAttr);
         }
 
         return attributes.ToImmutableArray();
     }
+
+    async Task<Result<GraphAttribute>> LoadSorts(GraphAttribute graphAttr, GraphQLField graphQlField, CancellationToken cancellationToken)
+    {
+        if (graphAttr.Type != DisplayType.Crosstable)
+        {
+            return graphAttr;
+        }
+
+        if (graphQlField.Arguments is null)
+        {
+            return graphAttr;
+        }
+
+        var sorts = new List<Sort>(); 
+        foreach (var arg in graphQlField.Arguments)
+        {
+            if (arg.Name != SortConstant.SortKey) continue;
+            if (arg.Value is not GraphQLListValue listValue || listValue.Values is null)
+            {
+                continue;
+            }
+
+            foreach (var item in listValue.Values)
+            {
+                if (item is not GraphQLObjectValue { Fields: not null } objectValue) continue;
+                foreach (var field in objectValue.Fields)
+                {
+                    if (!(field.Value is GraphQLEnumValue enumValue && (enumValue.Name == SortOrder.Asc || enumValue.Name == SortOrder.Desc)))
+                    {
+                        return Result.Fail($"Fail to parse sort direction, it should be {SortOrder.Asc} or {SortOrder.Desc}");
+                    }
+                    sorts.Add(new Sort(field.Name.StringValue, enumValue.Name.StringValue));
+                }
+            }
+        }
+
+        var (_,_,validSort, errors) = await sorts.ToValidSorts(graphAttr.Crosstable!.TargetEntity, entitySchemaService.ResolveAttributeVector);
+        if (errors is not null)
+        {
+            return Result.Fail(errors);
+        }
+        return graphAttr with{Sorts = [..validSort]};
+    }
+    async Task<Result<GraphAttribute>> LoadSelection(GraphAttribute graphAttr, GraphQLField graphQlField, CancellationToken cancellationToken)
+    {
+        var targetEntity = graphAttr.Type switch
+        {
+            DisplayType.Crosstable => graphAttr.Crosstable!.TargetEntity,
+            DisplayType.Lookup => graphAttr.Lookup,
+            _ => null
+        };
+
+        if (targetEntity is not null && graphQlField.SelectionSet is not null)
+        {
+            var (_, _, children, errors) =
+                await SelectionSetToNode(graphQlField.SelectionSet.SubFields(), targetEntity, cancellationToken);
+            if (errors is not null)
+            {
+                return Result.Fail($"Fail to get subfield of {graphAttr}, errors: {errors}");
+            }
+
+            graphAttr = graphAttr with { Selection = children };
+        }
+
+        return graphAttr;
+    }
+
+    private async Task<Result<GraphAttribute>> LoadAttribute(LoadedEntity entity, string fldName, CancellationToken cancellationToken)
+    {
+        var find = entity.Attributes.FindOneAttribute(fldName);
+        if (find is null)
+        {
+            return Result.Fail($"Verifying `SectionSet` fail, can not find {fldName} in {entity.Name}");
+        }
+
+        var (_, _, loadedAttr, loadRelatedErr) = await entitySchemaService.LoadOneRelated(entity, find, cancellationToken);
+        if (loadRelatedErr is not null)
+        {
+            return Result.Fail(loadRelatedErr);
+        }
+
+        return loadedAttr.ToGraph();
+    }
+
 }

@@ -16,7 +16,7 @@ public static class JsonElementExt
       return dict; 
    }
 
-   private static List<object> ToArray(this JsonElement jsonElement)
+   private static object[] ToArray(this JsonElement jsonElement)
    {
       var list = new List<object>();
 
@@ -25,7 +25,7 @@ public static class JsonElementExt
          list.Add(ConvertJsonElement(item));
       }
 
-      return list;
+      return list.ToArray();
    }
    private static object ConvertJsonElement(JsonElement element)
    {
