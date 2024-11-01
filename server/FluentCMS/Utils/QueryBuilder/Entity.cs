@@ -113,15 +113,11 @@ public static class EntityHelper
     }
 
 
-    public static Result<SqlKata.Query> ManyQuery(this LoadedEntity e,ImmutableArray<object> ids, IEnumerable<LoadedAttribute> attributes)
+    public static SqlKata.Query ManyQuery(this LoadedEntity e,IEnumerable<object> ids, IEnumerable<LoadedAttribute> attributes)
     {
-        if (!ids.Any())
-        {
-            Result.Fail("ids is empty");
-        }
-
-        var lstFields = attributes.Select(x => x.Field);
-        return e.Basic().Select(lstFields.ToArray()).WhereIn(e.PrimaryKey, ids);
+        return e.Basic()
+            .Select(attributes.Select(x=>x.GetFullName()))
+            .WhereIn(e.PrimaryKey, ids);
     }
 
     public static SqlKata.Query Insert(this LoadedEntity e, Record item)

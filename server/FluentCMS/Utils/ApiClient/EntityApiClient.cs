@@ -13,7 +13,7 @@ public class EntityApiClient(HttpClient client)
         return await client.GetObject<ListResult>($"/api/entities/{entity}?offset={offset}&limit={limit}");
     }
 
-    public async Task<Result> AddDataWithLookup(string entity, string field, object value, string lookupField,
+    public async Task<Result<Dictionary<string,JsonElement>>> AddDataWithLookup(string entity, string field, object value, string lookupField,
         object lookupTargetId)
     {
         return await AddData(entity, new Dictionary<string, object>
@@ -60,7 +60,7 @@ public class EntityApiClient(HttpClient client)
         return await res.ToResult();
     }
 
-    public async Task<Result> AddSimpleData(string entity, string field, string val)
+    public async Task<Result<Dictionary<string,JsonElement>>> AddSimpleData(string entity, string field, string val)
     {
         var payload = new Dictionary<string, object>
         {
@@ -69,10 +69,8 @@ public class EntityApiClient(HttpClient client)
         return await AddData(entity, payload);
     }
 
-    private async Task<Result> AddData(string entity, Dictionary<string, object> payload)
+    private async Task<Result<Dictionary<string,JsonElement>>> AddData(string entity, Dictionary<string, object> payload)
     {
-        var res = await client.PostObject($"/api/entities/{entity}/insert", payload);
-        return await res.ToResult();
-
+        return await client.PostObject<Dictionary<string,JsonElement>>($"/api/entities/{entity}/insert", payload);
     }
 }

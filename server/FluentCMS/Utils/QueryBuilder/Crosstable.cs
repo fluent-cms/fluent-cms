@@ -122,7 +122,8 @@ public static class CrosstableHelper
          ValidPagination pagination,
          IEnumerable<object> sourceIds)
      {
-         var baseQuery = c.TargetEntity.Basic().Select(selectAttributes.Select(x => x.GetFullName()));
+         List<LoadedAttribute> attrs = [..selectAttributes, c.SourceAttribute];
+         var baseQuery = c.TargetEntity.Basic().Select(attrs.Select(x => x.GetFullName()));
          c.ApplyRelatedFilter(baseQuery,sourceIds);
          baseQuery.ApplyPagination(pagination);
          baseQuery.ApplyFilters(filters);

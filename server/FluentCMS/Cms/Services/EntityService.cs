@@ -274,13 +274,14 @@ public sealed class EntityService(
             children = [..children, lookupEntity.PrimaryKeyAttribute];
         }
 
-        var manyQuery = lookupEntity.ManyQuery(attribute.GetUniqValues(items), children);
-        if (manyQuery.IsFailed)
+        var ids = attribute.GetUniqValues(items);
+        if (ids.Length == 0)
         {
             return;
         }
-
-        var targetRecords = await queryKateQueryExecutor.Many(manyQuery.Value, cancellationToken);
+        
+        var query = lookupEntity.ManyQuery(ids, children);
+        var targetRecords = await queryKateQueryExecutor.Many(query, cancellationToken);
         await AttachRelatedEntity(lookupEntity,attribute.Children, targetRecords, cancellationToken);
 
         foreach (var lookupRecord in targetRecords)
