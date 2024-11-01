@@ -1,4 +1,5 @@
 using FluentResults;
+using Microsoft.Extensions.Primitives;
 
 namespace FluentCMS.Utils.DictionaryExt;
 
@@ -22,6 +23,48 @@ public static class DictionaryExt
             }
         }
         return current;
+    }
+
+    /* 
+     * convert 
+     * {
+     *      name[startsWidth]: a,
+     *      name[endsWith]: b,
+     * }
+     * to
+     * {
+     *      name : {
+     *          startsWidth : a,
+     *          endsWith : b
+     *      }
+     * }
+     */
+    public static Dictionary<string, Dictionary<string, StringValues>> GroupByFirstIdentifier(
+        this Dictionary<string, StringValues> dictionary)
+    {
+        var result = new Dictionary<string, Dictionary<string, StringValues>>();
+        foreach (var (key,value) in dictionary)
+        {
+            var parts = key.Split('[');
+            if (parts.Length != 2)
+            {
+                continue;
+            }
+
+            var (k, subKey)= (parts[0], parts[1]);
+            if (!subKey.EndsWith("]"))
+            {
+                continue;
+            }
+            subKey = subKey[..^1];
+            if (!result.ContainsKey(k))
+            {
+                result[k] = new();
+            }
+
+            result[k][subKey] = value;
+        }
+        return result;
     }
    
 }

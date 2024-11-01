@@ -2,10 +2,10 @@ using System.Collections.Immutable;
 using System.Text.Json;
 using FluentCMS.Services;
 using FluentCMS.Utils.DataDefinitionExecutor;
+using FluentCMS.Utils.DictionaryExt;
 using FluentCMS.Utils.HookFactory;
 using Microsoft.Extensions.Primitives;
 using FluentCMS.Utils.KateQueryExecutor;
-using FluentCMS.Utils.Qs;
 using FluentCMS.Utils.QueryBuilder;
 
 namespace FluentCMS.Cms.Services;
@@ -65,9 +65,9 @@ public sealed class EntityService(
         CancellationToken cancellationToken)
     {
         var entity = CheckResult(await entitySchemaService.GetLoadedEntity(entityName,  cancellationToken));
-        var qsDict = new QsDict(qs);
-        var filters = CheckResult(await FilterHelper.Parse(entity, qsDict, entitySchemaService.ResolveAttributeVector));
-        var sorts = CheckResult(await SortHelper.Parse(qsDict,entity, entitySchemaService.ResolveAttributeVector));
+        var groupQs = qs.GroupByFirstIdentifier();
+        var filters = CheckResult(await FilterHelper.Parse(entity, groupQs, entitySchemaService.ResolveAttributeVector));
+        var sorts = CheckResult(await SortHelper.Parse(entity, groupQs, entitySchemaService.ResolveAttributeVector));
         return await List(entity, filters, sorts, pagination, cancellationToken);
     }
 
@@ -135,7 +135,7 @@ public sealed class EntityService(
     public async Task<int> CrosstableDelete(string entityName, string strId, string attributeName,
         JsonElement[] elements, CancellationToken cancellationToken)
     {
-        var attribute = NotNull(await FindAttribute(entityName, attributeName, cancellationToken))
+        var attribute = NotNull(await entitySchemaService.FindAttribute(entityName, attributeName, cancellationToken))
             .ValOrThrow($"not find {attributeName} in {entityName}");
 
         var crossTable = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable of {attributeName}");
@@ -156,7 +156,7 @@ public sealed class EntityService(
     public async Task<int> CrosstableAdd(string entityName, string strId, string attributeName, JsonElement[] elements,
         CancellationToken cancellationToken)
     {
-        var attribute = NotNull(await FindAttribute(entityName, attributeName, cancellationToken))
+        var attribute = NotNull(await entitySchemaService.FindAttribute(entityName, attributeName, cancellationToken))
             .ValOrThrow($"not find {attributeName} in {entityName}");
 
         var crossTable = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable of {attributeName}");
@@ -175,16 +175,31 @@ public sealed class EntityService(
     }
 
     public async Task<ListResult> CrosstableList(string entityName, string strId, string attributeName, bool exclude,
-        Pagination pagination, CancellationToken cancellationToken)
+        Dictionary<string,StringValues> qs, Pagination pagination, CancellationToken cancellationToken)
     {
-        var attribute = NotNull(await FindAttribute(entityName, attributeName, cancellationToken))
+        var entity = CheckResult(await entitySchemaService.GetLoadedEntity(entityName, cancellationToken));
+        var attribute = NotNull(entity.Attributes.FindOneAttribute(attributeName))
             .ValOrThrow($"not find {attributeName} in {entityName}");
 
         var crossTable = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable of {attributeName}");
-        var selectAttributes = crossTable.TargetEntity.Attributes.GetLocalAttributes(InListOrDetail.InList);
-        var id =definitionExecutor.Cast(strId,crossTable.SourceAttribute.DataType);
-        var countQuery = crossTable.Filter(selectAttributes, exclude, id);
-        var pagedListQuery = crossTable.Many(selectAttributes, exclude, id, pagination);
+        var target = crossTable.TargetEntity;
+        
+        var selectAttributes = target.Attributes.GetLocalAttributes(InListOrDetail.InList);
+        var id = crossTable.SourceAttribute.Cast(strId);
+        
+        var dictionary = qs.GroupByFirstIdentifier();
+        var filter = CheckResult(await FilterHelper.Parse(target, dictionary, entitySchemaService.ResolveAttributeVector));
+        var sorts =CheckResult(await SortHelper.Parse(target, dictionary, entitySchemaService.ResolveAttributeVector));
+        var validPagination = pagination.ToValid(crossTable.TargetEntity.DefaultPageSize);
+
+        var pagedListQuery = exclude
+            ? crossTable.GetNotRelatedItems(selectAttributes, filter, sorts, validPagination, [id])
+            : crossTable.GetRelatedItems(selectAttributes, filter, sorts, validPagination, [id]);
+
+        var countQuery = exclude
+            ? crossTable.GetNotRelatedItemsCount(filter, [id])
+            : crossTable.GetRelatedItemsCount(filter, [id]);
+        
         return new ListResult(await queryKateQueryExecutor.Many(pagedListQuery, cancellationToken),
             await queryKateQueryExecutor.Count(countQuery, cancellationToken));
     }
@@ -225,7 +240,9 @@ public sealed class EntityService(
             fields = cross.TargetEntity.Attributes.GetLocalAttributes();
         }
 
-        var query = cross.Many(fields, ids);
+        var query = cross.GetRelatedItems(fields, [], [], 
+            new Pagination().ToValid(cross.TargetEntity.DefaultPageSize),
+            ids);
         var targetRecords = await queryKateQueryExecutor.Many(query, cancellationToken);
         
         await AttachRelatedEntity(cross.TargetEntity,attribute.Children, targetRecords, cancellationToken);
@@ -277,12 +294,7 @@ public sealed class EntityService(
         }
     }
 
-    private async Task<LoadedAttribute?> FindAttribute(string entityName, string attributeName,
-        CancellationToken cancellationToken)
-    {
-        var entity = CheckResult(await entitySchemaService.GetLoadedEntity(entityName, cancellationToken));
-        return entity.Attributes.FindOneAttribute(attributeName);
-    }
+   
 
     private async Task<Record> Update(LoadedEntity entity, Record record, CancellationToken cancellationToken)
     {

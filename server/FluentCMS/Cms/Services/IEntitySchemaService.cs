@@ -14,4 +14,5 @@ public interface IEntitySchemaService
     Task<Schema> AddOrUpdate(Entity entity, CancellationToken cancellationToken);
     Task<Result<LoadedAttribute>> LoadOneRelated(LoadedEntity entity, LoadedAttribute attribute, CancellationToken cancellationToken);
     Task<Result<AttributeVector>> ResolveAttributeVector(LoadedEntity entity, string fieldName);
+    Task<LoadedAttribute?> FindAttribute(string entityName, string attributeName, CancellationToken cancellationToken);
 }

@@ -12,6 +12,13 @@ using static InvalidParamExceptionFactory;
 public sealed class EntitySchemaService(ISchemaService schemaService, IDefinitionExecutor definitionExecutor)
     : IEntitySchemaService
 {
+    
+    public async Task<LoadedAttribute?> FindAttribute(string entityName, string attributeName, CancellationToken cancellationToken)
+    {
+        var entity = CheckResult(await GetLoadedEntity(entityName, cancellationToken));
+        return entity.Attributes.FindOneAttribute(attributeName);
+    }    
+    
     public async Task<Result<AttributeVector>> ResolveAttributeVector(LoadedEntity entity, string fieldName)
     {
         var fields = fieldName.Split(".");

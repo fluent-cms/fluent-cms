@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using FluentResults;
+using Microsoft.Extensions.Primitives;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
@@ -36,21 +37,24 @@ public static class SortHelper
         return ret.ToImmutableArray();
     }
     
-    public static async Task<Result<ImmutableArray<ValidSort>>> Parse(Qs.QsDict qsDict, LoadedEntity entity, ResolveVectorDelegate vectorDelegate)
+    public static async Task<Result<ImmutableArray<ValidSort>>> Parse(
+        LoadedEntity entity, 
+        Dictionary<string,Dictionary<string,StringValues>> dictionary, 
+        ResolveVectorDelegate vectorDelegate)
     {
         var ret = new List<ValidSort>();
 
-        if (qsDict.Dict.TryGetValue(SortConstant.SortKey, out var pairs))
+        if (dictionary.TryGetValue(SortConstant.SortKey, out var dict))
         {
-            foreach (var p in pairs)
+            foreach (var (fieldName, orderStr) in dict)
             {
-                var (_, _, vector, errors) = await vectorDelegate(entity, p.Key);
-                if (errors is not null)
+                var (_, _, vector, errors) = await vectorDelegate(entity, fieldName);
+                if (errors?.Count > 0 )
                 {
                     return Result.Fail(errors);
                 }
                 
-                var order = p.Values.FirstOrDefault() == "1" ? SortOrder.Asc : SortOrder.Desc;
+                var order = orderStr.ToString() == "1" ? SortOrder.Asc : SortOrder.Desc;
                 ret.Add(new ValidSort(vector,order));
             }
         }

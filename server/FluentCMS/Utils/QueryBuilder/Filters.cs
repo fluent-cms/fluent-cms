@@ -1,7 +1,5 @@
 using System.Collections.Immutable;
-using FluentCMS.Utils.Qs;
 using FluentResults;
-using FluentResults.Extensions;
 using Microsoft.Extensions.Primitives;
 
 namespace FluentCMS.Utils.QueryBuilder;
@@ -23,14 +21,14 @@ public static class FilterHelper
         var ret = new List<ValidFilter>();
         foreach (var filter in filters)
         {
-            var (_, vectorFail, vector, vectorError) = await resolveVector(entity,filter.FieldName);
-            if (vectorFail)
+            var (_, _, vector, vectorError) = await resolveVector(entity,filter.FieldName);
+            if (vectorError is not null)
             {
                 return Result.Fail(vectorError);
             }
 
-            var (_, consFail, constraints, constraintErrors) = filter.Constraints.Resolve(vector.Attribute, filter.OmitFail,querystringDictionary);
-            if (consFail)
+            var (_, _, constraints, constraintErrors) = filter.Constraints.Resolve(vector.Attribute, filter.OmitFail,querystringDictionary);
+            if (constraintErrors is not null)
             {
                 return Result.Fail(constraintErrors);
             }
@@ -41,41 +39,44 @@ public static class FilterHelper
         }
         return ret.ToImmutableArray();
     }
-    
-    public static async Task<Result<ImmutableArray<ValidFilter>>> Parse(LoadedEntity entity, QsDict qsDict, ResolveVectorDelegate resolveVector)
+
+    public static async Task<Result<ImmutableArray<ValidFilter>>> Parse(LoadedEntity entity,
+        Dictionary<string, Dictionary<string, StringValues>> dictionary, ResolveVectorDelegate resolveVector)
     {
         var ret = new List<ValidFilter>();
-        foreach (var pair in qsDict.Dict)
+        foreach (var (key, value) in dictionary)
         {
-            if (pair.Key == SortConstant.SortKey)
+            if (key == SortConstant.SortKey)
             {
                 continue;
             }
-            var result =await Parse(entity, pair.Key, pair.Value.ToArray(),resolveVector );
-            if (result.IsFailed)
+
+            var (_,_,filter, errors) = await Parse(entity, key, value, resolveVector);
+            if (errors is not null)
             {
-                return Result.Fail(result.Errors);
+                return Result.Fail(errors);
             }
-            ret.Add(result.Value);
+
+            ret.Add(filter);
+
         }
 
         return ret.ToImmutableArray();
     }
 
-    private static async Task<Result<ValidFilter>> Parse(LoadedEntity entity, string field, Pair[] pairs, 
+    private static async Task<Result<ValidFilter>> Parse(LoadedEntity entity, string field, Dictionary<string,StringValues> dictionary, 
         ResolveVectorDelegate resolveVector)
     {
-        var res  = await resolveVector(entity, field);
-        if (res.IsFailed)
+        var (_,_, vector, errors)  = await resolveVector(entity, field);
+        if (errors is not null)
         {
-            return Result.Fail($"Fail to parse filter, not found {entity.Name}.{field}");
+            return Result.Fail($"Fail to parse filter, not found {entity.Name}.{field}, errors: {errors}");
         }
 
-        var op = pairs.FirstOrDefault(x => x.Key == "operator")?.Values.FirstOrDefault() ?? "and";
-        var constraints = from pair in pairs.Where(x => x.Key != "operator")
-            from pairValue in pair.Values
-            select new ValidConstraint(pair.Key, [res.Value.Attribute.Cast(pairValue)]);
-        
-        return new ValidFilter(res.Value,op, [..constraints]);
+        var op = dictionary.TryGetValue("operator", out var value) ? value.ToString() : "and";
+        var constraints = dictionary
+            .Where(x => x.Key != "operator")
+            .Select(x => new ValidConstraint(x.Key,[vector.Attribute.Cast(x.Value.ToString())]));
+        return new ValidFilter(vector,op, [..constraints]);
     }
 }
