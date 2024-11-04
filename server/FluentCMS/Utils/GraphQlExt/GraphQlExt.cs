@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using FluentCMS.Utils.QueryBuilder;
 using FluentResults;
 using GraphQLParser;
 using GraphQLParser.AST;
@@ -27,5 +28,43 @@ public static class GraphQlExt
     public static ImmutableArray<GraphQLField> SubFields(this GraphQLSelectionSet selectionSet)
     {
         return [..selectionSet.Selections.OfType<GraphQLField>()];
+    }
+
+    private static Result<object> ToPrimitiveValue(this GraphQLValue graphQlValue)
+    {
+        object val;
+        switch (graphQlValue)
+        {
+            case GraphQLEnumValue enumValue:
+                val = enumValue.Name.StringValue;
+                break;
+            case GraphQLBooleanValue booleanValue:
+                val = booleanValue.Value;
+                break;
+            case GraphQLIntValue intValue:
+                val = intValue.Value;
+                break;
+            case GraphQLStringValue stringValue:
+                val = stringValue.Value;
+                break;
+            default:
+                return Result.Fail($"failed to convert {graphQlValue} to primitive value");
+        }
+        return val;
+    }
+
+    public static Result<ImmutableArray<(string, object)>> ToPairs(this GraphQLObjectValue objectValue)
+    {
+        var result = new List<(string, object)>();
+        foreach (var field in objectValue.Fields ?? [])
+        {
+            var (_, _, v, e) = field.Value.ToPrimitiveValue();
+            if (e != null)
+            {
+                return Result.Fail([new Error($"fail to resolve value {field.Name}"), ..e]);
+            }
+            result.Add((field.Name.StringValue, v));
+        }
+        return result.ToImmutableArray();
     }
 }

@@ -30,7 +30,7 @@ public sealed class QuerySchemaService(
         var query = NotNull(item.Settings.Query).ValOrThrow("invalid view format");
         var entity = CheckResult(await entitySchemaService.GetLoadedEntity(query.EntityName, cancellationToken));
         var fields = CheckResult(GraphQlExt.GetRootGraphQlFields(query.SelectionSet));
-        var attributes = CheckResult(await SelectionSetToNode(fields, entity, cancellationToken));
+        var attributes = CheckResult(await SelectionSetToNode("", entity, fields, cancellationToken));
         return query.ToLoadedQuery(entity, attributes);
     }
 
@@ -52,87 +52,171 @@ public sealed class QuerySchemaService(
 
         var entity = CheckResult(await entitySchemaService.GetLoadedEntity(query.EntityName, cancellationToken));
         var fields = CheckResult(GraphQlExt.GetRootGraphQlFields(query.SelectionSet));
-        CheckResult(await SelectionSetToNode(fields, entity, cancellationToken));
+        CheckResult(await SelectionSetToNode("", entity, fields, cancellationToken));
         CheckResult(await (query.Sorts ?? []).ToValidSorts(entity, entitySchemaService.ResolveAttributeVector));
-        CheckResult(await (query.Filters ?? []).Resolve(entity, null, entitySchemaService.ResolveAttributeVector));
+        CheckResult(await (query.Filters ?? []).ToValid(entity, null, entitySchemaService.ResolveAttributeVector));
     }
 
     private async Task<Result<ImmutableArray<GraphAttribute>>> SelectionSetToNode(
-        IEnumerable<GraphQLField> graphQlFields,
+        string prefix,
         LoadedEntity entity,
+        IEnumerable<GraphQLField> graphQlFields,
         CancellationToken cancellationToken)
     {
 
         List<GraphAttribute> attributes = new();
         foreach (var field in graphQlFields)
         {
-            var (_, _, graphAttr, err) = await LoadAttribute(entity, field.Name.StringValue,cancellationToken);
+            var (_, _, graphAttr, err) = await LoadAttribute(entity, field.Name.StringValue, cancellationToken);
+            graphAttr = graphAttr with { Prefix = prefix };
             if (err is not null)
             {
                 return Result.Fail(err);
             }
 
-            (_, _, graphAttr, err) = await LoadSelection(graphAttr, field,cancellationToken);
-            if (err is not null)
+            var pre = prefix;
+            if (pre != "")
             {
-                return Result.Fail(err);
+                pre += ".";
             }
-            
-            (_, _, graphAttr, err) = await LoadSorts(graphAttr, field,cancellationToken);
+
+            pre += graphAttr.Field;
+            (_, _, graphAttr, err) = await LoadSelection(pre , graphAttr, field, cancellationToken);
             if (err is not null)
             {
                 return Result.Fail(err);
             }
 
+            if (graphAttr.Type == DisplayType.Crosstable && field.Arguments is not null)
+            {
+
+                (_, _, graphAttr, err) = LoadSorts(graphAttr, field.Arguments);
+                if (err is not null)
+                {
+                    return Result.Fail(err);
+                }
+
+                (_, _, graphAttr, err) =  LoadFilters(graphAttr, field.Arguments);
+                if (err is not null)
+                {
+                    return Result.Fail(err);
+                }
+            }
             attributes.Add(graphAttr);
         }
 
         return attributes.ToImmutableArray();
     }
 
-    async Task<Result<GraphAttribute>> LoadSorts(GraphAttribute graphAttr, GraphQLField graphQlField, CancellationToken cancellationToken)
+    private static Result<Filter> ObjectToFilter(string fieldName, GraphQLObjectValue argObjVal)
     {
-        if (graphAttr.Type != DisplayType.Crosstable)
+
+        //name: {omitFail:true, gt:2, lt:5, operator: and}
+        //name: {omitFail:false, eq:3, eq:4, operator: or}
+        var omitFail = false;
+        var logicalOperator = LogicalOperators.And;
+        var constraints = new List<Constraint>();
+        var (_, _, pairs, err) = argObjVal.ToPairs();
+        if (err is not null)
         {
-            return graphAttr;
+            return Result.Fail(err);
         }
 
-        if (graphQlField.Arguments is null)
+        foreach (var (key, val) in pairs)
         {
-            return graphAttr;
-        }
+            switch (key)
+            {
+                case FilterConstants.LogicalOperatorKey:
+                    if (val is not string strVal)
+                    {
+                        return Result.Fail("invalid filter logical operator");
+                    }
 
-        var sorts = new List<Sort>(); 
-        foreach (var arg in graphQlField.Arguments)
+                    logicalOperator = strVal;
+                    break;
+                case FilterConstants.OmitFailKey:
+                    if (val is not bool boolVal)
+                    {
+                        return Result.Fail("invalid filter omit fail setting");
+                    }
+
+                    omitFail = boolVal;
+                    break;
+                default:
+                    constraints.Add(new Constraint(key, val.ToString()!));
+                    break;
+            }
+        }
+        return new Filter(fieldName, logicalOperator,[..constraints],omitFail);
+    }
+
+    private static Result<GraphAttribute> LoadFilters(GraphAttribute graphAttr, GraphQLArguments arguments)
+    {
+        var filters = new List<Filter>();
+        foreach (var arg in arguments)
         {
-            if (arg.Name != SortConstant.SortKey) continue;
-            if (arg.Value is not GraphQLListValue listValue || listValue.Values is null)
+            if (arg.Name == SortConstant.SortKey)
             {
                 continue;
             }
 
-            foreach (var item in listValue.Values)
+            var fieldName = arg.Name.StringValue;
+
+            switch (arg.Value)
             {
-                if (item is not GraphQLObjectValue { Fields: not null } objectValue) continue;
-                foreach (var field in objectValue.Fields)
-                {
-                    if (!(field.Value is GraphQLEnumValue enumValue && (enumValue.Name == SortOrder.Asc || enumValue.Name == SortOrder.Desc)))
+                case GraphQLEnumValue argStrVal:
+                    //name: 3
+                    var constraint = new Constraint(Matches.EqualsTo, argStrVal.Name.StringValue);
+                    filters.Add(new Filter(fieldName, LogicalOperators.And, [constraint], false));
+                    break;
+                case GraphQLObjectValue argObjVal:
+                    var (_, _, filter, errors) = ObjectToFilter(fieldName, argObjVal);
+                    if (errors is not null)
                     {
-                        return Result.Fail($"Fail to parse sort direction, it should be {SortOrder.Asc} or {SortOrder.Desc}");
+                        return Result.Fail([new Error($"Failed to resolve filter for {fieldName}"),..errors]);
                     }
-                    sorts.Add(new Sort(field.Name.StringValue, enumValue.Name.StringValue));
-                }
+                    filters.Add(filter);
+                    break;
+                default:
+                    return Result.Fail("invalid filter");
             }
         }
 
-        var (_,_,validSort, errors) = await sorts.ToValidSorts(graphAttr.Crosstable!.TargetEntity, entitySchemaService.ResolveAttributeVector);
-        if (errors is not null)
-        {
-            return Result.Fail(errors);
-        }
-        return graphAttr with{Sorts = [..validSort]};
+        return graphAttr with { Filters = [..filters] };
     }
-    async Task<Result<GraphAttribute>> LoadSelection(GraphAttribute graphAttr, GraphQLField graphQlField, CancellationToken cancellationToken)
+
+    //sort: id or sort: {id:desc, name:asc}
+    static Result<GraphAttribute> LoadSorts(GraphAttribute graphAttr, GraphQLArguments arguments)
+    {
+
+        var sorts = new List<Sort>();
+        foreach (var arg in arguments)
+        {
+            if (arg.Name != SortConstant.SortKey) continue;
+            switch (arg.Value)
+            {
+                case GraphQLEnumValue str:
+                    sorts.Add(new Sort(str.Name.StringValue, SortOrder.Asc));
+                    break;
+                case GraphQLObjectValue obj:
+                    //{id:desc, name:asc}
+                    var (_, _, pairs, error) = obj.ToPairs();
+                    if (error is not null)
+                    {
+                        return Result.Fail(error);
+                    }
+                    foreach (var (k,v) in pairs)
+                    {
+                        sorts.Add(new Sort(k, v.ToString()!));
+                    }
+                    break;
+            }
+        }
+
+        return graphAttr with { Sorts = [..sorts] };
+    }
+
+    async Task<Result<GraphAttribute>> LoadSelection(string prefix, GraphAttribute graphAttr, GraphQLField graphQlField, CancellationToken cancellationToken)
     {
         var targetEntity = graphAttr.Type switch
         {
@@ -144,7 +228,7 @@ public sealed class QuerySchemaService(
         if (targetEntity is not null && graphQlField.SelectionSet is not null)
         {
             var (_, _, children, errors) =
-                await SelectionSetToNode(graphQlField.SelectionSet.SubFields(), targetEntity, cancellationToken);
+                await SelectionSetToNode(prefix, targetEntity,graphQlField.SelectionSet.SubFields(), cancellationToken);
             if (errors is not null)
             {
                 return Result.Fail($"Fail to get subfield of {graphAttr}, errors: {errors}");

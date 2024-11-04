@@ -15,14 +15,14 @@ public static class MongoExt
         
         
         var ret = sorts[0].Order == SortOrder.Asc
-                                  ? sortBuilder.Ascending(sorts[0].Vector.Field)
-                                  : sortBuilder.Descending(sorts[0].Vector.Field);
+                                  ? sortBuilder.Ascending(sorts[0].Vector.FullPathFiledName)
+                                  : sortBuilder.Descending(sorts[0].Vector.FullPathFiledName);
         
         for (var i = 1; i < sorts.Length; i++)
         {
             ret = sorts[i].Order == SortOrder.Asc
-                ? ret.Ascending(sorts[i].Vector.Field)
-                : ret.Descending(sorts[i].Vector.Field);
+                ? ret.Ascending(sorts[i].Vector.FullPathFiledName)
+                : ret.Descending(sorts[i].Vector.FullPathFiledName);
         }
         return ret;
     }
@@ -30,7 +30,7 @@ public static class MongoExt
     public static Result<FilterDefinition<BsonDocument>> GetCursorFilters(ValidCursor cursor, ImmutableArray<ValidSort> sorts)
     {
         var builder = Builders<BsonDocument>.Filter;
-        if (cursor.BoundaryItem?.Count == 0) return builder.Empty;
+        if (cursor.EdgeItem?.Count == 0) return builder.Empty;
         
         var definitions = new List<FilterDefinition<BsonDocument>>();
         for (var i = 0; i < sorts.Length; i++)
@@ -51,13 +51,13 @@ public static class MongoExt
         
         FilterDefinition<BsonDocument> GetEq(ValidSort sort)
         {
-            var (fld, val) = (sort.Vector.Field, cursor.BoundaryValue(sort.Vector.Field));
+            var (fld, val) = (Field: sort.Vector.FullPathFiledName, cursor.Edge(sort.Vector.FullPathFiledName));
             return builder.Eq(fld, val);
         }
   
         FilterDefinition<BsonDocument> GetCompare(ValidSort sort)
         {
-            var (fld, val) = (sort.Vector.Field, cursor.BoundaryValue(sort.Vector.Field));
+            var (fld, val) = (Field: sort.Vector.FullPathFiledName, cursor.Edge(sort.Vector.FullPathFiledName));
             return cursor.Cursor.GetCompareOperator(sort.Order) == ">" ? builder.Gt(fld, val) : builder.Lt(fld, val);
         } 
     }
@@ -83,7 +83,7 @@ public static class MongoExt
         List<FilterDefinition<BsonDocument>> definitions = new();
         foreach (var filterConstraint in filter.Constraints)
         {
-            var resConstraint = GetConstraintDefinition(filter.Vector.Field, filterConstraint.Match, filterConstraint.Values);
+            var resConstraint = GetConstraintDefinition(filter.Vector.FullPathFiledName, filterConstraint.Match, filterConstraint.Values);
             if (resConstraint.IsFailed)
             {
                 return Result.Fail(resConstraint.Errors);

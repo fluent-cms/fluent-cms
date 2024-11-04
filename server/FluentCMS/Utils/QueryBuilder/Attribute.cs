@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Globalization;
 using FluentCMS.Utils.DataDefinitionExecutor;
+using Microsoft.Extensions.Primitives;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
@@ -50,9 +51,11 @@ public record LoadedAttribute(
 );
 public record GraphAttribute(
     ImmutableArray<GraphAttribute> Selection,
-    ImmutableArray<ValidFilter> Filters,
-    ImmutableArray<ValidSort> Sorts,
     
+    ImmutableArray<Filter> Filters,
+    ImmutableArray<Sort> Sorts,
+    
+    string Prefix,
     string TableName,
     string Field,
 
@@ -110,8 +113,10 @@ public static class AttributeHelper
             ValidationMessage: a.ValidationMessage
         );
     }
-    public static GraphAttribute ToGraph( this LoadedAttribute a ){
+    public static GraphAttribute ToGraph( this LoadedAttribute a)
+    {
         return new GraphAttribute(
+            Prefix:"",
             Selection: [],
             Filters: [],
             Sorts: [],
@@ -223,5 +228,33 @@ public static class AttributeHelper
             .ToImmutableArray()??[];
     }
 
-   
+    public static Pagination? ResolvePagination(this GraphAttribute attribute,
+        Dictionary<string, StringValues> dictionary)
+    {
+        var key = attribute.Prefix ;
+        if (!string.IsNullOrWhiteSpace(attribute.Prefix))
+        {
+            key += ".";
+        }
+
+        key += attribute.Field;
+        if (dictionary.TryGetValue(key + ".offset", out var offsetStr) ||
+            dictionary.TryGetValue(key + ".limit", out var limitStr))
+        {
+            var offset = GetIntFromDictionary(dictionary, key + ".offset", defaultValue: 0);
+            var limit = GetIntFromDictionary(dictionary, key + ".limit", defaultValue: 20);
+            return new Pagination(offset, limit);
+        }
+
+        return null;
+    }
+
+    private static int GetIntFromDictionary(Dictionary<string, StringValues> dictionary, string key, int defaultValue)
+    {
+        if (dictionary.TryGetValue(key, out var value) && int.TryParse(value.ToString(), out int result))
+        {
+            return result;
+        }
+        return defaultValue;
+    }
 }

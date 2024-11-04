@@ -14,7 +14,7 @@ using static InvalidParamExceptionFactory;
 public sealed class EntityService(
     IDefinitionExecutor definitionExecutor,
     IServiceProvider provider,
-    KateQueryExecutor queryKateQueryExecutor,
+    KateQueryExecutor kateQueryExecutor,
     IEntitySchemaService entitySchemaService,
     HookRegistry hookRegistry) : IEntityService
 {
@@ -24,7 +24,7 @@ public sealed class EntityService(
         var entity = CheckResult(await entitySchemaService.GetLoadedEntity(entityName, cancellationToken));
         var idValue = definitionExecutor.Cast(id,entity.PrimaryKeyAttribute.DataType);
         var query = entity.ByIdQuery(idValue, entity.Attributes.GetLocalAttributes(attributes), []);
-        return NotNull(await queryKateQueryExecutor.One(query, cancellationToken))
+        return NotNull(await kateQueryExecutor.One(query, cancellationToken))
             .ValOrThrow($"not find record by [{id}]");
     }
 
@@ -40,12 +40,12 @@ public sealed class EntityService(
 
         var idValue = definitionExecutor.Cast(id,entity.PrimaryKeyAttribute.DataType);
         var query = entity.ByIdQuery(idValue, entity.Attributes.GetLocalAttributes(InListOrDetail.InDetail), []);
-        var record = NotNull(await queryKateQueryExecutor.One(query, cancellationToken))
+        var record = NotNull(await kateQueryExecutor.One(query, cancellationToken))
             .ValOrThrow($"not find record by [{id}]");
 
         foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.Lookup, InListOrDetail.InDetail))
         {
-            await AttachLookup( attribute, [record], cancellationToken);
+            await LoadLookupData(attribute, [record], cancellationToken);
         }
 
         await hookRegistry.EntityPostGetOne.Trigger(provider, new EntityPostGetOneArgs(entityName, id, record));
@@ -72,16 +72,16 @@ public sealed class EntityService(
         
         var query = CheckResult(entity.ListQuery(res.RefFilters, res.RefSorts, res.RefPagination, null, attributes));
         
-        var records = await queryKateQueryExecutor.Many(query, cancellationToken);
+        var records = await kateQueryExecutor.Many(query, cancellationToken);
 
         var ret = new ListResult(records, records.Length);
         if (records.Length > 0)
         {
             foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.Lookup, InListOrDetail.InList))
             {
-                await AttachLookup(attribute, records, cancellationToken);
+                await LoadLookupData(attribute, records, cancellationToken);
             }
-            ret = ret with{TotalRecords = await queryKateQueryExecutor.Count(entity.CountQuery(filters), cancellationToken)};
+            ret = ret with{TotalRecords = await kateQueryExecutor.Count(entity.CountQuery(filters), cancellationToken)};
         }
 
         var postRes = await hookRegistry.EntityPostGetList.Trigger(provider, new EntityPostGetListArgs(entity.Name, ret));
@@ -132,7 +132,7 @@ public sealed class EntityService(
             new CrosstablePreDelArgs(entityName, strId, attribute, items));
 
         var query = crossTable.Delete(definitionExecutor.Cast(strId,crossTable.SourceAttribute.Field), res.RefItems);
-        var ret = await queryKateQueryExecutor.Exec(query, cancellationToken);
+        var ret = await kateQueryExecutor.Exec(query, cancellationToken);
         await hookRegistry.CrosstablePostDel.Trigger(provider,
             new CrosstablePostDelArgs(entityName, strId, attribute, items));
         return ret;
@@ -153,7 +153,7 @@ public sealed class EntityService(
 
         var query = crossTable.Insert(definitionExecutor.Cast(strId,crossTable.SourceAttribute.DataType), res.RefItems);
         
-        var ret = await queryKateQueryExecutor.Exec(query, cancellationToken);
+        var ret = await kateQueryExecutor.Exec(query, cancellationToken);
         await hookRegistry.CrosstablePostAdd.Trigger(provider,
             new CrosstablePostAddArgs(entityName, strId, attribute, items));
         return ret;
@@ -185,89 +185,24 @@ public sealed class EntityService(
             ? crossTable.GetNotRelatedItemsCount(filter, [id])
             : crossTable.GetRelatedItemsCount(filter, [id]);
         
-        return new ListResult(await queryKateQueryExecutor.Many(pagedListQuery, cancellationToken),
-            await queryKateQueryExecutor.Count(countQuery, cancellationToken));
+        return new ListResult(await kateQueryExecutor.Many(pagedListQuery, cancellationToken),
+            await kateQueryExecutor.Count(countQuery, cancellationToken));
     }
 
-    public async Task AttachRelatedEntity(LoadedEntity entity,IEnumerable<GraphAttribute>? attributes, Record[] items, CancellationToken cancellationToken)
+    private async Task LoadLookupData(LoadedAttribute attribute, Record[] items, CancellationToken cancellationToken)
     {
-        if (attributes is null)
-        {
-            return;
-        }
-
-        var arr = attributes.ToArray();
-
-        foreach (var attribute in arr.GetAttributesByType(DisplayType.Lookup))
-        {
-            await AttachLookup(attribute, items, cancellationToken);
-        }
-
-        foreach (var attribute in arr.GetAttributesByType(DisplayType.Crosstable))
-        {
-            await AttachCrosstable(entity,attribute, items, cancellationToken);
-        }
-    }
-
-    private async Task AttachCrosstable(LoadedEntity sourceEntity, GraphAttribute attribute, Record[] items, CancellationToken cancellationToken)
-    {
-        //no need to attach, ignore
-        var ids = sourceEntity.PrimaryKeyAttribute.GetUniqValues(items);
-        if (ids.Length == 0)
-        {
-            return;
-        }
-
-        var cross = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable of {attribute.GetFullName()}");
-        var fields = attribute.Selection.GetLocalAttributes();
-        var query = cross.GetRelatedItems(fields, attribute.Filters, attribute.Sorts, 
-            new Pagination().ToValid(cross.TargetEntity.DefaultPageSize),
-            ids);
-        var targetRecords = await queryKateQueryExecutor.Many(query, cancellationToken);
-        
-        await AttachRelatedEntity(cross.TargetEntity,attribute.Selection, targetRecords, cancellationToken);
-        
-        var group = targetRecords.GroupBy(x => x[cross.SourceAttribute.Field], x => x);
-        foreach (var grouping in group)
-        {
-            var filteredItems = items.Where(local => local[sourceEntity.PrimaryKey].Equals(grouping.Key));
-            foreach (var item in filteredItems)
-            {
-                item[attribute.Field] = grouping.ToArray();
-            }
-        }
-    }
-    private async Task AttachLookup(LoadedAttribute attribute, Record[] records, CancellationToken cancellationToken)
-    {
-        var lookup = attribute.Lookup!;
-        await AttachLookup(
-            attribute.ToGraph() with
-            {
-                Selection = [lookup.PrimaryKeyAttribute.ToGraph(), lookup.LoadedTitleAttribute.ToGraph()]
-            }, records, cancellationToken);
-    }
-    
-    private async Task AttachLookup(GraphAttribute attribute, Record[] items, CancellationToken cancellationToken)
-    {
-        var lookupEntity = NotNull(attribute.Lookup)
-            .ValOrThrow($"not find lookup entity from {attribute.GetFullName()}");
-
-        var children = attribute.Selection.GetLocalAttributes(); 
-        if (children.FindOneAttribute(lookupEntity.PrimaryKey) == null)
-        {
-            children = [..children, lookupEntity.PrimaryKeyAttribute.ToGraph()];
-        }
-
         var ids = attribute.GetUniqValues(items);
         if (ids.Length == 0)
         {
             return;
         }
-        
-        var query = lookupEntity.ManyQuery(ids, children);
-        var targetRecords = await queryKateQueryExecutor.Many(query, cancellationToken);
-        await AttachRelatedEntity(lookupEntity,attribute.Selection, targetRecords, cancellationToken);
 
+        var lookupEntity = NotNull(attribute.Lookup)
+            .ValOrThrow($"not find lookup entity from {attribute.GetFullName()}");
+
+        var query = lookupEntity.ManyQuery(ids,
+            [attribute.Lookup!.PrimaryKeyAttribute, attribute.Lookup!.LoadedTitleAttribute]);
+        var targetRecords = await kateQueryExecutor.Many(query, cancellationToken);
         foreach (var lookupRecord in targetRecords)
         {
             var lookupId = lookupRecord[lookupEntity.PrimaryKey];
@@ -278,6 +213,8 @@ public sealed class EntityService(
             }
         }
     }
+
+    
 
     private async Task<Record> Update(LoadedEntity entity, Record record, CancellationToken cancellationToken)
     {
@@ -294,7 +231,7 @@ public sealed class EntityService(
             new EntityPreUpdateArgs(entity.Name, id.ToString()!, record));
 
         var query = CheckResult(entity.UpdateQuery(res.RefRecord));
-        await queryKateQueryExecutor.Exec(query, cancellationToken);
+        await kateQueryExecutor.Exec(query, cancellationToken);
         await hookRegistry.EntityPostUpdate.Trigger(provider,new EntityPostUpdateArgs(entity.Name, id.ToString()!, record));
         return record;
     }
@@ -309,7 +246,7 @@ public sealed class EntityService(
         record = res.RefRecord;
         
         var query = entity.Insert(record);
-        var id = await queryKateQueryExecutor.Exec(query, cancellationToken);
+        var id = await kateQueryExecutor.Exec(query, cancellationToken);
         record[entity.PrimaryKey] = id;
         
         await hookRegistry.EntityPostAdd.Trigger(provider,
@@ -330,7 +267,7 @@ public sealed class EntityService(
 
 
         var query = CheckResult(entity.DeleteQuery(record));
-        await queryKateQueryExecutor.Exec(query, cancellationToken);
+        await kateQueryExecutor.Exec(query, cancellationToken);
         (_, _, record) = await hookRegistry.EntityPostDel.Trigger(provider,
             new EntityPostDelArgs(entity.Name, id.ToString()!, record));
         return record;

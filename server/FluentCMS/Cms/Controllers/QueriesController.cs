@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using FluentCMS.Cms.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,26 +11,33 @@ namespace FluentCMS.Cms.Controllers;
 public class QueriesController(IQueryService queryService) : ControllerBase
 {
     [HttpGet("{queryName}")]
-    public async Task<ActionResult<QueryResult<Record>>> Get(string queryName,
+    public async Task<ActionResult> GetList(string queryName,
         [FromQuery] Cursor cursor, [FromQuery] Pagination pagination,CancellationToken cancellationToken)
     {
-        var queryDictionary = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
-        var res = await queryService.List(queryName, cursor,pagination, queryDictionary,cancellationToken);
+        var dict = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
+        var res = await queryService.List(queryName, cursor,pagination, dict,dict,cancellationToken);
         return Ok( res);
    
     }
-    [HttpGet("{pageName}/one")]
-    public async Task<ActionResult<Record>> GetOne(string pageName, CancellationToken cancellationToken)
+    [HttpGet("{queryName}/one")]
+    public async Task<ActionResult> GetOne(string pageName, CancellationToken cancellationToken)
     {
-        var queryDictionary = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
-        return Ok(await queryService.One(pageName,  queryDictionary,cancellationToken));
+        var dict = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
+        return Ok(await queryService.One(pageName, dict,dict,cancellationToken));
     }
 
-    [HttpGet("{pageName}/many")]
-    public async Task<ActionResult<IDictionary<string, object>[]>> GetMany(string pageName,
+    [HttpGet("{queryName}/partial/{attrPath}")]
+    public async Task<ActionResult> GetPartial(string pageName, string attrPath, 
+        [FromQuery] Cursor cursor, [FromQuery] int limit, CancellationToken cancellationToken)
+    {
+        return Ok(await queryService.Partial(pageName, attrPath, cursor, limit, cancellationToken));
+    }
+
+    [HttpGet("{queryName}/many")]
+    public async Task<ActionResult> GetMany(string queryName,
         CancellationToken cancellationToken)
     {
-        var queryDictionary = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
-        return Ok(await queryService.Many(pageName, queryDictionary,cancellationToken));
+        var dict = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
+        return Ok(await queryService.Many(queryName, dict,dict,cancellationToken));
     }
 }

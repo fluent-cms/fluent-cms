@@ -8,12 +8,21 @@ namespace FluentCMS.Utils.QueryBuilder;
 
 public sealed record Cursor(string? First = default, string? Last = default);
 
-public sealed record ValidCursor(Cursor Cursor, ImmutableDictionary<string,object>? BoundaryItem = default);
+public sealed record ValidCursor(Cursor Cursor, ImmutableDictionary<string,object>? EdgeItem = default);
+
+public static class CursorConstants
+{
+    public const string Cursor = "cursor";
+    public const string HasPreviousPage = "hasPreviousPage";
+    public const string HasNextPage = "hasNextPage";
+}
+
 public static class CursorHelper
 {
-    public static Result<object> BoundaryValue(this ValidCursor c, string fld) => c.BoundaryItem!.GetValue(fld);
     
-    private static bool IsEmpty(this Cursor c) => string.IsNullOrWhiteSpace(c.First) && string.IsNullOrWhiteSpace(c.Last);
+    public static Result<object> Edge(this ValidCursor c, string fld) => c.EdgeItem![fld];
+    
+    public static bool IsEmpty(this Cursor c) => string.IsNullOrWhiteSpace(c.First) && string.IsNullOrWhiteSpace(c.Last);
     
     public static bool IsForward(this Cursor c) => !string.IsNullOrWhiteSpace(c.Last) || string.IsNullOrWhiteSpace(c.First);
     
@@ -23,7 +32,7 @@ public static class CursorHelper
             order == SortOrder.Asc ? "<" : ">";
     }
 
-    public static Result<Cursor> GetNextCursor(this Cursor c, Record[] items, ImmutableArray<Sort>? sorts, bool hasMore)
+    public static Result<Cursor> GetNextCursor(this Cursor c, Record[] items, ImmutableArray<ValidSort>? sorts, bool hasMore)
     {
         if (sorts is null)
         {
@@ -52,17 +61,17 @@ public static class CursorHelper
         );
     }
 
-    private static string EncodeRecord(Record item, IEnumerable<Sort> sorts)
+    private static string EncodeRecord(Record item, IEnumerable<ValidSort> sorts)
     {
         var dict = new Dictionary<string, object>();
-        foreach (var field in sorts.Select(x => x.FieldName))
+        foreach (var sort in sorts)
         {
-            if (item.TryGetValue(field, out var val))
+            var (_, _, val, error) = item.GetValueByPath(sort.Vector.FullPathFiledName);
+            if (error is null)
             {
-                dict[field] = val;
+                dict[sort.Vector.FullPathFiledName] = val;
             }
         }
-
         var cursor = JsonSerializer.Serialize(dict);
         return Base64UrlEncoder.Encode(cursor);
     }

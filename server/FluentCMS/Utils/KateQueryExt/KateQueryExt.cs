@@ -165,7 +165,7 @@ public static class KateQueryExt
     
     public static Result ApplyCursor(this SqlKata.Query? query,  ValidCursor? cursor,ImmutableArray<ValidSort> sorts)
     {
-        if (query is null || cursor?.BoundaryItem is null)
+        if (query is null || cursor?.EdgeItem is null)
         {
             return Result.Ok();
         }
@@ -205,7 +205,7 @@ public static class KateQueryExt
 
         Result ApplyEq(SqlKata.Query q, ValidSort sort)
         {
-            var (_,_, value, errors) = cursor.BoundaryValue(sort.Vector.Field);
+            var (_,_, value, errors) = cursor.Edge(sort.Vector.FullPathFiledName);
             if (errors?.Count > 0 )
             {
                 return Result.Fail(errors);
@@ -217,7 +217,7 @@ public static class KateQueryExt
 
         Result ApplyCompare(SqlKata.Query q, ValidSort sort)
         {
-            var (_,_, v,err) = cursor.BoundaryValue(sort.Vector.Field);
+            var (_,_, v,err) = cursor.Edge(sort.Vector.FullPathFiledName);
             if (err?.Count > 0)
             {
                 return Result.Fail(err);

@@ -30,7 +30,8 @@ public sealed class PageService(ISchemaService schemaService, IQueryService quer
             qsDictionary[routerName] = paramValue;
         }
 
-        var data = await queryService.One(query, qsDictionary, cancellationToken);
+        //todo:
+        var data = await queryService.One(query, new Dictionary<string, StringValues>(),qsDictionary, cancellationToken);
         return await RenderPage(page, data, qsDictionary, cancellationToken);
     }
 
@@ -71,8 +72,7 @@ public sealed class PageService(ISchemaService schemaService, IQueryService quer
         var htmlNode = ParseNode();
         var template = Handlebars.Compile(htmlNode.OuterHtml);
         var result = await PrepareData();
-        result = SetResultPagination(result,token);
-        var data = new Dictionary<string, object> { { token.Field, result } };
+        var data = new Dictionary<string, object> { { token.Field, SetResultPagination(result,token) } };
         return template(data);
 
         HtmlNode ParseNode()
@@ -87,11 +87,11 @@ public sealed class PageService(ISchemaService schemaService, IQueryService quer
 
         }
 
-        async Task<QueryResult<Record>> PrepareData()
+        async Task<Record[]> PrepareData()
         {
             var cursor = new Cursor (token.First, token.Last );
             var pagination = new Pagination (token.Offset,token.Limit );
-            return await queryService.List(token.Query, cursor, pagination,  QueryHelpers.ParseQuery(token.Qs), cancellationToken);
+            return await queryService.List(token.Query, cursor, pagination,  new Dictionary<string, StringValues>(), QueryHelpers.ParseQuery(token.Qs), cancellationToken);
         }
     }
 
@@ -106,7 +106,7 @@ public sealed class PageService(ISchemaService schemaService, IQueryService quer
 
             var pagination = new Pagination (repeatNode.MultipleQuery.Offset, repeatNode.MultipleQuery.Limit );
             var result = await queryService.List(repeatNode.MultipleQuery.Query, new Cursor("",""), pagination,
-                repeatNode.MultipleQuery.Qs, cancellationToken);
+                new Dictionary<string, StringValues>(),repeatNode.MultipleQuery.Qs, cancellationToken);
             data[repeatNode.Field] = result;
         }
     }
@@ -118,11 +118,29 @@ public sealed class PageService(ISchemaService schemaService, IQueryService quer
         return template(data);
     }
 
-    private static QueryResult<Record>  SetResultPagination(QueryResult<Record> result, PartialToken token)
+    private static Record  SetResultPagination(Record[] items, PartialToken token)
     {
-        var last = string.IsNullOrEmpty(result.Last)  ? "" : (token with { Last = result.Last, First = ""}).ToString();
-        var first = string.IsNullOrEmpty(result.First) ? "" : (token with { First = result.First, Last = ""}).ToString();
-        return result with { First = first, Last = last };
+        var ret = new Dictionary<string, object>();
+        if (items.Length == 0)
+        {
+            return ret;
+        }
+
+        ret["items"] = items;
+        var (first, last) = (items.First(), items.Last());
+
+        if (first.TryGetValue(CursorConstants.HasPreviousPage, out var hasPreviousPage) &&
+            hasPreviousPage.Equals(true))
+        {
+           ret["first"] =  (token with { First = (string)first[CursorConstants.Cursor] , Last = ""}).ToString();
+        }
+
+        if (last.TryGetValue(CursorConstants.HasNextPage, out var hasNextPage) && hasNextPage.Equals(true))
+        {
+           ret["last"] =  (token with { Last = (string)last[CursorConstants.Cursor] , First = ""}).ToString();
+        }
+
+        return ret;
     }
 
     private static void SetDataPagination(string pageName, Record data, RepeatNode[] repeatNodes)
@@ -130,7 +148,7 @@ public sealed class PageService(ISchemaService schemaService, IQueryService quer
         foreach (var repeatNode in repeatNodes)
         {
             if (repeatNode.MultipleQuery is not null && data.TryGetValue(repeatNode.Field, out var value) &&
-                value is QueryResult<Record> result)
+                value is Record[] result)
             {
                 var token = new PartialToken(pageName, repeatNode.HtmlNode.Id, repeatNode.Field,
                     repeatNode.PaginationType,

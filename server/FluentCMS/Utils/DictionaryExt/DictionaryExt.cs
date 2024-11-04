@@ -5,7 +5,7 @@ namespace FluentCMS.Utils.DictionaryExt;
 
 public static class DictionaryExt
 {
-    public static Result<object> GetValue(this IDictionary<string, object> dictionary, string key)
+    public static Result<object> GetValueByPath(this IDictionary<string, object> dictionary, string key)
     {
         var parts = key.Split('.');
         object current = dictionary;

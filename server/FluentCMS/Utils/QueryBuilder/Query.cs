@@ -32,4 +32,5 @@ public static class QueryHelper{
             entity // LoadedEntity to be passed
         );
     }
+    
 }

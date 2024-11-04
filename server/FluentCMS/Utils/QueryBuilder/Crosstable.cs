@@ -112,18 +112,28 @@ public static class CrosstableHelper
          return baseQuery;
      }
 
+    public static SqlKata.Query GetRelatedItemsInGraph(GraphAttribute attribute, AttributeVector vector, Cursor cursor)
+    {
+         var query = attribute.Crosstable!.TargetEntity.Basic();
+         return query;
+    }
+    
      public static SqlKata.Query GetRelatedItems(
          this Crosstable c,
          IEnumerable<LoadedAttribute> selectAttributes,
          IEnumerable<ValidFilter> filters,
          IEnumerable<ValidSort> sorts,
-         ValidPagination pagination,
+         ValidPagination? pagination,
          IEnumerable<object> sourceIds)
      {
          List<LoadedAttribute> attrs = [..selectAttributes, c.SourceAttribute];
          var baseQuery = c.TargetEntity.Basic().Select(attrs.Select(x => x.GetFullName()));
          c.ApplyRelatedFilter(baseQuery,sourceIds);
-         baseQuery.ApplyPagination(pagination);
+         if (pagination is not null)
+         {
+             baseQuery.ApplyPagination(pagination);
+         }
+
          baseQuery.ApplyFilters(filters);
          baseQuery.ApplySorts(sorts);
          return baseQuery;

@@ -7,11 +7,17 @@ namespace FluentCMS.Utils.QueryBuilder;
 public sealed record Filter(string FieldName, string Operator, ImmutableArray<Constraint> Constraints, bool OmitFail);
 
 public sealed record ValidFilter(AttributeVector Vector, string Operator, ImmutableArray<ValidConstraint> Constraints);
-   
+
+public static class FilterConstants
+{
+    public const string OmitFailKey = "omitFail";
+    public const string LogicalOperatorKey = "operator";
+}
+
 public static class FilterHelper
 {
     
-    public static async Task<Result<ImmutableArray<ValidFilter>>> Resolve(
+    public static async Task<Result<ImmutableArray<ValidFilter>>> ToValid(
         this IEnumerable<Filter> filters,  
         LoadedEntity entity,
         Dictionary<string, StringValues>? querystringDictionary,
@@ -41,7 +47,8 @@ public static class FilterHelper
     }
 
     public static async Task<Result<ImmutableArray<ValidFilter>>> Parse(LoadedEntity entity,
-        Dictionary<string, Dictionary<string, StringValues>> dictionary, ResolveVectorDelegate resolveVector)
+        Dictionary<string, Dictionary<string, StringValues>> dictionary, 
+        ResolveVectorDelegate resolveVector)
     {
         var ret = new List<ValidFilter>();
         foreach (var (key, value) in dictionary)

@@ -61,6 +61,11 @@ public static class ConstraintsHelper
     }
 }
 
+public static class LogicalOperators
+{
+    public const string And = "and";
+    public const string Or = "or";
+}
 public static class Matches
 {
     public const string Between = "between";
