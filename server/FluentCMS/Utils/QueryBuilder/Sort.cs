@@ -10,9 +10,9 @@ public static class SortOrder
     public const string Desc = "desc";
 }
 
-public sealed record Sort(string FieldName, string Order);
+public record Sort(string FieldName, string Order);
 
-public sealed record ValidSort(AttributeVector Vector,string Order);
+public sealed record ValidSort(AttributeVector Vector,string Order):Sort(Vector.FullPath, Order);
 
 public static class SortConstant
 {
@@ -39,7 +39,7 @@ public static class SortHelper
     
     public static async Task<Result<ImmutableArray<ValidSort>>> Parse(
         LoadedEntity entity, 
-        Dictionary<string,Dictionary<string,StringValues>> dictionary, 
+        Dictionary<string,QueryArgs> dictionary, 
         ResolveVectorDelegate vectorDelegate)
     {
         var ret = new List<ValidSort>();

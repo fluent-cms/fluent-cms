@@ -73,4 +73,7 @@
       <_ContentIncludedByDefault Remove="wwwroot000\schema-ui\json\sort.json" />
       <_ContentIncludedByDefault Remove="wwwroot000\schema-ui\json\sorts.json" />
     </ItemGroup>
+    <ItemGroup>
+      <Folder Include="wwwroot\files\2024-11\" />
+    </ItemGroup>
 </Project>

@@ -1,6 +1,4 @@
-using System.Collections.Immutable;
 using FluentCMS.Cms.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using FluentCMS.Utils.QueryBuilder;
@@ -10,34 +8,32 @@ namespace FluentCMS.Cms.Controllers;
 [Route("api/[controller]")]
 public class QueriesController(IQueryService queryService) : ControllerBase
 {
-    [HttpGet("{queryName}")]
-    public async Task<ActionResult> GetList(string queryName,
-        [FromQuery] Cursor cursor, [FromQuery] Pagination pagination,CancellationToken cancellationToken)
+    [HttpGet("{name}")]
+    public async Task<ActionResult> GetList(string name, [FromQuery] Span span, [FromQuery] Pagination pagination,CancellationToken token)
     {
         var dict = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
-        var res = await queryService.List(queryName, cursor,pagination, dict,dict,cancellationToken);
+        var res = await queryService.List(name, span,pagination, dict,token);
         return Ok( res);
    
     }
-    [HttpGet("{queryName}/one")]
-    public async Task<ActionResult> GetOne(string pageName, CancellationToken cancellationToken)
+    [HttpGet("{name}/one")]
+    public async Task<ActionResult> GetOne(string name, CancellationToken token)
     {
-        var dict = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
-        return Ok(await queryService.One(pageName, dict,dict,cancellationToken));
+        var args = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
+        return Ok(await queryService.One(name, args,token));
     }
 
-    [HttpGet("{queryName}/partial/{attrPath}")]
-    public async Task<ActionResult> GetPartial(string pageName, string attrPath, 
-        [FromQuery] Cursor cursor, [FromQuery] int limit, CancellationToken cancellationToken)
+    [HttpGet("{name}/partial/{attr}")]
+    public async Task<ActionResult> GetPartial(string name, string attr, [FromQuery] Span span, [FromQuery] int limit, CancellationToken token)
     {
-        return Ok(await queryService.Partial(pageName, attrPath, cursor, limit, cancellationToken));
+        var args = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
+        return Ok(await queryService.Partial(name, attr, span, limit,args, token));
     }
 
-    [HttpGet("{queryName}/many")]
-    public async Task<ActionResult> GetMany(string queryName,
-        CancellationToken cancellationToken)
+    [HttpGet("{name}/many")]
+    public async Task<ActionResult> GetMany(string name, CancellationToken token)
     {
-        var dict = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
-        return Ok(await queryService.Many(queryName, dict,dict,cancellationToken));
+        var args = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
+        return Ok(await queryService.Many(name, args,token));
     }
 }

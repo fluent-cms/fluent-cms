@@ -1,7 +1,4 @@
-using System.Text.Json;
 using HtmlAgilityPack;
-using Microsoft.Extensions.Primitives;
-using Microsoft.IdentityModel.Tokens;
 
 namespace FluentCMS.Utils.PageRender;
 
@@ -12,29 +9,31 @@ public enum PaginationType
     InfiniteScroll
 }
 
-public record RepeatNode(HtmlNode HtmlNode, string Field, PaginationType PaginationType, MultiQuery? MultipleQuery);
-
-public record PartialToken(
-    string Page,
-    string NodeId,
-    string Field,
+public record Repeat(
     PaginationType PaginationType,
+    string Field,
     string Query,
+    string QueryString,
     int Offset,
-    int Limit,
-    string First,
-    string Last,
-    string Qs)
-{
-    public override string ToString()
-    {
-        var cursor = JsonSerializer.Serialize(this);
-        return Base64UrlEncoder.Encode(cursor);
-    }
+    int Limit
+);
 
-    public static PartialToken? Parse(string s)
+
+public record RepeatNode(
+    HtmlNode HtmlNode,
+    Repeat Repeat
+);
+
+public static class RepeatNodeExtensions
+{
+    public static PartialToken ToPartialToken(this RepeatNode node, string page, string first ="", string last = "")
     {
-        s = Base64UrlEncoder.Decode(s);
-        return JsonSerializer.Deserialize<PartialToken>(s);
+        return new PartialToken(
+            NodeId: node.HtmlNode.Id,
+            Repeat: node.Repeat,
+            Page: page,
+            First: "",
+            Last: ""
+        );
     }
 }

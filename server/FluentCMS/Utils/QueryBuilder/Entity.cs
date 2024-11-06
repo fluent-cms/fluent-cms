@@ -42,7 +42,7 @@ public static class EntityConstants
 
 public static class EntityHelper
 {
-    public static LoadedEntity ToLoadedEntity(this Entity entity, Func<string, string,object> cast)
+    public static LoadedEntity ToLoadedEntity(this Entity entity)
     {
         var primaryKey = entity.Attributes.FindOneAttribute(entity.PrimaryKey)!.ToLoaded(entity.TableName);
         var titleAttribute = entity.Attributes.FindOneAttribute(entity.TitleAttribute)?.ToLoaded(entity.TableName) ?? primaryKey;
@@ -64,7 +64,7 @@ public static class EntityHelper
     
     public static Result<SqlKata.Query> OneQuery(this LoadedEntity e,ImmutableArray<ValidFilter> filters, ImmutableArray<ValidSort> sorts,IEnumerable<LoadedAttribute> attributes)
     {
-        var query = e.Basic().Select(attributes.Select(x => x.GetFullName()));
+        var query = e.Basic().Select(attributes.Select(x => x.AddTableModifier()));
         query.ApplyJoin([..filters.Select(x=>x.Vector),..sorts.Select(x=>x.Vector)]);
         var result = query.ApplyFilters(filters); //filters.Apply(this, query);
         if (result.IsFailed)
@@ -78,28 +78,19 @@ public static class EntityHelper
     public static SqlKata.Query ByIdQuery(this LoadedEntity e,object id, IEnumerable<LoadedAttribute> attributes, IEnumerable<ValidFilter> filters)
     {
         var query = e.Basic().Where(e.PrimaryKey, id)
-            .Select(attributes.Select(x => x.GetFullName()));
+            .Select(attributes.Select(x => x.AddTableModifier()));
         query.ApplyFilters(filters);
         return query;
     }
 
-    public static Result<SqlKata.Query> ListQuery(this LoadedEntity e,ImmutableArray<ValidFilter> filters, ImmutableArray<ValidSort> sorts, 
-        ValidPagination pagination, ValidCursor? cursor, IEnumerable<LoadedAttribute> attributes)
+    public static SqlKata.Query ListQuery(this LoadedEntity e,ImmutableArray<ValidFilter> filters, ImmutableArray<ValidSort> sorts, 
+        ValidPagination pagination, ValidSpan? cursor, IEnumerable<LoadedAttribute> attributes)
     {
-        var query = e.Basic().Select(attributes.Select(x => x.GetFullName()));
+        var query = e.Basic().Select(attributes.Select(x => x.AddTableModifier()));
         query.ApplyJoin([..filters.Select(x=>x.Vector),..sorts.Select(x=>x.Vector)]);
-        var cursorResult = query.ApplyCursor(cursor, sorts);
-        if (cursorResult.IsFailed) return Result.Fail(cursorResult.Errors);
+        query.ApplyCursor(cursor, sorts);
         query.ApplyPagination(pagination);
-        if (cursor?.Cursor.IsForward() == false && sorts != null)
-        {
-            query.ApplySorts(sorts.ReverseOrder());
-        }
-        else
-        {
-            query.ApplySorts(sorts);
-        }
-        
+        query.ApplySorts(cursor?.Span.IsForward() == false ? sorts.ReverseOrder() : sorts);
         query.ApplyFilters(filters);
         return query;
     }
@@ -116,7 +107,7 @@ public static class EntityHelper
     public static SqlKata.Query ManyQuery(this LoadedEntity e,IEnumerable<object> ids, IEnumerable<LoadedAttribute> attributes)
     {
         return e.Basic()
-            .Select(attributes.Select(x=>x.GetFullName()))
+            .Select(attributes.Select(x=>x.AddTableModifier()))
             .WhereIn(e.PrimaryKey, ids);
     }
 
@@ -151,7 +142,7 @@ public static class EntityHelper
 
     public static SqlKata.Query Basic(this LoadedEntity e) =>
         new SqlKata.Query(e.TableName)
-            .Where(e.DeletedAttribute.GetFullName(), false);
+            .Where(e.DeletedAttribute.AddTableModifier(), false);
 
     public static ColumnDefinition[] AddedColumnDefinitions(this Entity e, ColumnDefinition[] columnDefinitions)
     {
@@ -160,7 +151,7 @@ public static class EntityHelper
         return items.Select(x => new ColumnDefinition(x.Field, x.DataType) ).ToArray();
     }
 
-    public static ColumnDefinition[] ColumnDefinitions(this Entity e)
+    public static ColumnDefinition[] Definitions(this Entity e)
         => e.Attributes.GetLocalAttributes()
             .Select(x => new ColumnDefinition (ColumnName : x.Field, DataType : x.DataType ))
             .ToArray();

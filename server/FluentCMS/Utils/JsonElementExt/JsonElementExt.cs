@@ -10,7 +10,7 @@ public static class JsonElementExt
 
       foreach (var prop in element.EnumerateObject())
       {
-         dict[prop.Name] = ConvertJsonElement(prop.Value);
+         dict[prop.Name] = prop.Value.ToPrimitive(); 
       }
 
       return dict; 
@@ -18,16 +18,9 @@ public static class JsonElementExt
 
    private static object[] ToArray(this JsonElement jsonElement)
    {
-      var list = new List<object>();
-
-      foreach (var item in jsonElement.EnumerateArray())
-      {
-         list.Add(ConvertJsonElement(item));
-      }
-
-      return list.ToArray();
+      return jsonElement.EnumerateArray().Select(item => item.ToPrimitive()).ToArray();
    }
-   private static object ConvertJsonElement(JsonElement element)
+   public static object ToPrimitive(this JsonElement element)
    {
          return (element.ValueKind switch
          {

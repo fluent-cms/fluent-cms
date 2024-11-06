@@ -43,7 +43,7 @@ public class HookRegistryTests
     [Fact]
     public async Task TestEntityPreList()
     {
-        var attr = new LoadedAttribute([], "", "");
+        var attr = new LoadedAttribute( "", "");
         var entity = new LoadedEntity([], attr, attr, attr, "", ""); 
         _hookRegistry.EntityPreGetList.Register(People.EntityName, args => args);
         await _hookRegistry.EntityPreGetList.Trigger(_serviceProvider,
@@ -58,7 +58,7 @@ public class HookRegistryTests
              args with{ RefPagination = args.RefPagination with{Offset = offset}}
         );
 
-        var attr = new LoadedAttribute([], "", "");
+        var attr = new LoadedAttribute( "", "");
         var entity = new LoadedEntity([], attr, attr, attr, "", ""); 
         var args = new EntityPreGetListArgs(People.EntityName,entity, [], [], new ValidPagination(0,2));
 

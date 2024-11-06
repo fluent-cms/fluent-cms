@@ -50,12 +50,10 @@ public class QueryApiTest
         await PrepareSimpleData();
         var query = GetPostQuery();
         (await _schemaApiClient.SaveSchema(query)).AssertSuccess();
-        var res = (await _queryApiClient.GetList(query.Name, new Cursor(), new Pagination())).AssertSuccess();
-        if (string.IsNullOrWhiteSpace(res.Last))
-        {
-            (await _queryApiClient.GetList(query.Name, new Cursor(Last: res.Last), new Pagination()))
-                .AssertSuccess();
-        }
+        var items = (await _queryApiClient.GetList(query.Name, new Span(), new Pagination())).AssertSuccess();
+        if (!SpanHelper.HasNext(items)) return;
+        var res = await _queryApiClient.GetList(query.Name, new Span(Last: SpanHelper.LastCursor(items)), new Pagination());
+        res.AssertSuccess();
     }
 
     [Fact]

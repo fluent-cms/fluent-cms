@@ -31,7 +31,8 @@ public sealed class QuerySchemaService(
         var entity = CheckResult(await entitySchemaService.GetLoadedEntity(query.EntityName, cancellationToken));
         var fields = CheckResult(GraphQlExt.GetRootGraphQlFields(query.SelectionSet));
         var attributes = CheckResult(await SelectionSetToNode("", entity, fields, cancellationToken));
-        return query.ToLoadedQuery(entity, attributes);
+        var sorts = CheckResult(await (query.Sorts??[]).ToValidSorts(entity, entitySchemaService.ResolveAttributeVector));
+        return query.ToLoadedQuery(entity, attributes, sorts );
     }
 
     public async Task<Schema> Save(Schema schema, CancellationToken cancellationToken)
@@ -74,14 +75,7 @@ public sealed class QuerySchemaService(
                 return Result.Fail(err);
             }
 
-            var pre = prefix;
-            if (pre != "")
-            {
-                pre += ".";
-            }
-
-            pre += graphAttr.Field;
-            (_, _, graphAttr, err) = await LoadSelection(pre , graphAttr, field, cancellationToken);
+            (_, _, graphAttr, err) = await LoadSelection(graphAttr.FullPathName(prefix) , graphAttr, field, cancellationToken);
             if (err is not null)
             {
                 return Result.Fail(err);
@@ -90,7 +84,7 @@ public sealed class QuerySchemaService(
             if (graphAttr.Type == DisplayType.Crosstable && field.Arguments is not null)
             {
 
-                (_, _, graphAttr, err) = LoadSorts(graphAttr, field.Arguments);
+                (_, _, graphAttr, err) = LoadSorts(graphAttr, field.Arguments, graphAttr.Crosstable!.TargetEntity.PrimaryKey);
                 if (err is not null)
                 {
                     return Result.Fail(err);
@@ -186,7 +180,7 @@ public sealed class QuerySchemaService(
     }
 
     //sort: id or sort: {id:desc, name:asc}
-    static Result<GraphAttribute> LoadSorts(GraphAttribute graphAttr, GraphQLArguments arguments)
+    private static Result<GraphAttribute> LoadSorts(GraphAttribute graphAttr, GraphQLArguments arguments, string primaryKey)
     {
 
         var sorts = new List<Sort>();
@@ -213,10 +207,16 @@ public sealed class QuerySchemaService(
             }
         }
 
+        if (sorts.Count == 0)
+        {
+            //sort by primary key  default
+            sorts.Add(new Sort(primaryKey, SortOrder.Asc));
+        }
+
         return graphAttr with { Sorts = [..sorts] };
     }
 
-    async Task<Result<GraphAttribute>> LoadSelection(string prefix, GraphAttribute graphAttr, GraphQLField graphQlField, CancellationToken cancellationToken)
+    private async Task<Result<GraphAttribute>> LoadSelection(string prefix, GraphAttribute graphAttr, GraphQLField graphQlField, CancellationToken cancellationToken)
     {
         var targetEntity = graphAttr.Type switch
         {

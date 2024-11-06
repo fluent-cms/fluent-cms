@@ -4,7 +4,7 @@ using FluentResults;
 namespace FluentCMS.Utils.QueryBuilder;
 
 public record AttributeVector(
-    string FullPathFiledName,
+    string FullPath,
     string TableAlias,
     ImmutableArray<LoadedAttribute> Ancestors,
     LoadedAttribute Attribute);

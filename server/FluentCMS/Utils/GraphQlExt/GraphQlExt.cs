@@ -30,7 +30,7 @@ public static class GraphQlExt
         return [..selectionSet.Selections.OfType<GraphQLField>()];
     }
 
-    private static Result<object> ToPrimitiveValue(this GraphQLValue graphQlValue)
+    private static Result<object> ToPrimitive(this GraphQLValue graphQlValue)
     {
         object val;
         switch (graphQlValue)
@@ -58,7 +58,7 @@ public static class GraphQlExt
         var result = new List<(string, object)>();
         foreach (var field in objectValue.Fields ?? [])
         {
-            var (_, _, v, e) = field.Value.ToPrimitiveValue();
+            var (_, _, v, e) = field.Value.ToPrimitive();
             if (e != null)
             {
                 return Result.Fail([new Error($"fail to resolve value {field.Name}"), ..e]);

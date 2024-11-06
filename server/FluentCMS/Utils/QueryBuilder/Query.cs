@@ -15,22 +15,21 @@ public sealed record LoadedQuery(
     string EntityName,
     int PageSize,
     ImmutableArray<GraphAttribute> Selection ,
-    ImmutableArray<Sort> Sorts,
+    ImmutableArray<ValidSort> Sorts,
     ImmutableArray<Filter> Filters, // filter need to resolve according to user input
     LoadedEntity Entity);
 
 public static class QueryHelper{
-    public static LoadedQuery ToLoadedQuery(this Query query, LoadedEntity entity, IEnumerable<GraphAttribute> attributes)
+    public static LoadedQuery ToLoadedQuery(this Query query, LoadedEntity entity, IEnumerable<GraphAttribute> attributes, IEnumerable<ValidSort> sorts)
     {
         return new LoadedQuery(
             query.Name,
             query.EntityName,
             query.PageSize,
             [..attributes],
-            query.Sorts??[] ,
+            [..sorts],
             query.Filters??[],
-            entity // LoadedEntity to be passed
+            entity 
         );
     }
-    
 }

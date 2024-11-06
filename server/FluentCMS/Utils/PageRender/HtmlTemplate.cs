@@ -1,6 +1,6 @@
 namespace FluentCMS.Utils.PageRender;
 
-public sealed class Renderer(string templatePath)
+public sealed class HtmlTemplate(string templatePath)
 {
     private readonly string _template = LoadTemplate(templatePath);
 

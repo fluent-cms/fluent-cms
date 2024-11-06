@@ -69,8 +69,8 @@ public sealed class EntityService(
         var res = await hookRegistry.EntityPreGetList.Trigger(provider,
             new EntityPreGetListArgs(entity.Name, entity, filters, sorts, pagination.ToValid(entity.DefaultPageSize)));
         var attributes = entity.Attributes.GetLocalAttributes(InListOrDetail.InList);
-        
-        var query = CheckResult(entity.ListQuery(res.RefFilters, res.RefSorts, res.RefPagination, null, attributes));
+
+        var query = entity.ListQuery(res.RefFilters, res.RefSorts, res.RefPagination, null, attributes);
         
         var records = await kateQueryExecutor.Many(query, cancellationToken);
 
@@ -179,7 +179,7 @@ public sealed class EntityService(
 
         var pagedListQuery = exclude
             ? crossTable.GetNotRelatedItems(selectAttributes, filter, sorts, validPagination, [id])
-            : crossTable.GetRelatedItems(selectAttributes, filter, sorts, validPagination, [id]);
+            : crossTable.GetRelatedItems(selectAttributes, filter, sorts, null,validPagination, [id]);
 
         var countQuery = exclude
             ? crossTable.GetNotRelatedItemsCount(filter, [id])
@@ -198,7 +198,7 @@ public sealed class EntityService(
         }
 
         var lookupEntity = NotNull(attribute.Lookup)
-            .ValOrThrow($"not find lookup entity from {attribute.GetFullName()}");
+            .ValOrThrow($"not find lookup entity from {attribute.AddTableModifier()}");
 
         var query = lookupEntity.ManyQuery(ids,
             [attribute.Lookup!.PrimaryKeyAttribute, attribute.Lookup!.LoadedTitleAttribute]);

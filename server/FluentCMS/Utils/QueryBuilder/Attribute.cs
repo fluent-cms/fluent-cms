@@ -1,7 +1,6 @@
 using System.Collections.Immutable;
 using System.Globalization;
 using FluentCMS.Utils.DataDefinitionExecutor;
-using Microsoft.Extensions.Primitives;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
@@ -113,15 +112,16 @@ public static class AttributeHelper
             ValidationMessage: a.ValidationMessage
         );
     }
-    public static GraphAttribute ToGraph( this LoadedAttribute a)
+
+    public static GraphAttribute ToGraph(this LoadedAttribute a)
     {
         return new GraphAttribute(
-            Prefix:"",
+            Prefix: "",
             Selection: [],
             Filters: [],
             Sorts: [],
             Lookup: a.Lookup,
-            Crosstable:a.Crosstable,
+            Crosstable: a.Crosstable,
             TableName: a.TableName,
             Field: a.Field,
             Header: a.Header,
@@ -135,6 +135,7 @@ public static class AttributeHelper
             ValidationMessage: a.ValidationMessage
         );
     }
+
     public static void SetCastToDbType(Func<string, string, object> func)
     {
         _castToDbType = (a, s) => func(s, a.DataType);
@@ -144,17 +145,21 @@ public static class AttributeHelper
     {
         return _castToDbType(attribute, s);
     }
-    
-    public static string GetFullName(this LoadedAttribute attribute, string prefix = "")
+
+    public static string AddTableModifier(this LoadedAttribute attribute, string tableAlias = "")
     {
-        if (prefix == "")
+        if (tableAlias == "")
         {
-            prefix = attribute.TableName;
+            tableAlias = attribute.TableName;
         }
-        return $"{prefix}.{attribute.Field}";
+
+        return $"{tableAlias}.{attribute.Field}";
     }
 
-
+    public static string FullPathName(this Attribute a, string prefix)
+    {
+        return prefix == "" ? a.Field : prefix + "." + a.Field;
+    }
 
     public static string GetLookupTarget(this Attribute a) => a.Options;
     public static string GetCrosstableTarget(this Attribute a) => a.Options;
@@ -163,10 +168,11 @@ public static class AttributeHelper
     public static Attribute ToAttribute(this ColumnDefinition col)
     {
         return new Attribute(
-            Field:col.ColumnName,
-            Header : SnakeToTitle(col.ColumnName),
-            DataType : col.DataType
+            Field: col.ColumnName,
+            Header: SnakeToTitle(col.ColumnName),
+            DataType: col.DataType
         );
+
         string SnakeToTitle(string snakeStr)
         {
             // Split the snake_case string by underscores
@@ -179,82 +185,75 @@ public static class AttributeHelper
                     components[i] = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(components[i]);
                 }
             }
+
             return string.Join(" ", components);
         }
     }
-    
-   
+
+
     public static ImmutableArray<object> GetUniqValues<T>(this T a, Record[] records)
-    where T :Attribute
+        where T : Attribute
     {
         return [..records.Where(x => x.ContainsKey(a.Field)).Select(x => x[a.Field]).Distinct().Where(x => x != null)];
     }
 
-    public static T? FindOneAttribute<T>(this IEnumerable<T>?  arr, string name)
-    where T :Attribute
+    public static T? FindOneAttribute<T>(this IEnumerable<T>? arr, string name)
+        where T : Attribute
     {
         return arr?.FirstOrDefault(x => x.Field == name);
     }
+
     public static ImmutableArray<T> GetLocalAttributes<T>(this IEnumerable<T>? arr)
-    where T :Attribute
+        where T : Attribute
     {
-        return arr?.Where(x => x.IsLocalAttribute()).ToImmutableArray()??[];
+        return arr?.Where(x => x.IsLocalAttribute()).ToImmutableArray() ?? [];
     }
+
     public static ImmutableArray<T> GetLocalAttributes<T>(this IEnumerable<T>? arr, InListOrDetail listOrDetail)
-    where T : Attribute
+        where T : Attribute
     {
         return arr?.Where(x =>
                 x.Type != DisplayType.Crosstable &&
                 (listOrDetail == InListOrDetail.InList ? x.InList : x.InDetail))
-            .ToImmutableArray()??[];
+            .ToImmutableArray() ?? [];
     }
 
     public static ImmutableArray<T> GetLocalAttributes<T>(this IEnumerable<T>? arr, string[] attributes)
-    where T : Attribute
+        where T : Attribute
     {
-        return arr?.Where(x => x.Type != DisplayType.Crosstable && attributes.Contains(x.Field)).ToImmutableArray()??[];
+        return arr?.Where(x => x.Type != DisplayType.Crosstable && attributes.Contains(x.Field)).ToImmutableArray() ??
+               [];
     }
 
     public static ImmutableArray<T> GetAttributesByType<T>(this IEnumerable<T>? arr, string displayType)
-    where T : Attribute
+        where T : Attribute
     {
-        return arr?.Where(x => x.Type == displayType).ToImmutableArray()??[];
+        return arr?.Where(x => x.Type == displayType).ToImmutableArray() ?? [];
     }
 
-    public static ImmutableArray<T> GetAttributesByType<T>(this IEnumerable<T>? arr, string type, InListOrDetail listOrDetail)
-    where T : Attribute
+    public static ImmutableArray<T> GetAttributesByType<T>(this IEnumerable<T>? arr, string type,
+        InListOrDetail listOrDetail)
+        where T : Attribute
     {
         return arr?.Where(x => x.Type == type && (listOrDetail == InListOrDetail.InList ? x.InList : x.InDetail))
-            .ToImmutableArray()??[];
+            .ToImmutableArray() ?? [];
     }
 
-    public static Pagination? ResolvePagination(this GraphAttribute attribute,
-        Dictionary<string, StringValues> dictionary)
+    public static GraphAttribute? RecursiveFindAttribute(this ImmutableArray<GraphAttribute> attributes, string name)
     {
-        var key = attribute.Prefix ;
-        if (!string.IsNullOrWhiteSpace(attribute.Prefix))
+        var parts = name.Split('.');
+        var attrs = attributes;
+        foreach (var part in parts[..^1])
         {
-            key += ".";
+            var find = attrs.FindOneAttribute(part);
+            if (find == null)
+            {
+                return null;
+            }
+
+            attrs = find.Selection;
         }
 
-        key += attribute.Field;
-        if (dictionary.TryGetValue(key + ".offset", out var offsetStr) ||
-            dictionary.TryGetValue(key + ".limit", out var limitStr))
-        {
-            var offset = GetIntFromDictionary(dictionary, key + ".offset", defaultValue: 0);
-            var limit = GetIntFromDictionary(dictionary, key + ".limit", defaultValue: 20);
-            return new Pagination(offset, limit);
-        }
-
-        return null;
-    }
-
-    private static int GetIntFromDictionary(Dictionary<string, StringValues> dictionary, string key, int defaultValue)
-    {
-        if (dictionary.TryGetValue(key, out var value) && int.TryParse(value.ToString(), out int result))
-        {
-            return result;
-        }
-        return defaultValue;
+        return attrs.FindOneAttribute(parts.Last());
     }
 }

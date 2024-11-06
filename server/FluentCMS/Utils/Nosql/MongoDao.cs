@@ -45,7 +45,7 @@ public sealed class MongoDao:INosqlDao
     }
 
     public async Task<Result<Record[]>> Query(string collectionName, IEnumerable<ValidFilter> filters, ValidPagination pagination,
-        ImmutableArray<ValidSort> sorts, ValidCursor? cursor)
+        ImmutableArray<ValidSort> sorts, ValidSpan? cursor)
     {
         var collection = _mongoDatabase.GetCollection<BsonDocument>(collectionName);
         var filterRes = MongoExt.GetFiltersDefinition(filters);

@@ -8,11 +8,11 @@ namespace FluentCMS.Cms.Services;
 public interface IEntitySchemaService
 {
     
-    Task<Result<LoadedEntity>> GetLoadedEntity(string name, CancellationToken cancellationToken = default);
-    Task<Entity?> GetTableDefine(string tableName, CancellationToken cancellationToken);
-    Task<Schema> SaveTableDefine(Schema schemaDto, CancellationToken cancellationToken);
+    Task<Result<LoadedEntity>> GetLoadedEntity(string name, CancellationToken token = default);
+    Task<Entity?> GetTableDefine(string name, CancellationToken token);
+    Task<Schema> SaveTableDefine(Schema schemaDto, CancellationToken token);
     Task<Schema> AddOrUpdate(Entity entity, CancellationToken cancellationToken);
-    Task<Result<LoadedAttribute>> LoadOneRelated(LoadedEntity entity, LoadedAttribute attribute, CancellationToken cancellationToken);
+    Task<Result<LoadedAttribute>> LoadOneRelated(LoadedEntity entity, LoadedAttribute attr, CancellationToken token);
     Task<Result<AttributeVector>> ResolveAttributeVector(LoadedEntity entity, string fieldName);
-    Task<LoadedAttribute?> FindAttribute(string entityName, string attributeName, CancellationToken cancellationToken);
+    Task<LoadedAttribute?> FindAttribute(string name, string attr, CancellationToken token);
 }
