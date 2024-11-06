@@ -191,25 +191,25 @@ public static class AttributeHelper
     }
 
 
-    public static ImmutableArray<object> GetUniqValues<T>(this T a, Record[] records)
+    public static ImmutableArray<object> GetUniq<T>(this T a, Record[] records)
         where T : Attribute
     {
         return [..records.Where(x => x.ContainsKey(a.Field)).Select(x => x[a.Field]).Distinct().Where(x => x != null)];
     }
 
-    public static T? FindOneAttribute<T>(this IEnumerable<T>? arr, string name)
+    public static T? FindOneAttr<T>(this IEnumerable<T>? arr, string name)
         where T : Attribute
     {
         return arr?.FirstOrDefault(x => x.Field == name);
     }
 
-    public static ImmutableArray<T> GetLocalAttributes<T>(this IEnumerable<T>? arr)
+    public static ImmutableArray<T> GetLocalAttrs<T>(this IEnumerable<T>? arr)
         where T : Attribute
     {
         return arr?.Where(x => x.IsLocalAttribute()).ToImmutableArray() ?? [];
     }
 
-    public static ImmutableArray<T> GetLocalAttributes<T>(this IEnumerable<T>? arr, InListOrDetail listOrDetail)
+    public static ImmutableArray<T> GetLocalAttrs<T>(this IEnumerable<T>? arr, InListOrDetail listOrDetail)
         where T : Attribute
     {
         return arr?.Where(x =>
@@ -218,20 +218,20 @@ public static class AttributeHelper
             .ToImmutableArray() ?? [];
     }
 
-    public static ImmutableArray<T> GetLocalAttributes<T>(this IEnumerable<T>? arr, string[] attributes)
+    public static ImmutableArray<T> GetLocalAttrs<T>(this IEnumerable<T>? arr, string[] attributes)
         where T : Attribute
     {
         return arr?.Where(x => x.Type != DisplayType.Crosstable && attributes.Contains(x.Field)).ToImmutableArray() ??
                [];
     }
 
-    public static ImmutableArray<T> GetAttributesByType<T>(this IEnumerable<T>? arr, string displayType)
+    public static ImmutableArray<T> GetAttrByType<T>(this IEnumerable<T>? arr, string displayType)
         where T : Attribute
     {
         return arr?.Where(x => x.Type == displayType).ToImmutableArray() ?? [];
     }
 
-    public static ImmutableArray<T> GetAttributesByType<T>(this IEnumerable<T>? arr, string type,
+    public static ImmutableArray<T> GetAttrByType<T>(this IEnumerable<T>? arr, string type,
         InListOrDetail listOrDetail)
         where T : Attribute
     {
@@ -239,13 +239,13 @@ public static class AttributeHelper
             .ToImmutableArray() ?? [];
     }
 
-    public static GraphAttribute? RecursiveFindAttribute(this ImmutableArray<GraphAttribute> attributes, string name)
+    public static GraphAttribute? RecursiveFind(this ImmutableArray<GraphAttribute> attributes, string name)
     {
         var parts = name.Split('.');
         var attrs = attributes;
         foreach (var part in parts[..^1])
         {
-            var find = attrs.FindOneAttribute(part);
+            var find = attrs.FindOneAttr(part);
             if (find == null)
             {
                 return null;
@@ -254,6 +254,6 @@ public static class AttributeHelper
             attrs = find.Selection;
         }
 
-        return attrs.FindOneAttribute(parts.Last());
+        return attrs.FindOneAttr(parts.Last());
     }
 }

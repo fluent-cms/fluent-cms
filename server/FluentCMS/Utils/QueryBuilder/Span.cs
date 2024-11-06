@@ -96,11 +96,7 @@ public static class SpanHelper
         var dict = new Dictionary<string, object>();
         foreach (var sort in sorts)
         {
-            var (_, _, val, error) = item.GetValueByPath(sort.FieldName);
-            if (error is null)
-            {
-                dict[sort.FieldName] = val;
-            }
+            if (item.GetValueByPath<object>(sort.FieldName, out var val)) dict[sort.FieldName] = val!;
         }
 
         if (sourceId is not null)
@@ -127,7 +123,7 @@ public static class SpanHelper
                 var val = value.ToPrimitive();
                 if (val is string s )
                 {
-                    var field = arr.FindOneAttribute(key);
+                    var field = arr.FindOneAttr(key);
                     if (field is not null)
                     {
                         val = field.Cast(s);

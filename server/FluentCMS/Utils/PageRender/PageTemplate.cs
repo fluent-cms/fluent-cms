@@ -1,6 +1,6 @@
 namespace FluentCMS.Utils.PageRender;
 
-public sealed class HtmlTemplate(string templatePath)
+public sealed class PageTemplate(string templatePath)
 {
     private readonly string _template = LoadTemplate(templatePath);
 
@@ -11,7 +11,7 @@ public sealed class HtmlTemplate(string templatePath)
             :"";
     }
     
-    public string RenderHtml(string title,string body,  string css)
+    public string Build(string title,string body,  string css)
     {
         return _template.
             Replace("<!--title-->", title).

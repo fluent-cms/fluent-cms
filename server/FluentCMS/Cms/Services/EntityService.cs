@@ -23,7 +23,7 @@ public sealed class EntityService(
     {
         var entity = CheckResult(await entitySchemaService.GetLoadedEntity(entityName, cancellationToken));
         var idValue = definitionExecutor.Cast(id,entity.PrimaryKeyAttribute.DataType);
-        var query = entity.ByIdQuery(idValue, entity.Attributes.GetLocalAttributes(attributes), []);
+        var query = entity.ByIdQuery(idValue, entity.Attributes.GetLocalAttrs(attributes), []);
         return NotNull(await kateQueryExecutor.One(query, cancellationToken))
             .ValOrThrow($"not find record by [{id}]");
     }
@@ -39,11 +39,11 @@ public sealed class EntityService(
         }
 
         var idValue = definitionExecutor.Cast(id,entity.PrimaryKeyAttribute.DataType);
-        var query = entity.ByIdQuery(idValue, entity.Attributes.GetLocalAttributes(InListOrDetail.InDetail), []);
+        var query = entity.ByIdQuery(idValue, entity.Attributes.GetLocalAttrs(InListOrDetail.InDetail), []);
         var record = NotNull(await kateQueryExecutor.One(query, cancellationToken))
             .ValOrThrow($"not find record by [{id}]");
 
-        foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.Lookup, InListOrDetail.InDetail))
+        foreach (var attribute in entity.Attributes.GetAttrByType(DisplayType.Lookup, InListOrDetail.InDetail))
         {
             await LoadLookupData(attribute, [record], cancellationToken);
         }
@@ -68,7 +68,7 @@ public sealed class EntityService(
 
         var res = await hookRegistry.EntityPreGetList.Trigger(provider,
             new EntityPreGetListArgs(entity.Name, entity, filters, sorts, pagination.ToValid(entity.DefaultPageSize)));
-        var attributes = entity.Attributes.GetLocalAttributes(InListOrDetail.InList);
+        var attributes = entity.Attributes.GetLocalAttrs(InListOrDetail.InList);
 
         var query = entity.ListQuery(res.RefFilters, res.RefSorts, res.RefPagination, null, attributes);
         
@@ -77,7 +77,7 @@ public sealed class EntityService(
         var ret = new ListResult(records, records.Length);
         if (records.Length > 0)
         {
-            foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.Lookup, InListOrDetail.InList))
+            foreach (var attribute in entity.Attributes.GetAttrByType(DisplayType.Lookup, InListOrDetail.InList))
             {
                 await LoadLookupData(attribute, records, cancellationToken);
             }
@@ -163,13 +163,13 @@ public sealed class EntityService(
         Dictionary<string,StringValues> qs, Pagination pagination, CancellationToken cancellationToken)
     {
         var entity = CheckResult(await entitySchemaService.GetLoadedEntity(entityName, cancellationToken));
-        var attribute = NotNull(entity.Attributes.FindOneAttribute(attributeName))
+        var attribute = NotNull(entity.Attributes.FindOneAttr(attributeName))
             .ValOrThrow($"not find {attributeName} in {entityName}");
 
         var crossTable = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable of {attributeName}");
         var target = crossTable.TargetEntity;
         
-        var selectAttributes = target.Attributes.GetLocalAttributes(InListOrDetail.InList);
+        var selectAttributes = target.Attributes.GetLocalAttrs(InListOrDetail.InList);
         var id = crossTable.SourceAttribute.Cast(strId);
         
         var dictionary = qs.GroupByFirstIdentifier();
@@ -191,7 +191,7 @@ public sealed class EntityService(
 
     private async Task LoadLookupData(LoadedAttribute attribute, Record[] items, CancellationToken cancellationToken)
     {
-        var ids = attribute.GetUniqValues(items);
+        var ids = attribute.GetUniq(items);
         if (ids.Length == 0)
         {
             return;

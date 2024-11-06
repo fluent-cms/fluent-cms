@@ -13,7 +13,7 @@ public sealed class EntitySchemaService(ISchemaService schemaSvc, IDefinitionExe
     public async Task<LoadedAttribute?> FindAttribute(string name, string attr, CancellationToken token)
     {
         var entity = CheckResult(await GetLoadedEntity(name, token));
-        return entity.Attributes.FindOneAttribute(attr);
+        return entity.Attributes.FindOneAttr(attr);
     }
 
     public async Task<Result<AttributeVector>> ResolveAttributeVector(LoadedEntity entity, string fieldName)
@@ -25,7 +25,7 @@ public sealed class EntitySchemaService(ISchemaService schemaSvc, IDefinitionExe
         for (var i = 0; i < fields.Length; i++)
         {
             var field = fields[i];
-            attr = entity.Attributes.FindOneAttribute(field);
+            attr = entity.Attributes.FindOneAttr(field);
             if (attr is null)
             {
                 return Result.Fail($"Fail to attribute vector: can not find {field} in {entity.Name} ");
@@ -137,7 +137,7 @@ public sealed class EntitySchemaService(ISchemaService schemaSvc, IDefinitionExe
 
         async Task CreateCrosstables()
         {
-            foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.Crosstable))
+            foreach (var attribute in entity.Attributes.GetAttrByType(DisplayType.Crosstable))
             {
                 await CreateCrosstable(entity.ToLoadedEntity(),
                     attribute.ToLoaded(entity.TableName), token);
@@ -258,9 +258,9 @@ public sealed class EntitySchemaService(ISchemaService schemaSvc, IDefinitionExe
 
     private async Task VerifyEntity(Entity entity, CancellationToken cancellationToken)
     {
-        NotNull(entity.Attributes.FindOneAttribute(entity.TitleAttribute))
+        NotNull(entity.Attributes.FindOneAttr(entity.TitleAttribute))
             .ValOrThrow($"`{entity.TitleAttribute}` was not in attributes list");
-        foreach (var attribute in entity.Attributes.GetAttributesByType(DisplayType.Lookup))
+        foreach (var attribute in entity.Attributes.GetAttrByType(DisplayType.Lookup))
         {
             await CheckLookup(attribute, cancellationToken);
         }

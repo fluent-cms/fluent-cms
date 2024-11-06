@@ -60,11 +60,11 @@ public sealed class CmsModule(
             builder.Services.AddScoped<IProfileService, DummyProfileService>();
             
             builder.Services.AddMemoryCache();
-            builder.Services.AddSingleton<HtmlTemplate>(p =>
+            builder.Services.AddSingleton<PageTemplate>(p =>
             {
                 var provider = p.GetRequiredService<IWebHostEnvironment>().WebRootFileProvider;
                 var fileInfo = provider.GetFileInfo($"{FluentCmsContentRoot}/static-assets/templates/template.html");
-                return new HtmlTemplate(fileInfo.PhysicalPath??"");
+                return new PageTemplate(fileInfo.PhysicalPath??"");
             });
             builder.Services.AddSingleton<HookRegistry>(_ => new HookRegistry());
             builder.Services.AddSingleton<KeyValueCache<LoadedQuery>>(p =>

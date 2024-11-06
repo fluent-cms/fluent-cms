@@ -1,7 +1,9 @@
 using FluentCMS.Cms.Models;
 using FluentCMS.Services;
+using FluentCMS.Utils.DictionaryExt;
 using FluentCMS.Utils.PageRender;
 using FluentCMS.Utils.QueryBuilder;
+using FluentResults;
 using HandlebarsDotNet;
 using HtmlAgilityPack;
 using Microsoft.AspNetCore.WebUtilities;
@@ -9,15 +11,15 @@ using Microsoft.AspNetCore.WebUtilities;
 namespace FluentCMS.Cms.Services;
 using static InvalidParamExceptionFactory;
 
-public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc, HtmlTemplate template) : IPageService
+public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc, PageTemplate template) : IPageService
 {
     public async Task<string> GetDetail(string name, string param, QueryArgs args, CancellationToken token)
     {
-        //detail page format <pageName>/{<routerName>}, not know the exact page name now, match prefix with '/{'. 
+        //detail page format <pageName>/{<routerName>}, not know the exact page name now, match with prefix '/{'. 
         var ctx = (await GetContext(name+ "/{" , true,token)).ToPageContext();
         args = GetLocalPaginationArgs(ctx, args); 
         
-        var routerName = RenderUtil.RemoveBrace(ctx.Page.Name.Split("/").Last());
+        var routerName =ctx.Page.Name.Split("/").Last()[1..^1]; // remove '{' and '}'
         args[routerName] = param;
         
         var data = string.IsNullOrWhiteSpace(ctx.Page.Query)
@@ -33,107 +35,112 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
         return await RenderPage(ctx.ToPageContext(),  new Dictionary<string, object>(), args, token);
     }
 
-    private async Task<string> RenderPage(PageContext ctx, Record data, QueryArgs args, CancellationToken token)
+    public async Task<string> GetPart(string pageId, CancellationToken token)
     {
-        await LoadRelatedData(ctx.Page.Name, data,args, ctx.Nodes, token);
-        TagPagination(ctx,data);
-        
-        ctx.Nodes.SetLoopAndPagination();
-        var title = RenderUtil.GetTitle(ctx.Page.Title, data);
-        var body = RenderUtil.GetBody(ctx.HtmlDocument, data);
-        return template.RenderHtml(title, body, ctx.Page.Css);
-    }
+        var part = NotNull(PagePartHelper.Parse(pageId)).ValOrThrow("Invalid Partial Part");
+        var ctx = (await GetContext(part.Page, false, token)).ToPartialContext(part.NodeId);
 
-    public async Task<string> GetPartial(string patialToken, CancellationToken token)
-    {
-        var partialToken = NotNull(PartialToken.Parse(patialToken)).ValOrThrow("Invalid Partial Token");
-        var ctx = (await GetContext(partialToken.Page, false, token)).ToPartialContext(partialToken.NodeId);
-        ctx.Node.SetLoopAndPagination(partialToken.Repeat.Field, partialToken.Repeat.PaginationType);
-
-        var cursor = new Span(partialToken.First, partialToken.Last);
-        var args = QueryHelpers.ParseQuery(partialToken.Repeat.QueryString);
+        var cursor = new Span(part.First, part.Last);
+        var args = QueryHelpers.ParseQuery(part.DataSource.QueryString);
 
         Record[] items;
-        if (!string.IsNullOrWhiteSpace(partialToken.Repeat.Query))
+        if (!string.IsNullOrWhiteSpace(part.DataSource.Query))
         {
-            var pagination = new Pagination(0, partialToken.Repeat.Limit);
-            items = await querySvc.List(partialToken.Repeat.Query, cursor, pagination, args, token);
+            var pagination = new Pagination(0, part.DataSource.Limit);
+            items = await querySvc.List(part.DataSource.Query, cursor, pagination, args, token);
         }
         else
         {
-            items = await querySvc.Partial(ctx.Page.Query!, partialToken.Repeat.Field, cursor, partialToken.Repeat.Limit, args, token);
+            items = await querySvc.Partial(ctx.Page.Query!, part.DataSource.Field, cursor, part.DataSource.Limit, args, token);
         }
 
+        var flatField = RenderUtil.Flat(part.DataSource.Field);
         var data = new Dictionary<string, object>
         {
-            [partialToken.Repeat.Field] = items
+            [flatField] = items
         };
-        TagPagination(data, items, partialToken);
+        TagPagination(data, items, part);
         
-        var render = Handlebars.Compile(ctx.Node.OuterHtml);
+        ctx.Node.SetPaginationTemplate(flatField, part.DataSource.PageMode);
+        var html = part.DataSource.PageMode == PageMode.Button
+            ? ctx.Node.OuterHtml // for button pagination, replace the div 
+            : ctx.Node.InnerHtml; // for infinite screen, append to original div
+        var render = Handlebars.Compile(html);
         return render(data);
     }
 
-    
+    private async Task<string> RenderPage(PageContext ctx, Record data, QueryArgs args, CancellationToken token)
+    {
+        await LoadRelatedData(ctx.Page.Name, data, args, ctx.Nodes, token);
+        CheckResult(TagPagination(ctx, data));
+
+        foreach (var repeatNode in ctx.Nodes)
+        {
+            repeatNode.HtmlNode.SetPaginationTemplate(repeatNode.DataSource.Field, repeatNode.DataSource.PageMode);
+        }
+
+        var title = Handlebars.Compile(ctx.Page.Title)(data);
+        var body = ctx.HtmlDocument.RenderBody(data);
+        return template.Build(title, body, ctx.Page.Css);
+    }
+
     private static QueryArgs GetLocalPaginationArgs(PageContext ctx,QueryArgs args)
     {
         var ret = new QueryArgs(args);
         foreach (var node in ctx.Nodes.Where(x => 
-                string.IsNullOrWhiteSpace(x.Repeat.Query) && (x.Repeat.Offset > 0 || x.Repeat.Limit > 0)))
+                string.IsNullOrWhiteSpace(x.DataSource.Query) && (x.DataSource.Offset > 0 || x.DataSource.Limit > 0)))
         {
-            ret[node.Repeat.Field + PaginationConstants.OffsetSuffix] = node.Repeat.Offset.ToString();
-            ret[node.Repeat.Field + PaginationConstants.LimitSuffix] = node.Repeat.Limit.ToString();
+            ret[node.DataSource.Field + PaginationConstants.OffsetSuffix] = node.DataSource.Offset.ToString();
+            ret[node.DataSource.Field + PaginationConstants.LimitSuffix] = node.DataSource.Limit.ToString();
         }
         return ret;
     }
 
-    private async Task LoadRelatedData(string name, Record data, QueryArgs args, RepeatNode[] nodes, CancellationToken token)
+    private async Task LoadRelatedData(string name, Record data, QueryArgs args, DataNode[] nodes, CancellationToken token)
     {
-        foreach (var repeatNode in nodes.Where(x => !string.IsNullOrWhiteSpace(x.Repeat.Query)))
+        foreach (var repeatNode in nodes.Where(x => !string.IsNullOrWhiteSpace(x.DataSource.Query)))
         {
-            var pagination = new Pagination(repeatNode.Repeat.Offset, repeatNode.Repeat.Limit);
-            var qs = QueryHelpers.ParseQuery(repeatNode.Repeat.QueryString);
-            var result = await querySvc.List(repeatNode.Repeat.Query, new Span(), pagination, RenderUtil.MergeDict(args,qs), token);
-            data[repeatNode.Repeat.Field] = result;
+            var pagination = new Pagination(repeatNode.DataSource.Offset, repeatNode.DataSource.Limit);
+            var qs = QueryHelpers.ParseQuery(repeatNode.DataSource.QueryString);
+            var result = await querySvc.List(repeatNode.DataSource.Query, new Span(), pagination, args.MergeByOverwriting(qs), token);
+            data[repeatNode.DataSource.Field] = result;
         }
     }
-    private static void TagPagination(PageContext ctx, Record data)
+
+    private static Result TagPagination(PageContext ctx, Record data)
     {
-        foreach (var node in ctx.Nodes.Where(x=>x.Repeat.Offset > 0 || x.Repeat.Limit > 0))
+        foreach (var node in ctx.Nodes.Where(x => x.DataSource.Offset > 0 || x.DataSource.Limit > 0))
         {
-            if (data.TryGetValue(node.Repeat.Field, out var val) && val is Record[] records)
+            if (!data.GetValueByPath<Record[]>(node.DataSource.Field, out var value))
             {
-                TagPagination(data, records, node.ToPartialToken(ctx.Page.Name));
+                return Result.Fail($"Fail to tag pagination for {node.DataSource.Field}");
             }
+            TagPagination(data, value!, node.ToPagePart(ctx.Page.Name));
         }
+
+        return Result.Ok();
     }
-    
-    private static void TagPagination(Record data, Record[] items, PartialToken token)
+
+    private static void TagPagination(Record data, Record[] items, PagePart token)
     {
         if (SpanHelper.HasPrevious(items))
         {
-            data[RenderUtil.FirstAttributeTag(token.Repeat.Field) ] = (token with { First = SpanHelper.FirstCursor(items), Last = ""}).ToString();
+            data[RenderUtil.FirstAttrTag(token.DataSource.Field) ] = (token with { First = SpanHelper.FirstCursor(items), Last = ""}).GenerateToken();
         }
 
         if (SpanHelper.HasNext(items))
         {
-            data[RenderUtil.LastAttributeTag(token.Repeat.Field)] = (token with { Last = SpanHelper.LastCursor(items),First = ""}).ToString();
+            data[RenderUtil.LastAttrTag(token.DataSource.Field)] = (token with { Last = SpanHelper.LastCursor(items),First = ""}).GenerateToken();
         }
     }
     record Context(Page Page, HtmlDocument Doc)
     {
-        public PartialContext ToPartialContext(string nodeId)
-        {
-            return new PartialContext(Page, Doc, Doc.GetElementbyId(nodeId));
-        }
+        public PartialContext ToPartialContext(string nodeId) => new (Page, Doc, Doc.GetElementbyId(nodeId));
     
-        public PageContext ToPageContext()
-        {
-            return new PageContext(Page, Doc, CheckResult(Doc.GetRepeatingNodes()));
-        }
+        public PageContext ToPageContext() => new (Page, Doc, CheckResult(Doc.GetDataNodes()));
     }
 
-    record PageContext(Page Page, HtmlDocument HtmlDocument, RepeatNode[] Nodes);
+    record PageContext(Page Page, HtmlDocument HtmlDocument, DataNode[] Nodes);
     
     record PartialContext(Page Page, HtmlDocument HtmlDocument, HtmlNode Node);
     

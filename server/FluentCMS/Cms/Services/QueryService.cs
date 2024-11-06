@@ -26,26 +26,26 @@ public sealed class QueryService(
         }
 
         var query = await querySchema.GetByNameAndCache(name, token);
-        var attribute = NotNull(query.Selection.RecursiveFindAttribute(attr)).ValOrThrow("not find attribute");
+        var attribute = NotNull(query.Selection.RecursiveFind(attr)).ValOrThrow("not find attribute");
         var cross = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable of {attribute.Field})");
         
         
         var pagination = new Pagination(0, limit).ToValid(cross.TargetEntity.DefaultPageSize);
         
         var validSpan =CheckResult(span.ToValid([]));
-        var fields = attribute!.Selection.GetLocalAttributes();
+        var fields = attribute.Selection.GetLocalAttrs();
         var filters = CheckResult(await attribute.Filters.ToValid(cross.TargetEntity, args, entitySchema.ResolveAttributeVector));
         var sorts = CheckResult(await attribute.Sorts.ToValidSorts(cross.TargetEntity, entitySchema.ResolveAttributeVector));
         
         var kateQuery = cross.GetRelatedItems(fields, filters,sorts, validSpan, pagination.PlusLimitOne(), [validSpan.SourceId()]);
         var records = await executor.Many(kateQuery, token);
 
-        records = new Span().ToPage(records, pagination.Limit);
-        if (records.Length > 0)
-        {
-            await AttachRelated(attribute.Selection, args, records, token);
-            SetCursorForRoot(cross.TargetEntity, attribute.Selection, sorts, records);
-        }
+        records = span.ToPage(records, pagination.Limit);
+        if (records.Length <= 0) return records;
+        
+        await AttachRelated(attribute.Selection, args, records, token);
+        var sourceId = records.First()[attribute.Crosstable!.SourceAttribute.Field];
+        SetSpan(true, attribute.Selection, records, attribute.Sorts, sourceId);
         return records;
     }
 
@@ -73,7 +73,8 @@ public sealed class QueryService(
         items = span.ToPage(items, validPagination.Limit);
         if (items.Length <= 0) return items;
         await AttachRelated(query.Selection, args, items, token);
-        SetCursorForRoot(query.Entity, query.Selection, query.Sorts, items);
+        
+        SetSpan(true,query.Selection, items, query.Sorts, null);
 
         return items;
     }
@@ -95,7 +96,7 @@ public sealed class QueryService(
         var kateQuery = query.Entity.ListQuery(res.Filters, query.Sorts, validPagination, null, selection);
         var items = await executor.Many(kateQuery, token);
         await AttachRelated(query.Selection, args, items, token);
-        SetCursorForRoot(query.Entity, query.Selection, query.Sorts, items);
+        SetSpan(false,query.Selection, items, [], null);
         return items;
     }
 
@@ -112,49 +113,35 @@ public sealed class QueryService(
         var kateQuery = CheckResult(query.Entity.OneQuery(res.Filters, query.Sorts, selection));
         var item = NotNull(await executor.One(kateQuery, token)).ValOrThrow("Not find record");
         await AttachRelated(query.Selection, args, [item], token);
-        SetCursorForRoot(query.Entity, query.Selection, query.Sorts, [item]);
+        SetSpan(false, query.Selection, [item], [],null);
         return item;
     }
 
-    private void SetCursorForRoot(LoadedEntity entity, ImmutableArray<GraphAttribute> attrs, ImmutableArray<ValidSort> sorts,
-        Record[] items)
+    private void SetSpan(bool needAddCursor,  ImmutableArray<GraphAttribute> attrs, Record[] items,  IEnumerable<Sort> sorts, object? sourceId)
     {
-        SpanHelper.SetCursor(null, items.First(), sorts);
-        if (items.Length > 1)
+        if (needAddCursor)
         {
-            SpanHelper.SetCursor(null, items.Last(), sorts);
+            if (items.Length == 0) return;
+            SpanHelper.SetCursor(sourceId, items.First(), sorts);
+            if (items.Length > 1) SpanHelper.SetCursor(sourceId, items.Last(), sorts);
         }
 
-        SetCursor(entity, attrs, items);
-    }
-
-    private void SetCursor(LoadedEntity entity, ImmutableArray<GraphAttribute> attrs, Record[] records)
-    {
-        foreach (var record in records)
+        foreach (var item in items)
         {
-            foreach (var attribute in attrs.GetAttributesByType(DisplayType.Lookup))
+
+            foreach (var attribute in attrs.GetAttrByType(DisplayType.Lookup))
             {
-                if (record.TryGetValue(attribute.Field, out var value) && value is Record recordValue)
+                if (item.TryGetValue(attribute.Field, out var value) && value is  Record record)
                 {
-                    SetCursor(attribute.Lookup!, attribute.Selection, [recordValue]);
+                    SetSpan( false, attribute.Selection, [record],   [], null);
                 }
             }
 
-            foreach (var attribute in attrs.GetAttributesByType(DisplayType.Crosstable))
+            foreach (var attribute in attrs.GetAttrByType(DisplayType.Crosstable))
             {
-                if (!record.TryGetValue(attribute.Field, out var value) || value is not Record[] items ||
-                    items.Length == 0)
-                {
-                    continue;
-                }
-
-                SpanHelper.SetCursor(record[entity.PrimaryKey], items.First(), attribute.Sorts);
-                if (items.Length > 1)
-                {
-                    SpanHelper.SetCursor(record[entity.PrimaryKey], items.Last(), attribute.Sorts);
-                }
-
-                SetCursor(attribute.Crosstable!.TargetEntity, attribute.Selection, [..items]);
+                if (!item.TryGetValue(attribute.Field, out var value) || value is not Record[] records || records.Length <= 0) continue;
+                var nextSourceId = records.First()[attribute.Crosstable!.SourceAttribute.Field];
+                SetSpan(true,attribute.Selection,  records, attribute.Sorts, nextSourceId);
             }
         }
     }
@@ -166,12 +153,12 @@ public sealed class QueryService(
             return;
         }
 
-        foreach (var attribute in attrs.GetAttributesByType<GraphAttribute>(DisplayType.Lookup))
+        foreach (var attribute in attrs.GetAttrByType<GraphAttribute>(DisplayType.Lookup))
         {
             await AttachLookup(attribute, args, items, token);
         }
 
-        foreach (var attribute in attrs.GetAttributesByType<GraphAttribute>(DisplayType.Crosstable))
+        foreach (var attribute in attrs.GetAttrByType<GraphAttribute>(DisplayType.Crosstable))
         {
             await AttachCrosstable(attribute, args, items, token);
         }
@@ -181,13 +168,13 @@ public sealed class QueryService(
     {
         var cross = NotNull(attr.Crosstable).ValOrThrow($"not find crosstable of {attr.AddTableModifier()}");
         //no need to attach, ignore
-        var ids = cross.SourceEntity.PrimaryKeyAttribute.GetUniqValues(items);
+        var ids = cross.SourceEntity.PrimaryKeyAttribute.GetUniq(items);
         if (ids.Length == 0)
         {
             return;
         }
 
-        var fields = attr.Selection.GetLocalAttributes();
+        var fields = attr.Selection.GetLocalAttrs();
         var filters = CheckResult(await attr.Filters.ToValid(cross.TargetEntity, args,
             entitySchema.ResolveAttributeVector));
         var sorts = CheckResult(await attr.Sorts.ToValidSorts(attr.Crosstable!.TargetEntity,
@@ -239,13 +226,13 @@ public sealed class QueryService(
     {
         var lookupEntity = NotNull(attr.Lookup).ValOrThrow($"can not find lookup entity of{attr.Field}");
 
-        var selection = attr.Selection.GetLocalAttributes();
-        if (selection.FindOneAttribute(lookupEntity.PrimaryKey) == null)
+        var selection = attr.Selection.GetLocalAttrs();
+        if (selection.FindOneAttr(lookupEntity.PrimaryKey) == null)
         {
             selection = [..selection, lookupEntity.PrimaryKeyAttribute.ToGraph()];
         }
 
-        var ids = attr.GetUniqValues(items);
+        var ids = attr.GetUniq(items);
         if (ids.Length == 0)
         {
             return;
@@ -270,7 +257,7 @@ public sealed class QueryService(
     async Task<Context> GetContext(string name, QueryArgs args, CancellationToken token)
     {
         var query = await querySchema.GetByNameAndCache(name, token);
-        var attributes = query.Selection.GetLocalAttributes();
+        var attributes = query.Selection.GetLocalAttrs();
         var filters = CheckResult(await query.Filters.ToValid(query.Entity, args, entitySchema.ResolveAttributeVector));
         return new Context(query, attributes, filters);
     }
