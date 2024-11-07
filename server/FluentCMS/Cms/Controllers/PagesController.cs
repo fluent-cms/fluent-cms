@@ -25,7 +25,7 @@ public class PagesController(IPageService pageService) : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult> GetPartial([FromQuery]string token, CancellationToken cancellationToken)
+    public async Task<ActionResult> GetPart([FromQuery]string token, CancellationToken cancellationToken)
     {
         var htmlContent = await pageService.GetPart(token, cancellationToken);
         return Content(htmlContent, "text/html");

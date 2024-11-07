@@ -23,7 +23,7 @@ public class QueriesController(IQueryService queryService) : ControllerBase
         return Ok(await queryService.One(name, args,token));
     }
 
-    [HttpGet("{name}/partial/{attr}")]
+    [HttpGet("{name}/part/{attr}")]
     public async Task<ActionResult> GetPartial(string name, string attr, [FromQuery] Span span, [FromQuery] int limit, CancellationToken token)
     {
         var args = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);

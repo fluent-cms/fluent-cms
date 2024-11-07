@@ -104,7 +104,6 @@ public sealed class QuerySchemaService(
 
     private static Result<Filter> ObjectToFilter(string fieldName, GraphQLObjectValue argObjVal)
     {
-
         //name: {omitFail:true, gt:2, lt:5, operator: and}
         //name: {omitFail:false, eq:3, eq:4, operator: or}
         var omitFail = false;
@@ -158,10 +157,15 @@ public sealed class QuerySchemaService(
 
             switch (arg.Value)
             {
-                case GraphQLEnumValue argStrVal:
-                    //name: 3
-                    var constraint = new Constraint(Matches.EqualsTo, argStrVal.Name.StringValue);
-                    filters.Add(new Filter(fieldName, LogicalOperators.And, [constraint], false));
+                case GraphQLStringValue stringValue:
+                    AddFilter(fieldName, stringValue.Value.ToString()!);
+                    break;
+                case GraphQLIntValue intValue:
+                    AddFilter(fieldName, intValue.Value.ToString()!);
+                    break;
+                    
+                case GraphQLEnumValue enumValue:
+                    AddFilter(fieldName, enumValue.Name.StringValue);
                     break;
                 case GraphQLObjectValue argObjVal:
                     var (_, _, filter, errors) = ObjectToFilter(fieldName, argObjVal);
@@ -172,11 +176,17 @@ public sealed class QuerySchemaService(
                     filters.Add(filter);
                     break;
                 default:
-                    return Result.Fail("invalid filter");
+                    return Result.Fail($"invalid value type for {fieldName}");
             }
         }
 
         return graphAttr with { Filters = [..filters] };
+
+        void AddFilter(string fieldName,string val)
+        {
+            var constraint = new Constraint(Matches.EqualsTo, val);
+            filters.Add(new Filter(fieldName, LogicalOperators.And, [constraint], false));
+        }
     }
 
     //sort: id or sort: {id:desc, name:asc}
@@ -242,7 +252,7 @@ public sealed class QuerySchemaService(
 
     private async Task<Result<GraphAttribute>> LoadAttribute(LoadedEntity entity, string fldName, CancellationToken cancellationToken)
     {
-        var find = entity.Attributes.FindOneAttribute(fldName);
+        var find = entity.Attributes.FindOneAttr(fldName);
         if (find is null)
         {
             return Result.Fail($"Verifying `SectionSet` fail, can not find {fldName} in {entity.Name}");

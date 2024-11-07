@@ -44,8 +44,8 @@ public static class EntityHelper
 {
     public static LoadedEntity ToLoadedEntity(this Entity entity)
     {
-        var primaryKey = entity.Attributes.FindOneAttribute(entity.PrimaryKey)!.ToLoaded(entity.TableName);
-        var titleAttribute = entity.Attributes.FindOneAttribute(entity.TitleAttribute)?.ToLoaded(entity.TableName) ?? primaryKey;
+        var primaryKey = entity.Attributes.FindOneAttr(entity.PrimaryKey)!.ToLoaded(entity.TableName);
+        var titleAttribute = entity.Attributes.FindOneAttr(entity.TitleAttribute)?.ToLoaded(entity.TableName) ?? primaryKey;
         var attributes = entity.Attributes.Select(x => x.ToLoaded(entity.TableName));
         var deletedAttribute = new LoadedAttribute(entity.TableName, DefaultFields.Deleted);
         return new LoadedEntity(
@@ -147,19 +147,19 @@ public static class EntityHelper
     public static ColumnDefinition[] AddedColumnDefinitions(this Entity e, ColumnDefinition[] columnDefinitions)
     {
         var set = columnDefinitions.Select(x => x.ColumnName.ToLower()).ToHashSet();
-        var items = e.Attributes.GetLocalAttributes().Where(x => !set.Contains(x.Field.ToLower().Trim()));
+        var items = e.Attributes.GetLocalAttrs().Where(x => !set.Contains(x.Field.ToLower().Trim()));
         return items.Select(x => new ColumnDefinition(x.Field, x.DataType) ).ToArray();
     }
 
     public static ColumnDefinition[] Definitions(this Entity e)
-        => e.Attributes.GetLocalAttributes()
+        => e.Attributes.GetLocalAttrs()
             .Select(x => new ColumnDefinition (ColumnName : x.Field, DataType : x.DataType ))
             .ToArray();
 
     public static Entity WithDefaultAttr(this Entity e)
     {
         var list = new List<Attribute>();
-        if (e.Attributes.FindOneAttribute(DefaultFields.Id) is null)
+        if (e.Attributes.FindOneAttr(DefaultFields.Id) is null)
         {
             list.Add(new Attribute
            ( 
@@ -171,7 +171,7 @@ public static class EntityHelper
 
         list.AddRange(e.Attributes);
 
-        if (e.Attributes.FindOneAttribute(DefaultFields.CreatedAt) is null)
+        if (e.Attributes.FindOneAttr(DefaultFields.CreatedAt) is null)
         {
             list.Add(new Attribute
             (
@@ -181,7 +181,7 @@ public static class EntityHelper
             ));
         }
 
-        if (e.Attributes.FindOneAttribute(DefaultFields.UpdatedAt) is null)
+        if (e.Attributes.FindOneAttr(DefaultFields.UpdatedAt) is null)
         {
             list.Add(new Attribute
             (
@@ -208,7 +208,7 @@ public static class EntityHelper
         var interpreter = new Interpreter();
         interpreter.Reference(typeof(Regex));
         var errs = new List<IError>();
-        foreach (var localAttribute in e.Attributes.GetLocalAttributes().Where(x=>!string.IsNullOrWhiteSpace(x.Validation)))
+        foreach (var localAttribute in e.Attributes.GetLocalAttrs().Where(x=>!string.IsNullOrWhiteSpace(x.Validation)))
         {
             var res = Validate(localAttribute);
             
@@ -251,7 +251,7 @@ public static class EntityHelper
         Dictionary<string, object> ret = new();
         foreach (var property in jsonElement.EnumerateObject())
         {
-            var attribute = e.Attributes.FindOneAttribute(property.Name);
+            var attribute = e.Attributes.FindOneAttr(property.Name);
             if (attribute == null) continue;
             var res = attribute.Type switch
             {
