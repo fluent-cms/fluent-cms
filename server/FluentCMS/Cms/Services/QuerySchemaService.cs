@@ -81,10 +81,11 @@ public sealed class QuerySchemaService(
                 return Result.Fail(err);
             }
 
-            if (graphAttr.Type == DisplayType.Crosstable && field.Arguments is not null)
+            if (graphAttr.Type == DisplayType.Crosstable)
             {
+                var target = graphAttr.Crosstable!.TargetEntity;
 
-                (_, _, graphAttr, err) = LoadSorts(graphAttr, field.Arguments, graphAttr.Crosstable!.TargetEntity.PrimaryKey);
+                (_, _, graphAttr, err) = await LoadSorts(target,graphAttr, field.Arguments, target.PrimaryKey);
                 if (err is not null)
                 {
                     return Result.Fail(err);
@@ -143,9 +144,11 @@ public sealed class QuerySchemaService(
         return new Filter(fieldName, logicalOperator,[..constraints],omitFail);
     }
 
-    private static Result<GraphAttribute> LoadFilters(GraphAttribute graphAttr, GraphQLArguments arguments)
+    private static Result<GraphAttribute> LoadFilters(GraphAttribute graphAttr, GraphQLArguments? arguments)
     {
         var filters = new List<Filter>();
+        if (arguments is null) return graphAttr;
+
         foreach (var arg in arguments)
         {
             if (arg.Name == SortConstant.SortKey)
@@ -163,7 +166,7 @@ public sealed class QuerySchemaService(
                 case GraphQLIntValue intValue:
                     AddFilter(fieldName, intValue.Value.ToString()!);
                     break;
-                    
+
                 case GraphQLEnumValue enumValue:
                     AddFilter(fieldName, enumValue.Name.StringValue);
                     break;
@@ -171,8 +174,9 @@ public sealed class QuerySchemaService(
                     var (_, _, filter, errors) = ObjectToFilter(fieldName, argObjVal);
                     if (errors is not null)
                     {
-                        return Result.Fail([new Error($"Failed to resolve filter for {fieldName}"),..errors]);
+                        return Result.Fail([new Error($"Failed to resolve filter for {fieldName}"), ..errors]);
                     }
+
                     filters.Add(filter);
                     break;
                 default:
@@ -182,7 +186,7 @@ public sealed class QuerySchemaService(
 
         return graphAttr with { Filters = [..filters] };
 
-        void AddFilter(string fieldName,string val)
+        void AddFilter(string fieldName, string val)
         {
             var constraint = new Constraint(Matches.EqualsTo, val);
             filters.Add(new Filter(fieldName, LogicalOperators.And, [constraint], false));
@@ -190,30 +194,34 @@ public sealed class QuerySchemaService(
     }
 
     //sort: id or sort: {id:desc, name:asc}
-    private static Result<GraphAttribute> LoadSorts(GraphAttribute graphAttr, GraphQLArguments arguments, string primaryKey)
+    private async Task<Result<GraphAttribute>> LoadSorts(LoadedEntity entity,GraphAttribute graphAttr, GraphQLArguments? arguments,
+        string primaryKey)
     {
 
         var sorts = new List<Sort>();
-        foreach (var arg in arguments)
+        if (arguments is not null)
         {
-            if (arg.Name != SortConstant.SortKey) continue;
-            switch (arg.Value)
+            foreach (var arg in arguments)
             {
-                case GraphQLEnumValue str:
-                    sorts.Add(new Sort(str.Name.StringValue, SortOrder.Asc));
-                    break;
-                case GraphQLObjectValue obj:
-                    //{id:desc, name:asc}
-                    var (_, _, pairs, error) = obj.ToPairs();
-                    if (error is not null)
-                    {
-                        return Result.Fail(error);
-                    }
-                    foreach (var (k,v) in pairs)
-                    {
-                        sorts.Add(new Sort(k, v.ToString()!));
-                    }
-                    break;
+                if (arg.Name != SortConstant.SortKey) continue;
+                switch (arg.Value)
+                {
+                    case GraphQLEnumValue str:
+                        sorts.Add(new Sort(str.Name.StringValue, SortOrder.Asc));
+                        break;
+                    case GraphQLObjectValue obj:
+                        //{id:desc, name:asc}
+                        var (_, _, pairs, error) = obj.ToPairs();
+                        if (error is not null)
+                        {
+                            return Result.Fail(error);
+                        }
+                        foreach (var (k, v) in pairs)
+                        {
+                            sorts.Add(new Sort(k, v.ToString()!));
+                        }
+                        break;
+                }
             }
         }
 
@@ -223,7 +231,8 @@ public sealed class QuerySchemaService(
             sorts.Add(new Sort(primaryKey, SortOrder.Asc));
         }
 
-        return graphAttr with { Sorts = [..sorts] };
+        var validSorts = CheckResult(await sorts.ToValidSorts(entity, entitySchemaService.ResolveAttributeVector)); 
+        return graphAttr with { Sorts = validSorts};
     }
 
     private async Task<Result<GraphAttribute>> LoadSelection(string prefix, GraphAttribute graphAttr, GraphQLField graphQlField, CancellationToken cancellationToken)

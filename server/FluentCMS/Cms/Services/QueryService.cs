@@ -29,7 +29,6 @@ public sealed class QueryService(
         var attribute = NotNull(query.Selection.RecursiveFind(attr)).ValOrThrow("not find attribute");
         var cross = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable of {attribute.Field})");
         
-        
         var pagination = new Pagination(0, limit).ToValid(cross.TargetEntity.DefaultPageSize);
         
         var validSpan =CheckResult(span.ToValid([]));
@@ -78,8 +77,6 @@ public sealed class QueryService(
 
         return items;
     }
-
-   
     
     public async Task<Record[]> Many(string name, QueryArgs args, CancellationToken token)
     {
@@ -117,41 +114,9 @@ public sealed class QueryService(
         return item;
     }
 
-    private void SetSpan(bool needAddCursor,  ImmutableArray<GraphAttribute> attrs, Record[] items,  IEnumerable<Sort> sorts, object? sourceId)
-    {
-        if (needAddCursor)
-        {
-            if (items.Length == 0) return;
-            SpanHelper.SetCursor(sourceId, items.First(), sorts);
-            if (items.Length > 1) SpanHelper.SetCursor(sourceId, items.Last(), sorts);
-        }
-
-        foreach (var item in items)
-        {
-
-            foreach (var attribute in attrs.GetAttrByType(DisplayType.Lookup))
-            {
-                if (item.TryGetValue(attribute.Field, out var value) && value is  Record record)
-                {
-                    SetSpan( false, attribute.Selection, [record],   [], null);
-                }
-            }
-
-            foreach (var attribute in attrs.GetAttrByType(DisplayType.Crosstable))
-            {
-                if (!item.TryGetValue(attribute.Field, out var value) || value is not Record[] records || records.Length <= 0) continue;
-                var nextSourceId = records.First()[attribute.Crosstable!.SourceAttribute.Field];
-                SetSpan(true,attribute.Selection,  records, attribute.Sorts, nextSourceId);
-            }
-        }
-    }
-
     private async Task AttachRelated(ImmutableArray<GraphAttribute>? attrs, QueryArgs args, Record[] items, CancellationToken token)
     {
-        if (attrs is null)
-        {
-            return;
-        }
+        if (attrs is null) return;
 
         foreach (var attribute in attrs.GetAttrByType<GraphAttribute>(DisplayType.Lookup))
         {
@@ -169,10 +134,7 @@ public sealed class QueryService(
         var cross = NotNull(attr.Crosstable).ValOrThrow($"not find crosstable of {attr.AddTableModifier()}");
         //no need to attach, ignore
         var ids = cross.SourceEntity.PrimaryKeyAttribute.GetUniq(items);
-        if (ids.Length == 0)
-        {
-            return;
-        }
+        if (ids.Length == 0) return;
 
         var fields = attr.Selection.GetLocalAttrs();
         var filters = CheckResult(await attr.Filters.ToValid(cross.TargetEntity, args,
@@ -252,9 +214,39 @@ public sealed class QueryService(
             }
         }
     }
-    record Context(LoadedQuery Query, ImmutableArray<GraphAttribute> Selection, ImmutableArray<ValidFilter> Filters);
+    
+    private static void SetSpan(bool needAddCursor,  ImmutableArray<GraphAttribute> attrs, Record[] items,  IEnumerable<ValidSort> sorts, object? sourceId)
+    {
+        var arr = sorts.ToArray();
+        if (needAddCursor)
+        {
+            if (items.Length == 0) return;
+            SpanHelper.SetCursor(sourceId, items.First(), arr);
+            if (items.Length > 1) SpanHelper.SetCursor(sourceId, items.Last(), arr);
+        }
 
-    async Task<Context> GetContext(string name, QueryArgs args, CancellationToken token)
+        foreach (var item in items)
+        {
+            foreach (var attribute in attrs.GetAttrByType(DisplayType.Lookup))
+            {
+                if (item.TryGetValue(attribute.Field, out var value) && value is  Record record)
+                {
+                    SetSpan( false, attribute.Selection, [record],   [], null);
+                }
+            }
+
+            foreach (var attribute in attrs.GetAttrByType(DisplayType.Crosstable))
+            {
+                if (!item.TryGetValue(attribute.Field, out var value) || value is not Record[] records || records.Length <= 0) continue;
+                var nextSourceId = records.First()[attribute.Crosstable!.SourceAttribute.Field];
+                SetSpan(true,attribute.Selection,  records, attribute.Sorts, nextSourceId);
+            }
+        }
+    }
+
+    private record Context(LoadedQuery Query, ImmutableArray<GraphAttribute> Selection, ImmutableArray<ValidFilter> Filters);
+
+    private async Task<Context> GetContext(string name, QueryArgs args, CancellationToken token)
     {
         var query = await querySchema.GetByNameAndCache(name, token);
         var attributes = query.Selection.GetLocalAttrs();

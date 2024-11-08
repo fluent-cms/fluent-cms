@@ -50,9 +50,10 @@ public record LoadedAttribute(
 );
 public record GraphAttribute(
     ImmutableArray<GraphAttribute> Selection,
+    ImmutableArray<ValidSort> Sorts,
     
+    // filter need to resolve at the runtime
     ImmutableArray<Filter> Filters,
-    ImmutableArray<Sort> Sorts,
     
     string Prefix,
     string TableName,
