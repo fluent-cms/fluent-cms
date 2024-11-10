@@ -21,13 +21,15 @@ public static class SortConstant
 
 public static class SortHelper
 {
-    public static async Task<Result<ImmutableArray<ValidSort>>> ToValidSorts(this IEnumerable<Sort> sorts, LoadedEntity entity,
-        ResolveVectorDelegate vectorDelegate)
+    public static async Task<Result<ImmutableArray<ValidSort>>> ToValidSorts(
+        this IEnumerable<Sort> sorts, 
+        LoadedEntity entity,
+        IAttributeResolver attributeResolver)
     {
         var ret = new List<ValidSort>();
         foreach (var sort in sorts)
         {
-            var res = await vectorDelegate(entity, sort.FieldName);
+            var res = await attributeResolver.GetAttrVector(entity, sort.FieldName);
             if (res.IsFailed)
             {
                 return Result.Fail(res.Errors);
@@ -40,7 +42,7 @@ public static class SortHelper
     public static async Task<Result<ImmutableArray<ValidSort>>> Parse(
         LoadedEntity entity, 
         Dictionary<string,QueryArgs> dictionary, 
-        ResolveVectorDelegate vectorDelegate)
+        IAttributeResolver attributeResolver)
     {
         var ret = new List<ValidSort>();
 
@@ -48,7 +50,7 @@ public static class SortHelper
         {
             foreach (var (fieldName, orderStr) in dict)
             {
-                var (_, _, vector, errors) = await vectorDelegate(entity, fieldName);
+                var (_, _, vector, errors) = await attributeResolver.GetAttrVector(entity, fieldName);
                 if (errors?.Count > 0 )
                 {
                     return Result.Fail(errors);

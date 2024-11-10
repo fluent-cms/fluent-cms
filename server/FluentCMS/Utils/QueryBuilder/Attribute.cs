@@ -17,7 +17,6 @@ public record Attribute(
     string ValidationMessage = ""
 );
 
-
 public record LoadedAttribute(
     string TableName,
     string Field,
@@ -95,7 +94,20 @@ public record GraphAttribute(
 
 public static class AttributeHelper
 {
+    /*
     private static Func<Attribute, string, object> _castToDbType = (_, s) => s;
+
+    public static void SetCastToDbType(Func<string, string, object> func)
+    {
+        _castToDbType = (a, s) => func(s, a.DataType);
+    }
+
+    public static object Cast(this Attribute attribute, string s)
+    {
+        return _castToDbType(attribute, s);
+    }
+    */
+
 
     public static LoadedAttribute ToLoaded(this Attribute a, string tableName)
     {
@@ -137,15 +149,6 @@ public static class AttributeHelper
         );
     }
 
-    public static void SetCastToDbType(Func<string, string, object> func)
-    {
-        _castToDbType = (a, s) => func(s, a.DataType);
-    }
-
-    public static object Cast(this Attribute attribute, string s)
-    {
-        return _castToDbType(attribute, s);
-    }
 
     public static string AddTableModifier(this LoadedAttribute attribute, string tableAlias = "")
     {

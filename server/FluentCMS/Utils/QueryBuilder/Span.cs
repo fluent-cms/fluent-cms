@@ -107,11 +107,11 @@ public static class SpanHelper
         item[SpanConstants.Cursor] = Base64UrlEncoder.Encode(cursor);
     }
     
-    public static Result<ValidSpan> ToValid(this Span c, IEnumerable<Attribute> attributes)
+    public static Result<ValidSpan> ToValid(this Span c, IEnumerable<Attribute> attrs,IAttributeResolver resolver)
     {
         if (c.IsEmpty()) return new ValidSpan(c, default);
 
-        var arr = attributes.ToArray();
+        var arr = attrs.ToArray();
         try
         {
             var recordStr = c.IsForward() ? c.Last : c.First;
@@ -124,13 +124,15 @@ public static class SpanHelper
                 if (val is string s )
                 {
                     var field = arr.FindOneAttr(key);
-                    if (field is not null)
+                    if (field is not null )
                     {
-                        val = field.Cast(s);
+                        if (!resolver.GetAttrVal(field, s, out val))
+                        {
+                            return Result.Fail($"Fail to cast s to {field.DataType}");
+                        }
                     }
                 }
-
-                dict[key] = val;
+                dict[key] = val!;
             }
 
             return new ValidSpan(c,dict.ToImmutableDictionary());

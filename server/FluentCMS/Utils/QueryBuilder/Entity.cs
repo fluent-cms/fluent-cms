@@ -33,7 +33,7 @@ public record LoadedEntity(
     string Title = "", //needed by admin panel
     string TitleAttribute = "",
     int DefaultPageSize = EntityConstants.DefaultPageSize
-    ) ;
+    );
 
 public static class EntityConstants
 {
@@ -246,7 +246,7 @@ public static class EntityHelper
         }
     }
 
-    public static Result<Record> Parse (this LoadedEntity e, JsonElement jsonElement)
+    public static Result<Record> Parse (this LoadedEntity e, JsonElement jsonElement, IAttributeResolver resolver)
     {
         Dictionary<string, object> ret = new();
         foreach (var property in jsonElement.EnumerateObject())
@@ -285,7 +285,7 @@ public static class EntityHelper
             }
             return element.Value.ValueKind switch
             {
-                JsonValueKind.String => attribute.Cast(element.Value.GetString()!),
+                JsonValueKind.String when resolver.GetAttrVal(attribute, element.Value.GetString()!,out var caseVal) => caseVal!, 
                 JsonValueKind.Number when element.Value.TryGetInt32(out var intValue) => intValue,
                 JsonValueKind.Number when element.Value.TryGetInt64(out var longValue) => longValue,
                 JsonValueKind.Number when element.Value.TryGetDouble(out var doubleValue) => doubleValue,

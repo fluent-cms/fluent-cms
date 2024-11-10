@@ -79,6 +79,7 @@ public sealed class CmsModule(
 
             builder.Services.AddScoped<ISchemaService, SchemaService>();
             builder.Services.AddScoped<IEntitySchemaService, EntitySchemaService>();
+            builder.Services.AddScoped<IAttributeResolver, EntitySchemaService>();
             builder.Services.AddScoped<IQuerySchemaService, QuerySchemaService>();
             builder.Services.AddScoped<IEntityService, EntityService>();
             builder.Services.AddScoped<IQueryService, QueryService>();
@@ -121,7 +122,6 @@ public sealed class CmsModule(
 
     public async Task UseCmsAsync(WebApplication app)
     {
-        AttributeHelper.SetCastToDbType(app.Services.GetRequiredService<IDefinitionExecutor>().Cast);
         PrintVersion();
         await InitSchema();
         app.UseStaticFiles();

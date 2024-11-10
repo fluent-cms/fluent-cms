@@ -13,25 +13,26 @@ using static InvalidParamExceptionFactory;
 public sealed class QuerySchemaService(
     ISchemaService schemaService,
     IEntitySchemaService entitySchemaService,
+    IAttributeResolver  attributeResolver,
     KeyValueCache<LoadedQuery> queryCache
 ) : IQuerySchemaService
 {
-    public async Task<LoadedQuery> GetByNameAndCache(string name, CancellationToken cancellationToken = default)
+    public async Task<LoadedQuery> GetByNameAndCache(string name, CancellationToken token = default)
     {
-        var query = await queryCache.GetOrSet(name, async () => await GetByName(name, cancellationToken));
+        var query = await queryCache.GetOrSet(name, async () => await GetByName(name, token));
         return NotNull(query).ValOrThrow($"can not find query [{name}]");
     }
 
-    private async Task<LoadedQuery> GetByName(string name, CancellationToken cancellationToken)
+    private async Task<LoadedQuery> GetByName(string name, CancellationToken token)
     {
         StrNotEmpty(name).ValOrThrow("query name should not be empty");
-        var item = NotNull(await schemaService.GetByNameDefault(name, SchemaType.Query, cancellationToken))
+        var item = NotNull(await schemaService.GetByNameDefault(name, SchemaType.Query, token))
             .ValOrThrow($"can not find query by name {name}");
         var query = NotNull(item.Settings.Query).ValOrThrow("invalid view format");
-        var entity = CheckResult(await entitySchemaService.GetLoadedEntity(query.EntityName, cancellationToken));
+        var entity = CheckResult(await entitySchemaService.GetLoadedEntity(query.EntityName, token));
         var fields = CheckResult(GraphQlExt.GetRootGraphQlFields(query.SelectionSet));
-        var attributes = CheckResult(await SelectionSetToNode("", entity, fields, cancellationToken));
-        var sorts = CheckResult(await (query.Sorts??[]).ToValidSorts(entity, entitySchemaService.ResolveAttributeVector));
+        var attributes = CheckResult(await SelectionSetToNode("", entity, fields, token));
+        var sorts = CheckResult(await (query.Sorts).ToValidSorts(entity, attributeResolver));
         return query.ToLoadedQuery(entity, attributes, sorts );
     }
 
@@ -54,28 +55,28 @@ public sealed class QuerySchemaService(
         var entity = CheckResult(await entitySchemaService.GetLoadedEntity(query.EntityName, cancellationToken));
         var fields = CheckResult(GraphQlExt.GetRootGraphQlFields(query.SelectionSet));
         CheckResult(await SelectionSetToNode("", entity, fields, cancellationToken));
-        CheckResult(await (query.Sorts ?? []).ToValidSorts(entity, entitySchemaService.ResolveAttributeVector));
-        CheckResult(await (query.Filters ?? []).ToValid(entity, null, entitySchemaService.ResolveAttributeVector));
+        CheckResult(await query.Sorts.ToValidSorts(entity, attributeResolver));
+        CheckResult(await query.Filters.Verify(entity, attributeResolver));
     }
 
     private async Task<Result<ImmutableArray<GraphAttribute>>> SelectionSetToNode(
         string prefix,
         LoadedEntity entity,
         IEnumerable<GraphQLField> graphQlFields,
-        CancellationToken cancellationToken)
+        CancellationToken token)
     {
 
-        List<GraphAttribute> attributes = new();
+        List<GraphAttribute> attributes = [];
         foreach (var field in graphQlFields)
         {
-            var (_, _, graphAttr, err) = await LoadAttribute(entity, field.Name.StringValue, cancellationToken);
+            var (_, _, graphAttr, err) = await LoadAttribute(entity, field.Name.StringValue, token);
             graphAttr = graphAttr with { Prefix = prefix };
             if (err is not null)
             {
                 return Result.Fail(err);
             }
 
-            (_, _, graphAttr, err) = await LoadSelection(graphAttr.FullPathName(prefix) , graphAttr, field, cancellationToken);
+            (_, _, graphAttr, err) = await LoadSelection(graphAttr.FullPathName(prefix) , graphAttr, field, token);
             if (err is not null)
             {
                 return Result.Fail(err);
@@ -161,10 +162,10 @@ public sealed class QuerySchemaService(
             switch (arg.Value)
             {
                 case GraphQLStringValue stringValue:
-                    AddFilter(fieldName, stringValue.Value.ToString()!);
+                    AddFilter(fieldName, stringValue.Value.ToString());
                     break;
                 case GraphQLIntValue intValue:
-                    AddFilter(fieldName, intValue.Value.ToString()!);
+                    AddFilter(fieldName, intValue.Value.ToString());
                     break;
 
                 case GraphQLEnumValue enumValue:
@@ -227,11 +228,11 @@ public sealed class QuerySchemaService(
 
         if (sorts.Count == 0)
         {
-            //sort by primary key  default
+            //sort by primary key default
             sorts.Add(new Sort(primaryKey, SortOrder.Asc));
         }
 
-        var validSorts = CheckResult(await sorts.ToValidSorts(entity, entitySchemaService.ResolveAttributeVector)); 
+        var validSorts = CheckResult(await sorts.ToValidSorts(entity, attributeResolver)); 
         return graphAttr with { Sorts = validSorts};
     }
 

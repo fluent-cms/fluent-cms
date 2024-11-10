@@ -41,5 +41,3 @@ public class AttributeTreeNode(LoadedAttribute? attribute = default)
         return root;
     }
 }
-
-public delegate Task<Result<AttributeVector>> ResolveVectorDelegate(LoadedEntity entity, string attributeName);

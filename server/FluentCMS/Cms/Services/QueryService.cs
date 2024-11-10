@@ -15,7 +15,9 @@ public sealed class QueryService(
     IEntitySchemaService entitySchema,
     IQuerySchemaService querySchema,
     IServiceProvider provider,
-    HookRegistry hook) : IQueryService
+    HookRegistry hook,
+    IAttributeResolver attributeResolver
+    ) : IQueryService
 {
 
     public async Task<Record[]> Partial(string name, string attr,  Span span, int limit,QueryArgs args, CancellationToken token)
@@ -31,10 +33,10 @@ public sealed class QueryService(
         
         var pagination = new Pagination(0, limit).ToValid(cross.TargetEntity.DefaultPageSize);
         
-        var validSpan =CheckResult(span.ToValid([]));
+        var validSpan =CheckResult(span.ToValid([],attributeResolver));
         var fields = attribute.Selection.GetLocalAttrs();
-        var filters = CheckResult(await attribute.Filters.ToValid(cross.TargetEntity, args, entitySchema.ResolveAttributeVector));
-        var sorts = CheckResult(await attribute.Sorts.ToValidSorts(cross.TargetEntity, entitySchema.ResolveAttributeVector));
+        var filters = CheckResult(await attribute.Filters.ToValid(cross.TargetEntity, args,attributeResolver));
+        var sorts = CheckResult(await attribute.Sorts.ToValidSorts(cross.TargetEntity, attributeResolver));
         
         var kateQuery = cross.GetRelatedItems(fields, filters,sorts, validSpan, pagination.PlusLimitOne(), [validSpan.SourceId()]);
         var records = await executor.Many(kateQuery, token);
@@ -43,7 +45,7 @@ public sealed class QueryService(
         if (records.Length <= 0) return records;
         
         await AttachRelated(attribute.Selection, args, records, token);
-        var sourceId = records.First()[attribute.Crosstable!.SourceAttribute.Field];
+        var sourceId = records.First()[cross.SourceAttribute.Field];
         SetSpan(true, attribute.Selection, records, attribute.Sorts, sourceId);
         return records;
     }
@@ -52,7 +54,7 @@ public sealed class QueryService(
     {
         var (query,selection,filters) = await GetContext(name, args, token);
 
-        var validSpan = CheckResult(span.ToValid(query.Entity.Attributes));
+        var validSpan = CheckResult(span.ToValid(query.Entity.Attributes, attributeResolver));
         
         if (!span.IsEmpty())
         {
@@ -137,10 +139,8 @@ public sealed class QueryService(
         if (ids.Length == 0) return;
 
         var fields = attr.Selection.GetLocalAttrs();
-        var filters = CheckResult(await attr.Filters.ToValid(cross.TargetEntity, args,
-            entitySchema.ResolveAttributeVector));
-        var sorts = CheckResult(await attr.Sorts.ToValidSorts(attr.Crosstable!.TargetEntity,
-            entitySchema.ResolveAttributeVector));
+        var filters = CheckResult(await attr.Filters.ToValid(cross.TargetEntity, args, attributeResolver));
+        var sorts = CheckResult(await attr.Sorts.ToValidSorts(attr.Crosstable!.TargetEntity, attributeResolver));
 
         var pagination = PaginationHelper.ResolvePagination(attr,args);
 
@@ -250,7 +250,7 @@ public sealed class QueryService(
     {
         var query = await querySchema.GetByNameAndCache(name, token);
         var attributes = query.Selection.GetLocalAttrs();
-        var filters = CheckResult(await query.Filters.ToValid(query.Entity, args, entitySchema.ResolveAttributeVector));
+        var filters = CheckResult(await query.Filters.ToValid(query.Entity, args, attributeResolver));
         return new Context(query, attributes, filters);
     }
 }

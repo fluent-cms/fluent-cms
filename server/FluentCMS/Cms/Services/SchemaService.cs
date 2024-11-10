@@ -15,6 +15,7 @@ public sealed  class SchemaService(
     KateQueryExecutor queryExecutor,
     HookRegistry hook,
     IServiceProvider provider
+    
 ) : ISchemaService
 {
     public async Task<Schema[]> GetAll(string type, CancellationToken cancellationToken = default)

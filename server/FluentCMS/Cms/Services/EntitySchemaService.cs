@@ -8,16 +8,14 @@ using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 namespace FluentCMS.Cms.Services;
 using static InvalidParamExceptionFactory;
 
-public sealed class EntitySchemaService(ISchemaService schemaSvc, IDefinitionExecutor executor) : IEntitySchemaService
+public sealed class EntitySchemaService(ISchemaService schemaSvc, IDefinitionExecutor executor)
+    : IEntitySchemaService, IAttributeResolver
 {
-    public async Task<LoadedAttribute?> FindAttribute(string name, string attr, CancellationToken token)
-    {
-        var entity = CheckResult(await GetLoadedEntity(name, token));
-        return entity.Attributes.FindOneAttr(attr);
-    }
+    public bool GetAttrVal(Attribute attribute, string v, out object? result) => executor.CastToDatabaseDataType(v, attribute.DataType, out result);
 
-    public async Task<Result<AttributeVector>> ResolveAttributeVector(LoadedEntity entity, string fieldName)
+    public async Task<Result<AttributeVector>> GetAttrVector(LoadedEntity entity, string fieldName)
     {
+
         var fields = fieldName.Split(".");
         var prefix = string.Join(AttributeVectorConstants.Separator, fields[..^1]);
         var attributes = new List<LoadedAttribute>();
@@ -56,7 +54,15 @@ public sealed class EntitySchemaService(ISchemaService schemaSvc, IDefinitionExe
         }
 
         return new AttributeVector(fieldName, prefix, [..attributes], attr!);
+
     }
+
+    public async Task<LoadedAttribute?> FindAttribute(string name, string attr, CancellationToken token)
+    {
+        var entity = CheckResult(await GetLoadedEntity(name, token));
+        return entity.Attributes.FindOneAttr(attr);
+    }
+
 
     public async Task<Result<LoadedEntity>> GetLoadedEntity(string name, CancellationToken token = default)
     {
