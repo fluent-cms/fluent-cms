@@ -53,6 +53,8 @@ public class EntitiesController(IEntityService entityService) : ControllerBase
         string attributeName, 
         [FromQuery] Pagination pagination,
         CancellationToken cancellationToken,
-        [FromQuery] bool exclude) =>
-        Ok(await entityService.CrosstableList(entityName, id, attributeName, exclude, pagination, cancellationToken));
+        [FromQuery] bool exclude) {
+        var queryDictionary = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
+        return Ok(await entityService.CrosstableList(entityName, id, attributeName, exclude, queryDictionary, pagination, cancellationToken));
+    }
 }

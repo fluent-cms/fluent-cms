@@ -15,22 +15,22 @@ public static class MongoExt
         
         
         var ret = sorts[0].Order == SortOrder.Asc
-                                  ? sortBuilder.Ascending(sorts[0].Vector.Field)
-                                  : sortBuilder.Descending(sorts[0].Vector.Field);
+                                  ? sortBuilder.Ascending(sorts[0].Vector.FullPath)
+                                  : sortBuilder.Descending(sorts[0].Vector.FullPath);
         
         for (var i = 1; i < sorts.Length; i++)
         {
             ret = sorts[i].Order == SortOrder.Asc
-                ? ret.Ascending(sorts[i].Vector.Field)
-                : ret.Descending(sorts[i].Vector.Field);
+                ? ret.Ascending(sorts[i].Vector.FullPath)
+                : ret.Descending(sorts[i].Vector.FullPath);
         }
         return ret;
     }
 
-    public static Result<FilterDefinition<BsonDocument>> GetCursorFilters(ValidCursor cursor, ImmutableArray<ValidSort> sorts)
+    public static Result<FilterDefinition<BsonDocument>> GetCursorFilters(ValidSpan span, ImmutableArray<ValidSort> sorts)
     {
         var builder = Builders<BsonDocument>.Filter;
-        if (cursor.BoundaryItem?.Count == 0) return builder.Empty;
+        if (span.EdgeItem?.Count == 0) return builder.Empty;
         
         var definitions = new List<FilterDefinition<BsonDocument>>();
         for (var i = 0; i < sorts.Length; i++)
@@ -51,14 +51,14 @@ public static class MongoExt
         
         FilterDefinition<BsonDocument> GetEq(ValidSort sort)
         {
-            var (fld, val) = (sort.Vector.Field, cursor.BoundaryValue(sort.Vector.Field));
-            return builder.Eq(fld, val);
+            var (f, v) = (sort.Vector.FullPath, span.Edge(sort.Vector.FullPath));
+            return builder.Eq(f, v);
         }
   
         FilterDefinition<BsonDocument> GetCompare(ValidSort sort)
         {
-            var (fld, val) = (sort.Vector.Field, cursor.BoundaryValue(sort.Vector.Field));
-            return cursor.Cursor.GetCompareOperator(sort.Order) == ">" ? builder.Gt(fld, val) : builder.Lt(fld, val);
+            var (f, v) = (sort.Vector.FullPath, span.Edge(sort.Vector.FullPath));
+            return span.Span.GetCompareOperator(sort.Order) == ">" ? builder.Gt(f, v) : builder.Lt(f, v);
         } 
     }
     public static Result<List<FilterDefinition<BsonDocument>>> GetFiltersDefinition(IEnumerable<ValidFilter> filters)
@@ -83,7 +83,7 @@ public static class MongoExt
         List<FilterDefinition<BsonDocument>> definitions = new();
         foreach (var filterConstraint in filter.Constraints)
         {
-            var resConstraint = GetConstraintDefinition(filter.Vector.Field, filterConstraint.Match, filterConstraint.Values);
+            var resConstraint = GetConstraintDefinition(filter.Vector.FullPath, filterConstraint.Match, filterConstraint.Values);
             if (resConstraint.IsFailed)
             {
                 return Result.Fail(resConstraint.Errors);

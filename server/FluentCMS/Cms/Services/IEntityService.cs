@@ -9,14 +9,12 @@ public interface IEntityService
 {
     Task<ListResult?> List(string entityName,Pagination pagination, Dictionary<string, StringValues> qs, CancellationToken cancellationToken);
     Task<Record> Insert(string entityName, JsonElement item, CancellationToken cancellationToken = default);
-    Task<Record> Insert(string entityName, Record item, CancellationToken cancellationToken = default);
     Task<Record> Update(string entityName, JsonElement item, CancellationToken cancellationToken);
     Task<Record> Delete(string entityName, JsonElement item, CancellationToken cancellationToken);
     Task<Record> One(string entityName, string strId, CancellationToken cancellationToken);
     Task<Record> OneByAttributes(string entityName, string strId, string[]attributes, CancellationToken cancellationToken =default);
     
-    Task<ListResult> CrosstableList(string entityName, string strId, string field, bool exclude, Pagination pagination, CancellationToken cancellationToken);
-    Task<int> CrosstableAdd(string entityName, string strId, string field, JsonElement[] items, CancellationToken cancellationToken);
+    Task<ListResult> CrosstableList(string entityName, string strId, string field, bool exclude, Dictionary<string,StringValues> qs, Pagination pagination, CancellationToken cancellationToken);
+    Task<int> CrosstableAdd(string entityName, string strId, string field, JsonElement[] items, CancellationToken token);
     Task<int> CrosstableDelete(string entityName, string strId, string attributeName, JsonElement[] elements, CancellationToken cancellationToken);
-    Task AttachRelatedEntity(LoadedEntity entity, IEnumerable<LoadedAttribute> attributes, Record[] items, CancellationToken cancellationToken);
 }

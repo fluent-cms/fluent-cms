@@ -2,7 +2,7 @@ export const contentB = {
     category: 'Multiple Records',
     name: 'content-b',
     label: 'Content B',
-    media: `<svg fill="#000000" viewBox="0 0 512 512" version="1.1" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    media: `<svg fill="#000000" viewBox="0 0 512 512" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 
 <g id="_x31_3_x2C__newsletter_x2C__newspaper_x2C__article_x2C__blog_x2C__news_paper">
 

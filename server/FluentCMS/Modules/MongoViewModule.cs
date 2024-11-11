@@ -21,7 +21,7 @@ public class MongoViewModule(ILogger<MongoViewModule> logger)
         hookRegistry.QueryPreGetList.RegisterDynamic(viewName,
             async (INosqlDao dao, QueryPreGetListArgs p) =>
             {
-                var res = InvalidParamExceptionFactory.CheckResult(await dao.Query(p.EntityName, p.Filters,p.Pagination, p.Sorts, p.Cursor));
+                var res = InvalidParamExceptionFactory.CheckResult(await dao.Query(p.EntityName, p.Filters,p.Pagination, p.Sorts, p.Span));
                 return p with { OutRecords = res };
             }
         );

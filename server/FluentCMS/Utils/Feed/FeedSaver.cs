@@ -54,19 +54,18 @@ public class FeedSaver(INosqlDao nosqlDao,ILogger<FeedSaver> logger)
                 logger.LogError(string.Join("\r\n",viewResult.Errors));
             }
 
-            if (string.IsNullOrEmpty(viewResult.Value.Last))
-            {
-                break;
-            }
+            //todo:
+            /*
+            if (viewResult.Value)
 
             Thread.Sleep(10);
             viewResult = await Call(viewResult.Value.Last);
+            */
 
         }
 
-        return;
 
-        async Task<Result<QueryResult<JsonElement>>> Call(string last)
+        async Task<Result<JsonElement[]>> Call(string last)
         {
             var fullUrl = config.Url;
             if (!string.IsNullOrWhiteSpace(last))
@@ -74,7 +73,7 @@ public class FeedSaver(INosqlDao nosqlDao,ILogger<FeedSaver> logger)
                 fullUrl += $"?last={last}";
             }
 
-            var requestResult = await _client.GetObject<QueryResult<JsonElement>>(fullUrl);
+            var requestResult = await _client.GetObject<JsonElement[]>(fullUrl);
             if (requestResult.IsFailed)
             {
                 return Result.Fail(requestResult.Errors);
@@ -82,7 +81,7 @@ public class FeedSaver(INosqlDao nosqlDao,ILogger<FeedSaver> logger)
 
             logger.LogInformation($"succeed to download feed from {fullUrl}");
 
-            var items = requestResult.Value.Items!.Select(x => x.ToDictionary());
+            var items = requestResult.Value!.Select(x => x.ToDictionary());
             try
             {
                 await nosqlDao.BatchInsert(config.CollectionName ,items);

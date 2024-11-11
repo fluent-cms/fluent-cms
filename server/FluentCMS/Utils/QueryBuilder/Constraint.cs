@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentResults;
 using Microsoft.Extensions.Primitives;
 
@@ -12,37 +11,66 @@ public static class ConstraintsHelper
 {
     private const string QuerystringPrefix = "qs.";
 
+    public static Result Verify(this IEnumerable<Constraint> constraints, Attribute attribute, IAttributeValueResolver resolver)
+    {
+        foreach (var (_, value) in constraints)
+        {
+            if (string.IsNullOrWhiteSpace(value) )
+            {
+                return Result.Fail($"value not set for field {attribute.Field}");
+            }
+            
+            if (!value.StartsWith(QuerystringPrefix) && !resolver.ResolveVal(attribute, value,out var _))
+            {
+                return Result.Fail($"Can not cast value `{value}` of `{attribute.Field}` to `{attribute.DataType}`");
+            }
+        }
+        return Result.Ok();
+    }
     public static Result<ImmutableArray<ValidConstraint>> Resolve(
         this IEnumerable<Constraint> constraints, 
         Attribute attribute,  
-        bool ignoreResolveError,
-        Dictionary<string, StringValues>? querystringDictionary
+        Dictionary<string, StringValues>? querystringDictionary,
+        IAttributeValueResolver resolver,
+        bool ignoreResolveError
         )
     {
         var ret = new List<ValidConstraint>();
-        foreach (var constraint in constraints)
+        foreach (var (match, val) in constraints)
         {
-            var val = constraint.Value;
             if (string.IsNullOrWhiteSpace(val))
             {
                 return Result.Fail($"Fail to resolve Filter, value not set for field {attribute.Field}");
             }
             if (val.StartsWith(QuerystringPrefix))
             {
-                var res = ResolveFromQueryString(val);
-                if (res.IsSuccess)
+                var (_,_, values, err) = ResolveFromQueryString(val);
+                if (err is null)
                 {
-                    var arr = res.Value.Select(attribute.Cast).ToArray();
-                    ret.Add(new ValidConstraint(constraint.Match, arr));
+                    var arr = new List<object>();
+                    foreach (var value in values)
+                    {
+                        if (!resolver.ResolveVal(attribute, value, out var dbTypeValue))
+                        {
+                            return Result.Fail("can not cast value " + value + " to " + attribute.DataType);
+                        }
+                        arr.Add(dbTypeValue!);
+                    }
+                    ret.Add(new ValidConstraint(match, [..arr]));
                 }
                 else if (!ignoreResolveError)
                 {
-                    return Result.Fail(res.Errors);
+                    return Result.Fail(err);
                 }//else ignore this constraint  
             }
             else
             {
-                ret.Add(new ValidConstraint(constraint.Match, [attribute.Cast(val)]));
+                if (!resolver.ResolveVal(attribute, val, out var dbTypeValue))
+                {
+                    return Result.Fail("can not cast value " + val + " to " + attribute.DataType);
+                }
+
+                ret.Add(new ValidConstraint(match, [dbTypeValue!]));
             }
         }
 
@@ -54,13 +82,18 @@ public static class ConstraintsHelper
             var key = val[QuerystringPrefix.Length..];
             if (querystringDictionary is null||!querystringDictionary.TryGetValue(key, out var vals))
             {
-                return Result.Fail($"Fail to resolve filter: no key {key} in query string");
+                return Result.Fail($"Fail to resolve constraint value of field `{attribute.Field}`: Can not find`{key}` in query string");
             }
             return vals.ToArray()!;
         } 
     }
 }
 
+public static class LogicalOperators
+{
+    public const string And = "and";
+    public const string Or = "or";
+}
 public static class Matches
 {
     public const string Between = "between";

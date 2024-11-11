@@ -1,7 +1,7 @@
 $(document).ready(function() {
     var loadingDict = new Map();
-    $('[data-command="previous"]').click(e => handlePaginationButton(e.target, false));
-    $('[data-command="next"]').click(e=> handlePaginationButton(e.target, true));
+    $('[data-command="previous"]').click(e => handlePaginationButton(e, e.target, false));
+    $('[data-command="next"]').click(e=> handlePaginationButton(e, e.target, true));
     
     initIntersectionObserver();
     setPaginationStatus();
@@ -30,7 +30,7 @@ $(document).ready(function() {
         });
     }
 
-    function handlePaginationButton(button, isNext) {
+    function handlePaginationButton(event,button, isNext) {
         event.preventDefault();
         let container = button.parentElement.parentElement;
         let list = container.querySelector('[data-source-type="multiple-records"]');

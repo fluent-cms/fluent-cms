@@ -372,25 +372,238 @@ LEFT JOIN "skill_teacher" AS "skills_skill_teacher" ON "teacher"."id" = "teacher
 LEFT JOIN "skills" AS "teacher_skills" ON "teacher_skills_skill_teacher"."skill_id" = "teacher_skills"."id"
 ```
 
+### Subfield
+
+Subfields in GraphQL are useful for querying complex data structures and handling relationships between entities. For example, when querying for a list of courses, each course could include a nested `teacher` object. Within the `teacher`, additional subfields like `firstname`, `lastname`, and `bio` can be queried. Each level of nesting defines a new layer of subfields.
+
+```graphql
+{
+    id
+    name
+    teacher {
+        firstname
+        lastname
+        bio
+        skills {
+            name
+            years
+        }
+    }
+}
+```
+
+With FluentCMS, you can add `filter`, `sort`, `offset`, and `limit` options to subfields, allowing for even more control over returned data.
+
+#### Filter in Subfields
+
+Filtering can be specified in three forms:
+
+1. **`fieldName:value` format**
+
+   ```graphql
+   firstname
+   lastname
+   skills(years: 3) {
+       name
+       years
+   }
+   ```
+
+   Here, the argument `years: 3` for the `skills` subfield generates a query with a `WHERE` clause equivalent to `years = 3`.
+
+2. **`fieldName: { match: value }` format**
+
+   ```graphql
+   firstname
+   lastname
+   skills(years: { gt: 3 }) {
+       name
+       years
+   }
+   ```
+
+   Using `years: { gt: 3 }` as an argument for the `skills` subfield generates a `WHERE` clause `years > 3`.
+
+3. **Advanced filter with multiple conditions**
+
+   ```graphql
+   firstname
+   lastname
+   skills(years: { equals: 3, equals: 4, operator: or }) {
+       name
+       years
+   }
+   ```
+
+   With `years: { equals: 3, equals: 4, operator: or }`, the query service generates a `WHERE` clause `years = 3 OR years = 4`.
+
+#### Sort in subfields
+
+Sort arguments can be provided in two forms:
+
+1. **Simple sort by field**
+
+   ```graphql
+   firstname
+   lastname
+   skills(years: 3, sort: years) {
+       name
+       years
+   }
+   ```
+
+   With `sort: years`, the query service generates an `ORDER BY` clause like `ORDER BY years`.
+
+2. **Sort by multiple fields and directions**
+
+   ```graphql
+   firstname
+   lastname
+   skills(years: 3, sort: { years: desc, name: asc }) {
+       name
+       years
+   }
+   ```
+
+   Here, `sort: { years: desc, name: asc }` generates an `ORDER BY` clause `ORDER BY years DESC, name ASC`.
+
+#### Offset and Limit in subfields
+
+`offset` and `limit` can be passed as query string parameters to control pagination. For instance, calling `/api/queries/teacher` might return a set of results:
+
+```json
+[
+  {
+    "id": 3,
+    "firstname": "Jane",
+    "lastname": "Debuggins",
+    "skills": [
+      {
+        "id": 13,
+        "name": "Html",
+        "years": 7,
+        "teacher_id": 3,
+        "cursor": "eyJ5ZWFycyI6NywiaWQiOjEzLCJzb3VyY2VJZCI6M30"
+      },
+      {
+        "id": 2,
+        "name": "C#",
+        "years": 5,
+        "teacher_id": 3,
+        "cursor": null
+      },
+      {
+        "id": 15,
+        "name": "Database",
+        "years": 4,
+        "teacher_id": 3,
+        "cursor": null
+      },
+      {
+        "id": 1,
+        "name": "C++",
+        "years": 3,
+        "teacher_id": 3,
+        "cursor": "eyJ5ZWFycyI6MywiaWQiOjEsInNvdXJjZUlkIjozfQ"
+      }
+    ],
+    "hasPreviousPage": false,
+    "cursor": "eyJpZCI6M30"
+  }
+]
+```
+
+Calling `/api/queries/teacher?skills.limit=2&skills.offset=1` retrieves the second and third skills in the list:
+
+```json
+[
+  {
+    "id": 3,
+    "firstname": "Jane",
+    "lastname": "Debuggins",
+    "skills": [
+      {
+        "id": 2,
+        "name": "C#",
+        "years": 5,
+        "teacher_id": 3,
+        "hasPreviousPage": false,
+        "cursor": "eyJ5ZWFycyI6NSwiaWQiOjIsInNvdXJjZUlkIjozfQ"
+      },
+      {
+        "id": 15,
+        "name": "Database",
+        "years": 4,
+        "teacher_id": 3,
+        "hasNextPage": true,
+        "cursor": "eyJ5ZWFycyI6NCwiaWQiOjE1LCJzb3VyY2VJZCI6M30"
+      }
+    ],
+    "hasPreviousPage": false,
+    "cursor": "eyJpZCI6M30"
+  }
+]
+```
+#### Paginating subfields
+
+Calling `/api/queries/teacher/part/skills?last=<cursor>` retrieves the records after the third skill.
+```json
+[
+  {
+    "id": 15,
+    "name": "Database",
+    "years": 4,
+    "teacher_id": 3,
+    "hasPreviousPage": true,
+    "cursor": "eyJ5ZWFycyI6NCwiaWQiOjE1LCJzb3VyY2VJZCI6M30"
+  },
+  {
+    "id": 1,
+    "name": "C++",
+    "years": 3,
+    "teacher_id": 3,
+    "hasNextPage": false,
+    "cursor": "eyJ5ZWFycyI6MywiaWQiOjEsInNvdXJjZUlkIjozfQ"
+  }
+]
+```
+This setup allows precise control over filtering, sorting, and paginating nested data in FluentCMS.
+
+
 ### Query Endpoints
 
 Each query has three corresponding endpoints:
 
 - **List**: `/api/queries/<query-name>` retrieves a paginated list.
-  - To view the next page: `/api/queries/<query-name>?last=***`
-  - To view the previous page: `/api/queries/<query-name>?first=***`
-`sorts` was applied when retrieving next page or previous page.
-Example response:
+The example response is, if this page has previous page, the `hasPreviousPage` is set to ture. if the page has next page,
+the `hasNextPage` is set to true. 
 
 ```json
-{
-  "items": [],
-  "first": "",
-  "hasPrevious": false,
-  "last": "eyJpZCI6M30",
-  "hasNext": true
-}
+[
+  {
+    "name": "The Art of Pizza Making",
+    "id": 23,
+    "hasPreviousPage": false,
+    "cursor": "eyJpZCI6MjJ9"
+  },
+  {
+    "name": "Functional Programming",
+    "id": 22
+  },
+  {
+    "id": 21,
+    "name": "Functional Programming",
+    "hasPreviousPage": true,
+    "cursor": "eyJpZCI6M30"
+  }
+]
 ```
+The cursor field value of the two edge items is used to fetch the next or previous page.
+  - To view the next page: `/api/queries/<query-name>?last=<cursor>`
+  - To view the previous page: `/api/queries/<query-name>?first=<cursor>`
+
+`sorts` was applied when retrieving next page or previous page.
+
 
 - **Single Record**: `/api/queries/<query-name>/one` returns the first record.
   - Example: `/api/queries/<query-name>/one?id=***`

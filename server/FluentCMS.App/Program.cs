@@ -118,7 +118,7 @@ void RegisterHooks()
             param.Record[TestEntity.FieldName] += "AfterQueryOne";
             return param;
         });
-    var attr = new LoadedAttribute([], TestEntity.EntityName, TestEntity.FieldName);
+    var attr = new LoadedAttribute(TestEntity.EntityName, TestEntity.FieldName);
     var vector = new AttributeVector(TestEntity.FieldName, "", [], attr);
     registry.EntityPreGetList.Register(TestEntity.EntityName,
         param => param with { RefSorts = [..param.RefSorts, new ValidSort(vector, SortOrder.Asc)] });

@@ -33,9 +33,9 @@ public static class KateQueryExt
                         var lookup = node.Attribute.Lookup!;
                         query
                             .LeftJoin($"{lookup.TableName} as {nextPrefix}",
-                            node.Attribute.GetFullName(prefix),
-                            lookup.PrimaryKeyAttribute.GetFullName(nextPrefix))
-                            .Where(lookup.DeletedAttribute.GetFullName(nextPrefix), false);
+                            node.Attribute.AddTableModifier(prefix),
+                            lookup.PrimaryKeyAttribute.AddTableModifier(nextPrefix))
+                            .Where(lookup.DeletedAttribute.AddTableModifier(nextPrefix), false);
                         break;
                     case DisplayType.Crosstable:
                         hasCrosstable = true;
@@ -43,13 +43,13 @@ public static class KateQueryExt
                         var crossAlias = $"{nextPrefix}_{cross!.CrossEntity.TableName}";
                         query
                             .LeftJoin($"{cross.CrossEntity.TableName} as {crossAlias}",
-                                cross.SourceEntity.PrimaryKeyAttribute.GetFullName(prefix),
-                                cross.SourceAttribute.GetFullName(crossAlias))
+                                cross.SourceEntity.PrimaryKeyAttribute.AddTableModifier(prefix),
+                                cross.SourceAttribute.AddTableModifier(crossAlias))
                             .LeftJoin($"{cross.TargetEntity.TableName} as {nextPrefix}",
-                                cross.TargetAttribute.GetFullName(crossAlias),
-                                cross.TargetEntity.PrimaryKeyAttribute.GetFullName(nextPrefix))
-                            .Where(cross.CrossEntity.DeletedAttribute.GetFullName(crossAlias),false)
-                            .Where(cross.TargetEntity.DeletedAttribute.GetFullName(nextPrefix),false);
+                                cross.TargetAttribute.AddTableModifier(crossAlias),
+                                cross.TargetEntity.PrimaryKeyAttribute.AddTableModifier(nextPrefix))
+                            .Where(cross.CrossEntity.DeletedAttribute.AddTableModifier(crossAlias),false)
+                            .Where(cross.TargetEntity.DeletedAttribute.AddTableModifier(nextPrefix),false);
                     break;
                 }
             }
@@ -72,11 +72,11 @@ public static class KateQueryExt
             var vector = sort.Vector;
             if (sort.Order == SortOrder.Desc)
             {
-                query.OrderByDesc(vector.Attribute.GetFullName(vector.TableAlias));
+                query.OrderByDesc(vector.Attribute.AddTableModifier(vector.TableAlias));
             }
             else
             {
-                query.OrderBy(vector.Attribute.GetFullName(vector.TableAlias));
+                query.OrderBy(vector.Attribute.AddTableModifier(vector.TableAlias));
             }
         }
     }
@@ -86,7 +86,7 @@ public static class KateQueryExt
         var result = Result.Ok();
         foreach (var filter in filters)
         {
-            var filedName = filter.Vector.Attribute.GetFullName(filter.Vector.TableAlias);
+            var filedName = filter.Vector.Attribute.AddTableModifier(filter.Vector.TableAlias);
             query.Where(q =>
             {
                 foreach (var c in filter.Constraints)
@@ -163,23 +163,18 @@ public static class KateQueryExt
     }
 
     
-    public static Result ApplyCursor(this SqlKata.Query? query,  ValidCursor? cursor,ImmutableArray<ValidSort> sorts)
+    public static void ApplyCursor(this SqlKata.Query? query,  ValidSpan? cursor,ImmutableArray<ValidSort> sorts)
     {
-        if (query is null || cursor?.BoundaryItem is null)
+        if (query is null || cursor?.EdgeItem is null)
         {
-            return Result.Ok();
+            return;
         }
 
-        var res = Result.Ok();
         query.Where(q =>
         {
             for (var i = 0; i < sorts.Length; i++)
             {
-                res =ApplyFilter(q, i);
-                if (res.IsFailed)
-                {
-                    break;
-                }
+                ApplyFilter(q, i);
                 if (i < sorts.Length - 1)
                 {
                     q.Or();
@@ -187,43 +182,25 @@ public static class KateQueryExt
             }
             return q;
         });
-        return res;
+        return ;
 
-        Result ApplyFilter(SqlKata.Query q,int idx)
+        void ApplyFilter(SqlKata.Query q,int idx)
         {
             for (var i = 0; i < idx; i++)
             {
-                var (_,_,errors) = ApplyEq(q, sorts[i]);
-                if (errors?.Count >0)
-                {
-                    return Result.Fail(res.Errors);
-                }
+                ApplyEq(q, sorts[i]);
             }
-            var r = ApplyCompare(q,sorts[idx]);
-            return r.IsFailed ? Result.Fail(r.Errors) : Result.Ok();
+            ApplyCompare(q,sorts[idx]);
         }
 
-        Result ApplyEq(SqlKata.Query q, ValidSort sort)
+        void ApplyEq(SqlKata.Query q, ValidSort sort)
         {
-            var (_,_, value, errors) = cursor.BoundaryValue(sort.Vector.Field);
-            if (errors?.Count > 0 )
-            {
-                return Result.Fail(errors);
-            }
-
-            q.Where(sort.Vector.Attribute.GetFullName(sort.Vector.TableAlias), value);
-            return Result.Ok();
+            q.Where(sort.Vector.Attribute.AddTableModifier(sort.Vector.TableAlias),  cursor.Edge(sort.Vector.FullPath));
         }
 
-        Result ApplyCompare(SqlKata.Query q, ValidSort sort)
+        void ApplyCompare(SqlKata.Query q, ValidSort sort)
         {
-            var (_,_, v,err) = cursor.BoundaryValue(sort.Vector.Field);
-            if (err?.Count > 0)
-            {
-                return Result.Fail(err);
-            }
-            q.Where(sort.Vector.Attribute.GetFullName(sort.Vector.TableAlias), cursor.Cursor.GetCompareOperator(sort.Order),v);
-            return Result.Ok();
+            q.Where(sort.Vector.Attribute.AddTableModifier(sort.Vector.TableAlias), cursor.Span.GetCompareOperator(sort.Order), cursor.Edge(sort.Vector.FullPath));
         }
         
     }

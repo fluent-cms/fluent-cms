@@ -533,23 +533,205 @@ LEFT JOIN &quot;teachers&quot; AS &quot;teacher&quot; ON &quot;courses&quot;.&qu
 LEFT JOIN &quot;skill_teacher&quot; AS &quot;skills_skill_teacher&quot; ON &quot;teacher&quot;.&quot;id&quot; = &quot;teacher_skills_skill_teacher&quot;.&quot;teacher_id&quot;
 LEFT JOIN &quot;skills&quot; AS &quot;teacher_skills&quot; ON &quot;teacher_skills_skill_teacher&quot;.&quot;skill_id&quot; = &quot;teacher_skills&quot;.&quot;id&quot;
 </code></pre>
+<h3 id="subfield">Subfield</h3>
+<p>Subfields in GraphQL are useful for querying complex data structures and handling relationships between entities. For example, when querying for a list of courses, each course could include a nested <code>teacher</code> object. Within the <code>teacher</code>, additional subfields like <code>firstname</code>, <code>lastname</code>, and <code>bio</code> can be queried. Each level of nesting defines a new layer of subfields.</p>
+<pre><code class="language-graphql">{
+    id
+    name
+    teacher {
+        firstname
+        lastname
+        bio
+        skills {
+            name
+            years
+        }
+    }
+}
+</code></pre>
+<p>With FluentCMS, you can add <code>filter</code>, <code>sort</code>, <code>offset</code>, and <code>limit</code> options to subfields, allowing for even more control over returned data.</p>
+<h4 id="filter-in-subfields">Filter in Subfields</h4>
+<p>Filtering can be specified in three forms:</p>
+<ol>
+<li><strong><code>fieldName:value</code> format</strong></li>
+</ol>
+<p><code>graphql
+   firstname
+   lastname
+   skills(years: 3) {
+       name
+       years
+   }</code></p>
+<p>Here, the argument <code>years: 3</code> for the <code>skills</code> subfield generates a query with a <code>WHERE</code> clause equivalent to <code>years = 3</code>.</p>
+<ol>
+<li><strong><code>fieldName: { match: value }</code> format</strong></li>
+</ol>
+<p><code>graphql
+   firstname
+   lastname
+   skills(years: { gt: 3 }) {
+       name
+       years
+   }</code></p>
+<p>Using <code>years: { gt: 3 }</code> as an argument for the <code>skills</code> subfield generates a <code>WHERE</code> clause <code>years &gt; 3</code>.</p>
+<ol>
+<li><strong>Advanced filter with multiple conditions</strong></li>
+</ol>
+<p><code>graphql
+   firstname
+   lastname
+   skills(years: { equals: 3, equals: 4, operator: or }) {
+       name
+       years
+   }</code></p>
+<p>With <code>years: { equals: 3, equals: 4, operator: or }</code>, the query service generates a <code>WHERE</code> clause <code>years = 3 OR years = 4</code>.</p>
+<h4 id="sort-in-subfields">Sort in subfields</h4>
+<p>Sort arguments can be provided in two forms:</p>
+<ol>
+<li><strong>Simple sort by field</strong></li>
+</ol>
+<p><code>graphql
+   firstname
+   lastname
+   skills(years: 3, sort: years) {
+       name
+       years
+   }</code></p>
+<p>With <code>sort: years</code>, the query service generates an <code>ORDER BY</code> clause like <code>ORDER BY years</code>.</p>
+<ol>
+<li><strong>Sort by multiple fields and directions</strong></li>
+</ol>
+<p><code>graphql
+   firstname
+   lastname
+   skills(years: 3, sort: { years: desc, name: asc }) {
+       name
+       years
+   }</code></p>
+<p>Here, <code>sort: { years: desc, name: asc }</code> generates an <code>ORDER BY</code> clause <code>ORDER BY years DESC, name ASC</code>.</p>
+<h4 id="offset-and-limit-in-subfields">Offset and Limit in subfields</h4>
+<p><code>offset</code> and <code>limit</code> can be passed as query string parameters to control pagination. For instance, calling <code>/api/queries/teacher</code> might return a set of results:</p>
+<pre><code class="language-json">[
+  {
+    &quot;id&quot;: 3,
+    &quot;firstname&quot;: &quot;Jane&quot;,
+    &quot;lastname&quot;: &quot;Debuggins&quot;,
+    &quot;skills&quot;: [
+      {
+        &quot;id&quot;: 13,
+        &quot;name&quot;: &quot;Html&quot;,
+        &quot;years&quot;: 7,
+        &quot;teacher_id&quot;: 3,
+        &quot;cursor&quot;: &quot;eyJ5ZWFycyI6NywiaWQiOjEzLCJzb3VyY2VJZCI6M30&quot;
+      },
+      {
+        &quot;id&quot;: 2,
+        &quot;name&quot;: &quot;C#&quot;,
+        &quot;years&quot;: 5,
+        &quot;teacher_id&quot;: 3,
+        &quot;cursor&quot;: null
+      },
+      {
+        &quot;id&quot;: 15,
+        &quot;name&quot;: &quot;Database&quot;,
+        &quot;years&quot;: 4,
+        &quot;teacher_id&quot;: 3,
+        &quot;cursor&quot;: null
+      },
+      {
+        &quot;id&quot;: 1,
+        &quot;name&quot;: &quot;C++&quot;,
+        &quot;years&quot;: 3,
+        &quot;teacher_id&quot;: 3,
+        &quot;cursor&quot;: &quot;eyJ5ZWFycyI6MywiaWQiOjEsInNvdXJjZUlkIjozfQ&quot;
+      }
+    ],
+    &quot;hasPreviousPage&quot;: false,
+    &quot;cursor&quot;: &quot;eyJpZCI6M30&quot;
+  }
+]
+</code></pre>
+<p>Calling <code>/api/queries/teacher?skills.limit=2&amp;skills.offset=1</code> retrieves the second and third skills in the list:</p>
+<pre><code class="language-json">[
+  {
+    &quot;id&quot;: 3,
+    &quot;firstname&quot;: &quot;Jane&quot;,
+    &quot;lastname&quot;: &quot;Debuggins&quot;,
+    &quot;skills&quot;: [
+      {
+        &quot;id&quot;: 2,
+        &quot;name&quot;: &quot;C#&quot;,
+        &quot;years&quot;: 5,
+        &quot;teacher_id&quot;: 3,
+        &quot;hasPreviousPage&quot;: false,
+        &quot;cursor&quot;: &quot;eyJ5ZWFycyI6NSwiaWQiOjIsInNvdXJjZUlkIjozfQ&quot;
+      },
+      {
+        &quot;id&quot;: 15,
+        &quot;name&quot;: &quot;Database&quot;,
+        &quot;years&quot;: 4,
+        &quot;teacher_id&quot;: 3,
+        &quot;hasNextPage&quot;: true,
+        &quot;cursor&quot;: &quot;eyJ5ZWFycyI6NCwiaWQiOjE1LCJzb3VyY2VJZCI6M30&quot;
+      }
+    ],
+    &quot;hasPreviousPage&quot;: false,
+    &quot;cursor&quot;: &quot;eyJpZCI6M30&quot;
+  }
+]
+</code></pre>
+<h4 id="paginating-subfields">Paginating subfields</h4>
+<p>Calling <code>/api/queries/teacher/part/skills?last=&lt;cursor&gt;</code> retrieves the records after the third skill.</p>
+<pre><code class="language-json">[
+  {
+    &quot;id&quot;: 15,
+    &quot;name&quot;: &quot;Database&quot;,
+    &quot;years&quot;: 4,
+    &quot;teacher_id&quot;: 3,
+    &quot;hasPreviousPage&quot;: true,
+    &quot;cursor&quot;: &quot;eyJ5ZWFycyI6NCwiaWQiOjE1LCJzb3VyY2VJZCI6M30&quot;
+  },
+  {
+    &quot;id&quot;: 1,
+    &quot;name&quot;: &quot;C++&quot;,
+    &quot;years&quot;: 3,
+    &quot;teacher_id&quot;: 3,
+    &quot;hasNextPage&quot;: false,
+    &quot;cursor&quot;: &quot;eyJ5ZWFycyI6MywiaWQiOjEsInNvdXJjZUlkIjozfQ&quot;
+  }
+]
+</code></pre>
+<p>This setup allows precise control over filtering, sorting, and paginating nested data in FluentCMS.</p>
 <h3 id="query-endpoints">Query Endpoints</h3>
 <p>Each query has three corresponding endpoints:</p>
 <ul>
-<li><strong>List</strong>: <code>/api/queries/&lt;query-name&gt;</code> retrieves a paginated list.</li>
-<li>To view the next page: <code>/api/queries/&lt;query-name&gt;?last=***</code></li>
-<li>To view the previous page: <code>/api/queries/&lt;query-name&gt;?first=***</code>
-<code>sorts</code> was applied when retrieving next page or previous page.
-Example response:</li>
+<li><strong>List</strong>: <code>/api/queries/&lt;query-name&gt;</code> retrieves a paginated list.
+The example response is, if this page has previous page, the <code>hasPreviousPage</code> is set to ture. if the page has next page,
+the <code>hasNextPage</code> is set to true. </li>
 </ul>
-<pre><code class="language-json">{
-  &quot;items&quot;: [],
-  &quot;first&quot;: &quot;&quot;,
-  &quot;hasPrevious&quot;: false,
-  &quot;last&quot;: &quot;eyJpZCI6M30&quot;,
-  &quot;hasNext&quot;: true
-}
+<pre><code class="language-json">[
+  {
+    &quot;name&quot;: &quot;The Art of Pizza Making&quot;,
+    &quot;id&quot;: 23,
+    &quot;hasPreviousPage&quot;: false,
+    &quot;cursor&quot;: &quot;eyJpZCI6MjJ9&quot;
+  },
+  {
+    &quot;name&quot;: &quot;Functional Programming&quot;,
+    &quot;id&quot;: 22
+  },
+  {
+    &quot;id&quot;: 21,
+    &quot;name&quot;: &quot;Functional Programming&quot;,
+    &quot;hasPreviousPage&quot;: true,
+    &quot;cursor&quot;: &quot;eyJpZCI6M30&quot;
+  }
+]
 </code></pre>
+<p>The cursor field value of the two edge items is used to fetch the next or previous page.
+  - To view the next page: <code>/api/queries/&lt;query-name&gt;?last=&lt;cursor&gt;</code>
+  - To view the previous page: <code>/api/queries/&lt;query-name&gt;?first=&lt;cursor&gt;</code></p>
+<p><code>sorts</code> was applied when retrieving next page or previous page.</p>
 <ul>
 <li><strong>Single Record</strong>: <code>/api/queries/&lt;query-name&gt;/one</code> returns the first record.</li>
 <li>
@@ -894,5 +1076,5 @@ The QueryService Apply below filter, resulting in  <code>WHERE teacher in (3)</c
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2024-10-31 15:47:58.207053+00:00
+Build Date UTC : 2024-11-07 16:41:33.967689+00:00
 -->

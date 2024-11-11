@@ -13,7 +13,7 @@ public static class HttpClientExt
             : Result.Fail($"fail to request {msg.RequestMessage?.RequestUri}, message= {await msg.Content.ReadAsStringAsync()}");
     }
 
-    public static async Task<Result<T>> ToResult<T>(this HttpResponseMessage msg)
+    private static async Task<Result<T>> ToResult<T>(this HttpResponseMessage msg)
     {
         var str = await msg.Content.ReadAsStringAsync();
         if (!msg.IsSuccessStatusCode)

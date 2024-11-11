@@ -33,7 +33,7 @@ public class EntityPermissionService(
             throw new InvalidParamException($"You don't have permission to read [{entityName}]");
         }
 
-        var createBy = new LoadedAttribute(Children:[],TableName: entity.TableName, Constants.CreatedBy);
+        var createBy = new LoadedAttribute(TableName: entity.TableName, Constants.CreatedBy);
         return
         [
             ..filters,

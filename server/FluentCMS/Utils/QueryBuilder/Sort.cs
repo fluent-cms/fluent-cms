@@ -5,13 +5,13 @@ namespace FluentCMS.Utils.QueryBuilder;
 
 public static class SortOrder
 {
-    public const string Asc = "ASC";
-    public const string Desc = "Desc";
+    public const string Asc = "asc";
+    public const string Desc = "desc";
 }
 
-public sealed record Sort(string FieldName, string Order);
+public record Sort(string FieldName, string Order);
 
-public sealed record ValidSort(AttributeVector Vector,string Order);
+public sealed record ValidSort(AttributeVector Vector,string Order):Sort(Vector.FullPath, Order);
 
 public static class SortConstant
 {
@@ -20,37 +20,42 @@ public static class SortConstant
 
 public static class SortHelper
 {
-    public static async Task<Result<ImmutableArray<ValidSort>>> ToValidSorts(this IEnumerable<Sort> sorts, LoadedEntity entity,
-        ResolveVectorDelegate vectorDelegate)
+    public static async Task<Result<ImmutableArray<ValidSort>>> ToValidSorts(
+        this IEnumerable<Sort> sorts, 
+        LoadedEntity entity,
+        IEntityVectorResolver vectorResolver)
     {
         var ret = new List<ValidSort>();
-        foreach (var sort in sorts)
+        foreach (var sort in sorts)             
         {
-            var res = await vectorDelegate(entity, sort.FieldName);
-            if (res.IsFailed)
+            var (_,_,attr,e) = await vectorResolver.ResolveVector(entity, sort.FieldName);
+            if (e is not null)
             {
-                return Result.Fail(res.Errors);
+                return Result.Fail(e);
             }
-            ret.Add(new ValidSort(res.Value,sort.Order));
+            ret.Add(new ValidSort(attr,sort.Order));
         }
         return ret.ToImmutableArray();
     }
     
-    public static async Task<Result<ImmutableArray<ValidSort>>> Parse(Qs.QsDict qsDict, LoadedEntity entity, ResolveVectorDelegate vectorDelegate)
+    public static async Task<Result<ImmutableArray<ValidSort>>> Parse(
+        LoadedEntity entity, 
+        Dictionary<string,QueryArgs> dictionary, 
+        IEntityVectorResolver vectorResolver)
     {
         var ret = new List<ValidSort>();
 
-        if (qsDict.Dict.TryGetValue(SortConstant.SortKey, out var pairs))
+        if (dictionary.TryGetValue(SortConstant.SortKey, out var dict))
         {
-            foreach (var p in pairs)
+            foreach (var (fieldName, orderStr) in dict)
             {
-                var (_, _, vector, errors) = await vectorDelegate(entity, p.Key);
-                if (errors is not null)
+                var (_, _, vector, errors) = await vectorResolver.ResolveVector(entity, fieldName);
+                if (errors?.Count > 0 )
                 {
                     return Result.Fail(errors);
                 }
                 
-                var order = p.Values.FirstOrDefault() == "1" ? SortOrder.Asc : SortOrder.Desc;
+                var order = orderStr.ToString() == "1" ? SortOrder.Asc : SortOrder.Desc;
                 ret.Add(new ValidSort(vector,order));
             }
         }

@@ -5,7 +5,7 @@ namespace FluentCMS.Cms.Services;
 
 public interface IPageService
 {
-    Task<string> Get(string pageName, Dictionary<string,StringValues> qsDictionary, CancellationToken cancellationToken =default);
-    Task<string> GetDetail(string pageName, string routerParamValue, Dictionary<string,StringValues> qsDictionary, CancellationToken cancellationToken = default);
-    Task<string> GetPartial(string partialToken, CancellationToken cancellationToken);
+    Task<string> Get(string name, Dictionary<string,StringValues> args, CancellationToken token =default);
+    Task<string> GetDetail(string name, string param, Dictionary<string,StringValues> args, CancellationToken token = default);
+    Task<string> GetPart(string pageId, CancellationToken token);
 }

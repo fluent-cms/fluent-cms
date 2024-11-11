@@ -4,7 +4,7 @@ using FluentResults;
 namespace FluentCMS.Utils.QueryBuilder;
 
 public record AttributeVector(
-    string Field,
+    string FullPath,
     string TableAlias,
     ImmutableArray<LoadedAttribute> Ancestors,
     LoadedAttribute Attribute);
@@ -41,5 +41,3 @@ public class AttributeTreeNode(LoadedAttribute? attribute = default)
         return root;
     }
 }
-
-public delegate Task<Result<AttributeVector>> ResolveVectorDelegate(LoadedEntity entity, string attributeName);

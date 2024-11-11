@@ -15,8 +15,7 @@ export function SelectDataTable({primaryKey, titleAttribute, columns, data, sele
 }) {
     const {items, totalRecords} = data ?? {}
     return columns && data && <DataTable
-        selection={selectedItems}
-        onSelectionChange={(e) => setSelectedItems(e.value)}
+        sortMode="multiple"
         dataKey={primaryKey}
         value={items}
         paginator
@@ -29,6 +28,9 @@ export function SelectDataTable({primaryKey, titleAttribute, columns, data, sele
         sortField={lazyState?.sortField}
         sortOrder={lazyState?.sortOrder}
         {...eventHandlers}
+
+        selection={selectedItems}
+        onSelectionChange={(e) => setSelectedItems(e.value)}
     >
         <Column selectionMode="multiple" headerStyle={{width: '3rem'}}></Column>
         {columns.map((column: any, i: number) => createColumn({column, primaryKey, titleAttribute,getFullURL }))}

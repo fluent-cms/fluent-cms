@@ -5,7 +5,8 @@ namespace FluentCMS.Cms.Services;
 
 public interface IQueryService
 {
-    Task<QueryResult<Record>> List(string queryName, Cursor cursor, Pagination pagination, Dictionary<string, StringValues> querystringDictionary, CancellationToken cancellationToken);
-    Task<Record> One(string queryName, Dictionary<string, StringValues> querystringDictionary, CancellationToken cancellationToken);
-    Task<Record[]> Many(string queryName,  Dictionary<string, StringValues> querystringDictionary, CancellationToken cancellationToken);
+    Task<Record[]> List(string name, Span span, Pagination pagination, QueryArgs args, CancellationToken token);
+    Task<Record[]> Many(string name,  QueryArgs args,  CancellationToken token);
+    Task<Record> One(string name, QueryArgs args, CancellationToken token);
+    Task<Record[]> Partial(string name, string attr, Span span, int limit, QueryArgs args, CancellationToken token);
 }

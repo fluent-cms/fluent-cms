@@ -120,7 +120,7 @@ public class SchemaPermissionService<TUser>(
     {
         var entity = schema.Settings.Entity;
         if (entity is null) return Result.Fail("Invalid Entity payload");
-        if (schema.Settings.Entity?.Attributes.FindOneAttribute(Constants.CreatedBy) is not null) return schema;
+        if (schema.Settings.Entity?.Attributes.FindOneAttr(Constants.CreatedBy) is not null) return schema;
 
         ImmutableArray<Attribute> attributes =
         [

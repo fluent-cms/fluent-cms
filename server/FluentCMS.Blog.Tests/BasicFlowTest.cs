@@ -3,9 +3,9 @@ using FluentCMS.Utils.ApiClient;
 namespace FluentCMS.IntegrationTests;
 public class BasicFlowTest
 {
-    private const string Tutor = "tutor";
-    private const string Leaner = "leaner";
-    private const string Class = "class";
+    private const string Tutor = "basic_test_tutor";
+    private const string Leaner = "basic_test_leaner";
+    private const string Class = "basic_test_class";
     private const string Name = "name";
 
 
