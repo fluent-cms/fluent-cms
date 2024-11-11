@@ -64,7 +64,6 @@ public class FeedSaver(INosqlDao nosqlDao,ILogger<FeedSaver> logger)
 
         }
 
-        return;
 
         async Task<Result<JsonElement[]>> Call(string last)
         {
