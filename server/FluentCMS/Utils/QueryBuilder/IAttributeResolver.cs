@@ -2,8 +2,12 @@ using FluentResults;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
-public interface IAttributeResolver
+public interface IAttributeValueResolver
 {
-    public bool GetAttrVal(Attribute attribute, string v, out object? value);
-    public Task<Result<AttributeVector>> GetAttrVector(LoadedEntity entity, string fieldName);
+    public bool ResolveVal(Attribute attribute, string v, out object? value);
+}
+
+public interface IEntityVectorResolver
+{
+    public Task<Result<AttributeVector>> ResolveVector(LoadedEntity entity, string fieldName);
 }

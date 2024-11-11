@@ -11,15 +11,16 @@ public static class ConstraintsHelper
 {
     private const string QuerystringPrefix = "qs.";
 
-    public static Result Verify(this IEnumerable<Constraint> constraints, Attribute attribute, IAttributeResolver resolver)
+    public static Result Verify(this IEnumerable<Constraint> constraints, Attribute attribute, IAttributeValueResolver resolver)
     {
-        foreach (var (match, value) in constraints)
+        foreach (var (_, value) in constraints)
         {
             if (string.IsNullOrWhiteSpace(value) )
             {
                 return Result.Fail($"value not set for field {attribute.Field}");
             }
-            if (!resolver.GetAttrVal(attribute, value,out var _))
+            
+            if (!value.StartsWith(QuerystringPrefix) && !resolver.ResolveVal(attribute, value,out var _))
             {
                 return Result.Fail($"Can not cast value `{value}` of `{attribute.Field}` to `{attribute.DataType}`");
             }
@@ -30,7 +31,7 @@ public static class ConstraintsHelper
         this IEnumerable<Constraint> constraints, 
         Attribute attribute,  
         Dictionary<string, StringValues>? querystringDictionary,
-        IAttributeResolver resolver,
+        IAttributeValueResolver resolver,
         bool ignoreResolveError
         )
     {
@@ -49,7 +50,7 @@ public static class ConstraintsHelper
                     var arr = new List<object>();
                     foreach (var value in values)
                     {
-                        if (!resolver.GetAttrVal(attribute, value, out var dbTypeValue))
+                        if (!resolver.ResolveVal(attribute, value, out var dbTypeValue))
                         {
                             return Result.Fail("can not cast value " + value + " to " + attribute.DataType);
                         }
@@ -64,7 +65,7 @@ public static class ConstraintsHelper
             }
             else
             {
-                if (!resolver.GetAttrVal(attribute, val, out var dbTypeValue))
+                if (!resolver.ResolveVal(attribute, val, out var dbTypeValue))
                 {
                     return Result.Fail("can not cast value " + val + " to " + attribute.DataType);
                 }
@@ -81,7 +82,7 @@ public static class ConstraintsHelper
             var key = val[QuerystringPrefix.Length..];
             if (querystringDictionary is null||!querystringDictionary.TryGetValue(key, out var vals))
             {
-                return Result.Fail($"Fail to resolve filter: no key {key} in query string");
+                return Result.Fail($"Fail to resolve constraint value of field `{attribute.Field}`: Can not find`{key}` in query string");
             }
             return vals.ToArray()!;
         } 

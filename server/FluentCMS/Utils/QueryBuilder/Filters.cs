@@ -19,18 +19,19 @@ public static class FilterHelper
     public static async Task<Result> Verify(
         this IEnumerable<Filter> filters,  
         LoadedEntity entity,
-        IAttributeResolver resolver  
+        IEntityVectorResolver vectorResolver ,
+        IAttributeValueResolver valueResolver
         )
     {
         foreach (var filter in filters)
         {
-            var (_,_,vector,errors) = await resolver.GetAttrVector(entity, filter.FieldName);
+            var (_,_,vector,errors) = await vectorResolver.ResolveVector(entity, filter.FieldName);
             if (errors is not null)
             {
                 return Result.Fail(errors);
             }
 
-            var (_, _, constraintsError) =  filter.Constraints.Verify(vector.Attribute, resolver);
+            var (_, _, constraintsError) =  filter.Constraints.Verify(vector.Attribute, valueResolver);
             if (constraintsError is not null)
             {
                 return Result.Fail(constraintsError);
@@ -43,19 +44,20 @@ public static class FilterHelper
         this IEnumerable<Filter> filters,  
         LoadedEntity entity,
         QueryArgs? args,
-        IAttributeResolver resolver  
+        IEntityVectorResolver vectorResolver,  
+        IAttributeValueResolver valueResolver  
         )
     {
         var ret = new List<ValidFilter>();
         foreach (var filter in filters)
         {
-            var (_, _, vector, vectorError) = await resolver.GetAttrVector(entity,filter.FieldName);
+            var (_, _, vector, vectorError) = await vectorResolver.ResolveVector(entity,filter.FieldName);
             if (vectorError is not null)
             {
                 return Result.Fail(vectorError);
             }
 
-            var (_, _, constraints, constraintErrors) = filter.Constraints.Resolve(vector.Attribute, args,resolver, filter.OmitFail);
+            var (_, _, constraints, constraintErrors) = filter.Constraints.Resolve(vector.Attribute, args,valueResolver, filter.OmitFail);
             if (constraintErrors is not null)
             {
                 return Result.Fail(constraintErrors);
@@ -68,7 +70,11 @@ public static class FilterHelper
         return ret.ToImmutableArray();
     }
 
-    public static async Task<Result<ImmutableArray<ValidFilter>>> Parse(LoadedEntity entity, Dictionary<string, QueryArgs> dictionary, IAttributeResolver resolver)
+    public static async Task<Result<ImmutableArray<ValidFilter>>> Parse(
+        LoadedEntity entity, 
+        Dictionary<string, QueryArgs> dictionary, 
+        IEntityVectorResolver vectorResolver, IAttributeValueResolver valueResolver
+        )
     {
         var ret = new List<ValidFilter>();
         foreach (var (key, value) in dictionary)
@@ -78,7 +84,7 @@ public static class FilterHelper
                 continue;
             }
 
-            var (_,_,filter, errors) = await Parse(entity, key, value, resolver);
+            var (_,_,filter, errors) = await Parse(entity, key, value, vectorResolver, valueResolver);
             if (errors is not null)
             {
                 return Result.Fail(errors);
@@ -91,9 +97,11 @@ public static class FilterHelper
         return ret.ToImmutableArray();
     }
 
-    private static async Task<Result<ValidFilter>> Parse(LoadedEntity entity, string field, QueryArgs args, IAttributeResolver resolver)
+    private static async Task<Result<ValidFilter>> Parse(LoadedEntity entity, string field, QueryArgs args, 
+        IEntityVectorResolver vectorResolver, IAttributeValueResolver valueResolver
+        )
     {
-        var (_, _, vector, errors) = await resolver.GetAttrVector(entity, field);
+        var (_, _, vector, errors) = await vectorResolver.ResolveVector(entity, field);
         if (errors is not null)
         {
             return Result.Fail($"Fail to parse filter, not found {entity.Name}.{field}, errors: {errors}");
@@ -103,7 +111,7 @@ public static class FilterHelper
         var constraints = new List<ValidConstraint>();
         foreach (var (match, values) in args.Where(x =>x.Key != "operator"))
         {
-            if (!resolver.GetAttrVal(vector.Attribute, values.ToString(), out var obj))
+            if (!valueResolver.ResolveVal(vector.Attribute, values.ToString(), out var obj))
             {
                 return Result.Fail($"Failed to case {values.ToString()} to {vector.Attribute.DataType}");
 

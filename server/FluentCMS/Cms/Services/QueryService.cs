@@ -4,7 +4,6 @@ using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.QueryBuilder;
 using Microsoft.Extensions.Primitives;
 using FluentCMS.Utils.HookFactory;
-using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.Cms.Services;
 
@@ -12,11 +11,10 @@ using static InvalidParamExceptionFactory;
 
 public sealed class QueryService(
     KateQueryExecutor executor,
-    IEntitySchemaService entitySchema,
-    IQuerySchemaService querySchema,
+    IQuerySchemaService querySchemaService,
+    IEntitySchemaService resolver,
     IServiceProvider provider,
-    HookRegistry hook,
-    IAttributeResolver attributeResolver
+    HookRegistry hook
     ) : IQueryService
 {
 
@@ -27,16 +25,16 @@ public sealed class QueryService(
             throw new InvalidParamException("cursor is empty, can not partially execute query");
         }
 
-        var query = await querySchema.GetByNameAndCache(name, token);
+        var query = await querySchemaService.GetByNameAndCache(name, token);
         var attribute = NotNull(query.Selection.RecursiveFind(attr)).ValOrThrow("not find attribute");
         var cross = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable of {attribute.Field})");
         
         var pagination = new Pagination(0, limit).ToValid(cross.TargetEntity.DefaultPageSize);
         
-        var validSpan =CheckResult(span.ToValid([],attributeResolver));
+        var validSpan =CheckResult(span.ToValid([], resolver));
         var fields = attribute.Selection.GetLocalAttrs();
-        var filters = CheckResult(await attribute.Filters.ToValid(cross.TargetEntity, args,attributeResolver));
-        var sorts = CheckResult(await attribute.Sorts.ToValidSorts(cross.TargetEntity, attributeResolver));
+        var filters = CheckResult(await attribute.Filters.ToValid(cross.TargetEntity, args,resolver,resolver));
+        var sorts = CheckResult(await attribute.Sorts.ToValidSorts(query.Entity, resolver));
         
         var kateQuery = cross.GetRelatedItems(fields, filters,sorts, validSpan, pagination.PlusLimitOne(), [validSpan.SourceId()]);
         var records = await executor.Many(kateQuery, token);
@@ -54,7 +52,7 @@ public sealed class QueryService(
     {
         var (query,selection,filters) = await GetContext(name, args, token);
 
-        var validSpan = CheckResult(span.ToValid(query.Entity.Attributes, attributeResolver));
+        var validSpan = CheckResult(span.ToValid(query.Entity.Attributes, resolver));
         
         if (!span.IsEmpty())
         {
@@ -139,8 +137,8 @@ public sealed class QueryService(
         if (ids.Length == 0) return;
 
         var fields = attr.Selection.GetLocalAttrs();
-        var filters = CheckResult(await attr.Filters.ToValid(cross.TargetEntity, args, attributeResolver));
-        var sorts = CheckResult(await attr.Sorts.ToValidSorts(attr.Crosstable!.TargetEntity, attributeResolver));
+        var filters = CheckResult(await attr.Filters.ToValid(cross.TargetEntity, args, resolver,resolver));
+        var sorts = CheckResult(await attr.Sorts.ToValidSorts(attr.Crosstable!.TargetEntity, resolver));
 
         var pagination = PaginationHelper.ResolvePagination(attr,args);
 
@@ -248,9 +246,9 @@ public sealed class QueryService(
 
     private async Task<Context> GetContext(string name, QueryArgs args, CancellationToken token)
     {
-        var query = await querySchema.GetByNameAndCache(name, token);
+        var query = await querySchemaService.GetByNameAndCache(name, token);
         var attributes = query.Selection.GetLocalAttrs();
-        var filters = CheckResult(await query.Filters.ToValid(query.Entity, args, attributeResolver));
+        var filters = CheckResult(await query.Filters.ToValid(query.Entity, args, resolver,resolver));
         return new Context(query, attributes, filters);
     }
 }

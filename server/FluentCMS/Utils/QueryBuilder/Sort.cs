@@ -1,6 +1,5 @@
 using System.Collections.Immutable;
 using FluentResults;
-using Microsoft.Extensions.Primitives;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
@@ -24,17 +23,17 @@ public static class SortHelper
     public static async Task<Result<ImmutableArray<ValidSort>>> ToValidSorts(
         this IEnumerable<Sort> sorts, 
         LoadedEntity entity,
-        IAttributeResolver attributeResolver)
+        IEntityVectorResolver vectorResolver)
     {
         var ret = new List<ValidSort>();
-        foreach (var sort in sorts)
+        foreach (var sort in sorts)             
         {
-            var res = await attributeResolver.GetAttrVector(entity, sort.FieldName);
-            if (res.IsFailed)
+            var (_,_,attr,e) = await vectorResolver.ResolveVector(entity, sort.FieldName);
+            if (e is not null)
             {
-                return Result.Fail(res.Errors);
+                return Result.Fail(e);
             }
-            ret.Add(new ValidSort(res.Value,sort.Order));
+            ret.Add(new ValidSort(attr,sort.Order));
         }
         return ret.ToImmutableArray();
     }
@@ -42,7 +41,7 @@ public static class SortHelper
     public static async Task<Result<ImmutableArray<ValidSort>>> Parse(
         LoadedEntity entity, 
         Dictionary<string,QueryArgs> dictionary, 
-        IAttributeResolver attributeResolver)
+        IEntityVectorResolver vectorResolver)
     {
         var ret = new List<ValidSort>();
 
@@ -50,7 +49,7 @@ public static class SortHelper
         {
             foreach (var (fieldName, orderStr) in dict)
             {
-                var (_, _, vector, errors) = await attributeResolver.GetAttrVector(entity, fieldName);
+                var (_, _, vector, errors) = await vectorResolver.ResolveVector(entity, fieldName);
                 if (errors?.Count > 0 )
                 {
                     return Result.Fail(errors);

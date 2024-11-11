@@ -9,13 +9,11 @@ namespace FluentCMS.Cms.Services;
 using static InvalidParamExceptionFactory;
 
 public sealed class EntitySchemaService(ISchemaService schemaSvc, IDefinitionExecutor executor)
-    : IEntitySchemaService, IAttributeResolver
+    : IEntitySchemaService 
 {
-    public bool GetAttrVal(Attribute attribute, string v, out object? result) => executor.CastToDatabaseDataType(v, attribute.DataType, out result);
-
-    public async Task<Result<AttributeVector>> GetAttrVector(LoadedEntity entity, string fieldName)
+    public bool ResolveVal(Attribute attribute, string v, out object? result) => executor.CastToDatabaseDataType(v, attribute.DataType, out result);
+    public async Task<Result<AttributeVector>> ResolveVector(LoadedEntity entity, string fieldName)
     {
-
         var fields = fieldName.Split(".");
         var prefix = string.Join(AttributeVectorConstants.Separator, fields[..^1]);
         var attributes = new List<LoadedAttribute>();

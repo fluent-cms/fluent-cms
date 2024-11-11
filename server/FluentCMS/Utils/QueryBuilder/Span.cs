@@ -107,7 +107,7 @@ public static class SpanHelper
         item[SpanConstants.Cursor] = Base64UrlEncoder.Encode(cursor);
     }
     
-    public static Result<ValidSpan> ToValid(this Span c, IEnumerable<Attribute> attrs,IAttributeResolver resolver)
+    public static Result<ValidSpan> ToValid(this Span c, IEnumerable<Attribute> attrs,IAttributeValueResolver resolver)
     {
         if (c.IsEmpty()) return new ValidSpan(c, default);
 
@@ -126,7 +126,7 @@ public static class SpanHelper
                     var field = arr.FindOneAttr(key);
                     if (field is not null )
                     {
-                        if (!resolver.GetAttrVal(field, s, out val))
+                        if (!resolver.ResolveVal(field, s, out val))
                         {
                             return Result.Fail($"Fail to cast s to {field.DataType}");
                         }

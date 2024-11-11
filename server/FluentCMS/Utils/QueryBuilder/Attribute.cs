@@ -243,7 +243,7 @@ public static class AttributeHelper
             .ToImmutableArray() ?? [];
     }
 
-    public static GraphAttribute? RecursiveFind(this ImmutableArray<GraphAttribute> attributes, string name)
+    public static GraphAttribute? RecursiveFind(this IEnumerable<GraphAttribute> attributes, string name)
     {
         var parts = name.Split('.');
         var attrs = attributes;

@@ -5,7 +5,7 @@ using FluentResults;
 
 namespace FluentCMS.Cms.Services;
 
-public interface IEntitySchemaService
+public interface IEntitySchemaService: IEntityVectorResolver, IAttributeValueResolver
 {
     
     Task<Result<LoadedEntity>> GetLoadedEntity(string name, CancellationToken token = default);
@@ -13,5 +13,4 @@ public interface IEntitySchemaService
     Task<Schema> SaveTableDefine(Schema schemaDto, CancellationToken token);
     Task<Schema> AddOrUpdate(Entity entity, CancellationToken cancellationToken);
     Task<Result<LoadedAttribute>> LoadOneRelated(LoadedEntity entity, LoadedAttribute attr, CancellationToken token);
-    Task<LoadedAttribute?> FindAttribute(string name, string attr, CancellationToken token);
 }
