@@ -165,8 +165,18 @@ public static class AttributeHelper
         return prefix == "" ? a.Field : prefix + "." + a.Field;
     }
 
-    public static string GetLookupTarget(this Attribute a) => a.Options;
-    public static string GetCrosstableTarget(this Attribute a) => a.Options;
+    public static bool GetLookupTarget(this Attribute a, out string val)
+    {
+        val = a.Options;
+        return !string.IsNullOrWhiteSpace(val);
+    }
+
+    public static bool GetCrosstableTarget(this Attribute a, out string val)
+    {
+       val = a.Options;
+       return !string.IsNullOrWhiteSpace(val);
+    } 
+    
     private static bool IsLocalAttribute(this Attribute a) => a.Type != DisplayType.Crosstable;
 
     public static Attribute ToAttribute(this ColumnDefinition col)

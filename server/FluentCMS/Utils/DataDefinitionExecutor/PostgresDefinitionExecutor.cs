@@ -4,7 +4,7 @@ namespace FluentCMS.Utils.DataDefinitionExecutor;
 
 public class PostgresDefinitionExecutor(string connectionString, ILogger<PostgresDefinitionExecutor> logger):IDefinitionExecutor
 {
-    public bool CastToDatabaseDataType(string s, string type, out object? result)
+    public bool TryParseDataType(string s, string type, out object? result)
     {
         result = s;
         var ret = true;
@@ -15,7 +15,7 @@ public class PostgresDefinitionExecutor(string connectionString, ILogger<Postgre
                 result = resultInt;
                 break;
             case DataType.Datetime:
-                ret = int.TryParse(s, out var resultDateTime);
+                ret = DateTime.TryParse(s, out var resultDateTime);
                 result = resultDateTime;
                 break;
         }

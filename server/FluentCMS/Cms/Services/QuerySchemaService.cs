@@ -30,9 +30,9 @@ public sealed class QuerySchemaService(
         var query = NotNull(item.Settings.Query).ValOrThrow("invalid view format");
         var entity = CheckResult(await entitySchemaSvc.GetLoadedEntity(query.EntityName, token));
         var fields = CheckResult(GraphQlExt.GetRootGraphQlFields(query.SelectionSet));
-        var attributes = CheckResult(await SelectionSetToNode("", entity, fields, token));
-        var sorts = CheckResult(await (query.Sorts).ToValidSorts(entity, entitySchemaSvc));
-        return query.ToLoadedQuery(entity, attributes, sorts );
+        var selection = CheckResult(await SelectionSetToNode("", entity, fields, token));
+        var sorts = CheckResult(await query.Sorts.ToValidSorts(entity, entitySchemaSvc));
+        return query.ToLoadedQuery(entity, selection, sorts );
     }
 
     public async Task<Schema> Save(Schema schema, CancellationToken cancellationToken)
@@ -57,21 +57,26 @@ public sealed class QuerySchemaService(
         var fields = CheckResult(GraphQlExt.GetRootGraphQlFields(query.SelectionSet));
         var selection = CheckResult(await SelectionSetToNode("", entity, fields, token));
         var sorts = CheckResult(await query.Sorts.ToValidSorts(entity, entitySchemaSvc));
-        CheckSorts(selection,sorts);
+        //todo: subfields' can only order by local attribute for now.
+        //maybe support order subfields' subfield later
+        CheckSorts(selection,sorts,true);
     }
 
-    private void CheckSorts(ImmutableArray<GraphAttribute> attributes, IEnumerable<ValidSort> sorts)
+    private void CheckSorts(ImmutableArray<GraphAttribute> attributes, IEnumerable<ValidSort> sorts, bool allowRecursive)
     {
         foreach (var sort in sorts)
         {
-            if (attributes.RecursiveFind(sort.FieldName) is null)
+            var find = allowRecursive
+                ? attributes.RecursiveFind(sort.FieldName)
+                : attributes.FindOneAttr(sort.FieldName);
+            if (find is null)
             {
                 throw new InvalidParamException($"can not find sort field {sort.FieldName} in selection");
             }
         }
         foreach (var attr in attributes)
         {
-            CheckSorts(attr.Selection, attr.Sorts);
+            CheckSorts(attr.Selection, attr.Sorts,false);
         }
     }
 
@@ -86,11 +91,11 @@ public sealed class QuerySchemaService(
         foreach (var field in graphQlFields)
         {
             var (_, _, graphAttr, err) = await LoadAttribute(entity, field.Name.StringValue, token);
-            graphAttr = graphAttr with { Prefix = prefix };
             if (err is not null)
             {
                 return Result.Fail(err);
             }
+            graphAttr = graphAttr with { Prefix = prefix };
 
             (_, _, graphAttr, err) = await LoadSelection(graphAttr.FullPathName(prefix) , graphAttr, field, token);
             if (err is not null)
@@ -248,8 +253,11 @@ public sealed class QuerySchemaService(
                 if (arg.Name != SortConstant.SortKey) continue;
                 switch (arg.Value)
                 {
-                    case GraphQLEnumValue str:
-                        sorts.Add(new Sort(str.Name.StringValue, SortOrder.Asc));
+                    case GraphQLStringValue stringValue:
+                        sorts.Add(new Sort(stringValue.Value.ToString(), SortOrder.Asc));
+                        break;
+                    case GraphQLEnumValue enumValue:
+                        sorts.Add(new Sort(enumValue.Name.StringValue, SortOrder.Asc));
                         break;
                     case GraphQLObjectValue obj:
                         //{id:desc, name:asc}
@@ -263,6 +271,8 @@ public sealed class QuerySchemaService(
                             sorts.Add(new Sort(k, v.ToString()!));
                         }
                         break;
+                    default:
+                        return Result.Fail("invalid value type for sorts");
                 }
             }
         }
@@ -282,7 +292,7 @@ public sealed class QuerySchemaService(
         var find = entity.Attributes.FindOneAttr(fldName);
         if (find is null)
         {
-            return Result.Fail($"Verifying `SectionSet` fail, can not find {fldName} in {entity.Name}");
+            return Result.Fail($"Parsing `SectionSet` fail, can not find {fldName} in {entity.Name}");
         }
 
         var (_, _, loadedAttr, loadRelatedErr) = await entitySchemaSvc.LoadOneRelated(entity, find, cancellationToken);

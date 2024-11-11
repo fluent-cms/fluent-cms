@@ -1,6 +1,5 @@
 using System.Collections.Immutable;
 using FluentResults;
-using MongoDB.Driver.Linq;
 
 namespace FluentCMS.Utils.QueryBuilder;
 

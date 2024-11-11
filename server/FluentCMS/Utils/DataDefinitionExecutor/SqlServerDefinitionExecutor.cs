@@ -1,11 +1,10 @@
 using System.Data.SqlClient;
-using Microsoft.Extensions.Logging;
 
 namespace FluentCMS.Utils.DataDefinitionExecutor;
 
 public class SqlServerDefinitionExecutor(string connectionString, ILogger<SqlServerDefinitionExecutor> logger ) : IDefinitionExecutor
 {
-    public bool CastToDatabaseDataType(string s, string type, out object value)
+    public bool TryParseDataType(string s, string type, out object value)
     {
         value = s;
         var ret = true;

@@ -4,7 +4,7 @@ namespace FluentCMS.Utils.QueryBuilder;
 
 public interface IAttributeValueResolver
 {
-    public bool ResolveVal(Attribute attribute, string v, out object? value);
+    public bool ResolveVal(Attribute attr, string v, out object? value);
 }
 
 public interface IEntityVectorResolver

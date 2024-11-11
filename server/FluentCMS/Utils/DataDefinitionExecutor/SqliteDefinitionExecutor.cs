@@ -6,7 +6,7 @@ namespace FluentCMS.Utils.DataDefinitionExecutor;
 
 public sealed class SqliteDefinitionExecutor(string connectionString, ILogger<SqliteDefinitionExecutor> logger) : IDefinitionExecutor
 {
-    public bool CastToDatabaseDataType(string s, string type, out object value)
+    public bool TryParseDataType(string s, string type, out object value)
     {
         value = s;
         var ret = true;

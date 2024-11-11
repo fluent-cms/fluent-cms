@@ -4,6 +4,7 @@
   "title": "Filter",
   "properties": {
     "fieldName": {
+      "minLength": 1,
       "title": "Attribute Name",
       "type": "string"
     },
@@ -21,6 +22,7 @@
       "title": "Constraints",
       "type": "array",
       "format": "table",
+      "minItems": 1,
       "items": {
         "$ref": "constraint.json"
       }

@@ -20,13 +20,13 @@ public sealed record LoadedQuery(
     LoadedEntity Entity);
 
 public static class QueryHelper{
-    public static LoadedQuery ToLoadedQuery(this Query query, LoadedEntity entity, IEnumerable<GraphAttribute> attributes, IEnumerable<ValidSort> sorts)
+    public static LoadedQuery ToLoadedQuery(this Query query, LoadedEntity entity, IEnumerable<GraphAttribute> selection, IEnumerable<ValidSort> sorts)
     {
         return new LoadedQuery(
             query.Name,
             query.EntityName,
             query.PageSize,
-            [..attributes],
+            [..selection],
             [..sorts],
             query.Filters,
             entity 
