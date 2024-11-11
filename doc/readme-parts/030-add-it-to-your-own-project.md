@@ -1,6 +1,6 @@
 
 
-## Adding Fluent CMS to your own project
+## Add it to your own project
 <details>
 <summary> 
 The following chapter will guid you through add Fluent CMS to your own project by adding a nuget package. 

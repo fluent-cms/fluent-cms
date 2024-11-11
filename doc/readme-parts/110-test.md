@@ -1,6 +1,6 @@
 
 
-## Testing
+## Testing Strategy
 
 <details><summary>This chapter describes Fluent CMS's automated testing strategy</summary>
 

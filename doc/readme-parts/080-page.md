@@ -1,7 +1,7 @@
 
 
 
-## Designing Web Page in FluentCMS
+## Drag and Drop Page Designer
 
 <details> <summary> The page designer utilizes the open-source GrapesJS and Handlebars, enabling seamless binding of `GrapesJS Components` with `FluentCMS Queries` for dynamic content rendering. </summary>
 

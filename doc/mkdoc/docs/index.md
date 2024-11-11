@@ -16,7 +16,10 @@ It proves valuable even for non-CMS projects by eliminating the need for tedious
 - **Performance:** Utilizing [SqlKata](https://sqlkata.com/) and [Dapper](https://www.learndapper.com/), Fluent CMS achieves performance levels comparable to manually written RESTful APIs using Entity Framework Core. Performance benchmarks include comparisons against Strapi and Entity Framework.  
     - [performance vs Strapi](https://github.com/fluent-cms/fluent-cms/blob/main/doc%2Fpeformance-tests%2Fperformance-test-fluent-cms-vs-strapi.md)  
     - [performance vs EF](https://github.com/fluent-cms/fluent-cms/blob/main/doc%2Fpeformance-tests%2Fperformance-test-fluent-cms-vs-entity-framework.md)  
-## Live Demo - A online course website based on Fluent CMS
+
+
+
+## Online Course System Live Demo 
 source code [Example Blog Project](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).  
 - Admin Panel https://fluent-cms-admin.azurewebsites.net/admin  
     - Email: `admin@cms.com`  
@@ -24,7 +27,7 @@ source code [Example Blog Project](https://github.com/fluent-cms/fluent-cms/tree
 - Public Site : https://fluent-cms-admin.azurewebsites.net/  
 
 
-## Adding Fluent CMS to your own project
+## Add it to your own project
 The following chapter will guid you through add Fluent CMS to your own project by adding a nuget package. 
 
 1. Create your own Asp.net Core WebApplication.
@@ -49,7 +52,7 @@ When the web server is up and running,  you can access Admin Panel by url `/admi
 The example project can be found at [Example Project](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).
 
 
-## Developing backend of a simple online course system use Fluent CMS
+## Online Course System Backend
 The following chapter will guide you through developing a simple online course system, starts with three entity `Teachers`, `Courses`, and `Students`. 
 
 ### Database Schema
@@ -136,7 +139,7 @@ When adding the "Course" entity, start by adding basic attributes like "Name" an
 
 With these configurations, your minimal viable product is ready to use.
 
-## Adding your own business logics 
+## Add business logics 
   <summary> The following chapter will guide you through add your own business logic by add validation logic, hook functions, and produce events to Kafka. </summary>
 
 ### Add validation logic using simple c# express
@@ -206,7 +209,7 @@ InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("sadmin@cms.com
 Behind the scene, fluentCMS leverage the hook mechanism.
 
 
-## **Designing Queries in FluentCMS**
+## **GraphQL style Queries**
 
 ### Requirements
 
@@ -606,7 +609,7 @@ If the number of IDs exceeds the page size, only the first set will be returned.
 
 
 
-## Designing Web Page in FluentCMS
+## Drag and Drop Page Designer
 
 
 ### Introduction to GrapesJS Panels
@@ -719,7 +722,7 @@ FluentCMS adds customized blocks to simplify web page design and data binding fo
 
 
 
-## Developing Frontend of a online course website
+## Online Course System Frontend
 Having established our understanding of Fluent CMS essentials like Entity Schemas, GraphQL-style Querying, and GrapeJS-based Page Design, we’re ready to build a frontend for an online course website.
 
 ### Introduction of online course website
@@ -732,6 +735,8 @@ The online course website is designed to help users easily find courses tailored
 - **Course Details(`course/{course_id}`)**: This page provides a comprehensive view of a selected course. Users can navigate to the **Teacher Details** page to learn more about the instructor. 
 
 - **Teacher Details(`teacher/{teacher_id}`)**: Here, users can explore the profile of the instructor, This page contains a `teacher's latest course section`, each course in the sections links back to **Course Details** 
+
+
 ---
 
 ```plaintext
@@ -877,7 +882,7 @@ This design creates an interconnected online course site, ensuring users can exp
 ![Schema Builder Sequence](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/schema-builder-sequence.png)
 
 
-## Testing
+## Testing Strategy
 
 
 Fluent CMS favors integration testing over unit testing because integration tests can catch more real-world issues. For example, when inserting a record into the database, multiple modules are involved:

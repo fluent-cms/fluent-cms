@@ -58,22 +58,22 @@
               </ul>
             </li>
             
-            <li class="nav-item" data-bs-level="2"><a href="#live-demo-a-online-course-website-based-on-fluent-cms" class="nav-link">Live Demo - A online course website based on Fluent CMS</a>
+            <li class="nav-item" data-bs-level="2"><a href="#online-course-system-live-demo" class="nav-link">Online Course System Live Demo</a>
               <ul class="nav flex-column">
               </ul>
             </li>
             
-            <li class="nav-item" data-bs-level="2"><a href="#adding-fluent-cms-to-your-own-project" class="nav-link">Adding Fluent CMS to your own project</a>
+            <li class="nav-item" data-bs-level="2"><a href="#add-it-to-your-own-project" class="nav-link">Add it to your own project</a>
               <ul class="nav flex-column">
               </ul>
             </li>
             
-            <li class="nav-item" data-bs-level="2"><a href="#developing-backend-of-a-simple-online-course-system-use-fluent-cms" class="nav-link">Developing backend of a simple online course system use Fluent CMS</a>
+            <li class="nav-item" data-bs-level="2"><a href="#online-course-system-backend" class="nav-link">Online Course System Backend</a>
               <ul class="nav flex-column">
               </ul>
             </li>
             
-            <li class="nav-item" data-bs-level="2"><a href="#adding-your-own-business-logics" class="nav-link">Adding your own business logics</a>
+            <li class="nav-item" data-bs-level="2"><a href="#add-business-logics" class="nav-link">Add business logics</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -83,22 +83,17 @@
               </ul>
             </li>
             
-            <li class="nav-item" data-bs-level="2"><a href="#designing-queries-in-fluentcms" class="nav-link">Designing Queries in FluentCMS</a>
+            <li class="nav-item" data-bs-level="2"><a href="#graphql-style-queries" class="nav-link">GraphQL style Queries</a>
               <ul class="nav flex-column">
               </ul>
             </li>
             
-            <li class="nav-item" data-bs-level="2"><a href="#designing-web-page-in-fluentcms" class="nav-link">Designing Web Page in FluentCMS</a>
+            <li class="nav-item" data-bs-level="2"><a href="#drag-and-drop-page-designer" class="nav-link">Drag and Drop Page Designer</a>
               <ul class="nav flex-column">
               </ul>
             </li>
             
-            <li class="nav-item" data-bs-level="2"><a href="#developing-frontend-of-a-online-course-website" class="nav-link">Developing Frontend of a online course website</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            
-            <li class="nav-item" data-bs-level="2"><a href="#-teacher-detailsteacherteacher_id-here-users-can-explore-the-profile-of-the-instructor-this-page-contains-a-teachers-latest-course-section-each-course-in-the-sections-links-back-to-course-details" class="nav-link">- Teacher Details(teacher/{teacher_id}): Here, users can explore the profile of the instructor, This page contains a teacher's latest course section, each course in the sections links back to Course Details</a>
+            <li class="nav-item" data-bs-level="2"><a href="#online-course-system-frontend" class="nav-link">Online Course System Frontend</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -108,7 +103,7 @@
               </ul>
             </li>
             
-            <li class="nav-item" data-bs-level="2"><a href="#testing" class="nav-link">Testing</a>
+            <li class="nav-item" data-bs-level="2"><a href="#testing-strategy" class="nav-link">Testing Strategy</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -134,13 +129,13 @@ It proves valuable even for non-CMS projects by eliminating the need for tedious
 - <strong>Performance:</strong> Utilizing <a href="https://sqlkata.com/">SqlKata</a> and <a href="https://www.learndapper.com/">Dapper</a>, Fluent CMS achieves performance levels comparable to manually written RESTful APIs using Entity Framework Core. Performance benchmarks include comparisons against Strapi and Entity Framework.<br />
     - <a href="https://github.com/fluent-cms/fluent-cms/blob/main/doc%2Fpeformance-tests%2Fperformance-test-fluent-cms-vs-strapi.md">performance vs Strapi</a><br />
     - <a href="https://github.com/fluent-cms/fluent-cms/blob/main/doc%2Fpeformance-tests%2Fperformance-test-fluent-cms-vs-entity-framework.md">performance vs EF</a>  </p>
-<h2 id="live-demo-a-online-course-website-based-on-fluent-cms">Live Demo - A online course website based on Fluent CMS</h2>
+<h2 id="online-course-system-live-demo">Online Course System Live Demo</h2>
 <p>source code <a href="https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples">Example Blog Project</a>.<br />
 - Admin Panel https://fluent-cms-admin.azurewebsites.net/admin<br />
     - Email: <code>admin@cms.com</code><br />
     - Password: <code>Admin1!</code><br />
 - Public Site : https://fluent-cms-admin.azurewebsites.net/  </p>
-<h2 id="adding-fluent-cms-to-your-own-project">Adding Fluent CMS to your own project</h2>
+<h2 id="add-it-to-your-own-project">Add it to your own project</h2>
 <p>The following chapter will guid you through add Fluent CMS to your own project by adding a nuget package. </p>
 <ol>
 <li>Create your own Asp.net Core WebApplication.</li>
@@ -161,7 +156,7 @@ It proves valuable even for non-CMS projects by eliminating the need for tedious
 </ol>
 <p>When the web server is up and running,  you can access Admin Panel by url <code>/admin</code>, you can access Schema builder by url <code>/schema</code>.
 The example project can be found at <a href="https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples">Example Project</a>.</p>
-<h2 id="developing-backend-of-a-simple-online-course-system-use-fluent-cms">Developing backend of a simple online course system use Fluent CMS</h2>
+<h2 id="online-course-system-backend">Online Course System Backend</h2>
 <p>The following chapter will guide you through developing a simple online course system, starts with three entity <code>Teachers</code>, <code>Courses</code>, and <code>Students</code>. </p>
 <h3 id="database-schema">Database Schema</h3>
 <h4 id="1-teachers-table">1. <strong>Teachers Table</strong></h4>
@@ -343,7 +338,7 @@ The example project can be found at <a href="https://github.com/fluent-cms/fluen
 </li>
 </ol>
 <p>With these configurations, your minimal viable product is ready to use.</p>
-<h2 id="adding-your-own-business-logics">Adding your own business logics</h2>
+<h2 id="add-business-logics">Add business logics</h2>
 <summary> The following chapter will guide you through add your own business logic by add validation logic, hook functions, and produce events to Kafka. </summary>
 
 <h3 id="add-validation-logic-using-simple-c-express">Add validation logic using simple c# express</h3>
@@ -397,7 +392,7 @@ builder.AddCmsAuth&lt;IdentityUser, IdentityRole, AppDbContext&gt;();
 <pre><code>InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser(&quot;sadmin@cms.com&quot;, &quot;Admin1!&quot;, [Roles.Sa]));
 </code></pre>
 <p>Behind the scene, fluentCMS leverage the hook mechanism.</p>
-<h2 id="designing-queries-in-fluentcms"><strong>Designing Queries in FluentCMS</strong></h2>
+<h2 id="graphql-style-queries"><strong>GraphQL style Queries</strong></h2>
 <h3 id="requirements">Requirements</h3>
 <h4 id="1-retrieve-all-related-data-with-one-api-call">1. Retrieve all related data with one API call</h4>
 <p>As shown in the screenshot below, we aim to design a course detail page. In addition to displaying basic course information, 
@@ -743,7 +738,7 @@ the <code>hasNextPage</code> is set to true. </li>
 <li>Example: <code>/api/queries/&lt;query-name&gt;/many?id=1&amp;id=2&amp;id=3</code></li>
 </ul>
 <p>If the number of IDs exceeds the page size, only the first set will be returned.</p>
-<h2 id="designing-web-page-in-fluentcms">Designing Web Page in FluentCMS</h2>
+<h2 id="drag-and-drop-page-designer">Drag and Drop Page Designer</h2>
 <h3 id="introduction-to-grapesjs-panels">Introduction to GrapesJS Panels</h3>
 <p>The GrapesJS Page Designer UI provides a toolbox with four main panels:<br />
 <img alt="GrapesJS Toolbox" src="https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/grapes-toolbox.png" /><br />
@@ -832,7 +827,7 @@ FluentCMS will call the query <code>https://fluent-cms-admin.azurewebsites.net/a
 <li><strong>Card</strong>: Typically used in detail pages.</li>
 <li><strong>Header</strong>: Represents a navigation bar or page header.</li>
 </ul>
-<h2 id="developing-frontend-of-a-online-course-website">Developing Frontend of a online course website</h2>
+<h2 id="online-course-system-frontend">Online Course System Frontend</h2>
 <p>Having established our understanding of Fluent CMS essentials like Entity Schemas, GraphQL-style Querying, and GrapeJS-based Page Design, we’re ready to build a frontend for an online course website.</p>
 <h3 id="introduction-of-online-course-website">Introduction of online course website</h3>
 <p>The online course website is designed to help users easily find courses tailored to their interests and goals. </p>
@@ -846,8 +841,11 @@ FluentCMS will call the query <code>https://fluent-cms-admin.azurewebsites.net/a
 <li>
 <p><strong>Course Details(<code>course/{course_id}</code>)</strong>: This page provides a comprehensive view of a selected course. Users can navigate to the <strong>Teacher Details</strong> page to learn more about the instructor. </p>
 </li>
+<li>
+<p><strong>Teacher Details(<code>teacher/{teacher_id}</code>)</strong>: Here, users can explore the profile of the instructor, This page contains a <code>teacher's latest course section</code>, each course in the sections links back to <strong>Course Details</strong> </p>
+</li>
 </ul>
-<h2 id="-teacher-detailsteacherteacher_id-here-users-can-explore-the-profile-of-the-instructor-this-page-contains-a-teachers-latest-course-section-each-course-in-the-sections-links-back-to-course-details">- <strong>Teacher Details(<code>teacher/{teacher_id}</code>)</strong>: Here, users can explore the profile of the instructor, This page contains a <code>teacher's latest course section</code>, each course in the sections links back to <strong>Course Details</strong></h2>
+<hr />
 <pre><code class="language-plaintext">             Home Page
                  |
                  |
@@ -979,7 +977,7 @@ The QueryService Apply below filter, resulting in  <code>WHERE teacher in (3)</c
 </li>
 </ul>
 <p><img alt="Schema Builder Sequence" src="https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/schema-builder-sequence.png" /></p>
-<h2 id="testing">Testing</h2>
+<h2 id="testing-strategy">Testing Strategy</h2>
 <p>Fluent CMS favors integration testing over unit testing because integration tests can catch more real-world issues. For example, when inserting a record into the database, multiple modules are involved:
 - <code>EntitiesController</code>
 - <code>EntitiesService</code>
@@ -1076,5 +1074,5 @@ The QueryService Apply below filter, resulting in  <code>WHERE teacher in (3)</c
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2024-11-07 16:41:33.967689+00:00
+Build Date UTC : 2024-11-11 19:35:23.145165+00:00
 -->

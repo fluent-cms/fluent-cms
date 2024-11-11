@@ -1,5 +1,5 @@
 
-## Adding your own business logics 
+## Add business logics 
 <details>
   <summary> The following chapter will guide you through add your own business logic by add validation logic, hook functions, and produce events to Kafka. </summary>
 

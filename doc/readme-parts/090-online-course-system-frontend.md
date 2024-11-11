@@ -1,7 +1,7 @@
 
 
 
-## Developing Frontend of a online course website
+## Online Course System Frontend
 <details> 
 <summary> 
 Having established our understanding of Fluent CMS essentials like Entity Schemas, GraphQL-style Querying, and GrapeJS-based Page Design, we’re ready to build a frontend for an online course website.
@@ -17,6 +17,8 @@ The online course website is designed to help users easily find courses tailored
 - **Course Details(`course/{course_id}`)**: This page provides a comprehensive view of a selected course. Users can navigate to the **Teacher Details** page to learn more about the instructor. 
 
 - **Teacher Details(`teacher/{teacher_id}`)**: Here, users can explore the profile of the instructor, This page contains a `teacher's latest course section`, each course in the sections links back to **Course Details** 
+
+
 ---
 
 ```plaintext

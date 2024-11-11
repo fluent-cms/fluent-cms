@@ -1,6 +1,6 @@
 
 
-## **Designing Queries in FluentCMS**
+## **GraphQL style Queries**
 <details> <summary> FluentCMS streamlines frontend development with support for GraphQL-style queries. </summary>
 
 ### Requirements
