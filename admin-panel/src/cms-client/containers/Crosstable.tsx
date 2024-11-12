@@ -7,11 +7,12 @@ import {useDialogState} from "../../components/dialogs/useDialogState";
 import {SelectDataTable} from "../../components/dataTable/SelectDataTable";
 import {SaveDialog} from "../../components/dialogs/SaveDialog";
 
-export function Crosstable({column, data, schema, getFullURL}: {
+export function Crosstable({baseRouter,column, data, schema, getFullAssetsURL}: {
     data: any,
     column: { field: string, header: string, crosstable: any },
     schema: any
-    getFullURL : (arg:string) =>string
+    getFullAssetsURL : (arg:string) =>string
+    baseRouter:string
 }) {
     const {visible, handleShow, handleHide} = useDialogState()
     const {
@@ -71,7 +72,9 @@ export function Crosstable({column, data, schema, getFullURL}: {
             setSelectedItems={setExistingItems}
             lazyState={lazyState}
             eventHandlers={eventHandlers}
-            getFullURL={getFullURL}
+            getFullAssetsURL={getFullAssetsURL}
+            entityName={targetSchema.name}
+            baseRouter={baseRouter}
         />
         <SaveDialog
             visible={visible}
@@ -79,7 +82,8 @@ export function Crosstable({column, data, schema, getFullURL}: {
             handleSave={handleSave}
             header={'Select ' + column.header}>
             <SelectDataTable
-                getFullURL={getFullURL}
+                entityName={targetSchema.name}
+                getFullAssetsURL={getFullAssetsURL}
                 data={excludedSubgridData}
                 columns={listColumns}
                 primaryKey={targetSchema.dataKey}
@@ -88,6 +92,7 @@ export function Crosstable({column, data, schema, getFullURL}: {
                 setSelectedItems={setToAddItems}
                 lazyState={excludedLazyState}
                 eventHandlers={excludedEventHandlers}
+                baseRouter={baseRouter}
             />
         </SaveDialog>
     </div>

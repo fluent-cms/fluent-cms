@@ -29,16 +29,20 @@ export function TopMenuBar({start, end, profile}:{start:any, end:any, profile: P
             || profile?.readonlyEntities?.includes(entityName)
             || profile?.restrictedReadonlyEntities?.includes(entityName);
     })
-
-    const links = items.map((x: any)=> x.isHref ? x :(
-        {
-            url:  x.url.replaceAll(entityPrefix, configs.entityBaseRouter),
-            icon: 'pi ' + (x.icon === ''?'pi-bolt':x.icon),
-            label:x.label,
-            command: ()=>{
-                navigate(x.url)
+    const links = items.map((x: any)=> {
+            if (x.isHref) {
+                return x;
             }
-        })
+            const url = x.url.replaceAll(entityPrefix, configs.entityBaseRouter);
+            return {
+                url,
+                icon: 'pi ' + (x.icon === '' ? 'pi-bolt' : x.icon),
+                label: x.label,
+                command: () => {
+                    navigate(url)
+                }
+            };
+        }
     );
 
     [

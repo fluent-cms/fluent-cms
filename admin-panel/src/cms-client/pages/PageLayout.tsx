@@ -4,10 +4,11 @@ import React from "react";
 import {Helmet} from "react-helmet";
 
 interface PageLayoutProps {
+    baseRouter:string,
     schemaName:string,
-    page: React.FC<{schema:any}>;
+    page: React.FC<{baseRouter:string,schema:any}>;
 }
-export function PageLayout({schemaName, page:Page}: PageLayoutProps){
+export function PageLayout({baseRouter,schemaName, page:Page}: PageLayoutProps){
     let {data:schema, error, isLoading} = useSchema(schemaName)
     if (isLoading || error) {
         return <FetchingStatus isLoading={isLoading} error={error}/>
@@ -16,6 +17,6 @@ export function PageLayout({schemaName, page:Page}: PageLayoutProps){
         <Helmet>
             <title>🚀{schema?.name} - Fluent CMS Admin Panel</title>
         </Helmet>
-        <Page schema={schema}/>
+        <Page baseRouter={baseRouter} schema={schema}/>
     </>
 }

@@ -13,7 +13,7 @@ export function FileInput(props: {
     uploadUrl: any
     previewImage:boolean
     download:boolean
-    getFileFullURL : (arg:string) =>string
+    getFullAssetsURL : (arg:string) =>string
 
 
 }) {
@@ -22,8 +22,8 @@ export function FileInput(props: {
         return <>
             <InputText id={field.name} value={field.value} className={' w-full'}
                        onChange={(e) => field.onChange(e.target.value)}/>
-            { field.value && props.previewImage &&  <img src={props.getFileFullURL(field.value)} alt={''} height={150}/>}
-            { field.value && props.download && <a href={props.getFileFullURL(field.value)}><h4>Download</h4></a> }
+            { field.value && props.previewImage &&  <img src={props.getFullAssetsURL(field.value)} alt={''} height={150}/>}
+            { field.value && props.download && <a href={props.getFullAssetsURL(field.value)}><h4>Download</h4></a> }
             <FileUpload withCredentials mode={"basic"} auto url={uploadUrl} onUpload={(e) => {
                 field.onChange(e.xhr.responseText)
             }} name={'files'}/>
