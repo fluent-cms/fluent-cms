@@ -3,7 +3,7 @@ using FluentCMS.Cms.Services;
 using FluentCMS.Utils.ApiClient;
 using FluentCMS.Utils.QueryBuilder;
 
-namespace FluentCMS.IntegrationTests;
+namespace FluentCMS.Blog.Tests;
 
 public class QueryApiTest
 {

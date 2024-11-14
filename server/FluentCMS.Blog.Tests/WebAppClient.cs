@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc.Testing;
-namespace FluentCMS.Utils.ApiClient;
+namespace FluentCMS.Blog.Tests;
 
 public class WebAppClient<T>
 where T :class

@@ -7,14 +7,12 @@ import {useRequestStatus} from "../containers/useFormStatus";
 import {useParams} from "react-router-dom";
 import {PageLayout} from "./PageLayout";
 
-export function NewDataItemPage({base}:{base:string}) {
+export function NewDataItemPage({baseRouter}:{baseRouter:string}) {
     const {schemaName} = useParams()
-    return <PageLayout schemaName={schemaName??''} base={base} page={NewDataItemPageComponent}/>
+    return <PageLayout schemaName={schemaName??''} baseRouter={baseRouter} page={NewDataItemPageComponent}/>
 }
 
-export function NewDataItemPageComponent({schema,base}:{schema:any, base:string }) {
-    console.log(base);
-
+export function NewDataItemPageComponent({schema,baseRouter}:{schema:any, baseRouter:string }) {
     const {checkError, Status} = useRequestStatus(schema.name)
     const formId = "newForm" + schema.name
     const columns = getWriteColumns(schema)
@@ -25,13 +23,13 @@ export function NewDataItemPageComponent({schema,base}:{schema:any, base:string 
         checkError(error, 'saved')
         if (!error) {
             await new Promise(r => setTimeout(r, 500));
-            window.location.href = `${base}/${schema.name}/${data[schema.primaryKey]}`;
+            window.location.href = `${baseRouter}/${schema.name}/${data[schema.primaryKey]}`;
         }
     }
 
     return <>
         <Status/>
-        <ItemForm {...{data:{}, onSubmit, columns, formId,uploadUrl,  getFileFullURL: getFullAssetsURL}}/>
+        <ItemForm {...{data:{}, onSubmit, columns, formId,uploadUrl,  getFullAssetsURL}}/>
         <Button label={'Save ' + schema.title} type="submit" form={formId}/>
     </>
 }

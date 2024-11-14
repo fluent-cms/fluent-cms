@@ -24,10 +24,10 @@ export function Crosstable({baseRouter,column, data, schema, getFullAssetsURL}: 
         toAddItems,
         setToAddItems
     } = useSubSchema(data, schema, column)
-    const {lazyState ,eventHandlers}= useLazyStateHandlers(10, listColumns)
-    const {data: subgridData, mutate: subgridMutate} = useSubPageData(schema.name, id, column.field, false, lazyState)
+    const {lazyState ,eventHandlers}= useLazyStateHandlers(10, listColumns,"");
+    const {data: subgridData, mutate: subgridMutate} = useSubPageData(schema.name, id, column.field, false, lazyState);
 
-    const {lazyState :excludedLazyState,eventHandlers:excludedEventHandlers}= useLazyStateHandlers(10, listColumns)
+    const {lazyState :excludedLazyState,eventHandlers:excludedEventHandlers}= useLazyStateHandlers(10, listColumns,"");
     const {data: excludedSubgridData, mutate: execMutate} = useSubPageData(schema.name, id, column.field, true,excludedLazyState)
     const {checkError, Status, confirm} = useRequestStatus(column.field)
 

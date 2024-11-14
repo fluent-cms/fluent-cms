@@ -7,7 +7,7 @@ import {NewDataItemPage} from "./pages/NewDataItemPage";
 export function EntityRouter({baseRouter}:{baseRouter:string}) {
     return <Routes>
             <Route path={'/:schemaName/'} element={<DataListPage baseRouter={baseRouter}/>}> </Route>
-            <Route path={'/:schemaName/new'} element={<NewDataItemPage base={baseRouter}/>}> </Route>
+            <Route path={'/:schemaName/new'} element={<NewDataItemPage baseRouter={baseRouter}/>}> </Route>
             <Route path={'/:schemaName/:id'} element={<DataItemPage baseRouter={baseRouter}/>}> </Route>
     </Routes>
 }
