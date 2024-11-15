@@ -39,4 +39,9 @@ public static class BuilderExt
     {
         MongoViewModule.AddMongoView(builder,config);
     }
+
+    public static void AddCmsGraphQl(this WebApplicationBuilder builder, string path)
+    {
+        GraphqlModule.AddGraphql(builder, path);
+    }
 }

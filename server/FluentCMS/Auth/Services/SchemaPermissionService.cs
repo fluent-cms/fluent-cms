@@ -61,7 +61,7 @@ public class SchemaPermissionService<TUser>(
     public async Task Delete(int schemaId)
     {
         var currentUserId = MustGetCurrentUserId();
-        var find = NotNull(await schemaService.GetByIdDefault(schemaId)).ValOrThrow($"can not find schema");
+        var find = NotNull(await schemaService.ById(schemaId)).ValOrThrow($"can not find schema");
         await CheckSchemaPermission(find, currentUserId);
     }
 
@@ -148,7 +148,7 @@ public class SchemaPermissionService<TUser>(
 
         if (isUpdate)
         {
-            var find = NotNull(await schemaService.GetByIdDefault(schema.Id)).ValOrThrow("not find schema");
+            var find = NotNull(await schemaService.ById(schema.Id)).ValOrThrow("not find schema");
             if (find.CreatedBy != currentUserId)
             {
                 throw new InvalidParamException("You are not supper admin,  you can only change your own schema");

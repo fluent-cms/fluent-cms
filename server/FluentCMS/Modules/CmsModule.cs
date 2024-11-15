@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Reflection;
 using System.Text.Json.Serialization;
 using FluentCMS.Auth.Services;
@@ -34,6 +35,13 @@ public sealed class CmsModule(
     public  HookRegistry GetHookRegistry(WebApplication app) => app.Services.GetRequiredService<HookRegistry>();
     public static void AddCms(WebApplicationBuilder builder,DatabaseProvider databaseProvider, string connectionString)
     {
+        builder.Services.AddSingleton<CmsModule>(p => new CmsModule(
+                p.GetRequiredService<ILogger<CmsModule>>(),
+                databaseProvider,
+                connectionString
+            )
+        );
+
         AddRouters();
         InjectDbServices();
         InjectServices();
@@ -50,39 +58,33 @@ public sealed class CmsModule(
 
         void InjectServices()
         {
-            builder.Services.AddSingleton<CmsModule>(p => new CmsModule(
-                    p.GetRequiredService<ILogger<CmsModule>>(),
-                    databaseProvider,
-                    connectionString
-                )
-            );
-
-            builder.Services.AddScoped<IProfileService, DummyProfileService>();
-            
             builder.Services.AddMemoryCache();
+            builder.Services.AddSingleton<NonExpiringKeyValueCache<ImmutableArray<LoadedEntity>>>(p =>
+                new NonExpiringKeyValueCache<ImmutableArray<LoadedEntity>>(p.GetRequiredService<IMemoryCache>(), "entities"));
+            builder.Services.AddSingleton<ExpiringKeyValueCache<LoadedQuery>>(p =>
+                new ExpiringKeyValueCache<LoadedQuery>(p.GetRequiredService<IMemoryCache>(), 30, "query"));
+            
             builder.Services.AddSingleton<PageTemplate>(p =>
             {
                 var provider = p.GetRequiredService<IWebHostEnvironment>().WebRootFileProvider;
                 var fileInfo = provider.GetFileInfo($"{FluentCmsContentRoot}/static-assets/templates/template.html");
                 return new PageTemplate(fileInfo.PhysicalPath??"");
             });
-            builder.Services.AddSingleton<HookRegistry>(_ => new HookRegistry());
-            builder.Services.AddSingleton<KeyValueCache<LoadedQuery>>(p =>
-                new KeyValueCache<LoadedQuery>(p.GetRequiredService<IMemoryCache>(), 30, "query"));
             builder.Services.AddSingleton<LocalFileStore>(p => new LocalFileStore(
-                Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/files"),
-                1200,
-                70)
-            );
+                           Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/files"), 1200, 70) ); 
             builder.Services.AddSingleton<KateQueryExecutor>(p =>
                 new KateQueryExecutor(p.GetRequiredService<IKateProvider>(), 30));
-
+            builder.Services.AddSingleton<HookRegistry>();
+            
             builder.Services.AddScoped<ISchemaService, SchemaService>();
             builder.Services.AddScoped<IEntitySchemaService, EntitySchemaService>();
             builder.Services.AddScoped<IQuerySchemaService, QuerySchemaService>();
+            
             builder.Services.AddScoped<IEntityService, EntityService>();
             builder.Services.AddScoped<IQueryService, QueryService>();
             builder.Services.AddScoped<IPageService, PageService>();
+            
+            builder.Services.AddScoped<IProfileService, DummyProfileService>();
         }
 
         void InjectDbServices()

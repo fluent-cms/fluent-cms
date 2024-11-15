@@ -1,5 +1,7 @@
+using System.Collections.Immutable;
 using FluentCMS.Cms.Models;
 using FluentCMS.Services;
+using FluentCMS.Utils.Cache;
 using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.QueryBuilder;
 using FluentResults;
@@ -8,10 +10,15 @@ using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 namespace FluentCMS.Cms.Services;
 using static InvalidParamExceptionFactory;
 
-public sealed class EntitySchemaService(ISchemaService schemaSvc, IDefinitionExecutor executor)
-    : IEntitySchemaService 
+public sealed class EntitySchemaService(
+    ISchemaService schemaSvc,
+    IDefinitionExecutor executor,
+    NonExpiringKeyValueCache<ImmutableArray<LoadedEntity>> entityCache
+) : IEntitySchemaService
 {
-    public bool ResolveVal(Attribute attr, string v, out object? result) => executor.TryParseDataType(v, attr.DataType, out result);
+    public bool ResolveVal(Attribute attr, string v, out object? result) =>
+        executor.TryParseDataType(v, attr.DataType, out result);
+
     public async Task<Result<AttributeVector>> ResolveVector(LoadedEntity entity, string fieldName)
     {
         var fields = fieldName.Split(".");
@@ -63,7 +70,7 @@ public sealed class EntitySchemaService(ISchemaService schemaSvc, IDefinitionExe
             return Result.Fail(errors);
         }
 
-        var ret = await LoadAllRelated(entity.ToLoadedEntity(), false, token);
+        var ret = await LoadAllRelatedAttr(entity.ToLoadedEntity(), false, token);
         return ret;
     }
 
@@ -110,7 +117,7 @@ public sealed class EntitySchemaService(ISchemaService schemaSvc, IDefinitionExe
         async Task SaveSchema()
         {
             dto = dto with { Settings = new Settings(entity) };
-            dto = await schemaSvc.Save(dto, token);
+            dto = await schemaSvc.SaveWithAction(dto, token);
             entity = dto.Settings.Entity!;
         }
 
@@ -192,7 +199,7 @@ public sealed class EntitySchemaService(ISchemaService schemaSvc, IDefinitionExe
             return Result.Fail($"not find entity by name {crosstableName}, err = {getErr}");
         }
 
-        var (_, _, loadedTarget, loadErr) = await LoadAllRelated(target.ToLoadedEntity(), true, token);
+        var (_, _, loadedTarget, loadErr) = await LoadAllRelatedAttr(target.ToLoadedEntity(), true, token);
         if (loadErr is not null)
         {
             return Result.Fail(loadErr);
@@ -213,7 +220,7 @@ public sealed class EntitySchemaService(ISchemaService schemaSvc, IDefinitionExe
     }
 
     //omitCrosstable: omit  circular reference
-    private async Task<Result<LoadedEntity>> LoadAllRelated(LoadedEntity entity, bool omitCrosstable,
+    private async Task<Result<LoadedEntity>> LoadAllRelatedAttr(LoadedEntity entity, bool omitCrosstable,
         CancellationToken token)
     {
         var lst = new List<LoadedAttribute>();
@@ -223,7 +230,7 @@ public sealed class EntitySchemaService(ISchemaService schemaSvc, IDefinitionExe
             switch (attribute)
             {
                 case { Type: DisplayType.Crosstable } when !omitCrosstable:
-                case { Type: DisplayType.Lookup } :
+                case { Type: DisplayType.Lookup }:
                     var (_, _, value, errors) = await LoadOneRelated(entity, attribute, token);
                     if (errors is not null)
                     {
@@ -248,6 +255,7 @@ public sealed class EntitySchemaService(ISchemaService schemaSvc, IDefinitionExe
         {
             throw new Exception($"Crosstable Option was not set for attribute `{entity.Name}.{attr.Field}`");
         }
+
         var targetEntity = CheckResult(await GetLoadedEntity(crosstableName, token));
         var crossTable = CrosstableHelper.Crosstable(entity, targetEntity, attr);
         var columns =
@@ -266,6 +274,7 @@ public sealed class EntitySchemaService(ISchemaService schemaSvc, IDefinitionExe
         {
             throw new InvalidParamException($"Lookup Option was not set for attribute `{attr.Field}`");
         }
+
         NotNull(await GetEntity(lookupName, token))
             .ValOrThrow($"not find entity by name {lookupName}");
     }
@@ -296,4 +305,23 @@ public sealed class EntitySchemaService(ISchemaService schemaSvc, IDefinitionExe
         );
         return await SaveTableDefine(schema, token);
     }
+
+    public async Task LoadEntityCache()
+    {
+        var entities = await schemaSvc.All(SchemaType.Entity, null, default);
+        var loadedEntities = new List<LoadedEntity>();
+        foreach (var schema in entities)
+        {
+            var entity = NotNull(schema.Settings.Entity).ValOrThrow("Invalid Entity").ToLoadedEntity();
+            var (_, _, loaded) = await LoadAllRelatedAttr(entity, false, default);
+
+            loadedEntities.Add(loaded!);
+        }
+
+        entityCache.Replace("", [..loadedEntities]);
+    }
+
+    public bool GetLoadedEntities(out ImmutableArray<LoadedEntity> entities) =>
+        entityCache.TryGetValue("", out entities);
+
 }

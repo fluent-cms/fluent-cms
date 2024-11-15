@@ -21,8 +21,9 @@ public static class App
       AddCms(builder, databaseProvider,connectionString);
       AddDbContext(builder, databaseProvider, connectionString);
       builder.AddCmsAuth<MyUser, IdentityRole, AppDbContext>();
-
+      builder.AddCmsGraphQl("/graph");
       var app = builder.Build();
+
       app.UseHttpsRedirection();
       if (app.Environment.IsDevelopment())
       {
@@ -34,7 +35,8 @@ public static class App
       await app.UseCmsAsync();
       InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [RoleConstants.Sa]));
       InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("admin@cms.com", "Admin1!", [RoleConstants.Admin]));
-      app.Run();
+      await app.RunAsync();
+      
    }
 
    private static async Task Migrate(WebApplication app)

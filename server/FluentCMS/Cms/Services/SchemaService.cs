@@ -18,27 +18,32 @@ public sealed  class SchemaService(
     
 ) : ISchemaService
 {
-    public async Task<Schema[]> GetAll(string type, CancellationToken cancellationToken = default)
+    public async Task<Schema[]> AllWithAction(string type, CancellationToken cancellationToken = default)
     {
         var res = await hook.SchemaPreGetAll.Trigger(provider, new SchemaPreGetAllArgs(default));
+        IEnumerable<string>? names = res.OutSchemaNames?.Length > 0 ? res.OutSchemaNames : null;
+        return await All(type,names, cancellationToken);
+    }
+
+    public async Task<Schema[]> All(string type, IEnumerable<string>? names, CancellationToken cancellationToken = default){
         var query = BaseQuery();
         if (!string.IsNullOrWhiteSpace(type))
         {
             query = query.Where(Type, type);
         }
 
-        if (res.OutSchemaNames?.Length > 0)
+        if (names is not null)
         {
-            query.WhereIn(Name,res.OutSchemaNames);
+            query.WhereIn(Name,names);
         }
 
         var items = await queryExecutor.Many(query, cancellationToken);
         return items.Select(x => CheckResult(ParseSchema(x))).ToArray();
     }
 
-    public async Task<Schema?> GetByIdWithTrigger(int id, CancellationToken cancellationToken = default)
+    public async Task<Schema?> ByIdWithAction(int id, CancellationToken cancellationToken = default)
     {
-        var schema = await GetByIdDefault(id, cancellationToken);
+        var schema = await ById(id, cancellationToken);
         if (schema is not null)
         {
             await hook.SchemaPostGetOne.Trigger(provider, new SchemaPostGetOneArgs(schema));
@@ -46,7 +51,7 @@ public sealed  class SchemaService(
         return schema;
 
     }
-    public async Task<Schema?> GetByIdDefault(int id, CancellationToken cancellationToken = default)
+    public async Task<Schema?> ById(int id, CancellationToken cancellationToken = default)
     {
         var query = BaseQuery().Where(Id, id);
         var item = await queryExecutor.One(query, cancellationToken);
@@ -72,7 +77,7 @@ public sealed  class SchemaService(
         return res.IsSuccess ? res.Value : null;
     }
 
-    public async Task<Schema> Save(Schema dto, CancellationToken cancellationToken = default)
+    public async Task<Schema> SaveWithAction(Schema dto, CancellationToken cancellationToken = default)
     {
         CheckResult(await NameNotTakenByOther(dto, cancellationToken));
         var res = await hook.SchemaPreSave.Trigger(provider, new SchemaPreSaveArgs(dto));

@@ -13,7 +13,7 @@ using static InvalidParamExceptionFactory;
 public sealed class QuerySchemaService(
     ISchemaService schemaSvc,
     IEntitySchemaService entitySchemaSvc,
-    KeyValueCache<LoadedQuery> queryCache
+    ExpiringKeyValueCache<LoadedQuery> queryCache
 ) : IQuerySchemaService
 {
     public async Task<LoadedQuery> GetByNameAndCache(string name, CancellationToken token = default)
@@ -38,7 +38,7 @@ public sealed class QuerySchemaService(
     public async Task<Schema> Save(Schema schema, CancellationToken cancellationToken)
     {
         await VerifyQuery(schema.Settings.Query, cancellationToken);
-        var ret = await schemaSvc.Save(schema, cancellationToken);
+        var ret = await schemaSvc.SaveWithAction(schema, cancellationToken);
         var query = await GetByName(schema.Name, cancellationToken);
         queryCache.Remove(query.Name);
         return ret;
