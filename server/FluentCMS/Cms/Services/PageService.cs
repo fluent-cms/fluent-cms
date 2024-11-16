@@ -47,7 +47,7 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
         if (!string.IsNullOrWhiteSpace(part.DataSource.Query))
         {
             var pagination = new Pagination(0, part.DataSource.Limit);
-            items = await querySvc.List(part.DataSource.Query, cursor, pagination, args, token);
+            items = await querySvc.ListWithAction(part.DataSource.Query, cursor, pagination, args, token);
         }
         else
         {
@@ -102,7 +102,7 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
         {
             var pagination = new Pagination(repeatNode.DataSource.Offset, repeatNode.DataSource.Limit);
             var qs = QueryHelpers.ParseQuery(repeatNode.DataSource.QueryString);
-            var result = await querySvc.List(repeatNode.DataSource.Query, new Span(), pagination, args.MergeByOverwriting(qs), token);
+            var result = await querySvc.ListWithAction(repeatNode.DataSource.Query, new Span(), pagination, args.MergeByOverwriting(qs), token);
             data[repeatNode.DataSource.Field] = result;
         }
     }

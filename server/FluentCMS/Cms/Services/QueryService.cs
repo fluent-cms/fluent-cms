@@ -4,6 +4,7 @@ using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.QueryBuilder;
 using Microsoft.Extensions.Primitives;
 using FluentCMS.Utils.HookFactory;
+using GraphQLParser.AST;
 
 namespace FluentCMS.Cms.Services;
 
@@ -17,7 +18,45 @@ public sealed class QueryService(
     HookRegistry hook
     ) : IQueryService
 {
+    public async Task<Record[]> Query(string entityName, IEnumerable<GraphQLField> fields)
+    {
+        var query = await querySchemaService.GetByGraphFields(entityName, fields);
+        return await ListWithAction(new Context(query, []), new Span(), new Pagination(), [], default);
+    }
 
+    public async Task<Record[]> ListWithAction(string name, Span span, Pagination pagination, QueryArgs args, CancellationToken token)
+    {
+        return await ListWithAction (await GetContext(name, args, token),span,pagination,args,token);
+    }
+
+    private async Task<Record[]> ListWithAction(Context ctx, Span span, Pagination pagination, QueryArgs args, CancellationToken token)
+    {
+        var (query, filters) = ctx;
+        var validSpan = CheckResult(span.ToValid(query.Entity.Attributes, resolver));
+         
+         if (!span.IsEmpty())
+         {
+             pagination = pagination with { Offset = 0 };
+         }
+         var validPagination = pagination.ToValid(query.PageSize);
+         
+         var hookParam = new QueryPreGetListArgs(query.Name, query.EntityName, filters, query.Sorts, validSpan, validPagination.PlusLimitOne());
+         var res = await hook.QueryPreGetList.Trigger(provider, hookParam);
+         if (res.OutRecords is not null)
+         {
+             return span.ToPage(res.OutRecords, validPagination.Limit); 
+         }
+ 
+         var kateQuery = query.Entity.ListQuery(filters, query.Sorts, validPagination.PlusLimitOne(), validSpan, query.Selection.GetLocalAttrs());
+         var items = await executor.Many(kateQuery, token);
+         items = span.ToPage(items, validPagination.Limit);
+         if (items.Length <= 0) return items;
+         await AttachRelated(query.Selection, args, items, token);
+         
+         SetSpan(true,query.Selection, items, query.Sorts, null);
+ 
+         return items;
+     }   
     public async Task<Record[]> Partial(string name, string attr,  Span span, int limit,QueryArgs args, CancellationToken token)
     {
         if (span.IsEmpty())
@@ -48,39 +87,11 @@ public sealed class QueryService(
         return records;
     }
 
-    public async Task<Record[]> List(string name, Span span, Pagination pagination, QueryArgs args, CancellationToken token)
-    {
-        var (query,selection,filters) = await GetContext(name, args, token);
 
-        var validSpan = CheckResult(span.ToValid(query.Entity.Attributes, resolver));
-        
-        if (!span.IsEmpty())
-        {
-            pagination = pagination with { Offset = 0 };
-        }
-        var validPagination = pagination.ToValid(query.PageSize);
-        
-        var hookParam = new QueryPreGetListArgs(name, query.EntityName, filters, query.Sorts, validSpan, validPagination.PlusLimitOne());
-        var res = await hook.QueryPreGetList.Trigger(provider, hookParam);
-        if (res.OutRecords is not null)
-        {
-            return span.ToPage(res.OutRecords, validPagination.Limit); 
-        }
-
-        var kateQuery = query.Entity.ListQuery(filters, query.Sorts, validPagination.PlusLimitOne(), validSpan, selection);
-        var items = await executor.Many(kateQuery, token);
-        items = span.ToPage(items, validPagination.Limit);
-        if (items.Length <= 0) return items;
-        await AttachRelated(query.Selection, args, items, token);
-        
-        SetSpan(true,query.Selection, items, query.Sorts, null);
-
-        return items;
-    }
     
     public async Task<Record[]> Many(string name, QueryArgs args, CancellationToken token)
     {
-        var (query,selection,filters) = await GetContext(name, args, token);
+        var (query,filters) = await GetContext(name, args, token);
         var validPagination = new Pagination().ToValid(query.PageSize);
 
         var res = await hook.QueryPreGetMany.Trigger(provider,
@@ -90,7 +101,7 @@ public sealed class QueryService(
             return res.OutRecords;
         }
       
-        var kateQuery = query.Entity.ListQuery(res.Filters, query.Sorts, validPagination, null, selection);
+        var kateQuery = query.Entity.ListQuery(res.Filters, query.Sorts, validPagination, null, query.Selection.GetLocalAttrs());
         var items = await executor.Many(kateQuery, token);
         await AttachRelated(query.Selection, args, items, token);
         SetSpan(false,query.Selection, items, [], null);
@@ -99,7 +110,7 @@ public sealed class QueryService(
 
     public async Task<Record> One(string name, Dictionary<string, StringValues> args, CancellationToken token)
     {
-        var (query,selection,filters) = await GetContext(name, args, token);
+        var (query,filters) = await GetContext(name, args, token);
         var res = await hook.QueryPreGetOne.Trigger(provider,
             new QueryPreGetOneArgs(name, query.EntityName, filters));
         if (res.OutRecord is not null)
@@ -107,7 +118,7 @@ public sealed class QueryService(
             return res.OutRecord;
         }
       
-        var kateQuery = CheckResult(query.Entity.OneQuery(res.Filters, query.Sorts, selection));
+        var kateQuery = CheckResult(query.Entity.OneQuery(res.Filters, query.Sorts, query.Selection.GetLocalAttrs()));
         var item = NotNull(await executor.One(kateQuery, token)).ValOrThrow("Not find record");
         await AttachRelated(query.Selection, args, [item], token);
         SetSpan(false, query.Selection, [item], [],null);
@@ -242,13 +253,12 @@ public sealed class QueryService(
         }
     }
 
-    private record Context(LoadedQuery Query, ImmutableArray<GraphAttribute> Selection, ImmutableArray<ValidFilter> Filters);
+    private record Context(LoadedQuery Query, ImmutableArray<ValidFilter> Filters);
 
     private async Task<Context> GetContext(string name, QueryArgs args, CancellationToken token)
     {
         var query = await querySchemaService.GetByNameAndCache(name, token);
-        var attributes = query.Selection.GetLocalAttrs();
         var filters = CheckResult(await query.Filters.ToValid(query.Entity, args, resolver,resolver));
-        return new Context(query, attributes, filters);
+        return new Context(query, filters);
     }
 }

@@ -59,8 +59,9 @@ public sealed class CmsModule(
         void InjectServices()
         {
             builder.Services.AddMemoryCache();
-            builder.Services.AddSingleton<NonExpiringKeyValueCache<ImmutableArray<LoadedEntity>>>(p =>
-                new NonExpiringKeyValueCache<ImmutableArray<LoadedEntity>>(p.GetRequiredService<IMemoryCache>(), "entities"));
+            builder.Services.AddSingleton<NonExpiringKeyValueCache<ImmutableArray<Schema>>>(p =>
+                new NonExpiringKeyValueCache<ImmutableArray<Schema>>(p.GetRequiredService<IMemoryCache>(), "entities"));
+            
             builder.Services.AddSingleton<ExpiringKeyValueCache<LoadedQuery>>(p =>
                 new ExpiringKeyValueCache<LoadedQuery>(p.GetRequiredService<IMemoryCache>(), 30, "query"));
             

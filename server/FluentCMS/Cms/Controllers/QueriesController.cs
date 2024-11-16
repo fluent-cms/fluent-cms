@@ -12,7 +12,7 @@ public class QueriesController(IQueryService queryService) : ControllerBase
     public async Task<ActionResult> GetList(string name, [FromQuery] Span span, [FromQuery] Pagination pagination,CancellationToken token)
     {
         var dict = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
-        var res = await queryService.List(name, span,pagination, dict,token);
+        var res = await queryService.ListWithAction(name, span,pagination, dict,token);
         return Ok( res);
    
     }

@@ -11,7 +11,7 @@ public sealed class GraphqlModule( ILogger<GraphqlModule> logger, string path)
         builder.Services.AddSingleton<GraphqlModule>(p => 
             new GraphqlModule(p.GetRequiredService<ILogger<GraphqlModule>>(), path));
         
-        builder.Services.AddScoped<CmsQuery>();
+        builder.Services.AddScoped<CmsGraphQuery>();
         builder.Services.AddScoped<CmsSchema>();
         builder.Services.AddGraphQL(b => b.AddSystemTextJson());
     }
@@ -20,7 +20,7 @@ public sealed class GraphqlModule( ILogger<GraphqlModule> logger, string path)
     {
         logger.LogInformation($"Running graphql, path = ${path}");
         using var scope = app.Services.CreateScope();
-        await scope.ServiceProvider.GetRequiredService<IEntitySchemaService>().LoadEntityCache();
+        await scope.ServiceProvider.GetRequiredService<ISchemaService>().CacheSchema(SchemaType.Entity);
         app.UseGraphQL<CmsSchema>();
         app.UseGraphQLGraphiQL(path);
     }

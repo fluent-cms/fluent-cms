@@ -1,6 +1,8 @@
+using System.Collections.Immutable;
 using System.Text.Json;
 using FluentCMS.Cms.Models;
 using FluentCMS.Services;
+using FluentCMS.Utils.Cache;
 using FluentResults;
 using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.HookFactory;
@@ -14,8 +16,8 @@ public sealed  class SchemaService(
     IDefinitionExecutor ddlExecutor,
     KateQueryExecutor queryExecutor,
     HookRegistry hook,
-    IServiceProvider provider
-    
+    IServiceProvider provider,
+    NonExpiringKeyValueCache<ImmutableArray<Schema>>schemaCache
 ) : ISchemaService
 {
     public async Task<Schema[]> AllWithAction(string type, CancellationToken cancellationToken = default)
@@ -144,6 +146,18 @@ public sealed  class SchemaService(
         await ddlExecutor.CreateTable(entity.TableName, entity.Definitions().EnsureDeleted(),
             cancellationToken);
     }
+
+    public async Task CacheSchema(string type)
+    {
+        var entities = await All(type, null);
+        schemaCache.Replace(type, [..entities]);
+    }
+
+    public bool GetCachedSchema(string type, out ImmutableArray<Schema> entities)
+    {
+        return schemaCache.TryGetValue(type, out entities);
+    }
+
     public async Task EnsureEntityInTopMenuBar(Entity entity, CancellationToken cancellationToken)
     {
         var menuBarSchema = NotNull(await GetByNameDefault(SchemaName.TopMenuBar, SchemaType.Menu, cancellationToken))

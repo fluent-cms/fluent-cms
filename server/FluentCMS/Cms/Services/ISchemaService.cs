@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using FluentCMS.Cms.Models;
 using FluentResults;
 using FluentCMS.Utils.QueryBuilder;
@@ -19,12 +20,11 @@ public static class SchemaName
 
 public interface ISchemaService
 {
-    Task<Schema[]> All(string type,  IEnumerable<string>? names,CancellationToken cancellationToken);
-    Task<Schema[]> AllWithAction(string type,CancellationToken cancellationToken);
-    
+    Task<Schema[]> AllWithAction(string type, CancellationToken cancellationToken);
+
     Task<Schema?> ByIdWithAction(int id, CancellationToken cancellationToken = default);
     Task<Schema?> ById(int id, CancellationToken cancellationToken = default);
-    
+
     public Task EnsureEntityInTopMenuBar(Entity entity, CancellationToken cancellationToken);
     Task<Result> NameNotTakenByOther(Schema schema, CancellationToken cancellationToken);
     Task<Schema?> GetByNameDefault(string name, string type, CancellationToken cancellationToken = default);
@@ -33,4 +33,6 @@ public interface ISchemaService
     Task Delete(int id, CancellationToken cancellationToken);
     Task EnsureTopMenuBar(CancellationToken cancellationToken);
     Task EnsureSchemaTable(CancellationToken cancellationToken);
+    Task CacheSchema(string type);
+    bool GetCachedSchema(string type, out ImmutableArray<Schema> entities);
 }

@@ -16,6 +16,13 @@ public sealed class QuerySchemaService(
     ExpiringKeyValueCache<LoadedQuery> queryCache
 ) : IQuerySchemaService
 {
+    public async Task<LoadedQuery> GetByGraphFields(string entityName, IEnumerable<GraphQLField> fields, CancellationToken token = default)
+    {
+        var entity = CheckResult(await entitySchemaSvc.GetLoadedEntity(entityName, token));
+        var selection = CheckResult(await SelectionSetToNode("", entity, fields, token));
+        return new LoadedQuery(entityName + "_GraphQl", entityName, entity.DefaultPageSize, selection, [], [], entity);
+    }
+    
     public async Task<LoadedQuery> GetByNameAndCache(string name, CancellationToken token = default)
     {
         var query = await queryCache.GetOrSet(name, async () => await GetByName(name, token));
@@ -287,7 +294,7 @@ public sealed class QuerySchemaService(
         return graphAttr with { Sorts = validSorts};
     }
 
-    private async Task<Result<GraphAttribute>> LoadAttribute(LoadedEntity entity, string fldName, CancellationToken cancellationToken)
+    private async Task<Result<GraphAttribute>> LoadAttribute(LoadedEntity entity, string fldName, CancellationToken token)
     {
         var find = entity.Attributes.FindOneAttr(fldName);
         if (find is null)
@@ -295,12 +302,18 @@ public sealed class QuerySchemaService(
             return Result.Fail($"Parsing `SectionSet` fail, can not find {fldName} in {entity.Name}");
         }
 
-        var (_, _, loadedAttr, loadRelatedErr) = await entitySchemaSvc.LoadOneRelated(entity, find, cancellationToken);
-        if (loadRelatedErr is not null)
+        if (find.Type is DisplayType.Crosstable or DisplayType.Lookup)
         {
-            return Result.Fail(loadRelatedErr);
+            var (_, _, compoundAttr, loadRelatedErr) =
+                await entitySchemaSvc.LoadOneCompoundAttribute(entity, find, [], token);
+            if (loadRelatedErr is not null)
+            {
+                return Result.Fail(loadRelatedErr);
+            }
+
+            find = compoundAttr;
         }
 
-        return loadedAttr.ToGraph();
+        return find.ToGraph();
     }
 }

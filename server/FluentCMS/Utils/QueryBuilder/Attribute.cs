@@ -94,20 +94,6 @@ public record GraphAttribute(
 
 public static class AttributeHelper
 {
-    /*
-    private static Func<Attribute, string, object> _castToDbType = (_, s) => s;
-
-    public static void SetCastToDbType(Func<string, string, object> func)
-    {
-        _castToDbType = (a, s) => func(s, a.DataType);
-    }
-
-    public static object Cast(this Attribute attribute, string s)
-    {
-        return _castToDbType(attribute, s);
-    }
-    */
-
 
     public static LoadedAttribute ToLoaded(this Attribute a, string tableName)
     {
@@ -177,8 +163,6 @@ public static class AttributeHelper
        return !string.IsNullOrWhiteSpace(val);
     } 
     
-    private static bool IsLocalAttribute(this Attribute a) => a.Type != DisplayType.Crosstable;
-
     public static Attribute ToAttribute(this ColumnDefinition col)
     {
         return new Attribute(
@@ -220,7 +204,7 @@ public static class AttributeHelper
     public static ImmutableArray<T> GetLocalAttrs<T>(this IEnumerable<T>? arr)
         where T : Attribute
     {
-        return arr?.Where(x => x.IsLocalAttribute()).ToImmutableArray() ?? [];
+        return arr?.Where(x => x.Type != DisplayType.Crosstable).ToImmutableArray() ?? [];
     }
 
     public static ImmutableArray<T> GetLocalAttrs<T>(this IEnumerable<T>? arr, InListOrDetail listOrDetail)
