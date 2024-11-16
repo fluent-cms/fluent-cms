@@ -24,7 +24,7 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
         
         var data = string.IsNullOrWhiteSpace(ctx.Page.Query)
             ? new Dictionary<string, object>()
-            : await querySvc.One(ctx.Page.Query, args, token);
+            : await querySvc.OneWithAction(ctx.Page.Query, args, token);
         
         return await RenderPage(ctx, data, args, token);
     }

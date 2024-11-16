@@ -20,7 +20,7 @@ public class QueriesController(IQueryService queryService) : ControllerBase
     public async Task<ActionResult> GetOne(string name, CancellationToken token)
     {
         var args = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
-        return Ok(await queryService.One(name, args,token));
+        return Ok(await queryService.OneWithAction(name, args,token));
     }
 
     [HttpGet("{name}/part/{attr}")]
@@ -34,6 +34,6 @@ public class QueriesController(IQueryService queryService) : ControllerBase
     public async Task<ActionResult> GetMany(string name, CancellationToken token)
     {
         var args = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
-        return Ok(await queryService.Many(name, args,token));
+        return Ok(await queryService.ManyWithAction(name, args,token));
     }
 }

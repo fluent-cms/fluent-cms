@@ -17,29 +17,35 @@ public sealed class CmsGraphQuery : ObjectGraphType
             .Where(x=>x.Settings.Entity is not null)
             .Select(x=>x.Settings.Entity).ToImmutableArray();
         
-        var dict = new Dictionary<string, ObjectGraphType>();
+        var singleDict = new Dictionary<string, ObjectGraphType>();
+        var listDict = new Dictionary<string, ListGraphType>();
+        
         foreach (var entity in entities)
         {
-            dict[entity!.Name] = entity.GetPlainGraphType();
+            var t = entity!.GetPlainGraphType();
+            singleDict[entity!.Name] = t;
+            listDict[entity.Name] = new ListGraphType(t);
         }
         
         foreach (var entity in entities)
         {
-            entity!.LoadCompoundGraphType(dict);
+            entity!.LoadCompoundGraphType(singleDict,listDict);
         }
-        
+
         foreach (var entity in entities)
         {
             AddField(new FieldType
             {
-                Name =entity!.Name, 
-                ResolvedType = dict[entity.Name],
-                Resolver = new FuncFieldResolver<Record[]>(async context =>
-                {
-                    var fields = context.SubFields is null ?[]:context.SubFields.Values.Select(x => x.Field);
-                    var items = await queryService.Query(context.FieldDefinition.Name,fields);
-                    return items; 
-                })
+                Name = entity!.Name,
+                ResolvedType = singleDict[entity.Name],
+                Resolver = Resolvers.GetSingleResolver(queryService,entity.Name)
+            });
+            
+            AddField(new FieldType
+            {
+                Name = entity.Name + "List",
+                ResolvedType = listDict[entity.Name],
+                Resolver = Resolvers.GetListResolver(queryService, entity.Name)
             });
         }
     }

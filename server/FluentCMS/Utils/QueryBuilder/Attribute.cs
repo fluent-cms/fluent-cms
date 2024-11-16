@@ -161,7 +161,12 @@ public static class AttributeHelper
     {
        val = a.Options;
        return !string.IsNullOrWhiteSpace(val);
-    } 
+    }
+
+    public static bool IsCompound(this Attribute a)
+    {
+        return a.Type is DisplayType.Lookup or DisplayType.Crosstable;
+    }
     
     public static Attribute ToAttribute(this ColumnDefinition col)
     {
