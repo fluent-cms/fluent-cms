@@ -13,26 +13,26 @@ using static InvalidParamExceptionFactory;
 
 public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc, PageTemplate template) : IPageService
 {
-    public async Task<string> GetDetail(string name, string param, QueryArgs args, CancellationToken token)
+    public async Task<string> GetDetail(string name, string param, QueryStrArgs strArgs, CancellationToken token)
     {
         //detail page format <pageName>/{<routerName>}, not know the exact page name now, match with prefix '/{'. 
         var ctx = (await GetContext(name+ "/{" , true,token)).ToPageContext();
-        args = GetLocalPaginationArgs(ctx, args); 
+        strArgs = GetLocalPaginationArgs(ctx, strArgs); 
         
         var routerName =ctx.Page.Name.Split("/").Last()[1..^1]; // remove '{' and '}'
-        args[routerName] = param;
+        strArgs[routerName] = param;
         
         var data = string.IsNullOrWhiteSpace(ctx.Page.Query)
             ? new Dictionary<string, object>()
-            : await querySvc.OneWithAction(ctx.Page.Query, args, token);
+            : await querySvc.OneWithAction(ctx.Page.Query, strArgs, token);
         
-        return await RenderPage(ctx, data, args, token);
+        return await RenderPage(ctx, data, strArgs, token);
     }
 
-    public async Task<string> Get(string name, QueryArgs args, CancellationToken token)
+    public async Task<string> Get(string name, QueryStrArgs strArgs, CancellationToken token)
     {
         var ctx = await GetContext(name , false, token);
-        return await RenderPage(ctx.ToPageContext(),  new Dictionary<string, object>(), args, token);
+        return await RenderPage(ctx.ToPageContext(),  new Dictionary<string, object>(), strArgs, token);
     }
 
     public async Task<string> GetPart(string pageId, CancellationToken token)
@@ -69,9 +69,9 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
         return render(data);
     }
 
-    private async Task<string> RenderPage(PageContext ctx, Record data, QueryArgs args, CancellationToken token)
+    private async Task<string> RenderPage(PageContext ctx, Record data, QueryStrArgs strArgs, CancellationToken token)
     {
-        await LoadRelatedData(ctx.Page.Name, data, args, ctx.Nodes, token);
+        await LoadRelatedData(ctx.Page.Name, data, strArgs, ctx.Nodes, token);
         CheckResult(TagPagination(ctx, data));
 
         foreach (var repeatNode in ctx.Nodes)
@@ -84,9 +84,9 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
         return template.Build(title, body, ctx.Page.Css);
     }
 
-    private static QueryArgs GetLocalPaginationArgs(PageContext ctx,QueryArgs args)
+    private static QueryStrArgs GetLocalPaginationArgs(PageContext ctx,QueryStrArgs strArgs)
     {
-        var ret = new QueryArgs(args);
+        var ret = new QueryStrArgs(strArgs);
         foreach (var node in ctx.Nodes.Where(x => 
                 string.IsNullOrWhiteSpace(x.DataSource.Query) && (x.DataSource.Offset > 0 || x.DataSource.Limit > 0)))
         {
@@ -96,13 +96,13 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
         return ret;
     }
 
-    private async Task LoadRelatedData(string name, Record data, QueryArgs args, DataNode[] nodes, CancellationToken token)
+    private async Task LoadRelatedData(string name, Record data, QueryStrArgs strArgs, DataNode[] nodes, CancellationToken token)
     {
         foreach (var repeatNode in nodes.Where(x => !string.IsNullOrWhiteSpace(x.DataSource.Query)))
         {
             var pagination = new Pagination(repeatNode.DataSource.Offset, repeatNode.DataSource.Limit);
             var qs = QueryHelpers.ParseQuery(repeatNode.DataSource.QueryString);
-            var result = await querySvc.ListWithAction(repeatNode.DataSource.Query, new Span(), pagination, args.MergeByOverwriting(qs), token);
+            var result = await querySvc.ListWithAction(repeatNode.DataSource.Query, new Span(), pagination, strArgs.MergeByOverwriting(qs), token);
             data[repeatNode.DataSource.Field] = result;
         }
     }

@@ -48,7 +48,7 @@ public sealed class EntityService(
         return record;
     }
 
-    public async Task<ListResult?> List(string name, Pagination pagination, QueryArgs args, CancellationToken token)
+    public async Task<ListResult?> List(string name, Pagination pagination, QueryStrArgs args, CancellationToken token)
     {
         var entity = CheckResult(await entitySchemaSvc.GetLoadedEntity(name, token));
         var groupQs = args.GroupByFirstIdentifier();
@@ -72,11 +72,11 @@ public sealed class EntityService(
         return await Delete(await ResolveRecordContext(name, ele, token), token);
     }
 
-    public async Task<int> CrosstableDelete(string name, string id, string attr, JsonElement[] eles,
+    public async Task<int> CrosstableDelete(string name, string id, string attr, JsonElement[] elements,
         CancellationToken token)
     {
         var ctx = await ResolveCrosstableCtx(name, id, attr, token);
-        var items = eles.Select(ele =>
+        var items = elements.Select(ele =>
             CheckResult(ctx.Crosstable.TargetEntity.Parse(ele, entitySchemaSvc))).ToArray();
 
         var res = await hookRegistry.CrosstablePreDel.Trigger(provider,
@@ -89,12 +89,12 @@ public sealed class EntityService(
         return ret;
     }
 
-    public async Task<int> CrosstableAdd(string name, string id, string attr, JsonElement[] eles,
+    public async Task<int> CrosstableAdd(string name, string id, string attr, JsonElement[] elements,
         CancellationToken token)
     {
         var ctx = await ResolveCrosstableCtx(name, id, attr, token);
 
-        var items = eles
+        var items = elements
             .Select(ele => CheckResult(ctx.Crosstable.TargetEntity.Parse(ele, entitySchemaSvc))).ToArray();
         var res = await hookRegistry.CrosstablePreAdd.Trigger(provider,
             new CrosstablePreAddArgs(name, id, ctx.Attribute, items));
@@ -108,7 +108,7 @@ public sealed class EntityService(
 
 
     public async Task<ListResult> CrosstableList(string name, string id, string attr, bool exclude,
-        QueryArgs args, Pagination pagination, CancellationToken token)
+        QueryStrArgs args, Pagination pagination, CancellationToken token)
     {
         var ctx = await ResolveCrosstableCtx(name, id, attr, token);
         var target = ctx.Crosstable.TargetEntity;

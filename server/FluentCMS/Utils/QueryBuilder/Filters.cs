@@ -3,6 +3,8 @@ using FluentResults;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
+
+
 public sealed record Filter(string FieldName, string Operator, ImmutableArray<Constraint> Constraints, bool OmitFail);
 
 public sealed record ValidFilter(AttributeVector Vector, string Operator, ImmutableArray<ValidConstraint> Constraints);
@@ -15,6 +17,60 @@ public static class FilterConstants
 
 public static class FilterHelper
 {
+   
+
+    public static Result<Filter> ToFilter(this IInput input)
+    {
+        var name = input.Name();
+        return input.Val().Match<Result<Filter>>(
+            s => ToEqualsFilter(name,s),
+            arr => PairsToFilter(name,arr),
+            err => Result.Fail(err)
+            );
+    }
+    
+    private static Result<Filter> PairsToFilter(string fieldName, ImmutableArray<(string, object)> pairs)
+    {
+        //name: {omitFail:true, gt:2, lt:5, operator: and}
+        //name: {omitFail:false, eq:3, eq:4, operator: or}
+        var omitFail = false;
+        var logicalOperator = LogicalOperators.And;
+        var constraints = new List<Constraint>();
+        foreach (var (key, val) in pairs)
+        {
+            switch (key)
+            {
+                case FilterConstants.LogicalOperatorKey:
+                    if (val is not string strVal)
+                    {
+                        return Result.Fail("invalid filter logical operator");
+                    }
+
+                    logicalOperator = strVal;
+                    break;
+                case FilterConstants.OmitFailKey:
+                    if (val is not bool boolVal)
+                    {
+                        return Result.Fail("invalid filter omit fail setting");
+                    }
+
+                    omitFail = boolVal;
+                    break;
+                default:
+                    constraints.Add(new Constraint(key, val.ToString()!));
+                    break;
+            }
+        }
+
+        return new Filter(fieldName, logicalOperator, [..constraints], omitFail);
+    }
+
+    private static Filter ToEqualsFilter(string fieldName, string val)
+    {
+        var constraint = new Constraint(Matches.EqualsTo, val);
+        return new Filter(fieldName, LogicalOperators.And, [constraint], false);
+    }
+    
     public static async Task<Result> Verify(
         this IEnumerable<Filter> filters,  
         LoadedEntity entity,
@@ -42,7 +98,7 @@ public static class FilterHelper
     public static async Task<Result<ImmutableArray<ValidFilter>>> ToValid(
         this IEnumerable<Filter> filters,  
         LoadedEntity entity,
-        QueryArgs? args,
+        QueryStrArgs? args,
         IEntityVectorResolver vectorResolver,  
         IAttributeValueResolver valueResolver  
         )
@@ -71,7 +127,7 @@ public static class FilterHelper
 
     public static async Task<Result<ImmutableArray<ValidFilter>>> Parse(
         LoadedEntity entity, 
-        Dictionary<string, QueryArgs> dictionary, 
+        Dictionary<string, QueryStrArgs> dictionary, 
         IEntityVectorResolver vectorResolver, IAttributeValueResolver valueResolver
         )
     {
@@ -96,7 +152,7 @@ public static class FilterHelper
         return ret.ToImmutableArray();
     }
 
-    private static async Task<Result<ValidFilter>> Parse(LoadedEntity entity, string field, QueryArgs args, 
+    private static async Task<Result<ValidFilter>> Parse(LoadedEntity entity, string field, QueryStrArgs strArgs, 
         IEntityVectorResolver vectorResolver, IAttributeValueResolver valueResolver
         )
     {
@@ -106,9 +162,9 @@ public static class FilterHelper
             return Result.Fail($"Fail to parse filter, not found {entity.Name}.{field}, errors: {errors}");
         }
 
-        var op = args.TryGetValue("operator", out var value) ? value.ToString() : "and";
+        var op = strArgs.TryGetValue("operator", out var value) ? value.ToString() : "and";
         var constraints = new List<ValidConstraint>();
-        foreach (var (match, values) in args.Where(x =>x.Key != "operator"))
+        foreach (var (match, values) in strArgs.Where(x =>x.Key != "operator"))
         {
             if (!valueResolver.ResolveVal(vector.Attribute, values.ToString(), out var obj))
             {
@@ -119,4 +175,7 @@ public static class FilterHelper
         }
         return new ValidFilter(vector, op, [..constraints]);
     }
+    
+    
+    
 }

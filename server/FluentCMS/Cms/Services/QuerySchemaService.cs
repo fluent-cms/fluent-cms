@@ -2,7 +2,7 @@ using System.Collections.Immutable;
 using FluentCMS.Cms.Models;
 using FluentCMS.Services;
 using FluentCMS.Utils.Cache;
-using FluentCMS.Utils.GraphQlExt;
+using FluentCMS.Utils.Graph;
 using FluentCMS.Utils.QueryBuilder;
 using FluentResults;
 using GraphQLParser.AST;
@@ -16,13 +16,15 @@ public sealed class QuerySchemaService(
     ExpiringKeyValueCache<LoadedQuery> queryCache
 ) : IQuerySchemaService
 {
-    public async Task<LoadedQuery> GetByGraphFields(string entityName, IEnumerable<GraphQLField> fields, CancellationToken token = default)
+    public async Task<LoadedQuery> GetByGraphFields(string entityName, IEnumerable<GraphQLField> fields,
+        IEnumerable<IInput>? args)
     {
-        var entity = CheckResult(await entitySchemaSvc.GetLoadedEntity(entityName, token));
-        var selection = CheckResult(await SelectionSetToNode("", entity, fields, token));
-        return new LoadedQuery(entityName + "_GraphQl", entityName, entity.DefaultPageSize, selection, [], [], entity);
+        var entity = CheckResult(await entitySchemaSvc.GetLoadedEntity(entityName));
+        var selection = CheckResult(await SelectionSetToNode("", entity, fields, default));
+        var (sorts,filters) = CheckResult(await GetSortAndFilter(entity, args??[]));
+        return new LoadedQuery("GraphQL" + entityName , entityName, entity.DefaultPageSize, selection,sorts , filters, entity);
     }
-    
+
     public async Task<LoadedQuery> GetByNameAndCache(string name, CancellationToken token = default)
     {
         var query = await queryCache.GetOrSet(name, async () => await GetByName(name, token));
@@ -36,10 +38,10 @@ public sealed class QuerySchemaService(
             .ValOrThrow($"can not find query by name {name}");
         var query = NotNull(item.Settings.Query).ValOrThrow("invalid view format");
         var entity = CheckResult(await entitySchemaSvc.GetLoadedEntity(query.EntityName, token));
-        var fields = CheckResult(GraphQlExt.GetRootGraphQlFields(query.SelectionSet));
+        var fields = CheckResult(GraphTypeHelper.GetRootGraphQlFields(query.SelectionSet));
         var selection = CheckResult(await SelectionSetToNode("", entity, fields, token));
         var sorts = CheckResult(await query.Sorts.ToValidSorts(entity, entitySchemaSvc));
-        return query.ToLoadedQuery(entity, selection, sorts );
+        return query.ToLoadedQuery(entity, selection, sorts);
     }
 
     public async Task<Schema> Save(Schema schema, CancellationToken cancellationToken)
@@ -59,17 +61,18 @@ public sealed class QuerySchemaService(
         }
 
         var entity = CheckResult(await entitySchemaSvc.GetLoadedEntity(query.EntityName, token));
-        CheckResult(await query.Filters.Verify(entity, entitySchemaSvc,entitySchemaSvc));
-        
-        var fields = CheckResult(GraphQlExt.GetRootGraphQlFields(query.SelectionSet));
+        CheckResult(await query.Filters.Verify(entity, entitySchemaSvc, entitySchemaSvc));
+
+        var fields = CheckResult(GraphTypeHelper.GetRootGraphQlFields(query.SelectionSet));
         var selection = CheckResult(await SelectionSetToNode("", entity, fields, token));
         var sorts = CheckResult(await query.Sorts.ToValidSorts(entity, entitySchemaSvc));
         //todo: subfields' can only order by local attribute for now.
         //maybe support order subfields' subfield later
-        CheckSorts(selection,sorts,true);
+        CheckSorts(selection, sorts, true);
     }
 
-    private void CheckSorts(ImmutableArray<GraphAttribute> attributes, IEnumerable<ValidSort> sorts, bool allowRecursive)
+    private void CheckSorts(ImmutableArray<GraphAttribute> attributes, IEnumerable<ValidSort> sorts,
+        bool allowRecursive)
     {
         foreach (var sort in sorts)
         {
@@ -81,10 +84,51 @@ public sealed class QuerySchemaService(
                 throw new InvalidParamException($"can not find sort field {sort.FieldName} in selection");
             }
         }
+
         foreach (var attr in attributes)
         {
-            CheckSorts(attr.Selection, attr.Sorts,false);
+            CheckSorts(attr.Selection, attr.Sorts, false);
         }
+    }
+
+    private async Task<Result<(ImmutableArray<ValidSort>, ImmutableArray<Filter>)>> GetSortAndFilter(LoadedEntity entity, IEnumerable<IInput> args)
+    {
+        var sorts = new List<Sort>();
+        var filters = new List<Filter>();
+        foreach (var input in args)
+        {
+            if (input.Name() == SortConstant.SortKey)
+            {
+                var toSortResult = input.ToSort();
+                if (toSortResult.Errors?.Count > 0 )
+                {
+                    return Result.Fail(toSortResult.Errors);
+                }
+
+                sorts = [..toSortResult.Value];
+            }
+            else
+            {
+                var toFilterResult = input.ToFilter();
+                if (toFilterResult.Errors?.Count > 0 )
+                {
+                    return Result.Fail(toFilterResult.Errors);
+                }
+                filters.Add(toFilterResult.Value);
+            }
+        }
+
+        if (sorts.Count == 0)
+        {
+            sorts.Add(new Sort(entity.PrimaryKey, SortOrder.Asc));
+        }
+        var (_, _, validSort, validSortErr) = await sorts.ToValidSorts(entity, entitySchemaSvc);
+        if (validSortErr is not null)
+        {
+            return Result.Fail(validSortErr);
+        }
+
+        return ([..validSort], [..filters]);
     }
 
     private async Task<Result<ImmutableArray<GraphAttribute>>> SelectionSetToNode(
@@ -102,30 +146,28 @@ public sealed class QuerySchemaService(
             {
                 return Result.Fail(err);
             }
+
             graphAttr = graphAttr with { Prefix = prefix };
 
-            (_, _, graphAttr, err) = await LoadSelection(graphAttr.FullPathName(prefix) , graphAttr, field, token);
+            (_, _, graphAttr, err) = await LoadSelection(graphAttr.FullPathName(prefix), graphAttr, field, token);
             if (err is not null)
             {
                 return Result.Fail(err);
             }
 
-            if (graphAttr.Type == DisplayType.Crosstable)
+            if (graphAttr.Type == DisplayType.Crosstable && field.Arguments is not null)
             {
                 var target = graphAttr.Crosstable!.TargetEntity;
-
-                (_, _, graphAttr, err) = await LoadSorts(target,graphAttr, field.Arguments, target.PrimaryKey);
-                if (err is not null)
+                var parseRes = await GetSortAndFilter(target, field.Arguments.Select(x => new GraphQlArgumentInput(x)));
+                if (parseRes.Errors is not null)
                 {
-                    return Result.Fail(err);
+                    return Result.Fail(parseRes.Errors);
                 }
 
-                (_, _, graphAttr, err) =  LoadFilters(graphAttr, field.Arguments);
-                if (err is not null)
-                {
-                    return Result.Fail(err);
-                }
+                var (s, f) = parseRes.Value;
+                graphAttr = graphAttr with { Filters = f,Sorts =s };
             }
+
             attributes.Add(graphAttr);
         }
 
@@ -157,144 +199,8 @@ public sealed class QuerySchemaService(
         return attr;
     }
 
-    private static Result<Filter> ObjectToFilter(string fieldName, GraphQLObjectValue argObjVal)
-    {
-        //name: {omitFail:true, gt:2, lt:5, operator: and}
-        //name: {omitFail:false, eq:3, eq:4, operator: or}
-        var omitFail = false;
-        var logicalOperator = LogicalOperators.And;
-        var constraints = new List<Constraint>();
-        var (_, _, pairs, err) = argObjVal.ToPairs();
-        if (err is not null)
-        {
-            return Result.Fail(err);
-        }
-
-        foreach (var (key, val) in pairs)
-        {
-            switch (key)
-            {
-                case FilterConstants.LogicalOperatorKey:
-                    if (val is not string strVal)
-                    {
-                        return Result.Fail("invalid filter logical operator");
-                    }
-
-                    logicalOperator = strVal;
-                    break;
-                case FilterConstants.OmitFailKey:
-                    if (val is not bool boolVal)
-                    {
-                        return Result.Fail("invalid filter omit fail setting");
-                    }
-
-                    omitFail = boolVal;
-                    break;
-                default:
-                    constraints.Add(new Constraint(key, val.ToString()!));
-                    break;
-            }
-        }
-        return new Filter(fieldName, logicalOperator,[..constraints],omitFail);
-    }
-
-    private static Result<GraphAttribute> LoadFilters(GraphAttribute graphAttr, GraphQLArguments? arguments)
-    {
-        var filters = new List<Filter>();
-        if (arguments is null) return graphAttr;
-
-        foreach (var arg in arguments)
-        {
-            if (arg.Name == SortConstant.SortKey)
-            {
-                continue;
-            }
-
-            var fieldName = arg.Name.StringValue;
-
-            switch (arg.Value)
-            {
-                case GraphQLStringValue stringValue:
-                    AddFilter(fieldName, stringValue.Value.ToString());
-                    break;
-                case GraphQLIntValue intValue:
-                    AddFilter(fieldName, intValue.Value.ToString());
-                    break;
-
-                case GraphQLEnumValue enumValue:
-                    AddFilter(fieldName, enumValue.Name.StringValue);
-                    break;
-                case GraphQLObjectValue argObjVal:
-                    var (_, _, filter, errors) = ObjectToFilter(fieldName, argObjVal);
-                    if (errors is not null)
-                    {
-                        return Result.Fail([new Error($"Failed to resolve filter for {fieldName}"), ..errors]);
-                    }
-
-                    filters.Add(filter);
-                    break;
-                default:
-                    return Result.Fail($"invalid value type for {fieldName}");
-            }
-        }
-
-        return graphAttr with { Filters = [..filters] };
-
-        void AddFilter(string fieldName, string val)
-        {
-            var constraint = new Constraint(Matches.EqualsTo, val);
-            filters.Add(new Filter(fieldName, LogicalOperators.And, [constraint], false));
-        }
-    }
-
-    //sort: id or sort: {id:desc, name:asc}
-    private async Task<Result<GraphAttribute>> LoadSorts(LoadedEntity entity,GraphAttribute graphAttr, GraphQLArguments? arguments,
-        string primaryKey)
-    {
-
-        var sorts = new List<Sort>();
-        if (arguments is not null)
-        {
-            foreach (var arg in arguments)
-            {
-                if (arg.Name != SortConstant.SortKey) continue;
-                switch (arg.Value)
-                {
-                    case GraphQLStringValue stringValue:
-                        sorts.Add(new Sort(stringValue.Value.ToString(), SortOrder.Asc));
-                        break;
-                    case GraphQLEnumValue enumValue:
-                        sorts.Add(new Sort(enumValue.Name.StringValue, SortOrder.Asc));
-                        break;
-                    case GraphQLObjectValue obj:
-                        //{id:desc, name:asc}
-                        var (_, _, pairs, error) = obj.ToPairs();
-                        if (error is not null)
-                        {
-                            return Result.Fail(error);
-                        }
-                        foreach (var (k, v) in pairs)
-                        {
-                            sorts.Add(new Sort(k, v.ToString()!));
-                        }
-                        break;
-                    default:
-                        return Result.Fail("invalid value type for sorts");
-                }
-            }
-        }
-
-        if (sorts.Count == 0)
-        {
-            //sort by primary key default
-            sorts.Add(new Sort(primaryKey, SortOrder.Asc));
-        }
-
-        var validSorts = CheckResult(await sorts.ToValidSorts(entity, entitySchemaSvc)); 
-        return graphAttr with { Sorts = validSorts};
-    }
-
-    private async Task<Result<GraphAttribute>> LoadAttribute(LoadedEntity entity, string fldName, CancellationToken token)
+    private async Task<Result<GraphAttribute>> LoadAttribute(LoadedEntity entity, string fldName,
+        CancellationToken token)
     {
         var find = entity.Attributes.FindOneAttr(fldName);
         if (find is null)

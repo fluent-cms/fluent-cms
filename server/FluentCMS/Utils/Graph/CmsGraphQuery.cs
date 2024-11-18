@@ -1,6 +1,5 @@
 using System.Collections.Immutable;
 using FluentCMS.Cms.Services;
-using GraphQL.Resolvers;
 using GraphQL.Types;
 
 namespace FluentCMS.Utils.Graph;
@@ -38,14 +37,16 @@ public sealed class CmsGraphQuery : ObjectGraphType
             {
                 Name = entity!.Name,
                 ResolvedType = singleDict[entity.Name],
-                Resolver = Resolvers.GetSingleResolver(queryService,entity.Name)
+                Resolver = Resolvers.GetSingleResolver(queryService,entity.Name),
+                Arguments = entity.GetArgument(false)
             });
             
             AddField(new FieldType
             {
                 Name = entity.Name + "List",
                 ResolvedType = listDict[entity.Name],
-                Resolver = Resolvers.GetListResolver(queryService, entity.Name)
+                Resolver = Resolvers.GetListResolver(queryService, entity.Name),
+                Arguments = entity.GetArgument(true)
             });
         }
     }

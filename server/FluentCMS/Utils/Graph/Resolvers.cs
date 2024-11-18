@@ -1,4 +1,7 @@
+using System.Collections.Immutable;
 using FluentCMS.Cms.Services;
+using FluentCMS.Utils.QueryBuilder;
+using GraphQL;
 using GraphQL.Resolvers;
 
 namespace FluentCMS.Utils.Graph;
@@ -15,12 +18,16 @@ public static class Resolvers
         return null;
     });
 
+    private static ImmutableArray<IInput> GetInputs(this IResolveFieldContext context) =>
+        [..context.Arguments?.Where(x=>x.Value.Value is not null)
+            .Select(x=> new ArgumentKeyValueInput(x.Key,x.Value))??[]];
+
     public static IFieldResolver GetSingleResolver(IQueryService queryService, string entityName)
     {
         return new FuncFieldResolver<Record>(async context =>
         {
             var fields = context.SubFields!.Values.Select(x => x.Field);
-            return await queryService.OneWithAction(entityName, fields);
+            return await queryService.OneWithAction(entityName, fields, context.GetInputs());
         });
     }
 
@@ -29,7 +36,7 @@ public static class Resolvers
         return new FuncFieldResolver<Record[]>(async context =>
         {
             var fields = context.SubFields!.Values.Select(x => x.Field);
-            return await queryService.ListWithAction(entityName, fields);
+            return await queryService.ListWithAction(entityName, fields, context.GetInputs());
         });
     }
 }

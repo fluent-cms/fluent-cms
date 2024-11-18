@@ -20,6 +20,15 @@ public static class SortConstant
 
 public static class SortHelper
 {
+    //sort: id or sort: {id:desc, name:asc}
+    public static Result<ImmutableArray<Sort>> ToSort(this IInput input)
+    {
+        return input.Val().Match<Result<ImmutableArray<Sort>>>(
+            s => new List<Sort>{new (s,SortOrder.Asc)}.ToImmutableArray(),
+            array => array.Select(x=> new Sort(x.Item1, x.Item2.ToString()!)).ToImmutableArray(),
+            errors => Result.Fail(errors)
+        );
+    }
     public static async Task<Result<ImmutableArray<ValidSort>>> ToValidSorts(
         this IEnumerable<Sort> sorts, 
         LoadedEntity entity,
@@ -40,7 +49,7 @@ public static class SortHelper
     
     public static async Task<Result<ImmutableArray<ValidSort>>> Parse(
         LoadedEntity entity, 
-        Dictionary<string,QueryArgs> dictionary, 
+        Dictionary<string,QueryStrArgs> dictionary, 
         IEntityVectorResolver vectorResolver)
     {
         var ret = new List<ValidSort>();
