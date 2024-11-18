@@ -18,9 +18,9 @@ public static class Resolvers
         return null;
     });
 
-    private static ImmutableArray<IInput> GetInputs(this IResolveFieldContext context) =>
+    private static ImmutableArray<IValueProvider> GetInputs(this IResolveFieldContext context) =>
         [..context.Arguments?.Where(x=>x.Value.Value is not null)
-            .Select(x=> new ArgumentKeyValueInput(x.Key,x.Value))??[]];
+            .Select(x=> new ArgumentKeyValueValueProvider(x.Key,x.Value))??[]];
 
     public static IFieldResolver GetSingleResolver(IQueryService queryService, string entityName)
     {

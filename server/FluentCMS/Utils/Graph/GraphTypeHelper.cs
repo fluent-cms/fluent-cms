@@ -91,9 +91,9 @@ public static class GraphTypeHelper
     {
         return attr.DataType switch
         {
-            DataType.Int => new QueryArgument<IntGraphType> { Name = attr.Field },
-            DataType.Datetime => new QueryArgument<DateTimeGraphType> { Name = attr.Field },
-            _ => new QueryArgument<StringGraphType> { Name = attr.Field }
+            DataType.Int => new QueryArgument<ListGraphType<IntGraphType>> { Name = attr.Field },
+            DataType.Datetime => new QueryArgument<ListGraphType<DateTimeGraphType>> { Name = attr.Field },
+            _ => new QueryArgument<ListGraphType<StringGraphType>> { Name = attr.Field }
         };
     }
 

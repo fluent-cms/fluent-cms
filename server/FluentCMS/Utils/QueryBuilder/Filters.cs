@@ -3,8 +3,6 @@ using FluentResults;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
-
-
 public sealed record Filter(string FieldName, string Operator, ImmutableArray<Constraint> Constraints, bool OmitFail);
 
 public sealed record ValidFilter(AttributeVector Vector, string Operator, ImmutableArray<ValidConstraint> Constraints);
@@ -17,13 +15,12 @@ public static class FilterConstants
 
 public static class FilterHelper
 {
-   
-
-    public static Result<Filter> ToFilter(this IInput input)
+    public static Result<Filter> ToFilter(this IValueProvider valueProvider)
     {
-        var name = input.Name();
-        return input.Val().Match<Result<Filter>>(
+        var name = valueProvider.Name();
+        return valueProvider.Val().Val.Match<Result<Filter>>(
             s => ToEqualsFilter(name,s),
+            strings =>ToInFilter(name, strings) ,
             arr => PairsToFilter(name,arr),
             err => Result.Fail(err)
             );
@@ -57,17 +54,22 @@ public static class FilterHelper
                     omitFail = boolVal;
                     break;
                 default:
-                    constraints.Add(new Constraint(key, val.ToString()!));
+                    constraints.Add(new Constraint(key, [val.ToString()!]));
                     break;
             }
         }
 
         return new Filter(fieldName, logicalOperator, [..constraints], omitFail);
     }
-
+    private static Filter ToInFilter(string fieldName, IEnumerable<string> val)
+    {
+        var constraint = new Constraint(Matches.In, [..val]);
+        return new Filter(fieldName, LogicalOperators.And, [constraint], false);
+    }
+    
     private static Filter ToEqualsFilter(string fieldName, string val)
     {
-        var constraint = new Constraint(Matches.EqualsTo, val);
+        var constraint = new Constraint(Matches.EqualsTo, [val]);
         return new Filter(fieldName, LogicalOperators.And, [constraint], false);
     }
     

@@ -14,9 +14,13 @@
       ]
     },
     "value": {
-      "minLength": 1,
-      "type": "string",
-      "title":"Value"
+      "title":"Value",
+      "type": "array",
+      "format": "table",
+      "minItems": 1,
+      "items":{
+        "type":"string"
+      }
     }
   }
 }

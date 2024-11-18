@@ -21,10 +21,11 @@ public static class SortConstant
 public static class SortHelper
 {
     //sort: id or sort: {id:desc, name:asc}
-    public static Result<ImmutableArray<Sort>> ToSort(this IInput input)
+    public static Result<ImmutableArray<Sort>> ToSort(this IValueProvider valueProvider)
     {
-        return input.Val().Match<Result<ImmutableArray<Sort>>>(
+        return valueProvider.Val().Val.Match<Result<ImmutableArray<Sort>>>(
             s => new List<Sort>{new (s,SortOrder.Asc)}.ToImmutableArray(),
+            ss =>Result.Fail("Invalid sort input"),
             array => array.Select(x=> new Sort(x.Item1, x.Item2.ToString()!)).ToImmutableArray(),
             errors => Result.Fail(errors)
         );

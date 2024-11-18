@@ -2,7 +2,6 @@ using System.Collections.Immutable;
 using FluentCMS.Services;
 using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.QueryBuilder;
-using Microsoft.Extensions.Primitives;
 using FluentCMS.Utils.HookFactory;
 using GraphQLParser.AST;
 
@@ -18,7 +17,7 @@ public sealed class QueryService(
     HookRegistry hook
 ) : IQueryService
 {
-    public async Task<Record[]> ListWithAction(string entityName, IEnumerable<GraphQLField> fields, IEnumerable<IInput> args)
+    public async Task<Record[]> ListWithAction(string entityName, IEnumerable<GraphQLField> fields, IEnumerable<IValueProvider> args)
     {
        return await ListWithAction(await FromGraphQlRequest(entityName,fields,args) , new Span(), new Pagination(), []);
     }
@@ -29,17 +28,17 @@ public sealed class QueryService(
         return await ListWithAction(await FromSavedQuery(name, args, token), span, pagination, args, token);
     }
 
-    public async Task<Record> OneWithAction(string entityName, IEnumerable<GraphQLField> fields,IEnumerable<IInput> args)
+    public async Task<Record?> OneWithAction(string entityName, IEnumerable<GraphQLField> fields,IEnumerable<IValueProvider> args)
     {
         return await OneWithAction(await FromGraphQlRequest(entityName,fields,args), []);
     }
 
-    public async Task<Record> OneWithAction(string name, Dictionary<string, StringValues> strArgs, CancellationToken token)
+    public async Task<Record?> OneWithAction(string name, QueryStrArgs strArgs, CancellationToken token)
     {
         return await OneWithAction(await FromSavedQuery(name, strArgs, token),strArgs,token);
     }
 
-    private async Task<Record> OneWithAction(QueryContext ctx, Dictionary<string, StringValues> strArgs, CancellationToken token = default)
+    private async Task<Record?> OneWithAction(QueryContext ctx, QueryStrArgs strArgs, CancellationToken token = default)
     {
         var (query, filters) = ctx;
         var res = await hook.QueryPreGetOne.Trigger(provider,
@@ -50,9 +49,13 @@ public sealed class QueryService(
         }
 
         var kateQuery = CheckResult(query.Entity.OneQuery(res.Filters, query.Sorts, query.Selection.GetLocalAttrs()));
-        var item = NotNull(await executor.One(kateQuery, token)).ValOrThrow("Not find record");
-        await AttachRelated(query.Selection, strArgs, [item], token);
-        SetSpan(false, query.Selection, [item], [], null);
+        var item = await executor.One(kateQuery, token);
+        if (item is not null)
+        {
+            await AttachRelated(query.Selection, strArgs, [item], token);
+            SetSpan(false, query.Selection, [item], [], null);
+        }
+
         return item;
     }
     public async Task<Record[]> ManyWithAction(string name, QueryStrArgs strArgs, CancellationToken token)
@@ -284,7 +287,7 @@ public sealed class QueryService(
         return new QueryContext(query, filters);
     }
 
-    private async Task<QueryContext> FromGraphQlRequest(string entityName, IEnumerable<GraphQLField> fields, IEnumerable<IInput> args)
+    private async Task<QueryContext> FromGraphQlRequest(string entityName, IEnumerable<GraphQLField> fields, IEnumerable<IValueProvider> args)
     {
          var query = await querySchemaService.GetByGraphFields(entityName, fields,args);
          var filters = CheckResult(await query.Filters.ToValid(query.Entity, [], resolver, resolver));

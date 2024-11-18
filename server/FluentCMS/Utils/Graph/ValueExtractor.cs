@@ -3,20 +3,19 @@ using FluentCMS.Utils.QueryBuilder;
 using FluentResults;
 using GraphQL.Execution;
 using GraphQLParser.AST;
-using OneOf;
 
 namespace FluentCMS.Utils.Graph;
 
-public record GraphQlArgumentInput(GraphQLArgument Argument) : IInput
+public record GraphQlArgumentValueProvider(GraphQLArgument Argument) : IValueProvider
 {
     public string Name()
     {
         return Argument.Name.StringValue;
     }
 
-    public OneOf<string,ImmutableArray<(string,object)>,List<IError>> Val()
+    public ValueWrapper Val()
     {
-        return Argument.Value switch
+        return new ValueWrapper(Argument.Value switch
         {
             GraphQLStringValue stringValue => stringValue.ToString()!,
             GraphQLEnumValue enumValue => enumValue.Name.StringValue,
@@ -25,24 +24,25 @@ public record GraphQlArgumentInput(GraphQLArgument Argument) : IInput
                 ? pairsResult.Errors
                 : pairsResult.Value,
             _ => new List<IError>{new Error("Unsupported value type")}
-        };
+        });
     }
 }
 
-public record ArgumentKeyValueInput(string Key, ArgumentValue Value) : IInput
+public record ArgumentKeyValueValueProvider(string Key, ArgumentValue Value) : IValueProvider
 {
     public string Name()
     {
         return Key;
     }
 
-    public OneOf<string,ImmutableArray<(string,object)>,List<IError>> Val()
+    public ValueWrapper Val()
     {
-        return Value.Value switch
+        return new ValueWrapper( Value.Value switch
         {
             string stringValue => stringValue,
             int intValue => intValue.ToString(),
+            object[] objects => objects.Select(x => x.ToString()!).ToImmutableArray(),
             _ => new List<IError>{new Error("Unsupported value type")}
-        };
+        });
     }
 }

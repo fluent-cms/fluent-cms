@@ -4,89 +4,106 @@ using Microsoft.Extensions.Primitives;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
-public sealed record Constraint(string Match, string Value);
-public sealed record ValidConstraint(string Match, object[] Values);
+public sealed record Constraint(string Match, ImmutableArray<string> Value);
+public sealed record ValidConstraint(string Match, ImmutableArray<object> Values);
 
 public static class ConstraintsHelper
 {
     private const string QuerystringPrefix = "qs.";
 
-    public static Result Verify(this IEnumerable<Constraint> constraints, Attribute attribute, IAttributeValueResolver resolver)
+    public static Result Verify(this IEnumerable<Constraint> constraints, Attribute attribute,
+        IAttributeValueResolver resolver)
     {
         foreach (var (_, value) in constraints)
         {
-            if (string.IsNullOrWhiteSpace(value) )
+            if (value.Length == 0)
             {
                 return Result.Fail($"value not set for field {attribute.Field}");
             }
-            
-            if (!value.StartsWith(QuerystringPrefix) && !resolver.ResolveVal(attribute, value,out var _))
+
+            foreach (var se in value)
             {
-                return Result.Fail($"Can not cast value `{value}` of `{attribute.Field}` to `{attribute.DataType}`");
+                if (!se.StartsWith(QuerystringPrefix) && !resolver.ResolveVal(attribute, se, out var _))
+                {
+                    return Result.Fail(
+                        $"Can not cast value `{value}` of `{attribute.Field}` to `{attribute.DataType}`");
+                }
             }
         }
         return Result.Ok();
     }
+
     public static Result<ImmutableArray<ValidConstraint>> Resolve(
         this IEnumerable<Constraint> constraints, 
         Attribute attribute,  
-        Dictionary<string, StringValues>? querystringDictionary,
+        QueryStrArgs? args,
         IAttributeValueResolver resolver,
         bool ignoreResolveError
         )
     {
         var ret = new List<ValidConstraint>();
-        foreach (var (match, val) in constraints)
+        foreach (var (match, fromValues) in constraints)
         {
-            if (string.IsNullOrWhiteSpace(val))
+            var resolveValResult = ResolveValues(fromValues, attribute, args,resolver, ignoreResolveError);
+            if (!resolveValResult.IsSuccess)
             {
-                return Result.Fail($"Fail to resolve Filter, value not set for field {attribute.Field}");
+                return Result.Fail(resolveValResult.Errors);
             }
-            if (val.StartsWith(QuerystringPrefix))
+
+            if (resolveValResult.Value.Length > 0)
             {
-                var (_,_, values, err) = ResolveFromQueryString(val);
-                if (err is null)
-                {
-                    var arr = new List<object>();
-                    foreach (var value in values)
-                    {
-                        if (!resolver.ResolveVal(attribute, value, out var dbTypeValue))
-                        {
-                            return Result.Fail("can not cast value " + value + " to " + attribute.DataType);
-                        }
-                        arr.Add(dbTypeValue!);
-                    }
-                    ret.Add(new ValidConstraint(match, [..arr]));
-                }
-                else if (!ignoreResolveError)
+                ret.Add(new ValidConstraint(match, resolveValResult.Value));
+            }
+        }
+        return ret.ToImmutableArray();
+    }
+
+    private static Result<ImmutableArray<object>> ResolveValues(IEnumerable<string> fromValues, Attribute attribute,
+        QueryStrArgs? args, IAttributeValueResolver resolver, bool ignoreResolveError)
+    {
+        var list = new List<object>();
+
+        foreach (var fromValue in fromValues)
+        {
+            if (fromValue.StartsWith(QuerystringPrefix))
+            {
+                var (_, _, values, err) = ResolveFromQueryString(fromValue, args);
+                if (err is not null && !ignoreResolveError)
                 {
                     return Result.Fail(err);
-                }//else ignore this constraint  
+                }
+
+                foreach (var value in values??[])
+                {
+                    if (!resolver.ResolveVal(attribute, value, out var dbTypeValue))
+                    {
+                        return Result.Fail("can not cast value " + value + " to " + attribute.DataType);
+                    }
+
+                    list.Add(dbTypeValue!);
+                }
             }
             else
             {
-                if (!resolver.ResolveVal(attribute, val, out var dbTypeValue))
+                if (!resolver.ResolveVal(attribute, fromValue, out var dbTypeValue))
                 {
-                    return Result.Fail("can not cast value " + val + " to " + attribute.DataType);
+                    return Result.Fail("can not cast value " + fromValue + " to " + attribute.DataType);
                 }
-
-                ret.Add(new ValidConstraint(match, [dbTypeValue!]));
+                list.Add(dbTypeValue!);
             }
         }
-
-        return ret.ToImmutableArray();
-        
-
-        Result<string[]> ResolveFromQueryString (string val)
-        {
-            var key = val[QuerystringPrefix.Length..];
-            if (querystringDictionary is null||!querystringDictionary.TryGetValue(key, out var vals))
-            {
-                return Result.Fail($"Fail to resolve constraint value of field `{attribute.Field}`: Can not find`{key}` in query string");
-            }
-            return vals.ToArray()!;
-        } 
+        return list.ToImmutableArray();
     }
+
+    private static Result<string[]> ResolveFromQueryString (string val, QueryStrArgs? args)
+    {
+        var key = val[QuerystringPrefix.Length..];
+        if (args is null||!args.TryGetValue(key, out var vals))
+        {
+            return Result.Fail($"Fail to resolve constraint value, can not find `{key}` in query string");
+        }
+        return vals.ToArray()!;
+    } 
 }
 
 public static class LogicalOperators

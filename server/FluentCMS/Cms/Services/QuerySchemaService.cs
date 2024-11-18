@@ -17,7 +17,7 @@ public sealed class QuerySchemaService(
 ) : IQuerySchemaService
 {
     public async Task<LoadedQuery> GetByGraphFields(string entityName, IEnumerable<GraphQLField> fields,
-        IEnumerable<IInput>? args)
+        IEnumerable<IValueProvider>? args)
     {
         var entity = CheckResult(await entitySchemaSvc.GetLoadedEntity(entityName));
         var selection = CheckResult(await SelectionSetToNode("", entity, fields, default));
@@ -91,7 +91,9 @@ public sealed class QuerySchemaService(
         }
     }
 
-    private async Task<Result<(ImmutableArray<ValidSort>, ImmutableArray<Filter>)>> GetSortAndFilter(LoadedEntity entity, IEnumerable<IInput> args)
+    private async Task<Result<(ImmutableArray<ValidSort>, ImmutableArray<Filter>)>> GetSortAndFilter(
+        LoadedEntity entity, 
+        IEnumerable<IValueProvider> args)
     {
         var sorts = new List<Sort>();
         var filters = new List<Filter>();
@@ -158,7 +160,7 @@ public sealed class QuerySchemaService(
             if (graphAttr.Type == DisplayType.Crosstable && field.Arguments is not null)
             {
                 var target = graphAttr.Crosstable!.TargetEntity;
-                var parseRes = await GetSortAndFilter(target, field.Arguments.Select(x => new GraphQlArgumentInput(x)));
+                var parseRes = await GetSortAndFilter(target, field.Arguments.Select(x => new GraphQlArgumentValueProvider(x)));
                 if (parseRes.Errors is not null)
                 {
                     return Result.Fail(parseRes.Errors);
