@@ -1,10 +1,10 @@
-using System.Collections.Immutable;
 using FluentCMS.Cms.Services;
 using FluentCMS.Utils.QueryBuilder;
 using GraphQL.Types;
 
 namespace FluentCMS.Utils.Graph;
 
+public record GraphInfo(Entity Entity, ObjectGraphType SingleType, ListGraphType ListType);
 public sealed class Query : ObjectGraphType
 {
     public Query(ISchemaService schemaService, IQueryService queryService)
@@ -15,41 +15,45 @@ public sealed class Query : ObjectGraphType
         }
         var entities = schemas
             .Where(x=>x.Settings.Entity is not null)
-            .Select(x=>x.Settings.Entity).ToImmutableArray();
+            .Select(x=>x.Settings.Entity).ToArray();
         
-        var singleDict = new Dictionary<string, ObjectGraphType>();
-        var listDict = new Dictionary<string, ListGraphType>();
-        var entityDict = new Dictionary<string, Entity>();
+        var dict = new Dictionary<string, GraphInfo>();
         
         foreach (var entity in entities)
         {
-            var t = entity!.GetPlainGraphType();
-            singleDict[entity!.Name] = t;
-            listDict[entity.Name] = new ListGraphType(t);
-            entityDict[entity.Name] = entity;
+            var t = entity!.PlainType();
+            dict[entity!.Name] = new GraphInfo(entity, t, new ListGraphType(t));
         }
         
         foreach (var entity in entities)
         {
-            entity!.LoadCompoundGraphType(singleDict,listDict,entityDict);
+            entity!.SetCompoundType(dict);
         }
 
         foreach (var entity in entities)
         {
+            var graphInfo = dict[entity!.Name];
             AddField(new FieldType
             {
-                Name = entity!.Name,
-                ResolvedType = singleDict[entity.Name],
+                Name = entity.Name,
+                ResolvedType = graphInfo.SingleType,
                 Resolver = Resolvers.GetSingleResolver(queryService,entity.Name),
-                Arguments = entity.GetArgument(false)
+                Arguments = new QueryArguments([
+                    ..entity.FilterArgs(), ArgumentTypes.FilterExpr()
+                ])
             });
             
             AddField(new FieldType
             {
                 Name = entity.Name + "List",
-                ResolvedType = listDict[entity.Name],
+                ResolvedType = dict[entity.Name].ListType,
                 Resolver = Resolvers.GetListResolver(queryService, entity.Name),
-                Arguments = entity.GetArgument(true)
+                Arguments = new QueryArguments([
+                    entity.SortArg(),
+                    ..entity.FilterArgs(), 
+                    ArgumentTypes.SortExpr(), 
+                    ArgumentTypes.FilterExpr()
+                ])
             });
         }
     }

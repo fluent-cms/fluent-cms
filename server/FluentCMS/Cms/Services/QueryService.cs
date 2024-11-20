@@ -17,7 +17,8 @@ public sealed class QueryService(
     HookRegistry hook
 ) : IQueryService
 {
-    public async Task<Record[]> ListWithAction(string entityName, IEnumerable<GraphQLField> fields, IEnumerable<IValueProvider> args)
+    public async Task<Record[]> ListWithAction<T>(string entityName, IEnumerable<GraphQLField> fields, T[] args)
+    where T :IValueProvider,IPairProvider,IObjectProvider
     {
        return await ListWithAction(await FromGraphQlRequest(entityName,fields,args) , new Span(), new Pagination(), []);
     }
@@ -28,7 +29,8 @@ public sealed class QueryService(
         return await ListWithAction(await FromSavedQuery(name, args, token), span, pagination, args, token);
     }
 
-    public async Task<Record?> OneWithAction(string entityName, IEnumerable<GraphQLField> fields,IEnumerable<IValueProvider> args)
+    public async Task<Record?> OneWithAction<T>(string entityName, IEnumerable<GraphQLField> fields, T[] args)
+    where T :IValueProvider,IPairProvider,IObjectProvider
     {
         return await OneWithAction(await FromGraphQlRequest(entityName,fields,args), []);
     }
@@ -78,8 +80,6 @@ public sealed class QueryService(
         return items;
     }
 
-   
-
     private async Task<Record[]> ListWithAction(QueryContext ctx, Span span, Pagination pagination, QueryStrArgs args,
         CancellationToken token = default)
     {
@@ -121,7 +121,7 @@ public sealed class QueryService(
             throw new InvalidParamException("cursor is empty, can not partially execute query");
         }
 
-        var query = await querySchemaService.GetByNameAndCache(name, token);
+        var query = await querySchemaService.ByNameAndCache(name, token);
         var attribute = NotNull(query.Selection.RecursiveFind(attr)).ValOrThrow("not find attribute");
         var cross = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable of {attribute.Field})");
 
@@ -132,7 +132,7 @@ public sealed class QueryService(
         var filters = CheckResult(await attribute.Filters.ToValid(cross.TargetEntity, strArgs, resolver, resolver));
         var sorts = CheckResult(await attribute.Sorts.ToValidSorts(query.Entity, resolver));
 
-        var kateQuery = cross.GetRelatedItems(fields, filters, sorts, validSpan, pagination.PlusLimitOne(),
+        var kateQuery = cross.GetRelatedItems(fields, filters, [..sorts], validSpan, pagination.PlusLimitOne(),
             [validSpan.SourceId()]);
         var records = await executor.Many(kateQuery, token);
 
@@ -179,7 +179,7 @@ public sealed class QueryService(
         if (pagination is null)
         {
             //get all items and no pagination
-            var query = cross.GetRelatedItems(fields, filters, sorts, null, null, ids);
+            var query = cross.GetRelatedItems(fields, filters, [..sorts], null, null, ids);
             var targetRecords = await executor.Many(query, token);
             await AttachRelated(attr.Selection, strArgs, targetRecords, token);
             var targetItemGroups = targetRecords.GroupBy(x => x[cross.SourceAttribute.Field], x => x);
@@ -198,7 +198,7 @@ public sealed class QueryService(
             {
                 var validPagination = pagination.ToValid(cross.TargetEntity.DefaultPageSize);
 
-                var query = cross.GetRelatedItems(fields, filters, sorts, null, validPagination.PlusLimitOne(), [id]);
+                var query = cross.GetRelatedItems(fields, filters, [..sorts], null, validPagination.PlusLimitOne(), [id]);
                 var targetRecords = await executor.Many(query, token);
 
                 targetRecords = new Span().ToPage(targetRecords, validPagination.Limit);
@@ -282,15 +282,16 @@ public sealed class QueryService(
 
     private async Task<QueryContext> FromSavedQuery(string name, QueryStrArgs strArgs, CancellationToken token)
     {
-        var query = await querySchemaService.GetByNameAndCache(name, token);
+        var query = await querySchemaService.ByNameAndCache(name, token);
         var filters = CheckResult(await query.Filters.ToValid(query.Entity, strArgs, resolver, resolver));
-        return new QueryContext(query, filters);
+        return new QueryContext(query, [..filters]);
     }
 
-    private async Task<QueryContext> FromGraphQlRequest(string entityName, IEnumerable<GraphQLField> fields, IEnumerable<IValueProvider> args)
+    private async Task<QueryContext> FromGraphQlRequest<T>(string entityName, IEnumerable<GraphQLField> fields, T[] args)
+    where T :INameProvider,IValueProvider,IPairProvider,IObjectProvider
     {
-         var query = await querySchemaService.GetByGraphFields(entityName, fields,args);
+         var query = await querySchemaService.ByGraphQlRequest(entityName, fields,args);
          var filters = CheckResult(await query.Filters.ToValid(query.Entity, [], resolver, resolver));
-         return new QueryContext(query, filters);
+         return new QueryContext(query, [..filters]);
     }
 }

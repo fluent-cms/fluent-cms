@@ -15,9 +15,12 @@ public sealed class GraphqlModule( ILogger<GraphqlModule> logger, string path)
         builder.Services.AddScoped<Schema>();
         builder.Services.AddScoped<Query>();
         builder.Services.AddScoped<DateClause>();
-        builder.Services.AddScoped<StrClause>();
+        builder.Services.AddScoped<StringClause>();
         builder.Services.AddScoped<IntClause>();
         builder.Services.AddScoped<LogicalOperatorEnum>();
+        builder.Services.AddScoped<SortOrderEnum>();
+        builder.Services.AddScoped<FilterExpr>();
+        builder.Services.AddScoped<SortExpr>();
         
         builder.Services.AddGraphQL(b =>
         {

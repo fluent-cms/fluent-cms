@@ -16,18 +16,24 @@ public sealed record ValidSort(AttributeVector Vector,string Order):Sort(Vector.
 public static class SortConstant
 {
     public const string SortKey = "sort";
+    public const string SortExprKey = "sortExpr";
 }
 
 public static class SortHelper
 {
+    //sortExpr: [{field:"course.teacher.name", }]
+    public static Result<Sort[]> ToSortExpr(this IValueProvider valueProvider)
+    {
+        throw new Exception("not supported");
+    }
     //sort: [id, nameDesc]
-    public static Result<ImmutableArray<Sort>> ToSorts(this IValueProvider valueProvider)
+    public static Result<Sort[]> ToSorts(this IValueProvider valueProvider)
     {
         if (!valueProvider.Vals(out var array))
         {
             return Result.Fail("Fail to parse sort");
         }
-        return array.Select(ToSort).ToImmutableArray();
+        return array.Select(ToSort).ToArray();
 
         Sort ToSort(string s)
         {
@@ -36,32 +42,39 @@ public static class SortHelper
                 : new Sort(s, SortOrder.Asc);
         }
     }
-    public static async Task<Result<ImmutableArray<ValidSort>>> ToValidSorts(
-        this IEnumerable<Sort> sorts, 
+    public static async Task<Result<ValidSort[]>> ToValidSorts(
+        this IEnumerable<Sort> list, 
         LoadedEntity entity,
         IEntityVectorResolver vectorResolver)
     {
+        var sorts = list.ToArray();
+        if (sorts.Length == 0)
+        {
+            sorts = [new Sort(entity.PrimaryKey, SortOrder.Asc)];
+        }
+
         var ret = new List<ValidSort>();
         foreach (var sort in sorts)             
         {
-            var (_,_,attr,e) = await vectorResolver.ResolveVector(entity, sort.FieldName);
-            if (e is not null)
+            var (ok,_,attr,e) = await vectorResolver.ResolveVector(entity, sort.FieldName);
+            if (!ok)
             {
                 return Result.Fail(e);
             }
             ret.Add(new ValidSort(attr,sort.Order));
         }
-        return ret.ToImmutableArray();
+
+        return ret.ToArray();
     }
     
-    public static async Task<Result<ImmutableArray<ValidSort>>> Parse(
+    public static async Task<Result<ValidSort[]>> Parse(
         LoadedEntity entity, 
         Dictionary<string,QueryStrArgs> dictionary, 
         IEntityVectorResolver vectorResolver)
     {
         var ret = new List<ValidSort>();
 
-        if (!dictionary.TryGetValue(SortConstant.SortKey, out var dict)) return ret.ToImmutableArray();
+        if (!dictionary.TryGetValue(SortConstant.SortKey, out var dict)) return ret.ToArray();
         foreach (var (fieldName, orderStr) in dict)
         {
             var (_, failed, vector, errors) = await vectorResolver.ResolveVector(entity, fieldName);
@@ -73,7 +86,7 @@ public static class SortHelper
             var order = orderStr.ToString() == "1" ? SortOrder.Asc : SortOrder.Desc;
             ret.Add(new ValidSort(vector,order));
         }
-        return ret.ToImmutableArray();
+        return ret.ToArray();
     }
 
     public static ImmutableArray<ValidSort> ReverseOrder(this IEnumerable<ValidSort> sorts)

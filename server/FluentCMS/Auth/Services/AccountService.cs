@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using System.Security.Claims;
 using FluentCMS.Auth.models;
 using FluentCMS.Services;
@@ -150,8 +149,9 @@ public class AccountService<TUser, TRole,TCtx>(
         return NotNull(user).ValOrThrow($"not find user by id {id}");
     }
 
-    private async Task<Result> AssignClaim(TUser user, IList<Claim> claims, string type, ImmutableArray<string> values)
+    private async Task<Result> AssignClaim(TUser user, IList<Claim> claims, string type, IEnumerable<string> list)
     {
+        string[] values = [..list];
         var currentValues = claims.Where(x => x.Type == type).Select(x => x.Value).ToArray();
         // Calculate roles to be removed and added
         var toRemove = currentValues.Except(values).ToArray();
@@ -179,8 +179,9 @@ public class AccountService<TUser, TRole,TCtx>(
         return Result.Ok();
     }
 
-    private async Task<Result> AssignRole(TUser user, ImmutableArray<string> roles)
+    private async Task<Result> AssignRole(TUser user, IEnumerable<string> list )
     {
+        string[] roles = [..list];
         var currentRoles = await userManager.GetRolesAsync(user);
 
         // Calculate roles to be removed and added
@@ -257,8 +258,9 @@ public class AccountService<TUser, TRole,TCtx>(
         CheckResult(await AddClaimsToRole(role!, claims, AccessScope.RestrictedRead, roleDto.RestrictedReadonlyEntities));
     }
 
-    private async Task<Result> AddClaimsToRole(TRole role,  IList<Claim> claims, string type, ImmutableArray<string> values )
+    private async Task<Result> AddClaimsToRole(TRole role,  IList<Claim> claims, string type, IEnumerable<string> list )
     {
+        string[] values = [..list];
         var currentValues = claims.Where(x => x.Type == type).Select(x => x.Value).ToArray();
         // Calculate roles to be removed and added
         var toRemove = currentValues.Except(values).ToArray();

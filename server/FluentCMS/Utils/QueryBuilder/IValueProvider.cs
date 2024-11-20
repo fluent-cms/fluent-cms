@@ -1,10 +1,21 @@
-using System.Collections.Immutable;
-
 namespace FluentCMS.Utils.QueryBuilder;
 
-public interface IValueProvider
+public interface INameProvider
 {
     string Name();
-    bool Vals(out ImmutableArray<string> values);
-    bool Pairs(out ImmutableArray<(string,object)> pairs);
+}
+
+public interface IPairProvider:INameProvider
+{
+    bool Pairs(out (string, object)[] pairs);
+}
+
+public interface IValueProvider:INameProvider
+{
+    bool Vals(out string[] values);
+}
+
+public interface IObjectProvider:INameProvider
+{
+    bool Objects(out Record[] objects);
 }

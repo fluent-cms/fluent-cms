@@ -3,6 +3,31 @@ using GraphQL.Types;
 
 namespace FluentCMS.Utils.Graph;
 
+public sealed class StringClause : InputObjectGraphType
+{
+    public StringClause()
+    {
+        Name = "StringClause";
+        
+        foreach (var se in Matches.SingleStr)
+        {
+            AddField(new FieldType
+            {
+                Name = se,
+                Type = typeof(StringGraphType)
+            });
+        }
+        foreach (var se in Matches.MultiStr)
+        {
+            AddField(new FieldType
+            {
+                Name = se,
+                Type = typeof(ListGraphType<StringGraphType>)
+            });
+        }
+        this.AddClauseCommonField();
+    }
+}
 public sealed class LogicalOperatorEnum : EnumerationGraphType
 {
     public LogicalOperatorEnum()
@@ -59,32 +84,6 @@ public sealed class IntClause : InputObjectGraphType
                  Name = se,
                  Type = typeof(ListGraphType<IntGraphType>)
              });
-        }
-        this.AddClauseCommonField();
-    }
-}
-
-public sealed class StrClause : InputObjectGraphType
-{
-    public StrClause()
-    {
-        Name = "StrClause";
-        
-        foreach (var se in Matches.SingleStr)
-        {
-            AddField(new FieldType
-            {
-                Name = se,
-                Type = typeof(IntGraphType)
-            });
-        }
-        foreach (var se in Matches.MultiStr)
-        {
-            AddField(new FieldType
-            {
-                Name = se,
-                Type = typeof(ListGraphType<StringGraphType>)
-            });
         }
         this.AddClauseCommonField();
     }

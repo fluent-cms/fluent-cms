@@ -5,10 +5,41 @@ namespace FluentCMS.Utils.DictionaryExt;
 
 public static class DictionaryExt
 {
-    public static Dictionary<TK, TV> MergeByOverwriting<TK, TV>(this Dictionary<TK, TV> a, Dictionary<TK, TV> b)
-        where TK : notnull
+    public static bool DictObjsToPair(object obj, out (string, object)[] pairs)
     {
-        var ret = new Dictionary<TK, TV>(a);
+        pairs = [];
+        if (obj is not object[] objects) return false;
+        var ret = new List<(string, object)>();
+        foreach (var o in objects)
+        {
+            if (DictObjToPair(o, out var pair))
+            {
+                ret.AddRange(pair);
+            }
+        }
+        pairs = ret.ToArray();
+        return true;
+    }
+
+    public static bool DictObjToPair(object obj, out (string, object)[] pairs)
+    {
+        pairs = [];
+        var ret = new List<(string, object)>();
+        if (obj is not Dictionary<string, object> dictionary) return false;
+
+        foreach (var (key, value) in dictionary)
+        {
+            ret.Add((key, value));
+        }
+
+        pairs = ret.ToArray();
+        return true;
+    }
+
+    public static Dictionary<Tk, Tv> MergeByOverwriting<Tk, Tv>(this Dictionary<Tk, Tv> a, Dictionary<Tk, Tv> b)
+        where Tk : notnull
+    {
+        var ret = new Dictionary<Tk, Tv>(a);
         foreach (var (k, v) in b)
         {
             ret[k] = v;

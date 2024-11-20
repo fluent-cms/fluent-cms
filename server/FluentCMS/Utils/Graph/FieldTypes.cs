@@ -7,42 +7,7 @@ namespace FluentCMS.Utils.Graph;
 
 public static class FieldTypes
 {
-    public static void LoadCompoundGraphType(
-        this Entity entity,
-        Dictionary<string, ObjectGraphType> singleDict,
-        Dictionary<string, ListGraphType> listDict,
-        Dictionary<string, Entity> entityDict
-        )
-    {
-        var currentType = singleDict[entity.Name];
-        foreach (var attribute in entity.Attributes.Where(x=>x.IsCompound()))
-        {
-            var t = new FieldType
-            {
-                Name = attribute.Field,
-                Resolver = Resolvers.ValueResolver,
-                
-                ResolvedType = attribute.Type switch
-                {
-                    DisplayType.Crosstable when attribute.GetCrosstableTarget(out var target) => listDict[target],
-                    DisplayType.Lookup when attribute.GetLookupTarget(out var target) => singleDict[target],
-                    _ => null
-                },
-                Arguments = attribute.Type switch
-                {
-                    DisplayType.Crosstable when attribute.GetCrosstableTarget(out var target) => entityDict[target].GetArgument(true),
-                    _ => null
-                }
-                
-            };
-            if (t.ResolvedType is not null)
-            {
-                currentType.AddField(t);
-            }
-        }
-    }
-
-    public static ObjectGraphType GetPlainGraphType(this Entity entity)
+    public static ObjectGraphType PlainType(this Entity entity)
     {
         var entityType = new ObjectGraphType
         {
@@ -54,7 +19,7 @@ public static class FieldTypes
             entityType.AddField(new FieldType
             {
                 Name = attr.Field,
-                ResolvedType = attr.GetPlainGraphType(),
+                ResolvedType = attr.PlainGraphType(),
                 Resolver = Resolvers.ValueResolver
                 
             });
@@ -62,8 +27,46 @@ public static class FieldTypes
 
         return entityType;
     }
+    
+    public static void SetCompoundType(this Entity entity, Dictionary<string, GraphInfo> dict)
+    {
+        var current = dict[entity.Name].SingleType;
+        foreach (var attribute in entity.Attributes.Where(x=>x.IsCompound()))
+        {
+            var t = new FieldType
+            {
+                Name = attribute.Field,
+                Resolver = Resolvers.ValueResolver,
+                ResolvedType = attribute.Type switch
+                {
+                    DisplayType.Crosstable when attribute.GetCrosstableTarget(out var target) => dict[target].ListType,
+                    DisplayType.Lookup when attribute.GetLookupTarget(out var target) => dict[target].SingleType,
+                    _ => null
+                },
+                Arguments = attribute.Type switch
+                {
+                    DisplayType.Crosstable when attribute.GetCrosstableTarget(out var target) => Args(target),
+                    _ => null
+                }
+                
+            };
+            
+            if (t.ResolvedType is not null)
+            {
+                current.AddField(t);
+            }
+        }
 
-    private static IGraphType GetPlainGraphType(this Attribute attribute)
+        return;
+
+        QueryArguments Args(string target)
+        {
+            var find = dict[target].Entity;
+            return new QueryArguments([find.SortArg(),..find.FilterArgs()]);
+        }
+    }
+
+    private static IGraphType PlainGraphType(this Attribute attribute)
     {
         return attribute.DataType switch
         {

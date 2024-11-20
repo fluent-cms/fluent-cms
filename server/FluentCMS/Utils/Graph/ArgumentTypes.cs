@@ -5,64 +5,65 @@ using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.Utils.Graph;
 
-
 public static class ArgumentTypes
 {
-    public static QueryArguments GetArgument(this Entity entity, bool needSort)
+    public static QueryArgument[] FilterArgs(this Entity entity)
     {
         var args = new List<QueryArgument>();
-        if (needSort)
-        {
-            args.Add(entity.GetSortArgument());
-        }
-        args.AddRange(entity.Attributes
-            .Where(x => !x.IsCompound())
-            .Select(attr => attr.GetSimpleFilterArgument()));
-        
-        args.AddRange(entity.Attributes
-            .Where(x => !x.IsCompound())
-            .Select(attr => attr.GetFilterArgument()));
-        return new QueryArguments(args);
+        var arr = entity.Attributes.Where(x => !x.IsCompound()).ToArray();
+        args.AddRange(arr.Select(attr => attr.SimpleFilter()));
+        args.AddRange(arr.Select(attr => attr.ComplexFilter()));
+        return args.ToArray();
     }
 
-    private static QueryArgument GetFilterArgument(this Attribute attr)
-    {
-        return attr.DataType switch
-        {
-            DataType.Int => new QueryArgument<ListGraphType<IntClause>> { Name = attr.Field},
-            DataType.Datetime => new QueryArgument<ListGraphType<DateClause>> { Name = attr.Field },
-            _ => new QueryArgument<ListGraphType<StrClause>> { Name = attr.Field }
-        };
-    }
-
-    private static QueryArgument GetSimpleFilterArgument(this Attribute attr)
-    {
-        return attr.DataType switch
-        {
-            DataType.Int =>new QueryArgument<ListGraphType<IntGraphType>> { Name = attr.Field + FilterConstants.SetSuffix},
-            DataType.Datetime =>new QueryArgument<ListGraphType<DateGraphType>> { Name = attr.Field + FilterConstants.SetSuffix},
-            _ => new QueryArgument<ListGraphType<StringGraphType>> { Name = attr.Field + FilterConstants.SetSuffix}
-        };
-    }
-    
-    private static QueryArgument GetSortArgument(this Entity entity)
-    {
-        return new QueryArgument(new ListGraphType(entity.GetFieldEnumGraphType()))
+    public static QueryArgument SortArg(this Entity entity) =>
+        new(new ListGraphType(entity.GetSortFieldEnumGraphType()))
         {
             Name = SortConstant.SortKey
         };
-    }
 
-    private static EnumerationGraphType GetFieldEnumGraphType(this Entity entity)
+
+    public static QueryArgument SortExpr() => new QueryArgument<SortExpr>
+    {
+        Name = SortConstant.SortExprKey
+    };
+
+    public static QueryArgument FilterExpr() => new QueryArgument<ListGraphType<FilterExpr>>
+    {
+        Name = FilterConstants.FilterExprKey
+    };
+
+    private static QueryArgument ComplexFilter(this Attribute attr) => attr.DataType switch
+    {
+        DataType.Int => new QueryArgument<ListGraphType<IntClause>> { Name = attr.Field },
+        DataType.Datetime => new QueryArgument<ListGraphType<DateClause>> { Name = attr.Field },
+        _ => new QueryArgument<ListGraphType<StringClause>> { Name = attr.Field }
+    };
+
+    private static QueryArgument SimpleFilter(this Attribute attr) => attr.DataType switch
+    {
+        DataType.Int => new QueryArgument<ListGraphType<IntGraphType>>
+            { Name = attr.Field + FilterConstants.SetSuffix },
+        DataType.Datetime => new QueryArgument<ListGraphType<DateGraphType>>
+            { Name = attr.Field + FilterConstants.SetSuffix },
+        _ => new QueryArgument<ListGraphType<StringGraphType>> { Name = attr.Field + FilterConstants.SetSuffix }
+    };
+
+    private static EnumerationGraphType GetSortFieldEnumGraphType(this Entity entity)
     {
         var type = new EnumerationGraphType
         {
-            Name = entity.Name + "FieldEnum"
+            Name = "SortFields"
         };
-        foreach (var attribute in entity.Attributes.Where(x => !x.IsCompound()))
+        var arr = entity.Attributes.Where(x => !x.IsCompound()).ToArray();
+        foreach (var attribute in arr)
         {
             type.Add(new EnumValueDefinition(attribute.Field, attribute.Field));
-            type.Add(new EnumValueDefinition(attribute.Field + SortOrder.Desc  , attribute.Field + SortOrder.Desc));
+        }
+
+        foreach (var attribute in arr)
+        {
+            type.Add(new EnumValueDefinition(attribute.Field + SortOrder.Desc, attribute.Field + SortOrder.Desc));
         }
 
         return type;

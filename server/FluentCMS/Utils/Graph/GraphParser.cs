@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using GraphQLParser;
 using GraphQLParser.AST;
 using FluentResults;
@@ -8,7 +7,7 @@ namespace FluentCMS.Utils.Graph;
 public static class GraphParser
 {
     
-    public static Result<ImmutableArray<GraphQLField>> GetRootGraphQlFields(string s)
+    public static Result<GraphQLField[]> GetRootGraphQlFields(string s)
     {
         var document = Parser.Parse(s);
         var def = document.Definitions.FirstOrDefault();
@@ -25,12 +24,12 @@ public static class GraphParser
         return op.SelectionSet.SubFields();
     }
 
-    public static ImmutableArray<GraphQLField> SubFields(this GraphQLSelectionSet selectionSet)
+    public static GraphQLField[] SubFields(this GraphQLSelectionSet selectionSet)
     {
         return [..selectionSet.Selections.OfType<GraphQLField>()];
     }
 
-    public static ImmutableArray<string> ToPrimeStrings(this GraphQLListValue vals)
+    public static string[] ToPrimeStrings(this GraphQLListValue vals)
     {
         var ret = new List<string>();
         foreach (var graphQlValue in vals.Values??[])
@@ -56,7 +55,7 @@ public static class GraphParser
         return !string.IsNullOrEmpty(result);
     }
     
-    public static ImmutableArray<(string,object)> ToPairs(this GraphQLListValue vals)
+    public static (string,object)[] ToPairs(this GraphQLListValue vals)
     {
         var ret = new List<(string,object)>();
         foreach (var graphQlValue in vals.Values??[])
@@ -74,7 +73,7 @@ public static class GraphParser
         return [..ret];
     }
     
-    public static ImmutableArray<(string, object)> ToPairs(this GraphQLObjectValue objectValue)
+    public static (string, object)[] ToPairs(this GraphQLObjectValue objectValue)
     {
         var result = new List<(string, object)>();
         foreach (var field in objectValue.Fields ?? [])

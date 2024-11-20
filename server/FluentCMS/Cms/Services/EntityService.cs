@@ -55,7 +55,7 @@ public sealed class EntityService(
 
         var filters = CheckResult(await FilterHelper.Parse(entity, groupQs, entitySchemaSvc, entitySchemaSvc));
         var sorts = CheckResult(await SortHelper.Parse(entity, groupQs, entitySchemaSvc));
-        return await List(entity, filters, sorts, pagination, token);
+        return await List(entity, [..filters], ImmutableArray.CreateRange(sorts), pagination, token);
     }
     public async Task<Record> Insert(string name, JsonElement ele, CancellationToken token)
     {
@@ -122,7 +122,7 @@ public sealed class EntityService(
 
         var pagedListQuery = exclude
             ? ctx.Crosstable.GetNotRelatedItems(selectAttributes, filter, sorts, validPagination, [ctx.Id])
-            : ctx.Crosstable.GetRelatedItems(selectAttributes, filter, sorts, null, validPagination, [ctx.Id]);
+            : ctx.Crosstable.GetRelatedItems(selectAttributes, filter, ImmutableArray.CreateRange(sorts), null, validPagination, [ctx.Id]);
 
         var countQuery = exclude
             ? ctx.Crosstable.GetNotRelatedItemsCount(filter, [ctx.Id])
