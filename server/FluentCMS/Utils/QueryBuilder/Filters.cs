@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Globalization;
 using FluentResults;
 
 namespace FluentCMS.Utils.QueryBuilder;
@@ -7,72 +8,56 @@ public sealed record Filter(string FieldName, string Operator, ImmutableArray<Co
 
 public sealed record ValidFilter(AttributeVector Vector, string Operator, ImmutableArray<ValidConstraint> Constraints);
 
+
 public static class FilterConstants
 {
-    public const string OmitFailKey = "omitFail";
-    public const string LogicalOperatorKey = "operator";
+    public const string OperatorKey = "operator";
+    public const string SetSuffix = "Set";
 }
 
 public static class FilterHelper
 {
     public static Result<Filter> ToFilter(this IValueProvider valueProvider)
     {
-        var name = valueProvider.Name();
-        return valueProvider.Val().Val.Match<Result<Filter>>(
-            s => ToEqualsFilter(name,s),
-            strings =>ToInFilter(name, strings) ,
-            arr => PairsToFilter(name,arr),
-            err => Result.Fail(err)
-            );
+        return valueProvider.Name().EndsWith(FilterConstants.SetSuffix)
+            ? valueProvider.ToSimpleFilter()
+            : valueProvider.ToComplexFilter();
     }
-    
-    private static Result<Filter> PairsToFilter(string fieldName, ImmutableArray<(string, object)> pairs)
+
+    private static Result<Filter> ToSimpleFilter(this IValueProvider valueProvider)
     {
-        //name: {omitFail:true, gt:2, lt:5, operator: and}
-        //name: {omitFail:false, eq:3, eq:4, operator: or}
-        var omitFail = false;
+        var name = valueProvider.Name()[..^FilterConstants.SetSuffix.Length];
+        if (!valueProvider.Vals(out var arr)) return Result.Fail($"Invalid value provided of `{name}`");
+        return new Filter(name, LogicalOperators.And, [new Constraint(Matches.In, arr)], false);
+    }
+
+    private static Result<Filter> ToComplexFilter(this IValueProvider valueProvider)
+    {
+        var name = valueProvider.Name();
+        if (!valueProvider.Pairs(out var pairs)) return Result.Fail($"Invalid value provided of `{name}`");
         var logicalOperator = LogicalOperators.And;
         var constraints = new List<Constraint>();
-        foreach (var (key, val) in pairs)
+        foreach (var (match, val) in pairs)
         {
-            switch (key)
+            if (match == FilterConstants.OperatorKey)
             {
-                case FilterConstants.LogicalOperatorKey:
-                    if (val is not string strVal)
-                    {
-                        return Result.Fail("invalid filter logical operator");
-                    }
-
-                    logicalOperator = strVal;
-                    break;
-                case FilterConstants.OmitFailKey:
-                    if (val is not bool boolVal)
-                    {
-                        return Result.Fail("invalid filter omit fail setting");
-                    }
-
-                    omitFail = boolVal;
-                    break;
-                default:
-                    constraints.Add(new Constraint(key, [val.ToString()!]));
-                    break;
+                logicalOperator = val.ToString()!;
+            }
+            else
+            {
+                ImmutableArray<string> objs = val switch
+                {
+                    int[] l => [..l.Select(x => x.ToString())],
+                    DateTime[] l => [..l.Select(x => x.ToString(CultureInfo.InvariantCulture))],
+                    string[] s => [..s],
+                    _ => [val.ToString()!]
+                };
+                constraints.Add(new Constraint(match, objs));
             }
         }
+        return new Filter(name, logicalOperator, [..constraints], false);
+    }
 
-        return new Filter(fieldName, logicalOperator, [..constraints], omitFail);
-    }
-    private static Filter ToInFilter(string fieldName, IEnumerable<string> val)
-    {
-        var constraint = new Constraint(Matches.In, [..val]);
-        return new Filter(fieldName, LogicalOperators.And, [constraint], false);
-    }
-    
-    private static Filter ToEqualsFilter(string fieldName, string val)
-    {
-        var constraint = new Constraint(Matches.EqualsTo, [val]);
-        return new Filter(fieldName, LogicalOperators.And, [constraint], false);
-    }
-    
     public static async Task<Result> Verify(
         this IEnumerable<Filter> filters,  
         LoadedEntity entity,
@@ -164,7 +149,7 @@ public static class FilterHelper
             return Result.Fail($"Fail to parse filter, not found {entity.Name}.{field}, errors: {errors}");
         }
 
-        var op = strArgs.TryGetValue("operator", out var value) ? value.ToString() : "and";
+        var op = strArgs.TryGetValue(FilterConstants.OperatorKey, out var value) ? value.ToString() : "and";
         var constraints = new List<ValidConstraint>();
         foreach (var (match, values) in strArgs.Where(x =>x.Key != "operator"))
         {
@@ -177,7 +162,4 @@ public static class FilterHelper
         }
         return new ValidFilter(vector, op, [..constraints]);
     }
-    
-    
-    
 }

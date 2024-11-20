@@ -1,9 +1,9 @@
 namespace FluentCMS.Utils.Graph;
 
-public class CmsSchema: GraphQL.Types.Schema
+public class Schema: GraphQL.Types.Schema
 {
-    public CmsSchema(IServiceProvider services): base(services)
+    public Schema(IServiceProvider services): base(services)
     {
-        Query = services.GetRequiredService<CmsGraphQuery>();
+        Query = services.GetRequiredService<Query>();
     }
 }

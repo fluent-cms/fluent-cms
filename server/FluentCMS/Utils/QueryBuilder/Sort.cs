@@ -5,8 +5,8 @@ namespace FluentCMS.Utils.QueryBuilder;
 
 public static class SortOrder
 {
-    public const string Asc = "asc";
-    public const string Desc = "desc";
+    public const string Asc = "Asc";
+    public const string Desc = "Desc";
 }
 
 public record Sort(string FieldName, string Order);
@@ -20,15 +20,21 @@ public static class SortConstant
 
 public static class SortHelper
 {
-    //sort: id or sort: {id:desc, name:asc}
-    public static Result<ImmutableArray<Sort>> ToSort(this IValueProvider valueProvider)
+    //sort: [id, nameDesc]
+    public static Result<ImmutableArray<Sort>> ToSorts(this IValueProvider valueProvider)
     {
-        return valueProvider.Val().Val.Match<Result<ImmutableArray<Sort>>>(
-            s => new List<Sort>{new (s,SortOrder.Asc)}.ToImmutableArray(),
-            ss =>Result.Fail("Invalid sort input"),
-            array => array.Select(x=> new Sort(x.Item1, x.Item2.ToString()!)).ToImmutableArray(),
-            errors => Result.Fail(errors)
-        );
+        if (!valueProvider.Vals(out var array))
+        {
+            return Result.Fail("Fail to parse sort");
+        }
+        return array.Select(ToSort).ToImmutableArray();
+
+        Sort ToSort(string s)
+        {
+            return s.EndsWith(SortOrder.Desc)
+                ? new Sort(s[..^SortOrder.Desc.Length], SortOrder.Desc)
+                : new Sort(s, SortOrder.Asc);
+        }
     }
     public static async Task<Result<ImmutableArray<ValidSort>>> ToValidSorts(
         this IEnumerable<Sort> sorts, 
@@ -55,19 +61,17 @@ public static class SortHelper
     {
         var ret = new List<ValidSort>();
 
-        if (dictionary.TryGetValue(SortConstant.SortKey, out var dict))
+        if (!dictionary.TryGetValue(SortConstant.SortKey, out var dict)) return ret.ToImmutableArray();
+        foreach (var (fieldName, orderStr) in dict)
         {
-            foreach (var (fieldName, orderStr) in dict)
+            var (_, failed, vector, errors) = await vectorResolver.ResolveVector(entity, fieldName);
+            if (failed)
             {
-                var (_, _, vector, errors) = await vectorResolver.ResolveVector(entity, fieldName);
-                if (errors?.Count > 0 )
-                {
-                    return Result.Fail(errors);
-                }
-                
-                var order = orderStr.ToString() == "1" ? SortOrder.Asc : SortOrder.Desc;
-                ret.Add(new ValidSort(vector,order));
+                return Result.Fail(errors);
             }
+                
+            var order = orderStr.ToString() == "1" ? SortOrder.Asc : SortOrder.Desc;
+            ret.Add(new ValidSort(vector,order));
         }
         return ret.ToImmutableArray();
     }
@@ -80,4 +84,27 @@ public static class SortHelper
         ];
     }
     
+    public static Result Verify(this IEnumerable<ValidSort> sorts,ImmutableArray<GraphAttribute> attributes, bool allowRecursive)
+    {
+        foreach (var sort in sorts)
+        {
+            var find = allowRecursive
+                ? attributes.RecursiveFind(sort.FieldName)
+                : attributes.FindOneAttr(sort.FieldName);
+            if (find is null)
+            {
+                return Result.Fail($"can not find sort field {sort.FieldName} in selection");
+            }
+        }
+
+        foreach (var attr in attributes)
+        {
+            var res = attr.Sorts.Verify(attr.Selection, false);
+            if (res.IsFailed)
+            {
+                return Result.Fail(res.Errors);
+            }
+        }
+        return Result.Ok();
+    }
 }

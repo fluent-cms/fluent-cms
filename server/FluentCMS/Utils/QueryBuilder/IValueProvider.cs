@@ -1,12 +1,10 @@
 using System.Collections.Immutable;
-using FluentResults;
-using OneOf;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
-public record ValueWrapper(OneOf<string, ImmutableArray<string>, ImmutableArray<(string, object)>, List<IError>> Val);
 public interface IValueProvider
 {
     string Name();
-    ValueWrapper Val();
+    bool Vals(out ImmutableArray<string> values);
+    bool Pairs(out ImmutableArray<(string,object)> pairs);
 }

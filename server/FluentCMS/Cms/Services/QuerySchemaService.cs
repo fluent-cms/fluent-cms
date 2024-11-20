@@ -1,11 +1,12 @@
 using System.Collections.Immutable;
-using FluentCMS.Cms.Models;
 using FluentCMS.Services;
 using FluentCMS.Utils.Cache;
 using FluentCMS.Utils.Graph;
 using FluentCMS.Utils.QueryBuilder;
 using FluentResults;
 using GraphQLParser.AST;
+using Query = FluentCMS.Utils.QueryBuilder.Query;
+using Schema = FluentCMS.Cms.Models.Schema;
 
 namespace FluentCMS.Cms.Services;
 using static InvalidParamExceptionFactory;
@@ -38,7 +39,7 @@ public sealed class QuerySchemaService(
             .ValOrThrow($"can not find query by name {name}");
         var query = NotNull(item.Settings.Query).ValOrThrow("invalid view format");
         var entity = CheckResult(await entitySchemaSvc.GetLoadedEntity(query.EntityName, token));
-        var fields = CheckResult(GraphTypeHelper.GetRootGraphQlFields(query.SelectionSet));
+        var fields = CheckResult(GraphParser.GetRootGraphQlFields(query.SelectionSet));
         var selection = CheckResult(await SelectionSetToNode("", entity, fields, token));
         var sorts = CheckResult(await query.Sorts.ToValidSorts(entity, entitySchemaSvc));
         return query.ToLoadedQuery(entity, selection, sorts);
@@ -63,32 +64,12 @@ public sealed class QuerySchemaService(
         var entity = CheckResult(await entitySchemaSvc.GetLoadedEntity(query.EntityName, token));
         CheckResult(await query.Filters.Verify(entity, entitySchemaSvc, entitySchemaSvc));
 
-        var fields = CheckResult(GraphTypeHelper.GetRootGraphQlFields(query.SelectionSet));
+        var fields = CheckResult(GraphParser.GetRootGraphQlFields(query.SelectionSet));
         var selection = CheckResult(await SelectionSetToNode("", entity, fields, token));
         var sorts = CheckResult(await query.Sorts.ToValidSorts(entity, entitySchemaSvc));
         //todo: subfields' can only order by local attribute for now.
         //maybe support order subfields' subfield later
-        CheckSorts(selection, sorts, true);
-    }
-
-    private void CheckSorts(ImmutableArray<GraphAttribute> attributes, IEnumerable<ValidSort> sorts,
-        bool allowRecursive)
-    {
-        foreach (var sort in sorts)
-        {
-            var find = allowRecursive
-                ? attributes.RecursiveFind(sort.FieldName)
-                : attributes.FindOneAttr(sort.FieldName);
-            if (find is null)
-            {
-                throw new InvalidParamException($"can not find sort field {sort.FieldName} in selection");
-            }
-        }
-
-        foreach (var attr in attributes)
-        {
-            CheckSorts(attr.Selection, attr.Sorts, false);
-        }
+        CheckResult(sorts.Verify(selection, true));
     }
 
     private async Task<Result<(ImmutableArray<ValidSort>, ImmutableArray<Filter>)>> GetSortAndFilter(
@@ -99,24 +80,24 @@ public sealed class QuerySchemaService(
         var filters = new List<Filter>();
         foreach (var input in args)
         {
-            if (input.Name() == SortConstant.SortKey)
+            var name = input.Name();
+            if (name == SortConstant.SortKey)
             {
-                var toSortResult = input.ToSort();
-                if (toSortResult.Errors?.Count > 0 )
+                var res = input.ToSorts();
+                if (res.IsFailed )
                 {
-                    return Result.Fail(toSortResult.Errors);
+                    return Result.Fail(res.Errors);
                 }
-
-                sorts = [..toSortResult.Value];
+                sorts = [..res.Value];
             }
             else
             {
-                var toFilterResult = input.ToFilter();
-                if (toFilterResult.Errors?.Count > 0 )
+                var res = input.ToFilter();
+                if (res.IsFailed)
                 {
-                    return Result.Fail(toFilterResult.Errors);
+                    return Result.Fail(res.Errors);
                 }
-                filters.Add(toFilterResult.Value);
+                filters.Add(res.Value);
             }
         }
 
@@ -124,6 +105,7 @@ public sealed class QuerySchemaService(
         {
             sorts.Add(new Sort(entity.PrimaryKey, SortOrder.Asc));
         }
+        
         var (_, _, validSort, validSortErr) = await sorts.ToValidSorts(entity, entitySchemaSvc);
         if (validSortErr is not null)
         {
@@ -143,16 +125,16 @@ public sealed class QuerySchemaService(
         List<GraphAttribute> attributes = [];
         foreach (var field in graphQlFields)
         {
-            var (_, _, graphAttr, err) = await LoadAttribute(entity, field.Name.StringValue, token);
-            if (err is not null)
+            var (_, failed, graphAttr, err) = await LoadAttribute(entity, field.Name.StringValue, token);
+            if (failed)
             {
                 return Result.Fail(err);
             }
 
             graphAttr = graphAttr with { Prefix = prefix };
 
-            (_, _, graphAttr, err) = await LoadSelection(graphAttr.FullPathName(prefix), graphAttr, field, token);
-            if (err is not null)
+            (_, failed, graphAttr, err) = await LoadSelection(graphAttr.FullPathName(prefix), graphAttr, field, token);
+            if (failed)
             {
                 return Result.Fail(err);
             }
@@ -161,7 +143,7 @@ public sealed class QuerySchemaService(
             {
                 var target = graphAttr.Crosstable!.TargetEntity;
                 var parseRes = await GetSortAndFilter(target, field.Arguments.Select(x => new GraphQlArgumentValueProvider(x)));
-                if (parseRes.Errors is not null)
+                if (parseRes.IsFailed)
                 {
                     return Result.Fail(parseRes.Errors);
                 }
@@ -188,9 +170,9 @@ public sealed class QuerySchemaService(
 
         if (targetEntity is not null && field.SelectionSet is not null)
         {
-            var (_, _, children, errors) =
+            var (_, failed, children, errors) =
                 await SelectionSetToNode(prefix, targetEntity, field.SelectionSet.SubFields(), token);
-            if (errors is not null)
+            if (failed)
             {
                 return Result.Fail($"Fail to get subfield of {attr}, errors: {errors}");
             }
@@ -212,11 +194,11 @@ public sealed class QuerySchemaService(
 
         if (find.Type is DisplayType.Crosstable or DisplayType.Lookup)
         {
-            var (_, _, compoundAttr, loadRelatedErr) =
+            var (_, failed, compoundAttr, err) =
                 await entitySchemaSvc.LoadOneCompoundAttribute(entity, find, [], token);
-            if (loadRelatedErr is not null)
+            if (failed)
             {
-                return Result.Fail(loadRelatedErr);
+                return Result.Fail(err);
             }
 
             find = compoundAttr;

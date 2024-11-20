@@ -130,4 +130,16 @@ public static class Matches
     public const string DateIsNot = "dateIsNot";
     public const string DateBefore = "dateBefore";
     public const string DateAfter = "dateAfter";
+    
+    
+    public static readonly ImmutableHashSet<string> SingleInt = [EqualsTo,Lt,Lte,Gt,Gte];
+    public static readonly ImmutableHashSet<string> MultiInt = [Between,In,NotIn];
+    
+    public static readonly ImmutableHashSet<string> SingleStr = [EqualsTo,Lt,Lte,Gt,Gte,StartsWith, Contains, NotContains, EndsWith,EqualsTo];
+    public static readonly ImmutableHashSet<string> MultiStr = [Between,In,NotIn];
+    
+    public static readonly ImmutableHashSet<string> SingleDate = [DateIs,DateIsNot,DateBefore, DateAfter];
+    public static readonly ImmutableHashSet<string> MultiDate = [Between,In,NotIn];
+    
+    public static readonly ImmutableHashSet<string> AllMatch = [Between, StartsWith, Contains, NotContains, EndsWith,EqualsTo,In,NotIn,Lt,Lte,Gt,Gte,DateIs,DateIsNot,DateBefore, DateAfter];
 }

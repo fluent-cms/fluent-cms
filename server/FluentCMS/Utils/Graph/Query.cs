@@ -1,12 +1,13 @@
 using System.Collections.Immutable;
 using FluentCMS.Cms.Services;
+using FluentCMS.Utils.QueryBuilder;
 using GraphQL.Types;
 
 namespace FluentCMS.Utils.Graph;
 
-public sealed class CmsGraphQuery : ObjectGraphType
+public sealed class Query : ObjectGraphType
 {
-    public CmsGraphQuery(ISchemaService schemaService, IQueryService queryService)
+    public Query(ISchemaService schemaService, IQueryService queryService)
     {
         if (!schemaService.GetCachedSchema(SchemaType.Entity,out var schemas))
         {
@@ -18,17 +19,19 @@ public sealed class CmsGraphQuery : ObjectGraphType
         
         var singleDict = new Dictionary<string, ObjectGraphType>();
         var listDict = new Dictionary<string, ListGraphType>();
+        var entityDict = new Dictionary<string, Entity>();
         
         foreach (var entity in entities)
         {
             var t = entity!.GetPlainGraphType();
             singleDict[entity!.Name] = t;
             listDict[entity.Name] = new ListGraphType(t);
+            entityDict[entity.Name] = entity;
         }
         
         foreach (var entity in entities)
         {
-            entity!.LoadCompoundGraphType(singleDict,listDict);
+            entity!.LoadCompoundGraphType(singleDict,listDict,entityDict);
         }
 
         foreach (var entity in entities)
