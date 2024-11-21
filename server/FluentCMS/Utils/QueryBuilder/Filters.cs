@@ -59,7 +59,7 @@ public static class FilterHelper
     }
 
     private static Result<Filter> ToComplexFilter<T>(this T valueProvider)
-    where T: IPairProvider,INameProvider
+    where T: IPairProvider
     {
         var name = valueProvider.Name();
         if (!valueProvider.Pairs(out var pairs)) return Result.Fail($"Invalid value provided of `{name}`");

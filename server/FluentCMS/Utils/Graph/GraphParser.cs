@@ -1,4 +1,3 @@
-using GraphQLParser;
 using GraphQLParser.AST;
 using FluentResults;
 
@@ -6,10 +5,9 @@ namespace FluentCMS.Utils.Graph;
 
 public static class GraphParser
 {
-    
     public static Result<GraphQLField[]> GetRootGraphQlFields(string s)
     {
-        var document = Parser.Parse(s);
+        var document = GraphQLParser.Parser.Parse(s);
         var def = document.Definitions.FirstOrDefault();
         if (def is null)
         {
@@ -48,7 +46,7 @@ public static class GraphParser
         result = value switch
         {
             GraphQLIntValue integer => integer.Value.ToString(),
-            GraphQLStringValue stringValue => stringValue.ToString()!,
+            GraphQLStringValue stringValue => stringValue.Value.ToString(),
             GraphQLEnumValue enumValue => enumValue.Name.StringValue,
             _ => ""
         };

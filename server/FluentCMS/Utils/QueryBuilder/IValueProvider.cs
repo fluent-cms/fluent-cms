@@ -13,6 +13,7 @@ public interface IPairProvider:INameProvider
 public interface IValueProvider:INameProvider
 {
     bool Vals(out string[] values);
+    bool Val(out object? value);
 }
 
 public interface IObjectProvider:INameProvider

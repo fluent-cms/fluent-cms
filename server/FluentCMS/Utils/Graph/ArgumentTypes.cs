@@ -23,7 +23,7 @@ public static class ArgumentTypes
         };
 
 
-    public static QueryArgument SortExpr() => new QueryArgument<SortExpr>
+    public static QueryArgument SortExpr() => new QueryArgument<ListGraphType<SortExpr>>
     {
         Name = SortConstant.SortExprKey
     };

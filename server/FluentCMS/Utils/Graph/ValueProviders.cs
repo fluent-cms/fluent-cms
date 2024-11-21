@@ -1,10 +1,11 @@
+using Confluent.Kafka;
 using FluentCMS.Utils.QueryBuilder;
 using GraphQL.Execution;
 using GraphQLParser.AST;
 
 namespace FluentCMS.Utils.Graph;
 
-public record GraphQlArgumentValueProvider(GraphQLArgument Argument) : IValueProvider,INameProvider, IPairProvider
+public record GraphQlArgumentValueProvider(GraphQLArgument Argument) : IValueProvider, IPairProvider
 {
     public string Name()
     {
@@ -20,7 +21,20 @@ public record GraphQlArgumentValueProvider(GraphQLArgument Argument) : IValuePro
         };
         return array.Length > 0;
     }
-    
+
+    public bool Val(out object? value)
+    {
+        value = Argument.Value switch
+        {
+            GraphQLBooleanValue boolValue => boolValue.BoolValue,
+            GraphQLStringValue stringValue => stringValue.Value.ToString(),
+            GraphQLEnumValue enumValue => enumValue.Name.StringValue,
+            GraphQLIntValue intValue => int.Parse(intValue.Value),
+            _=> null
+        };
+        return value is not null;
+    }
+
     public bool Pairs(out  (string,object)[] pairs)
     {
         pairs = Argument.Value switch
@@ -38,12 +52,25 @@ public record GraphQlArgumentValueProvider(GraphQLArgument Argument) : IValuePro
     }
 }
 
-public record ArgumentKeyValueProvider(string Key, ArgumentValue Value) : INameProvider,IValueProvider, IPairProvider, IObjectProvider
+public record ArgumentKeyValueProvider(string Key, ArgumentValue Value) : IValueProvider, IPairProvider, IObjectProvider
 {
     public string Name()
     {
         return Key;
     }
+
+    public bool Val(out object? value)
+    {
+        value = Value.Value switch
+        {
+            int intValue => intValue,
+            string stringValue => stringValue,
+            DateTime dateTimeValue => dateTimeValue,
+            _ => null
+        };
+        return value is not null;
+    }
+        
 
     public bool Vals(out string[] array)
     {
@@ -79,14 +106,14 @@ public record ArgumentKeyValueProvider(string Key, ArgumentValue Value) : INameP
     }
 }
 
-public record FilterDictPairProvider(Record record) : IPairProvider,INameProvider
+public record FilterDictPairProvider(Record Record) : IPairProvider
 {
-    public string Name() => record.TryGetValue(FilterConstants.FieldKey, out var value) ? value.ToString()! : "";
+    public string Name() => Record.TryGetValue(FilterConstants.FieldKey, out var value) ? value.ToString()! : "";
 
     public bool Pairs(out (string, object)[] pairs)
     {
         pairs = [];
-        return record.TryGetValue(FilterConstants.ClauseKey, out var clause) &&
+        return Record.TryGetValue(FilterConstants.ClauseKey, out var clause) &&
                DictionaryExt.DictionaryExt.DictObjToPair(clause, out pairs);
     }
 }

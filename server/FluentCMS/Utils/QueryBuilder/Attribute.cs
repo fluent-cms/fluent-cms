@@ -71,7 +71,8 @@ public record GraphAttribute(
     string ValidationMessage = "",
     
     Crosstable? Crosstable = default,
-    LoadedEntity? Lookup = default
+    LoadedEntity? Lookup = default,
+    int Limit = 0
 ) : LoadedAttribute(
     TableName:TableName,
     Field:Field,

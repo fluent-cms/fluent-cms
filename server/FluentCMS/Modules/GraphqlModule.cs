@@ -13,7 +13,7 @@ public sealed class GraphqlModule( ILogger<GraphqlModule> logger, string path)
             new GraphqlModule(p.GetRequiredService<ILogger<GraphqlModule>>(), path));
         
         builder.Services.AddScoped<Schema>();
-        builder.Services.AddScoped<Query>();
+        builder.Services.AddScoped<GraphQuery>();
         builder.Services.AddScoped<DateClause>();
         builder.Services.AddScoped<StringClause>();
         builder.Services.AddScoped<IntClause>();
@@ -36,11 +36,10 @@ public sealed class GraphqlModule( ILogger<GraphqlModule> logger, string path)
         });
     }
 
-    public async Task UseGraphqlAsync(WebApplication app)
+    public void UseGraphqlAsync(WebApplication app)
     {
         logger.LogInformation($"Running graphql, path = ${path}");
-        using var scope = app.Services.CreateScope();
-        await scope.ServiceProvider.GetRequiredService<ISchemaService>().CacheSchema(SchemaType.Entity);
+
         app.UseGraphQL<Schema>();
         app.UseGraphQLGraphiQL(path);
     }

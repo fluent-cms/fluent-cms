@@ -5,9 +5,9 @@ using GraphQL.Types;
 namespace FluentCMS.Utils.Graph;
 
 public record GraphInfo(Entity Entity, ObjectGraphType SingleType, ListGraphType ListType);
-public sealed class Query : ObjectGraphType
+public sealed class GraphQuery : ObjectGraphType
 {
-    public Query(ISchemaService schemaService, IQueryService queryService)
+    public GraphQuery(ISchemaService schemaService, IQueryService queryService)
     {
         if (!schemaService.GetCachedSchema(SchemaType.Entity,out var schemas))
         {
@@ -33,13 +33,15 @@ public sealed class Query : ObjectGraphType
         foreach (var entity in entities)
         {
             var graphInfo = dict[entity!.Name];
+            var limitArg = new QueryArgument<IntGraphType>{Name = QueryConstants.LimitKey};
             AddField(new FieldType
             {
                 Name = entity.Name,
                 ResolvedType = graphInfo.SingleType,
                 Resolver = Resolvers.GetSingleResolver(queryService,entity.Name),
                 Arguments = new QueryArguments([
-                    ..entity.FilterArgs(), ArgumentTypes.FilterExpr()
+                    ..entity.FilterArgs(), 
+                    ArgumentTypes.FilterExpr()
                 ])
             });
             
@@ -49,6 +51,7 @@ public sealed class Query : ObjectGraphType
                 ResolvedType = dict[entity.Name].ListType,
                 Resolver = Resolvers.GetListResolver(queryService, entity.Name),
                 Arguments = new QueryArguments([
+                    limitArg,
                     entity.SortArg(),
                     ..entity.FilterArgs(), 
                     ArgumentTypes.SortExpr(), 

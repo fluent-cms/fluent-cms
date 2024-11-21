@@ -6,14 +6,16 @@ namespace FluentCMS.Cms.Services;
 
 public interface IQueryService
 {
-    Task<Record[]> ListWithAction<T>(string entityName, IEnumerable<GraphQLField> fields, T[] args)
-        where T :  IValueProvider, IPairProvider, IObjectProvider;
+    Task<Record[]> ListWithAction(Query query, 
+        IEnumerable<GraphQLField> fields,
+        IDictionary<string, ArgumentValue> args);
 
     Task<Record[]> ListWithAction(string name, Span span, Pagination pagination, QueryStrArgs args,
         CancellationToken token);
 
-    Task<Record?> OneWithAction<T>(string entityName, IEnumerable<GraphQLField> fields, T[] args)
-        where T :  IValueProvider, IPairProvider, IObjectProvider;
+    Task<Record?> OneWithAction(Query query, 
+        IEnumerable<GraphQLField> fields,
+        IDictionary<string, ArgumentValue> args);
 
     Task<Record?> OneWithAction(string name, QueryStrArgs strArgs, CancellationToken token);
 

@@ -10,6 +10,7 @@ public sealed record Query(
     ImmutableArray<Sort> Sorts,
     ImmutableArray<Filter> Filters);
 
+
 public sealed record LoadedQuery(
     string Name,
     string EntityName,
@@ -18,6 +19,12 @@ public sealed record LoadedQuery(
     ImmutableArray<ValidSort> Sorts,
     ImmutableArray<Filter> Filters, // filter need to resolve according to user input
     LoadedEntity Entity);
+
+public static class QueryConstants
+{
+    public const string LimitKey = "limit";
+    public const string GraphQlRequestSuffix = "GraphQlRequest";
+}
 
 public static class QueryHelper{
     public static LoadedQuery ToLoadedQuery(this Query query, LoadedEntity entity, IEnumerable<GraphAttribute> selection, IEnumerable<ValidSort> sorts)

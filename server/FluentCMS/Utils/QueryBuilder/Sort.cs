@@ -17,16 +17,37 @@ public static class SortConstant
 {
     public const string SortKey = "sort";
     public const string SortExprKey = "sortExpr";
+    public const string FieldKey = "field";
+    public const string OrderKey = "order";
 }
 
 public static class SortHelper
 {
-    //sortExpr: [{field:"course.teacher.name", }]
-    public static Result<Sort[]> ToSortExpr(this IValueProvider valueProvider)
+    public static Result<Sort[]> ToSortExpr<T>(this T provider)
+    where T : IObjectProvider
     {
-        throw new Exception("not supported");
+        if (!provider.Objects(out var objects))
+        {
+            return Result.Fail($"Failed to get sort expression for {provider.Name()}");
+        }
+        var sorts = new List<Sort>();
+        
+        //[{field:"course.teacher.name", sortOrder:Asc}]
+        foreach (var dictionary in objects)
+        {
+            if (dictionary.TryGetValue(SortConstant.FieldKey, out var field ) && field is string fieldStr &&
+                dictionary.TryGetValue(SortConstant.OrderKey, out var order) && order is string orderStr)
+            {
+                sorts.Add(new Sort(fieldStr,orderStr));
+            }
+            else
+            {
+                return Result.Fail("Failed to get sort expression.");
+            }
+        }
+        return sorts.ToArray();
     }
-    //sort: [id, nameDesc]
+    
     public static Result<Sort[]> ToSorts(this IValueProvider valueProvider)
     {
         if (!valueProvider.Vals(out var array))
@@ -37,6 +58,7 @@ public static class SortHelper
 
         Sort ToSort(string s)
         {
+            //sort: [id, nameDesc]
             return s.EndsWith(SortOrder.Desc)
                 ? new Sort(s[..^SortOrder.Desc.Length], SortOrder.Desc)
                 : new Sort(s, SortOrder.Asc);
@@ -77,8 +99,8 @@ public static class SortHelper
         if (!dictionary.TryGetValue(SortConstant.SortKey, out var dict)) return ret.ToArray();
         foreach (var (fieldName, orderStr) in dict)
         {
-            var (_, failed, vector, errors) = await vectorResolver.ResolveVector(entity, fieldName);
-            if (failed)
+            var (ok, _, vector, errors) = await vectorResolver.ResolveVector(entity, fieldName);
+            if (!ok)
             {
                 return Result.Fail(errors);
             }

@@ -126,6 +126,8 @@ public sealed class CmsModule(
     {
         PrintVersion();
         await InitSchema();
+        await InitCache();
+        
         app.UseStaticFiles();
         var options = new RewriteOptions();
         options.AddRedirect(@"^admin$", $"{FluentCmsContentRoot}/admin");
@@ -174,11 +176,17 @@ public sealed class CmsModule(
             });
         }
 
-        async Task InitSchema()
+        async Task InitCache()
         {
             using var scope = app.Services.CreateScope();
+            await scope.ServiceProvider.GetRequiredService<ISchemaService>().CacheSchema(SchemaType.Entity);
+        }
+        
+        async Task InitSchema()
+        {
+            using var serviceScope = app.Services.CreateScope();
 
-            var schemaService = scope.ServiceProvider.GetRequiredService<ISchemaService>();
+            var schemaService = serviceScope.ServiceProvider.GetRequiredService<ISchemaService>();
             await schemaService.EnsureSchemaTable(default);
             await schemaService.EnsureTopMenuBar(default);
         }

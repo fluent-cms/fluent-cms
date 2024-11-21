@@ -8,7 +8,7 @@ public sealed class SortOrderEnum : EnumerationGraphType
 {
     public SortOrderEnum()
     {
-        Name = "SortOrder";
+        Name = SortConstant.SortKey;
         Add(new EnumValueDefinition(SortOrder.Asc, SortOrder.Asc));
         Add(new EnumValueDefinition(SortOrder.Desc, SortOrder.Desc));
     }
@@ -18,15 +18,15 @@ public sealed class SortExpr : InputObjectGraphType
 {
     public SortExpr()
     {
-        Name = "SortExpr";
+        Name = SortConstant.SortExprKey;
         AddField(new FieldType
         {
-            Name = "field",
+            Name = SortConstant.FieldKey,
             Type = typeof(StringGraphType),
         });
         AddField(new FieldType
         {
-            Name = "order",
+            Name = SortConstant.OrderKey,
             Type = typeof(SortOrderEnum),
         });
     }

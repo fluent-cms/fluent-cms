@@ -45,7 +45,7 @@ public static class FieldTypes
                 },
                 Arguments = attribute.Type switch
                 {
-                    DisplayType.Crosstable when attribute.GetCrosstableTarget(out var target) => Args(target),
+                    DisplayType.Crosstable when attribute.GetCrosstableTarget(out var target) => CrosstableARgs(target),
                     _ => null
                 }
                 
@@ -59,10 +59,11 @@ public static class FieldTypes
 
         return;
 
-        QueryArguments Args(string target)
+        QueryArguments CrosstableARgs(string target)
         {
             var find = dict[target].Entity;
-            return new QueryArguments([find.SortArg(),..find.FilterArgs()]);
+            var limitArg = new QueryArgument<IntGraphType>{Name = QueryConstants.LimitKey};
+            return new QueryArguments([limitArg,find.SortArg(),..find.FilterArgs()]);
         }
     }
 

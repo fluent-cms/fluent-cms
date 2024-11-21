@@ -5,7 +5,7 @@ using FluentCMS.Utils.Graph;
 using FluentCMS.Utils.QueryBuilder;
 using FluentCMS.Utils.ResultExt;
 using FluentResults;
-using FluentResults.Extensions;
+using GraphQL.Execution;
 using GraphQLParser.AST;
 using Query = FluentCMS.Utils.QueryBuilder.Query;
 using Schema = FluentCMS.Cms.Models.Schema;
@@ -19,27 +19,39 @@ public sealed class QuerySchemaService(
     ExpiringKeyValueCache<LoadedQuery> queryCache
 ) : IQuerySchemaService
 {
-    public async Task<LoadedQuery> ByGraphQlRequest<T>(string entityName, IEnumerable<GraphQLField> fields, T[] args)
-    where T : IObjectProvider,IPairProvider,IValueProvider
+    public async Task<LoadedQuery> ByGraphQlRequest(Query query, IEnumerable<GraphQLField> fields,
+        IDictionary<string, ArgumentValue> dict)
     {
-        var entity = CheckResult(await entitySchemaSvc.GetLoadedEntity(entityName));
+        var entity = CheckResult(await entitySchemaSvc.GetLoadedEntity(query.EntityName));
         var selection = CheckResult(await SelectionSetToNode("", entity, fields, default));
-        var (sorts, filters)= CheckResult(GetSortAndFilter(args));
-        foreach (var input in args)
+        
+        var args = dict.Select(arg => 
+            new ArgumentKeyValueProvider(arg.Key, arg.Value)).ToArray();
+        HashSet<string> keys = [FilterConstants.FilterExprKey, SortConstant.SortExprKey];
+        var (sorts, filters,limit) = CheckResult(GetSortAndFilter(args.Where(x => !keys.Contains(x.Name()))));
+
+        foreach (var input in args.Where(x =>keys.Contains(x.Name())))
         {
             CheckResult(input.Name() switch
             {
-                FilterConstants.FilterExprKey => input.ToFilterExpr().BindAction(f=>filters = [..filters,..f]),
+                FilterConstants.FilterExprKey => input.ToFilterExpr().BindAction(f => filters = [..filters, ..f]),
+                SortConstant.SortExprKey => input.ToSortExpr().BindAction(s => sorts = [..sorts, ..s]),
                 _ => Result.Ok()
             });
         }
+
         var validSorts = CheckResult(await sorts.ToValidSorts(entity, entitySchemaSvc));
-        return new LoadedQuery("GraphQL" + entityName , 
-            entityName, 
-            entity.DefaultPageSize, 
+        var queryName = string.IsNullOrWhiteSpace(query.Name)
+            ? query.EntityName + QueryConstants.GraphQlRequestSuffix
+            : query.Name;
+        
+        return new LoadedQuery(
+            queryName,
+            query.EntityName,
+            limit > 0 ? limit: entity.DefaultPageSize,
             selection,
-            [..validSorts] , 
-            [..filters], 
+            [..validSorts],
+            [..filters],
             entity);
     }
 
@@ -85,46 +97,39 @@ public sealed class QuerySchemaService(
         var selection = CheckResult(await SelectionSetToNode("", entity, fields, token));
         var sorts = CheckResult(await query.Sorts.ToValidSorts(entity, entitySchemaSvc));
         //todo: subfields' can only order by local attribute for now.
-        //maybe support order subfields' subfield later
         CheckResult(sorts.Verify(selection, true));
     }
 
-    private Task<Result<(ValidSort[], Filter[])>> GetSortAndFilterExpr<T>(LoadedEntity entity, IEnumerable<T> args)
-    where T: IObjectProvider
-    {
-        throw new Exception("");
-    }
-
-    private Result<(Sort[], Filter[])> GetSortAndFilter<T>(IEnumerable<T> args)
+    private Result<(Sort[], Filter[], int)> GetSortAndFilter<T>(IEnumerable<T> args)
         where T : IValueProvider, IPairProvider
     {
         var sorts = new List<Sort>();
         var filters = new List<Filter>();
+        var limit = 0;
         foreach (var input in args)
         {
             var name = input.Name();
-            var res = name switch
+            if (name == QueryConstants.LimitKey)
             {
-                SortConstant.SortKey => input.ToSorts().BindAction(s => sorts.AddRange(s)),
-                FilterConstants.FilterExprKey => Result.Ok(),
-                _ => input.ToFilter().BindAction(f => filters.Add(f)),
-            };
-            if (res.IsFailed)
+                if (input.Val(out var val) && val is int intVal)
+                {
+                    limit = intVal;
+                }
+            }
+            else
             {
-                return Result.Fail(res.Errors);
+                var res = name switch
+                {
+                    SortConstant.SortKey => input.ToSorts().BindAction(s => sorts.AddRange(s)),
+                    _ => input.ToFilter().BindAction(f => filters.Add(f)),
+                };
+                if (res.IsFailed)
+                {
+                    return Result.Fail(res.Errors);
+                }
             }
         }
-        return (sorts.ToArray(), filters.ToArray());
-    }
-
-    private async Task<Result<ValidSort[]>> ToValidSorts(LoadedEntity entity, IEnumerable<Sort> sorts)
-    {
-        var list = sorts.ToList();
-        if (list.Count == 0)
-        {
-            list.Add(new Sort(entity.PrimaryKey, SortOrder.Asc));
-        }
-        return await list.ToArray().ToValidSorts(entity, entitySchemaSvc);
+        return (sorts.ToArray(), filters.ToArray(),limit);
     }
 
     private async Task<Result<ImmutableArray<GraphAttribute>>> SelectionSetToNode(
@@ -155,7 +160,7 @@ public sealed class QuerySchemaService(
             {
                 var target = graphAttr.Crosstable!.TargetEntity;
                 var inputs = field.Arguments.Select(x => new GraphQlArgumentValueProvider(x));
-                var (parseOk, _, (sorts, filters), parseErr) = GetSortAndFilter(inputs);
+                var (parseOk, _, (sorts, filters,limit), parseErr) = GetSortAndFilter(inputs);
                 if (!parseOk)
                 {
                     return Result.Fail(parseErr);
@@ -166,7 +171,7 @@ public sealed class QuerySchemaService(
                 {
                     return Result.Fail(validErr);
                 }
-                graphAttr = graphAttr with { Filters = [..filters],Sorts =[..validSorts] };
+                graphAttr = graphAttr with {Limit = limit,Filters = [..filters],Sorts =[..validSorts] };
             }
 
             attributes.Add(graphAttr);
