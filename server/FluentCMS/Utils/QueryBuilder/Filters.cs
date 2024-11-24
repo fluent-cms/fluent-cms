@@ -1,18 +1,20 @@
 using System.Collections.Immutable;
 using System.Globalization;
 using FluentCMS.Utils.Graph;
+using FluentCMS.Utils.ResultExt;
 using FluentResults;
+using MongoDB.Driver.Linq;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
-public sealed record Filter(string FieldName, string Operator, ImmutableArray<Constraint> Constraints, bool OmitFail);
+public sealed record Filter(string FieldName, string MatchType, ImmutableArray<Constraint> Constraints);
 
-public sealed record ValidFilter(AttributeVector Vector, string Operator, ImmutableArray<ValidConstraint> Constraints);
+public sealed record ValidFilter(AttributeVector Vector, string MatchType, ImmutableArray<ValidConstraint> Constraints);
 
 
 public static class FilterConstants
 {
-    public const string OperatorKey = "operator";
+    public const string MatchTypeKey = "matchType";
     public const string SetSuffix = "Set";
     public const string FilterExprKey = "filterExpr";
     public const string FieldKey = "field";
@@ -21,70 +23,73 @@ public static class FilterConstants
 
 public static class FilterHelper
 {
-    public static Result<Filter[]> ToFilterExpr<T>(this T valueProvider)
-    where T:IObjectProvider
+    public static Result<Filter[]> ParseFilterExpr(IDataProvider provider)
     {
-        if (!valueProvider.Objects(out var dictionaries))
+        if (!provider.TryGetNodes(out var nodes))
         {
             return Result.Fail("Unable to parse filter expression of field.");
         }
+        
         var ret = new List<Filter>();
-        foreach (var dictionary in dictionaries)
+        foreach (var node in nodes)
         {
-            var res = new FilterDictPairProvider(dictionary).ToComplexFilter();
-            if (res.IsFailed)
+            if (!node.TryGetVal(FilterConstants.FieldKey,out var fieldName))
             {
-                return Result.Fail(res.Errors);
+                return Result.Fail("Unable to parse filter expression, field is not set");
             }
-            ret.Add(res.Value);
+
+            if (!node.TryGetPairs(FilterConstants.ClauseKey, out var clauses))
+            {
+                return Result.Fail($"Unable to parse filter expression, failed to find clause of `{fieldName}` ");
+            }
+            ret.Add(ParseComplexFilter(fieldName, clauses));
         }
         return ret.ToArray();
     }
 
-    public static Result<Filter> ToFilter<T>(this T valueProvider)
-    where T: IPairProvider,IValueProvider
+    public static Result<Filter> ParseFilter<T>(T valueProvider)
+    where T: IDataProvider
     {
         return valueProvider.Name().EndsWith(FilterConstants.SetSuffix)
-            ? valueProvider.ToSimpleFilter()
-            : valueProvider.ToComplexFilter();
+            ? ParseSimpleFilter(valueProvider)
+            : Complex();
+
+        Result<Filter> Complex()
+        {
+            if (!valueProvider.TryGetPairs(out var pairs))
+            {
+                return Result.Fail($"Fail to parse filter {valueProvider.Name()}.");
+            }
+            return ParseComplexFilter(valueProvider.Name(), pairs);
+        }
     }
 
-    private static Result<Filter> ToSimpleFilter<T>(this T valueProvider)
-    where T: IPairProvider,IValueProvider
+    private static Result<Filter> ParseSimpleFilter<T>(T valueProvider)
+    where T: IDataProvider
     {
         var name = valueProvider.Name()[..^FilterConstants.SetSuffix.Length];
-        if (!valueProvider.Vals(out var arr)) return Result.Fail($"Invalid value provided of `{name}`");
+        if (!valueProvider.TryGetVals(out var arr)) 
+            return Result.Fail($"Fail to parse simple filter, Invalid value provided of `{name}`");
         var constraint = new Constraint(Matches.In, [..arr]);
-        return new Filter(name, LogicalOperators.And, [constraint], false);
+        return new Filter(name, MatchTypes.MatchAll, [constraint]);
     }
 
-    private static Result<Filter> ToComplexFilter<T>(this T valueProvider)
-    where T: IPairProvider
+    private static Filter ParseComplexFilter(string field, IEnumerable<StrPair> clauses)
     {
-        var name = valueProvider.Name();
-        if (!valueProvider.Pairs(out var pairs)) return Result.Fail($"Invalid value provided of `{name}`");
-        var logicalOperator = LogicalOperators.And;
+        var matchType = MatchTypes.MatchAll;
         var constraints = new List<Constraint>();
-        foreach (var (match, val) in pairs)
+        foreach (var (match, val) in clauses)
         {
-            if (match == FilterConstants.OperatorKey)
+            if (match == FilterConstants.MatchTypeKey)
             {
-                logicalOperator = val.ToString()!;
+                matchType = val.First();
             }
             else
             {
-                ImmutableArray<string> objs = val switch
-                {
-                    int[] l => [..l.Select(x => x.ToString())],
-                    DateTime[] l => [..l.Select(x => x.ToString(CultureInfo.InvariantCulture))],
-                    string[] s => [..s],
-                    _ => [val.ToString()!]
-                };
-                constraints.Add(new Constraint(match, objs));
+                constraints.Add(new Constraint(match, [..val]));
             }
         }
-
-        return new Filter(name, logicalOperator, [..constraints], false);
+        return new Filter(field, matchType, [..constraints]);
     }
 
     public static async Task<Result> Verify(
@@ -96,16 +101,16 @@ public static class FilterHelper
     {
         foreach (var filter in filters)
         {
-            var (_, _, vector, errors) = await vectorResolver.ResolveVector(entity, filter.FieldName);
-            if (errors is not null)
+            if (!(await vectorResolver.ResolveVector(entity, filter.FieldName))
+                .Try(out var vector, out var resolveErr))
             {
-                return Result.Fail(errors);
+                return Result.Fail(resolveErr);
             }
 
-            var (_, _, constraintsError) = filter.Constraints.Verify(vector.Attribute, valueResolver);
-            if (constraintsError is not null)
+            if (!filter.Constraints.Verify(vector.Attribute, valueResolver)
+                    .Try(out var verifyErr))
             {
-                return Result.Fail(constraintsError);
+                return Result.Fail(verifyErr);
             }
         }
 
@@ -115,7 +120,7 @@ public static class FilterHelper
     public static async Task<Result<ValidFilter[]>> ToValid(
         this IEnumerable<Filter> filters,
         LoadedEntity entity,
-        QueryStrArgs? args,
+        StrArgs? args,
         IEntityVectorResolver vectorResolver,
         IAttributeValueResolver valueResolver
     )
@@ -123,22 +128,21 @@ public static class FilterHelper
         var ret = new List<ValidFilter>();
         foreach (var filter in filters)
         {
-            var (_, _, vector, vectorError) = await vectorResolver.ResolveVector(entity, filter.FieldName);
-            if (vectorError is not null)
+            if (!(await vectorResolver.ResolveVector(entity, filter.FieldName))
+                .Try(out var vector, out var resolveErr))
             {
-                return Result.Fail(vectorError);
+                return Result.Fail(resolveErr);
             }
 
-            var (_, _, constraints, constraintErrors) =
-                filter.Constraints.Resolve(vector.Attribute, args, valueResolver, filter.OmitFail);
-            if (constraintErrors is not null)
+            if (!filter.Constraints.Resolve(vector.Attribute, args, valueResolver)
+                    .Try(out var constraints, out var constraintsErr))
             {
-                return Result.Fail(constraintErrors);
+                return Result.Fail(constraintsErr);
             }
 
             if (constraints.Length > 0)
             {
-                ret.Add(new ValidFilter(vector, filter.Operator, constraints));
+                ret.Add(new ValidFilter(vector, filter.MatchType, constraints));
             }
         }
 
@@ -147,7 +151,7 @@ public static class FilterHelper
 
     public static async Task<Result<ValidFilter[]>> Parse(
         LoadedEntity entity,
-        Dictionary<string, QueryStrArgs> dictionary,
+        Dictionary<string, StrArgs> dictionary,
         IEntityVectorResolver vectorResolver, IAttributeValueResolver valueResolver
     )
     {
@@ -175,7 +179,7 @@ public static class FilterHelper
     private static async Task<Result<ValidFilter>> Parse(
         LoadedEntity entity,
         string field,
-        QueryStrArgs strArgs,
+        StrArgs strArgs,
         IEntityVectorResolver vectorResolver,
         IAttributeValueResolver valueResolver
     )
@@ -186,19 +190,24 @@ public static class FilterHelper
             return Result.Fail($"Fail to parse filter, not found {entity.Name}.{field}, errors: {errors}");
         }
 
-        var op = strArgs.TryGetValue(FilterConstants.OperatorKey, out var value) ? value.ToString() : "and";
+        var op = strArgs.TryGetValue(FilterConstants.MatchTypeKey, out var value) ? value.ToString() : "and";
         var constraints = new List<ValidConstraint>();
         foreach (var (match, values) in strArgs.Where(x => x.Key != "operator"))
         {
-            if (!valueResolver.ResolveVal(vector.Attribute, values.ToString(), out var obj))
+            var list = new List<object>();
+            foreach (var stringValue in values)
             {
-                return Result.Fail($"Failed to case {values.ToString()} to {vector.Attribute.DataType}");
-
+                if (stringValue is not null && valueResolver.ResolveVal(vector.Attribute, stringValue, out var obj) && obj is not null)
+                {
+                    list.Add(obj);
+                }
+                else
+                {
+                    return Result.Fail($"Failed to case {values.ToString()} to {vector.Attribute.DataType}");
+                }
             }
-
-            constraints.Add(new ValidConstraint(match, [obj!]));
+            constraints.Add(new ValidConstraint(match, [..list]));
         }
-
         return new ValidFilter(vector, op, [..constraints]);
     }
 }

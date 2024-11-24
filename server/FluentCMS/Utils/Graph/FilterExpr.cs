@@ -16,7 +16,7 @@ public sealed class FilterExpr : InputObjectGraphType
         AddField(new FieldType
         {
             Name = FilterConstants.ClauseKey,
-            Type = typeof(StringClause)
+            Type = typeof(ListGraphType<Clause>)
         });
     }
 }

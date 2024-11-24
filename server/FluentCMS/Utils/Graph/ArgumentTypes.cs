@@ -10,7 +10,7 @@ public static class ArgumentTypes
     public static QueryArgument[] FilterArgs(this Entity entity)
     {
         var args = new List<QueryArgument>();
-        var arr = entity.Attributes.Where(x => !x.IsCompound()).ToArray();
+        var arr = entity.Attributes.GetLocalAttrs();
         args.AddRange(arr.Select(attr => attr.SimpleFilter()));
         args.AddRange(arr.Select(attr => attr.ComplexFilter()));
         return args.ToArray();
@@ -55,7 +55,7 @@ public static class ArgumentTypes
         {
             Name = "SortFields"
         };
-        var arr = entity.Attributes.Where(x => !x.IsCompound()).ToArray();
+        var arr = entity.Attributes.GetLocalAttrs();
         foreach (var attribute in arr)
         {
             type.Add(new EnumValueDefinition(attribute.Field, attribute.Field));

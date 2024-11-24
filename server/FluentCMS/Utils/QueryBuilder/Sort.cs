@@ -23,16 +23,18 @@ public static class SortConstant
 
 public static class SortHelper
 {
-    public static Result<Sort[]> ToSortExpr<T>(this T provider)
-    where T : IObjectProvider
+    public static Result<Sort[]> ParseSortExpr(IDataProvider provider)
     {
+        /*
         if (!provider.Objects(out var objects))
         {
             return Result.Fail($"Failed to get sort expression for {provider.Name()}");
         }
+        */
         var sorts = new List<Sort>();
         
         //[{field:"course.teacher.name", sortOrder:Asc}]
+        /*
         foreach (var dictionary in objects)
         {
             if (dictionary.TryGetValue(SortConstant.FieldKey, out var field ) && field is string fieldStr &&
@@ -45,12 +47,13 @@ public static class SortHelper
                 return Result.Fail("Failed to get sort expression.");
             }
         }
+        */
         return sorts.ToArray();
     }
     
-    public static Result<Sort[]> ToSorts(this IValueProvider valueProvider)
+    public static Result<Sort[]> ParseSorts( IDataProvider dataProvider)
     {
-        if (!valueProvider.Vals(out var array))
+        if (!dataProvider.TryGetVals(out var array))
         {
             return Result.Fail("Fail to parse sort");
         }
@@ -91,7 +94,7 @@ public static class SortHelper
     
     public static async Task<Result<ValidSort[]>> Parse(
         LoadedEntity entity, 
-        Dictionary<string,QueryStrArgs> dictionary, 
+        Dictionary<string,StrArgs> dictionary, 
         IEntityVectorResolver vectorResolver)
     {
         var ret = new List<ValidSort>();

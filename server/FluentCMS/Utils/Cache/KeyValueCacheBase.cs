@@ -2,34 +2,25 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace FluentCMS.Utils.Cache;
 
-public abstract class KeyValueCacheBase<T>
+public abstract class KeyValueCacheBase<T>(IMemoryCache memoryCache, string prefix)
 {
-    private readonly IMemoryCache _memoryCache;
-    private readonly string _prefix;
+    private string CacheKey(string key) => prefix + key;
 
-    protected KeyValueCacheBase(IMemoryCache memoryCache, string prefix)
-    {
-        this._memoryCache = memoryCache;
-        this._prefix = prefix;
-    }
+    public void Remove(string key) => memoryCache.Remove(CacheKey(key));
 
-    protected string CacheKey(string key) => _prefix + key;
-
-    public void Remove(string key) => _memoryCache.Remove(CacheKey(key));
-
-    public bool TryGetValue<TValue>(string key, out TValue? value) => _memoryCache.TryGetValue(CacheKey(key), out value);
+    public bool TryGetValue(string key, out T? value) => memoryCache.TryGetValue(CacheKey(key), out value);
 
     protected abstract MemoryCacheEntryOptions SetEntryOptions();
 
     public void Replace(string key, T value)
     {
         var cacheEntryOptions = SetEntryOptions();
-        _memoryCache.Set(CacheKey(key), value, cacheEntryOptions);
+        memoryCache.Set(CacheKey(key), value, cacheEntryOptions);
     }
 
     public async Task<T?> GetOrSet(string key, Func<Task<T>> factory)
     {
-        return await _memoryCache.GetOrCreateAsync(CacheKey(key), async entry =>
+        return await memoryCache.GetOrCreateAsync(CacheKey(key), async entry =>
         {
             entry.SetOptions(SetEntryOptions());
             return await factory();

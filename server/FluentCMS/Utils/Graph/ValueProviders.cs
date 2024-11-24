@@ -1,18 +1,16 @@
-using Confluent.Kafka;
 using FluentCMS.Utils.QueryBuilder;
-using GraphQL.Execution;
 using GraphQLParser.AST;
 
 namespace FluentCMS.Utils.Graph;
 
-public record GraphQlArgumentValueProvider(GraphQLArgument Argument) : IValueProvider, IPairProvider
+public record GraphQlArgumentDataProvider(GraphQLArgument Argument) : IDataProvider
 {
     public string Name()
     {
         return Argument.Name.StringValue;
     }
 
-    public bool Vals(out  string[] array)
+    public bool TryGetVals(out  string[] array)
     {
         array = Argument.Value switch
         {
@@ -22,98 +20,59 @@ public record GraphQlArgumentValueProvider(GraphQLArgument Argument) : IValuePro
         return array.Length > 0;
     }
 
-    public bool Val(out object? value)
+    public bool TryGetVal(out ScalarValue? value)
     {
         value = Argument.Value switch
         {
-            GraphQLBooleanValue boolValue => boolValue.BoolValue,
-            GraphQLStringValue stringValue => stringValue.Value.ToString(),
-            GraphQLEnumValue enumValue => enumValue.Name.StringValue,
-            GraphQLIntValue intValue => int.Parse(intValue.Value),
+            GraphQLBooleanValue boolValue => new BooleanValue(boolValue.BoolValue),
+            GraphQLStringValue stringValue => new StringValue(stringValue.Value.ToString()),
+            GraphQLEnumValue enumValue => new StringValue(enumValue.Name.StringValue),
+            GraphQLIntValue intValue => new IntValue(int.Parse(intValue.Value)),
             _=> null
         };
         return value is not null;
     }
 
-    public bool Pairs(out  (string,object)[] pairs)
+    public bool TryGetPairs(out StrPair[] pairs)
     {
-        pairs = Argument.Value switch
-        {
-            GraphQLObjectValue objectValue => objectValue.ToPairs(),
-            GraphQLListValue listValue => listValue.ToPairs(), 
-            _ => []
-        };
+        pairs = Argument.Value.ToPairs();
         return pairs.Length > 0;
     }
 
-    public bool Objects(out Record[] objects)
+    public bool TryGetNodes(out IFieldNode[] nodes)
     {
-        throw new NotImplementedException();
-    }
-}
-
-public record ArgumentKeyValueProvider(string Key, ArgumentValue Value) : IValueProvider, IPairProvider, IObjectProvider
-{
-    public string Name()
-    {
-        return Key;
-    }
-
-    public bool Val(out object? value)
-    {
-        value = Value.Value switch
+        var objectValueList = Argument.Value switch
         {
-            int intValue => intValue,
-            string stringValue => stringValue,
-            DateTime dateTimeValue => dateTimeValue,
-            _ => null
-        };
-        return value is not null;
-    }
-        
-
-    public bool Vals(out string[] array)
-    {
-        array = Value.Value switch
-        {
-            object[] vals => [..vals.Select(x => x.ToString()!)],
+            GraphQLListValue listValue => listValue.Values?
+                .Where(x => x is GraphQLObjectValue)
+                .Select(x => x as GraphQLObjectValue),
+            GraphQLObjectValue objectValue => [objectValue],
             _ => []
         };
-        return array.Length > 0;
-    }
-
-    public bool Pairs(out (string, object)[] pairs)
-    {
-        pairs = [];
-        return Value.Value is not null && DictionaryExt.DictionaryExt.DictObjsToPair(Value.Value, out pairs);
-    }
-
-    public bool Objects(out Record[] objects)
-    {
-        objects = [];
-        if (Value.Value is not object[] valuesObjects)
-        {
-            return false;
-        }
-        var ret = new List<Record>();
-        foreach (var valuesObject in valuesObjects)
-        {
-            if (valuesObject is not Dictionary<string, object> dictionary) return false;
-            ret.Add(dictionary);
-        }
-        objects = ret.ToArray();
-        return objects.Length > 0;
+        nodes = (objectValueList ?? [])
+            .Select(x => new GraphQlObjectValuePairProvider(x!))
+            .ToArray<IFieldNode>();
+        return nodes.Length > 0;
     }
 }
 
-public record FilterDictPairProvider(Record Record) : IPairProvider
+public record GraphQlObjectValuePairProvider(GraphQLObjectValue ObjectValue) : IFieldNode
 {
-    public string Name() => Record.TryGetValue(FilterConstants.FieldKey, out var value) ? value.ToString()! : "";
-
-    public bool Pairs(out (string, object)[] pairs)
+    public bool TryGetPairs(string fieldName,out StrPair[] pairs)
     {
         pairs = [];
-        return Record.TryGetValue(FilterConstants.ClauseKey, out var clause) &&
-               DictionaryExt.DictionaryExt.DictObjToPair(clause, out pairs);
+        var field = ObjectValue.Field(fieldName);
+        if (field is not null)
+        {
+            pairs = field.Value.ToPairs();
+        }
+        return pairs.Length > 0;
+    }
+
+    public bool TryGetVal(string fieldName, out string value)
+    {
+        value = "";
+        var field = ObjectValue.Field(fieldName);
+        return field is not null && field.Value.ToPrimitiveString(out value);
     }
 }

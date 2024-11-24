@@ -48,13 +48,13 @@ public sealed class EntityService(
         return record;
     }
 
-    public async Task<ListResult?> List(string name, Pagination pagination, QueryStrArgs args, CancellationToken token)
+    public async Task<ListResult?> List(string name, Pagination pagination, StrArgs args, CancellationToken token)
     {
-        var entity = CheckResult(await entitySchemaSvc.GetLoadedEntity(name, token));
+        var entity = Ok(await entitySchemaSvc.GetLoadedEntity(name, token));
         var groupQs = args.GroupByFirstIdentifier();
 
-        var filters = CheckResult(await FilterHelper.Parse(entity, groupQs, entitySchemaSvc, entitySchemaSvc));
-        var sorts = CheckResult(await SortHelper.Parse(entity, groupQs, entitySchemaSvc));
+        var filters = Ok(await FilterHelper.Parse(entity, groupQs, entitySchemaSvc, entitySchemaSvc));
+        var sorts = Ok(await SortHelper.Parse(entity, groupQs, entitySchemaSvc));
         return await List(entity, [..filters], ImmutableArray.CreateRange(sorts), pagination, token);
     }
     public async Task<Record> Insert(string name, JsonElement ele, CancellationToken token)
@@ -77,7 +77,7 @@ public sealed class EntityService(
     {
         var ctx = await ResolveCrosstableCtx(name, id, attr, token);
         var items = elements.Select(ele =>
-            CheckResult(ctx.Crosstable.TargetEntity.Parse(ele, entitySchemaSvc))).ToArray();
+            Ok(ctx.Crosstable.TargetEntity.Parse(ele, entitySchemaSvc))).ToArray();
 
         var res = await hookRegistry.CrosstablePreDel.Trigger(provider,
             new CrosstablePreDelArgs(name, id, ctx.Attribute, items));
@@ -95,7 +95,7 @@ public sealed class EntityService(
         var ctx = await ResolveCrosstableCtx(name, id, attr, token);
 
         var items = elements
-            .Select(ele => CheckResult(ctx.Crosstable.TargetEntity.Parse(ele, entitySchemaSvc))).ToArray();
+            .Select(ele => Ok(ctx.Crosstable.TargetEntity.Parse(ele, entitySchemaSvc))).ToArray();
         var res = await hookRegistry.CrosstablePreAdd.Trigger(provider,
             new CrosstablePreAddArgs(name, id, ctx.Attribute, items));
         var query = ctx.Crosstable.Insert(ctx.Id, res.RefItems);
@@ -108,7 +108,7 @@ public sealed class EntityService(
 
 
     public async Task<ListResult> CrosstableList(string name, string id, string attr, bool exclude,
-        QueryStrArgs args, Pagination pagination, CancellationToken token)
+        StrArgs args, Pagination pagination, CancellationToken token)
     {
         var ctx = await ResolveCrosstableCtx(name, id, attr, token);
         var target = ctx.Crosstable.TargetEntity;
@@ -116,8 +116,8 @@ public sealed class EntityService(
         var selectAttributes = target.Attributes.GetLocalAttrs(InListOrDetail.InList);
 
         var dictionary = args.GroupByFirstIdentifier();
-        var filter = CheckResult(await FilterHelper.Parse(target, dictionary, entitySchemaSvc, entitySchemaSvc));
-        var sorts = CheckResult(await SortHelper.Parse(target, dictionary, entitySchemaSvc));
+        var filter = Ok(await FilterHelper.Parse(target, dictionary, entitySchemaSvc, entitySchemaSvc));
+        var sorts = Ok(await SortHelper.Parse(target, dictionary, entitySchemaSvc));
         var validPagination = pagination.ToValid(ctx.Crosstable.TargetEntity.DefaultPageSize);
 
         var pagedListQuery = exclude
@@ -204,7 +204,7 @@ public sealed class EntityService(
         var res = await hookRegistry.EntityPreUpdate.Trigger(provider,
             new EntityPreUpdateArgs(entity.Name, id.ToString()!, record));
 
-        var query = CheckResult(entity.UpdateQuery(res.RefRecord));
+        var query = Ok(entity.UpdateQuery(res.RefRecord));
         await queryExecutor.Exec(query, token);
         await hookRegistry.EntityPostUpdate.Trigger(provider,
             new EntityPostUpdateArgs(entity.Name, id.ToString()!, record));
@@ -243,7 +243,7 @@ public sealed class EntityService(
         record = res.RefRecord;
 
 
-        var query = CheckResult(entity.DeleteQuery(record));
+        var query = Ok(entity.DeleteQuery(record));
         await queryExecutor.Exec(query, token);
         (_, _, record) = await hookRegistry.EntityPostDel.Trigger(provider,
             new EntityPostDelArgs(entity.Name, id.ToString()!, record));
@@ -254,7 +254,7 @@ public sealed class EntityService(
 
     private async Task<IdContext> ResolveOneContext(string entityName, string id, CancellationToken token)
     {
-        var entity = CheckResult(await entitySchemaSvc.GetLoadedEntity(entityName, token));
+        var entity = Ok(await entitySchemaSvc.GetLoadedEntity(entityName, token));
         if (!entitySchemaSvc.ResolveVal(entity.PrimaryKeyAttribute, id, out var idValue))
         {
             throw new InvalidParamException($"Failed to cast {id} to {entity.PrimaryKeyAttribute.DataType}");
@@ -268,7 +268,7 @@ public sealed class EntityService(
     private async Task<CrosstableContext> ResolveCrosstableCtx(string entityName, string strId, string attributeName,
         CancellationToken token)
     {
-        var entity = CheckResult(await entitySchemaSvc.GetLoadedEntity(entityName, token));
+        var entity = Ok(await entitySchemaSvc.GetLoadedEntity(entityName, token));
         var attribute = NotNull(entity.Attributes.FindOneAttr(attributeName))
             .ValOrThrow($"not find {attributeName} in {entityName}");
 
@@ -285,8 +285,8 @@ public sealed class EntityService(
 
     private async Task<RecordContext> ResolveRecordContext(string name, JsonElement ele, CancellationToken token)
     {
-        var entity = CheckResult(await entitySchemaSvc.GetLoadedEntity(name, token));
-        var record = CheckResult(entity.Parse(ele, entitySchemaSvc));
+        var entity = Ok(await entitySchemaSvc.GetLoadedEntity(name, token));
+        var record = Ok(entity.Parse(ele, entitySchemaSvc));
         return new RecordContext(entity, record);
     }
 }

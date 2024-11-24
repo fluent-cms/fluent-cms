@@ -44,7 +44,7 @@ var entity = new Entity
         Header:TestEntity.FieldName 
     )]
 );
-await schemaService.AddOrUpdate(entity,default);
+await schemaService.AddOrUpdateByName(entity,default);
 RegisterHooks();
 
 // Configure the HTTP request pipeline.

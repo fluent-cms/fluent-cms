@@ -1,26 +1,23 @@
+using FluentCMS.Utils.Graph;
 using FluentCMS.Utils.QueryBuilder;
-using GraphQL.Execution;
-using GraphQLParser.AST;
+using GraphQL.Validation;
 
 namespace FluentCMS.Cms.Services;
 
+
 public interface IQueryService
 {
-    Task<Record[]> ListWithAction(Query query, 
-        IEnumerable<GraphQLField> fields,
-        IDictionary<string, ArgumentValue> args);
+    Task<Record[]> ListWithAction(GraphQlRequestDto dto);
 
-    Task<Record[]> ListWithAction(string name, Span span, Pagination pagination, QueryStrArgs args,
+    Task<Record[]> ListWithAction(string name, Span span, Pagination pagination, StrArgs args,
         CancellationToken token);
 
-    Task<Record?> OneWithAction(Query query, 
-        IEnumerable<GraphQLField> fields,
-        IDictionary<string, ArgumentValue> args);
+    Task<Record?> OneWithAction(GraphQlRequestDto dto);
 
-    Task<Record?> OneWithAction(string name, QueryStrArgs strArgs, CancellationToken token);
+    Task<Record?> OneWithAction(string name, StrArgs strArgs, CancellationToken token);
 
-    Task<Record[]> Partial(string name, string attr, Span span, int limit, QueryStrArgs strArgs,
+    Task<Record[]> Partial(string name, string attr, Span span, int limit, StrArgs strArgs,
         CancellationToken token);
 
-    Task<Record[]> ManyWithAction(string name, QueryStrArgs strArgs, CancellationToken token);
+    Task<Record[]> ManyWithAction(string name, StrArgs strArgs, CancellationToken token);
 }

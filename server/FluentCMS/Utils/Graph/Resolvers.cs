@@ -1,68 +1,49 @@
 using FluentCMS.Cms.Services;
 using FluentCMS.Utils.QueryBuilder;
 using GraphQL;
-using GraphQL.Execution;
 using GraphQL.Resolvers;
+using GraphQLParser.AST;
 
 namespace FluentCMS.Utils.Graph;
 
+public record GraphQlRequestDto(Query Query, GraphQLField[] Fields, StrArgs Args);
+
 public static class Resolvers
 {
-    public static readonly IFieldResolver ValueResolver = new FuncFieldResolver<object>(context =>
-    {
-        if (context.Source is Record record)
-        {
-            return record[context.FieldDefinition.Name];
-        }
-
-        return null;
-    });
+    public static readonly IFieldResolver ValueResolver = new FuncFieldResolver<object>(context => 
+        context.Source is Record record ? record[context.FieldDefinition.Name] : null);
 
     public static IFieldResolver GetSingleResolver(IQueryService queryService, string entityName)
-    {
-        return new FuncFieldResolver<Record>(async context =>
-        {
-            var fields = context.SubFields!.Values.Select(x => x.Field);
-            return await queryService.OneWithAction(GetQuery(context, entityName), fields, Trim(context.Arguments));
-        });
-    }
+        => new FuncFieldResolver<Record>(async context =>
+            await queryService.OneWithAction(GetRequestDto(context, entityName)));
 
     public static IFieldResolver GetListResolver(IQueryService queryService, string entityName)
-    {
-        return new FuncFieldResolver<Record[]>(async context =>
-        {
-            var fields = context.SubFields!.Values.Select(x => x.Field);
-            return await queryService.ListWithAction(GetQuery(context, entityName), fields, Trim(context.Arguments));
-        });
-    }
+        => new FuncFieldResolver<Record[]>(async context =>
+            await queryService.ListWithAction(GetRequestDto(context, entityName)));
 
-    private static Dictionary<string,ArgumentValue> Trim(IDictionary<string, ArgumentValue>? arguments)
+    private static GraphQlRequestDto GetRequestDto(IResolveFieldContext context, string entityName)
     {
-        var ret = new Dictionary<string, ArgumentValue>();
-        if (arguments is null)
-        {
-            return ret;
-        }
+        var queryName = context.ExecutionContext.Operation.Name is null
+            ? ""
+            : context.ExecutionContext.Operation.Name.StringValue;
 
-        foreach (var (key, value) in arguments)
+        IDataProvider[] args = context.FieldAst.Arguments
+            ?.Select(x => new GraphQlArgumentDataProvider(x))
+            .ToArray<IDataProvider>() ?? [];
+        var res = QueryHelper.ParseArguments(args);
+        if (res.IsFailed)
         {
-            if (value.Value is not null)
-            {
-                
-                ret[key] = value;
-            }
+            throw new Exception(string.Join(";", res.Errors.Select(x=>x.Message)));
         }
-        return ret;
-    }
-    
-    private static Query GetQuery(IResolveFieldContext context, string entityName)
-    {
-        var raw = context.Document.Source.ToString();
-        var queryName = "";
-        if (context.ExecutionContext.Operation.Name is not null)
-        {
-            queryName = context.ExecutionContext.Operation.Name.StringValue;
-        }
-        return new Query(queryName, entityName, 0, raw, [], []);
+        var (sorts,filters,pagination) = res.Value;
+        
+        var query = new Query(
+            Name: queryName, EntityName: entityName, context.Document.Source.ToString(), IdeUrl: "",
+            Pagination: pagination,
+            Filters: [..filters], Sorts: [..sorts], ReqVariables: [..context.Variables.GetRequiredNames()]
+        );
+        return new GraphQlRequestDto(query, 
+            context.FieldAst.SelectionSet?.SubFields() ?? [],
+            context.Variables.ToQueryStrArgs());
     }
 }

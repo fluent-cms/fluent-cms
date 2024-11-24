@@ -103,7 +103,7 @@ public class QueryApiTest
             Name: Post + suffix,
             EntityName: Post,
             PageSize: QueryPageSize,
-            SelectionSet: $$"""
+            Source: $$"""
                           { 
                             id, {{Post}},
                             {{Author}}{id, {{Author}} },

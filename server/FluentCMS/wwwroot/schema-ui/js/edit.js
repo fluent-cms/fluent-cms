@@ -6,10 +6,7 @@ let editor ;
 
 $(document).ready(function() {
     $("#entityActions").prop('hidden', schema !=="entity");
-    $("#queryActions").prop('hidden', schema !=="query");
     $("#menuActions").prop('hidden', schema !=="menu");
-    
-
     editor = loadEditor();
 });
 

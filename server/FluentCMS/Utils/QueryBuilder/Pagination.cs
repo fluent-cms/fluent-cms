@@ -4,6 +4,7 @@ namespace FluentCMS.Utils.QueryBuilder;
 
 // Offset, Limit have to bu nullable so they can be resolved from controller
 public sealed record Pagination(int? Offset = null, int? Limit = null);
+
 public sealed record ValidPagination(int Offset, int Limit);
 
 public static class PaginationConstants
@@ -14,6 +15,11 @@ public static class PaginationConstants
 }
 public static class PaginationHelper
 {
+    public static bool IsEmpty(this Pagination? pagination)
+    {
+        return pagination == null || pagination.Offset == null && pagination.Limit == null;
+    }
+    
     public static ValidPagination ToValid(this Pagination pagination, int defaultPageSize)
     {
         var offset = pagination.Offset ?? 0;

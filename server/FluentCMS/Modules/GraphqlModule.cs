@@ -15,9 +15,10 @@ public sealed class GraphqlModule( ILogger<GraphqlModule> logger, string path)
         builder.Services.AddScoped<Schema>();
         builder.Services.AddScoped<GraphQuery>();
         builder.Services.AddScoped<DateClause>();
+        builder.Services.AddScoped<Clause>();
         builder.Services.AddScoped<StringClause>();
         builder.Services.AddScoped<IntClause>();
-        builder.Services.AddScoped<LogicalOperatorEnum>();
+        builder.Services.AddScoped<MatchTypeEnum>();
         builder.Services.AddScoped<SortOrderEnum>();
         builder.Services.AddScoped<FilterExpr>();
         builder.Services.AddScoped<SortExpr>();
@@ -43,4 +44,6 @@ public sealed class GraphqlModule( ILogger<GraphqlModule> logger, string path)
         app.UseGraphQL<Schema>();
         app.UseGraphQLGraphiQL(path);
     }
+
+    public string Path => path;
 }

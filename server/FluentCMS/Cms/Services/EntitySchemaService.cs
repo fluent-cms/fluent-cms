@@ -262,7 +262,7 @@ public sealed class EntitySchemaService(
             throw new Exception($"Crosstable Option was not set for attribute `{entity.Name}.{attr.Field}`");
         }
 
-        var targetEntity = CheckResult(await GetLoadedEntity(crosstableName, token));
+        var targetEntity = Ok(await GetLoadedEntity(crosstableName, token));
         var crossTable = CrosstableHelper.Crosstable(entity, targetEntity, attr);
         var columns =
             await executor.GetColumnDefinitions(crossTable.CrossEntity.TableName, token);
@@ -295,7 +295,7 @@ public sealed class EntitySchemaService(
         }
     }
 
-    public async Task<Schema> AddOrUpdate(Entity entity, CancellationToken token)
+    public async Task<Schema> AddOrUpdateByName(Entity entity, CancellationToken token)
     {
         var find = await schemaSvc.GetByNameDefault(entity.Name, SchemaType.Entity, token);
         var schema = new Schema

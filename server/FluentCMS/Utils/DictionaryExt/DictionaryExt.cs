@@ -5,19 +5,15 @@ namespace FluentCMS.Utils.DictionaryExt;
 
 public static class DictionaryExt
 {
-    public static bool DictObjsToPair(object obj, out (string, object)[] pairs)
+    public static bool GetStrings(this StrArgs? args, string key, out string[] strings)
     {
-        pairs = [];
-        if (obj is not object[] objects) return false;
-        var ret = new List<(string, object)>();
-        foreach (var o in objects)
+        strings = [];
+        if (args is null || !args.TryGetValue(key, out var vals))
         {
-            if (DictObjToPair(o, out var pair))
-            {
-                ret.AddRange(pair);
-            }
+            return false;
         }
-        pairs = ret.ToArray();
+
+        strings = vals.Where(s => s is not null).Select(s => s!).ToArray();
         return true;
     }
 
@@ -86,10 +82,10 @@ public static class DictionaryExt
      *      }
      * }
      */
-    public static Dictionary<string, Dictionary<string, StringValues>> GroupByFirstIdentifier(
-        this Dictionary<string, StringValues> dictionary, string startDelimiter = "[", string endDelimiter = "]")
+    public static Dictionary<string, StrArgs> GroupByFirstIdentifier(
+        this StrArgs dictionary, string startDelimiter = "[", string endDelimiter = "]")
     {
-        var result = new Dictionary<string, Dictionary<string, StringValues>>();
+        var result = new Dictionary<string, StrArgs>();
         foreach (var (key,value) in dictionary)
         {
             var parts = key.Split(startDelimiter);

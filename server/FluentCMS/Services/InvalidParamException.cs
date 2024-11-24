@@ -78,7 +78,7 @@ public static class InvalidParamExceptionFactory
         }
     }
     
-    public static T CheckResult<T>(Result<T> result)
+    public static T Ok<T>(Result<T> result)
     {
         return result switch
         {

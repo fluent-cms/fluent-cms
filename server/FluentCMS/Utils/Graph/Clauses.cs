@@ -3,6 +3,32 @@ using GraphQL.Types;
 
 namespace FluentCMS.Utils.Graph;
 
+public sealed class Clause : InputObjectGraphType
+{
+    public Clause()
+    {
+        Name = "Clause";
+        
+        foreach (var se in Matches.Single)
+        {
+            AddField(new FieldType
+            {
+                Name = se,
+                Type = typeof(StringGraphType)
+            });
+        }
+        foreach (var se in Matches.Multi)
+        {
+            AddField(new FieldType
+            {
+                Name = se,
+                Type = typeof(ListGraphType<StringGraphType>)
+            });
+        }
+        this.AddClauseCommonField();
+    }
+}
+
 public sealed class StringClause : InputObjectGraphType
 {
     public StringClause()
@@ -28,13 +54,13 @@ public sealed class StringClause : InputObjectGraphType
         this.AddClauseCommonField();
     }
 }
-public sealed class LogicalOperatorEnum : EnumerationGraphType
+public sealed class MatchTypeEnum : EnumerationGraphType
 {
-    public LogicalOperatorEnum()
+    public MatchTypeEnum()
     {
-        Name = "LogicalOperatorEnum";
-        Add(new EnumValueDefinition(LogicalOperators.And,LogicalOperators.And));
-        Add(new EnumValueDefinition(LogicalOperators.Or,LogicalOperators.Or));
+        Name = "MatchTypeEnum";
+        Add(new EnumValueDefinition(MatchTypes.MatchAll,MatchTypes.MatchAll));
+        Add(new EnumValueDefinition(MatchTypes.MatchAny,MatchTypes.MatchAny));
     }
 }
 public sealed class DateClause : InputObjectGraphType
@@ -95,8 +121,8 @@ public static class ClauseExt
     {
         t.AddField(new FieldType
         {
-            Name = FilterConstants.OperatorKey ,
-            Type = typeof(LogicalOperatorEnum),
+            Name = FilterConstants.MatchTypeKey ,
+            Type = typeof(MatchTypeEnum),
         });
     }
 }

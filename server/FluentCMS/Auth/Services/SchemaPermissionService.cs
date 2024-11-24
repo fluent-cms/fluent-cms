@@ -76,7 +76,7 @@ public class SchemaPermissionService<TUser>(
             if (schema.Type == SchemaType.Entity)
             {
                 await EnsureUserHaveAccessEntity(schema);
-                schema = CheckResult(EnsureCreatedByField(schema));
+                schema = Ok(EnsureCreatedByField(schema));
             }
         }
         return schema;

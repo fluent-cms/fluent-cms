@@ -20,19 +20,20 @@ public static class SchemaName
 
 public interface ISchemaService
 {
-    Task<Schema[]> AllWithAction(string type, CancellationToken cancellationToken);
+    Task<Schema[]> AllWithAction(string type, CancellationToken token);
 
-    Task<Schema?> ByIdWithAction(int id, CancellationToken cancellationToken = default);
+    Task<Schema?> ByIdWithAction(int id, CancellationToken token = default);
     Task<Schema?> ById(int id, CancellationToken cancellationToken = default);
 
-    public Task EnsureEntityInTopMenuBar(Entity entity, CancellationToken cancellationToken);
-    Task<Result> NameNotTakenByOther(Schema schema, CancellationToken cancellationToken);
-    Task<Schema?> GetByNameDefault(string name, string type, CancellationToken cancellationToken = default);
-    Task<Schema?> GetByNamePrefixDefault(string name, string type, CancellationToken cancellationToken = default);
-    Task<Schema> SaveWithAction(Schema schema, CancellationToken cancellationToken);
-    Task Delete(int id, CancellationToken cancellationToken);
-    Task EnsureTopMenuBar(CancellationToken cancellationToken);
-    Task EnsureSchemaTable(CancellationToken cancellationToken);
+    public Task EnsureEntityInTopMenuBar(Entity entity, CancellationToken token);
+    Task<Result> NameNotTakenByOther(Schema schema, CancellationToken token);
+    Task<Schema?> GetByNameDefault(string name, string type, CancellationToken token = default);
+    Task<Schema?> GetByNamePrefixDefault(string name, string type, CancellationToken token = default);
+    Task<Schema> SaveWithAction(Schema schema, CancellationToken token);
+    Task<Schema> AddOrUpdateByNameWithAction(Schema schema, CancellationToken token);
+    Task Delete(int id, CancellationToken token);
+    Task EnsureTopMenuBar(CancellationToken token);
+    Task EnsureSchemaTable(CancellationToken token);
     Task CacheSchema(string type);
     bool GetCachedSchema(string type, out ImmutableArray<Schema> entities);
 }

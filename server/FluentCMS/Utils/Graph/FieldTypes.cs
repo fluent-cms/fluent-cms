@@ -21,7 +21,6 @@ public static class FieldTypes
                 Name = attr.Field,
                 ResolvedType = attr.PlainGraphType(),
                 Resolver = Resolvers.ValueResolver
-                
             });
         }
 

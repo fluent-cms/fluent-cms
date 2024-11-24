@@ -70,9 +70,11 @@ public record GraphAttribute(
     string Validation = "",
     string ValidationMessage = "",
     
-    Crosstable? Crosstable = default,
     LoadedEntity? Lookup = default,
-    int Limit = 0
+        
+    Crosstable? Crosstable = default,
+    Pagination? Pagination = default
+    
 ) : LoadedAttribute(
     TableName:TableName,
     Field:Field,
@@ -120,6 +122,7 @@ public static class AttributeHelper
             Selection: [],
             Filters: [],
             Sorts: [],
+            Pagination:new Pagination(),
             Lookup: a.Lookup,
             Crosstable: a.Crosstable,
             TableName: a.TableName,
@@ -207,40 +210,40 @@ public static class AttributeHelper
         return arr?.FirstOrDefault(x => x.Field == name);
     }
 
-    public static ImmutableArray<T> GetLocalAttrs<T>(this IEnumerable<T>? arr)
+    public static T[] GetLocalAttrs<T>(this IEnumerable<T>? arr)
         where T : Attribute
     {
-        return arr?.Where(x => x.Type != DisplayType.Crosstable).ToImmutableArray() ?? [];
+        return arr?.Where(x => x.Type != DisplayType.Crosstable).ToArray() ?? [];
     }
 
-    public static ImmutableArray<T> GetLocalAttrs<T>(this IEnumerable<T>? arr, InListOrDetail listOrDetail)
+    public static T[] GetLocalAttrs<T>(this IEnumerable<T>? arr, InListOrDetail listOrDetail)
         where T : Attribute
     {
         return arr?.Where(x =>
                 x.Type != DisplayType.Crosstable &&
                 (listOrDetail == InListOrDetail.InList ? x.InList : x.InDetail))
-            .ToImmutableArray() ?? [];
+            .ToArray() ?? [];
     }
 
-    public static ImmutableArray<T> GetLocalAttrs<T>(this IEnumerable<T>? arr, string[] attributes)
+    public static T[] GetLocalAttrs<T>(this IEnumerable<T>? arr, string[] attributes)
         where T : Attribute
     {
-        return arr?.Where(x => x.Type != DisplayType.Crosstable && attributes.Contains(x.Field)).ToImmutableArray() ??
+        return arr?.Where(x => x.Type != DisplayType.Crosstable && attributes.Contains(x.Field)).ToArray() ??
                [];
     }
 
-    public static ImmutableArray<T> GetAttrByType<T>(this IEnumerable<T>? arr, string displayType)
+    public static T[] GetAttrByType<T>(this IEnumerable<T>? arr, string displayType)
         where T : Attribute
     {
-        return arr?.Where(x => x.Type == displayType).ToImmutableArray() ?? [];
+        return arr?.Where(x => x.Type == displayType).ToArray() ?? [];
     }
 
-    public static ImmutableArray<T> GetAttrByType<T>(this IEnumerable<T>? arr, string type,
+    public static T[] GetAttrByType<T>(this IEnumerable<T>? arr, string type,
         InListOrDetail listOrDetail)
         where T : Attribute
     {
         return arr?.Where(x => x.Type == type && (listOrDetail == InListOrDetail.InList ? x.InList : x.InDetail))
-            .ToImmutableArray() ?? [];
+            .ToArray() ?? [];
     }
 
     public static GraphAttribute? RecursiveFind(this IEnumerable<GraphAttribute> attributes, string name)

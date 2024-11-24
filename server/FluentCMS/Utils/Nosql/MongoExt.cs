@@ -91,7 +91,7 @@ public static class MongoExt
             definitions.Add(resConstraint.Value);
         }
 
-        return filter.Operator=="or" ? builder.Or(definitions) : builder.And(definitions);
+        return filter.MatchType=="or" ? builder.Or(definitions) : builder.And(definitions);
     }
 
     private static Result<FilterDefinition<BsonDocument>> GetConstraintDefinition(string fieldName, string match, ImmutableArray<object> values)

@@ -91,7 +91,7 @@ public static class KateQueryExt
             {
                 foreach (var c in filter.Constraints)
                 {
-                    var ret = filter.Operator == "or"
+                    var ret = filter.MatchType == MatchTypes.MatchAny
                         ? q.ApplyOrConstraint(filedName, c.Match, c.Values)
                         : q.ApplyAndConstraint(filedName, c.Match, c.Values);
                     if (ret.IsFailed)

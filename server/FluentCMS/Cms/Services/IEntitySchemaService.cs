@@ -10,7 +10,7 @@ public interface IEntitySchemaService: IEntityVectorResolver, IAttributeValueRes
     Task<Result<LoadedEntity>> GetLoadedEntity(string name, CancellationToken token = default);
     Task<Entity?> GetTableDefine(string name, CancellationToken token);
     Task<Schema> SaveTableDefine(Schema schemaDto, CancellationToken token);
-    Task<Schema> AddOrUpdate(Entity entity, CancellationToken token);
+    Task<Schema> AddOrUpdateByName(Entity entity, CancellationToken token);
     Task<Result<LoadedAttribute>> LoadOneCompoundAttribute(LoadedEntity entity, LoadedAttribute attr,HashSet<string> visitedCrosstable, CancellationToken token);
 
 }

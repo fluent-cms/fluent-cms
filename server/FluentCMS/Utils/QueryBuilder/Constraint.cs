@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
+using FluentCMS.Utils.DictionaryExt;
 using FluentResults;
-using Microsoft.Extensions.Primitives;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
@@ -9,8 +9,6 @@ public sealed record ValidConstraint(string Match, ImmutableArray<object> Values
 
 public static class ConstraintsHelper
 {
-    private const string QuerystringPrefix = "qs.";
-
     public static Result Verify(this IEnumerable<Constraint> constraints, Attribute attribute,
         IAttributeValueResolver resolver)
     {
@@ -23,7 +21,7 @@ public static class ConstraintsHelper
 
             foreach (var se in value)
             {
-                if (!se.StartsWith(QuerystringPrefix) && !resolver.ResolveVal(attribute, se, out var _))
+                if (!se.StartsWith(QueryConstants.VariablePrefix) && !resolver.ResolveVal(attribute, se, out var _))
                 {
                     return Result.Fail(
                         $"Can not cast value `{value}` of `{attribute.Field}` to `{attribute.DataType}`");
@@ -36,15 +34,14 @@ public static class ConstraintsHelper
     public static Result<ImmutableArray<ValidConstraint>> Resolve(
         this IEnumerable<Constraint> constraints, 
         Attribute attribute,  
-        QueryStrArgs? args,
-        IAttributeValueResolver resolver,
-        bool ignoreResolveError
+        StrArgs? args,
+        IAttributeValueResolver resolver
         )
     {
         var ret = new List<ValidConstraint>();
         foreach (var (match, fromValues) in constraints)
         {
-            var resolveValResult = ResolveValues(fromValues, attribute, args,resolver, ignoreResolveError);
+            var resolveValResult = ResolveValues(fromValues, attribute, args,resolver);
             if (!resolveValResult.IsSuccess)
             {
                 return Result.Fail(resolveValResult.Errors);
@@ -59,28 +56,18 @@ public static class ConstraintsHelper
     }
 
     private static Result<ImmutableArray<object>> ResolveValues(IEnumerable<string> fromValues, Attribute attribute,
-        QueryStrArgs? args, IAttributeValueResolver resolver, bool ignoreResolveError)
+        StrArgs? args, IAttributeValueResolver resolver)
     {
         var list = new List<object>();
 
         foreach (var fromValue in fromValues)
         {
-            if (fromValue.StartsWith(QuerystringPrefix))
+            if (fromValue.StartsWith(QueryConstants.VariablePrefix))
             {
-                var (_, _, values, err) = ResolveFromQueryString(fromValue, args);
-                if (err is not null && !ignoreResolveError)
+                var key = fromValue[QueryConstants.VariablePrefix.Length..];
+                if (args.GetStrings(key, out var strings))
                 {
-                    return Result.Fail(err);
-                }
-
-                foreach (var value in values??[])
-                {
-                    if (!resolver.ResolveVal(attribute, value, out var dbTypeValue))
-                    {
-                        return Result.Fail("can not cast value " + value + " to " + attribute.DataType);
-                    }
-
-                    list.Add(dbTypeValue!);
+                    list.AddRange(strings);
                 }
             }
             else
@@ -94,22 +81,12 @@ public static class ConstraintsHelper
         }
         return list.ToImmutableArray();
     }
-
-    private static Result<string[]> ResolveFromQueryString (string val, QueryStrArgs? args)
-    {
-        var key = val[QuerystringPrefix.Length..];
-        if (args is null||!args.TryGetValue(key, out var vals))
-        {
-            return Result.Fail($"Fail to resolve constraint value, can not find `{key}` in query string");
-        }
-        return vals.ToArray()!;
-    } 
 }
 
-public static class LogicalOperators
+public static class MatchTypes
 {
-    public const string And = "and";
-    public const string Or = "or";
+    public const string MatchAll = "matchAll";
+    public const string MatchAny = "matchAny";
 }
 public static class Matches
 {
@@ -135,11 +112,19 @@ public static class Matches
     public static readonly ImmutableHashSet<string> SingleInt = [EqualsTo,Lt,Lte,Gt,Gte];
     public static readonly ImmutableHashSet<string> MultiInt = [Between,In,NotIn];
     
-    public static readonly ImmutableHashSet<string> SingleStr = [EqualsTo,Lt,Lte,Gt,Gte,StartsWith, Contains, NotContains, EndsWith,EqualsTo];
+    public static readonly ImmutableHashSet<string> SingleStr = [
+        EqualsTo,Lt,Lte,Gt,Gte,
+        StartsWith, Contains, NotContains, EndsWith,EqualsTo
+    ];
     public static readonly ImmutableHashSet<string> MultiStr = [Between,In,NotIn];
     
     public static readonly ImmutableHashSet<string> SingleDate = [DateIs,DateIsNot,DateBefore, DateAfter];
     public static readonly ImmutableHashSet<string> MultiDate = [Between,In,NotIn];
     
-    public static readonly ImmutableHashSet<string> AllMatch = [Between, StartsWith, Contains, NotContains, EndsWith,EqualsTo,In,NotIn,Lt,Lte,Gt,Gte,DateIs,DateIsNot,DateBefore, DateAfter];
+    public static readonly ImmutableHashSet<string> Multi = [Between,In,NotIn];
+    public static readonly ImmutableHashSet<string> Single = [
+        StartsWith, Contains, NotContains, EndsWith,
+        EqualsTo,Lt,Lte,Gt,Gte,
+        DateIs,DateIsNot,DateBefore, DateAfter
+    ];
 }

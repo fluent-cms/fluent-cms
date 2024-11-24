@@ -13,7 +13,7 @@ using static InvalidParamExceptionFactory;
 
 public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc, PageTemplate template) : IPageService
 {
-    public async Task<string> GetDetail(string name, string param, QueryStrArgs strArgs, CancellationToken token)
+    public async Task<string> GetDetail(string name, string param, StrArgs strArgs, CancellationToken token)
     {
         //detail page format <pageName>/{<routerName>}, not know the exact page name now, match with prefix '/{'. 
         var ctx = (await GetContext(name+ "/{" , true,token)).ToPageContext();
@@ -29,7 +29,7 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
         return await RenderPage(ctx, data, strArgs, token);
     }
 
-    public async Task<string> Get(string name, QueryStrArgs strArgs, CancellationToken token)
+    public async Task<string> Get(string name, StrArgs strArgs, CancellationToken token)
     {
         var ctx = await GetContext(name , false, token);
         return await RenderPage(ctx.ToPageContext(),  new Dictionary<string, object>(), strArgs, token);
@@ -69,7 +69,7 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
         return render(data);
     }
 
-    private async Task<string> RenderPage(PageContext ctx, Record data, QueryStrArgs strArgs, CancellationToken token)
+    private async Task<string> RenderPage(PageContext ctx, Record data, StrArgs strArgs, CancellationToken token)
     {
         await LoadRelatedData(ctx.Page.Name, data, strArgs, ctx.Nodes, token);
         CheckResult(TagPagination(ctx, data));
@@ -84,9 +84,9 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
         return template.Build(title, body, ctx.Page.Css);
     }
 
-    private static QueryStrArgs GetLocalPaginationArgs(PageContext ctx,QueryStrArgs strArgs)
+    private static StrArgs GetLocalPaginationArgs(PageContext ctx,StrArgs strArgs)
     {
-        var ret = new QueryStrArgs(strArgs);
+        var ret = new StrArgs(strArgs);
         foreach (var node in ctx.Nodes.Where(x => 
                 string.IsNullOrWhiteSpace(x.DataSource.Query) && (x.DataSource.Offset > 0 || x.DataSource.Limit > 0)))
         {
@@ -96,7 +96,7 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
         return ret;
     }
 
-    private async Task LoadRelatedData(string name, Record data, QueryStrArgs strArgs, DataNode[] nodes, CancellationToken token)
+    private async Task LoadRelatedData(string name, Record data, StrArgs strArgs, DataNode[] nodes, CancellationToken token)
     {
         foreach (var repeatNode in nodes.Where(x => !string.IsNullOrWhiteSpace(x.DataSource.Query)))
         {
@@ -137,7 +137,7 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
     {
         public PartialContext ToPartialContext(string nodeId) => new (Page, Doc, Doc.GetElementbyId(nodeId));
     
-        public PageContext ToPageContext() => new (Page, Doc, CheckResult(Doc.GetDataNodes()));
+        public PageContext ToPageContext() => new (Page, Doc, Ok(Doc.GetDataNodes()));
     }
 
     record PageContext(Page Page, HtmlDocument HtmlDocument, DataNode[] Nodes);
