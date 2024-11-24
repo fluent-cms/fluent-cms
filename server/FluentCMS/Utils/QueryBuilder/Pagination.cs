@@ -21,7 +21,8 @@ public static class PaginationHelper
 {
     public static bool IsEmpty(this Pagination? pagination)
     {
-        return pagination == null || pagination.Offset == null && pagination.Limit == null;
+        return pagination == null || 
+               pagination.Offset is null or 0 && pagination.Limit is null or 0;
     }
 
     public static ValidPagination ToValid(this Pagination? pagination, int defaultPageSize)

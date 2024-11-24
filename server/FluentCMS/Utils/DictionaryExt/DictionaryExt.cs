@@ -1,7 +1,32 @@
+using System.Text;
+
 namespace FluentCMS.Utils.DictionaryExt;
 
 public static class DictionaryExt
 {
+    public static string ToQueryString(this StrArgs? args)
+    {
+        if (args == null || args.Count == 0)
+            return string.Empty;
+
+        var queryString = new StringBuilder();
+
+        foreach (var kvp in args)
+        {
+            if (string.IsNullOrEmpty(kvp.Key) || string.IsNullOrEmpty(kvp.Value)) continue;
+            if (queryString.Length > 0)
+            {
+                queryString.Append("&");
+            }
+
+            queryString.Append(Uri.EscapeDataString(kvp.Key))
+                .Append('=')
+                .Append(Uri.EscapeDataString(kvp.Value!));
+        }
+
+        return queryString.ToString();
+        
+    } 
     public static bool GetStrings(this StrArgs? args, string key, out string[] strings)
     {
         strings = [];

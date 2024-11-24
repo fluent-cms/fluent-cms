@@ -23,7 +23,7 @@ public record PagePart(string Page, string NodeId, string First, string Last, Da
 
 public static class PagePartHelper
 {
-    public static string GenerateToken(this PagePart part)
+    public static string ToString(this PagePart part)
     {
         var cursor = JsonSerializer.Serialize(part);
         return Base64UrlEncoder.Encode(cursor);

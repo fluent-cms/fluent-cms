@@ -24,7 +24,8 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
         
         var data = string.IsNullOrWhiteSpace(ctx.Page.Query)
             ? new Dictionary<string, object>()
-            : await querySvc.OneWithAction(ctx.Page.Query, strArgs, token);
+            : NotNull(await querySvc.OneWithAction(ctx.Page.Query, strArgs, token))
+                .ValOrThrow($"not find data by of {param}");
         
         return await RenderPage(ctx, data, strArgs, token);
     }
@@ -35,9 +36,9 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
         return await RenderPage(ctx.ToPageContext(),  new Dictionary<string, object>(), strArgs, token);
     }
 
-    public async Task<string> GetPart(string pageId, CancellationToken token)
+    public async Task<string> GetPart(string partStr, CancellationToken token)
     {
-        var part = NotNull(PagePartHelper.Parse(pageId)).ValOrThrow("Invalid Partial Part");
+        var part = NotNull(PagePartHelper.Parse(partStr)).ValOrThrow("Invalid Partial Part");
         var ctx = (await GetContext(part.Page, false, token)).ToPartialContext(part.NodeId);
 
         var cursor = new Span(part.First, part.Last);
@@ -69,10 +70,10 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
         return render(data);
     }
 
-    private async Task<string> RenderPage(PageContext ctx, Record data, StrArgs strArgs, CancellationToken token)
+    private async Task<string> RenderPage(PageContext ctx, Record data, StrArgs args, CancellationToken token)
     {
-        await LoadRelatedData(ctx.Page.Name, data, strArgs, ctx.Nodes, token);
-        CheckResult(TagPagination(ctx, data));
+        await LoadRelatedData(data, args, ctx.Nodes, token);
+        CheckResult(TagPagination(ctx, data,args));
 
         foreach (var repeatNode in ctx.Nodes)
         {
@@ -96,7 +97,7 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
         return ret;
     }
 
-    private async Task LoadRelatedData(string name, Record data, StrArgs strArgs, DataNode[] nodes, CancellationToken token)
+    private async Task LoadRelatedData(Record data, StrArgs strArgs, DataNode[] nodes, CancellationToken token)
     {
         foreach (var repeatNode in nodes.Where(x => !string.IsNullOrWhiteSpace(x.DataSource.Query)))
         {
@@ -107,7 +108,7 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
         }
     }
 
-    private static Result TagPagination(PageContext ctx, Record data)
+    private static Result TagPagination(PageContext ctx, Record data, StrArgs args)
     {
         foreach (var node in ctx.Nodes.Where(x => x.DataSource.Offset > 0 || x.DataSource.Limit > 0))
         {
@@ -115,7 +116,9 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
             {
                 return Result.Fail($"Fail to tag pagination for {node.DataSource.Field}");
             }
-            TagPagination(data, value!, node.ToPagePart(ctx.Page.Name));
+
+            var nodeWithArg = node with { DataSource = node.DataSource with { QueryString = args.ToQueryString() } };
+            TagPagination(data, value!, nodeWithArg.ToPagePart(ctx.Page.Name));
         }
 
         return Result.Ok();
@@ -125,24 +128,24 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
     {
         if (SpanHelper.HasPrevious(items))
         {
-            data[RenderUtil.FirstAttrTag(token.DataSource.Field) ] = (token with { First = SpanHelper.FirstCursor(items), Last = ""}).GenerateToken();
+            data[RenderUtil.FirstAttrTag(token.DataSource.Field) ] = PagePartHelper.ToString((token with { First = SpanHelper.FirstCursor(items), Last = ""}));
         }
 
         if (SpanHelper.HasNext(items))
         {
-            data[RenderUtil.LastAttrTag(token.DataSource.Field)] = (token with { Last = SpanHelper.LastCursor(items),First = ""}).GenerateToken();
+            data[RenderUtil.LastAttrTag(token.DataSource.Field)] = PagePartHelper.ToString((token with { Last = SpanHelper.LastCursor(items),First = ""}));
         }
     }
     record Context(Page Page, HtmlDocument Doc)
     {
-        public PartialContext ToPartialContext(string nodeId) => new (Page, Doc, Doc.GetElementbyId(nodeId));
+        public PartialContext ToPartialContext(string nodeId) => new (Page, Doc.GetElementbyId(nodeId));
     
         public PageContext ToPageContext() => new (Page, Doc, Ok(Doc.GetDataNodes()));
     }
 
     record PageContext(Page Page, HtmlDocument HtmlDocument, DataNode[] Nodes);
     
-    record PartialContext(Page Page, HtmlDocument HtmlDocument, HtmlNode Node);
+    record PartialContext(Page Page, HtmlNode Node);
     
     private async Task<Context> GetContext(string name, bool matchPrefix, CancellationToken token)
     {
