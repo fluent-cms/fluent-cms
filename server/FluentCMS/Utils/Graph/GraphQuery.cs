@@ -15,25 +15,25 @@ public sealed class GraphQuery : ObjectGraphType
         }
         var entities = schemas
             .Where(x=>x.Settings.Entity is not null)
-            .Select(x=>x.Settings.Entity).ToArray();
+            .Select(x=>x.Settings.Entity!).ToArray();
         
         var dict = new Dictionary<string, GraphInfo>();
         
         foreach (var entity in entities)
         {
-            var t = entity!.PlainType();
+            var t = FieldTypes.PlainType(entity);
             dict[entity!.Name] = new GraphInfo(entity, t, new ListGraphType(t));
         }
         
         foreach (var entity in entities)
         {
-            entity!.SetCompoundType(dict);
+            FieldTypes.SetCompoundType(entity,dict);
         }
 
         foreach (var entity in entities)
         {
             var graphInfo = dict[entity!.Name];
-            var limitArg = new QueryArgument<IntGraphType>{Name = QueryConstants.LimitKey};
+            var limitArg = new QueryArgument<IntGraphType>{Name = PaginationConstants.LimitKey};
             AddField(new FieldType
             {
                 Name = entity.Name,

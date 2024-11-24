@@ -14,10 +14,10 @@ public interface IQueryService
 
     Task<Record?> OneWithAction(GraphQlRequestDto dto);
 
-    Task<Record?> OneWithAction(string name, StrArgs strArgs, CancellationToken token);
+    Task<Record?> OneWithAction(string name, StrArgs args, CancellationToken token);
 
-    Task<Record[]> Partial(string name, string attr, Span span, int limit, StrArgs strArgs,
+    Task<Record[]> Partial(string name, string attr, Span span, int limit, StrArgs args,
         CancellationToken token);
 
-    Task<Record[]> ManyWithAction(string name, StrArgs strArgs, CancellationToken token);
+    Task<Record[]> ManyWithAction(string name, StrArgs args, CancellationToken token);
 }

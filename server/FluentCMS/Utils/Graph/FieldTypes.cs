@@ -7,7 +7,7 @@ namespace FluentCMS.Utils.Graph;
 
 public static class FieldTypes
 {
-    public static ObjectGraphType PlainType(this Entity entity)
+    public static ObjectGraphType PlainType(Entity entity)
     {
         var entityType = new ObjectGraphType
         {
@@ -19,7 +19,7 @@ public static class FieldTypes
             entityType.AddField(new FieldType
             {
                 Name = attr.Field,
-                ResolvedType = attr.PlainGraphType(),
+                ResolvedType = PlainGraphType(attr),
                 Resolver = Resolvers.ValueResolver
             });
         }
@@ -27,7 +27,7 @@ public static class FieldTypes
         return entityType;
     }
     
-    public static void SetCompoundType(this Entity entity, Dictionary<string, GraphInfo> dict)
+    public static void SetCompoundType(Entity entity, Dictionary<string, GraphInfo> dict)
     {
         var current = dict[entity.Name].SingleType;
         foreach (var attribute in entity.Attributes.Where(x=>x.IsCompound()))
@@ -47,7 +47,6 @@ public static class FieldTypes
                     DisplayType.Crosstable when attribute.GetCrosstableTarget(out var target) => CrosstableARgs(target),
                     _ => null
                 }
-                
             };
             
             if (t.ResolvedType is not null)
@@ -61,12 +60,18 @@ public static class FieldTypes
         QueryArguments CrosstableARgs(string target)
         {
             var find = dict[target].Entity;
-            var limitArg = new QueryArgument<IntGraphType>{Name = QueryConstants.LimitKey};
-            return new QueryArguments([limitArg,find.SortArg(),..find.FilterArgs()]);
+            var offsetArg = new QueryArgument<IntGraphType>{Name = PaginationConstants.OffsetKey};
+            var limitArg = new QueryArgument<IntGraphType>{Name = PaginationConstants.LimitKey};
+            return new QueryArguments([
+                offsetArg,
+                limitArg,
+                find.SortArg(),
+                ..find.FilterArgs()
+            ]);
         }
     }
 
-    private static IGraphType PlainGraphType(this Attribute attribute)
+    private static IGraphType PlainGraphType( Attribute attribute)
     {
         return attribute.DataType switch
         {
@@ -75,4 +80,6 @@ public static class FieldTypes
             _ => new StringGraphType()
         };
     }
+    
+
 }

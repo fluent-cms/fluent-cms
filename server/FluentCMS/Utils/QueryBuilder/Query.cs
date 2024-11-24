@@ -1,7 +1,4 @@
 using System.Collections.Immutable;
-using System.Text;
-using System.Text.Json;
-using System.Web;
 using FluentCMS.Utils.ResultExt;
 using FluentResults;
 
@@ -33,9 +30,6 @@ public sealed record LoadedQuery(
 
 public static class QueryConstants
 {
-    public const string LimitKey = "limit";
-    public const string OffsetKey = "offset";
-    public const string GraphQlRequestSuffix = "GraphQlRequest";
     public const string VariablePrefix = "$";
 }
 
@@ -107,8 +101,8 @@ public static Result<(Sort[], Filter[], Pagination)> ParseArguments(IDataProvide
             var name = input.Name();
             var res = name switch
             {
-                QueryConstants.OffsetKey => IntValue(input).BindAction(v => offset = v),
-                QueryConstants.LimitKey => IntValue(input).BindAction(v => limit = v),
+                PaginationConstants.OffsetKey => IntValue(input).BindAction(v => offset = v),
+                PaginationConstants.LimitKey => IntValue(input).BindAction(v => limit = v),
                 SortConstant.SortKey => SortHelper.ParseSorts(input).BindAction(s => sorts.AddRange(s)),
                 _ => FilterHelper.ParseFilter(input).BindAction(f => filters.Add(f)),
             };

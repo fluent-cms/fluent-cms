@@ -33,14 +33,14 @@ public sealed class QueryService(
         return await OneWithAction(await FromGraphQlRequest(dto,dto.Args), dto.Args);
     }
 
-    public async Task<Record?> OneWithAction(string name, StrArgs strArgs, CancellationToken token)
+    public async Task<Record?> OneWithAction(string name, StrArgs args, CancellationToken token)
     {
-        return await OneWithAction(await FromSavedQuery(name, strArgs, token),strArgs,token);
+        return await OneWithAction(await FromSavedQuery(name, args, token),args,token);
     }
 
-    public async Task<Record[]> ManyWithAction(string name, StrArgs strArgs, CancellationToken token)
+    public async Task<Record[]> ManyWithAction(string name, StrArgs args, CancellationToken token)
     {
-        var (query, filters) = await FromSavedQuery(name, strArgs, token);
+        var (query, filters) = await FromSavedQuery(name, args, token);
         var validPagination = new Pagination().ToValid(query.Entity.DefaultPageSize);
 
         var res = await hook.QueryPreGetMany.Trigger(provider,
@@ -53,12 +53,12 @@ public sealed class QueryService(
         var kateQuery = query.Entity.ListQuery(res.Filters, query.Sorts, validPagination, null,
             query.Selection.GetLocalAttrs());
         var items = await executor.Many(kateQuery, token);
-        await AttachRelated(query.Selection, strArgs, items, token);
+        await AttachRelated(query.Selection, args, items, token);
         SetSpan(false, query.Selection, items, [], null);
         return items;
     }
 
-    public async Task<Record[]> Partial(string name, string attr, Span span, int limit, StrArgs strArgs,
+    public async Task<Record[]> Partial(string name, string attr, Span span, int limit, StrArgs args,
         CancellationToken token)
     {
         if (span.IsEmpty())
@@ -74,7 +74,7 @@ public sealed class QueryService(
 
         var validSpan = Ok(span.ToValid([], resolver));
         var fields = attribute.Selection.GetLocalAttrs();
-        var filters = Ok(await attribute.Filters.ToValid(cross.TargetEntity, strArgs, resolver, resolver));
+        var filters = Ok(await attribute.Filters.ToValid(cross.TargetEntity, args, resolver, resolver));
         var sorts = Ok(await attribute.Sorts.ToValidSorts(query.Entity, resolver));
 
         var kateQuery = cross.GetRelatedItems(fields, filters, [..sorts], validSpan, pagination.PlusLimitOne(),
@@ -84,7 +84,7 @@ public sealed class QueryService(
         records = span.ToPage(records, pagination.Limit);
         if (records.Length <= 0) return records;
 
-        await AttachRelated(attribute.Selection, strArgs, records, token);
+        await AttachRelated(attribute.Selection, args, records, token);
         var sourceId = records.First()[cross.SourceAttribute.Field];
         SetSpan(true, attribute.Selection, records, attribute.Sorts, sourceId);
         return records;
@@ -96,11 +96,16 @@ public sealed class QueryService(
         var (query, filters) = ctx;
         var validSpan = Ok(span.ToValid(query.Entity.Attributes, resolver));
 
+        if (pagination.IsEmpty() && query.Pagination is not null)
+        {
+            pagination = query.Pagination;
+        }
+        
         if (!span.IsEmpty())
         {
             pagination = pagination with { Offset = 0 };
         }
-
+        
         var validPagination = pagination.ToValid(query.Entity.DefaultPageSize);
 
         var hookParam = new QueryPreGetListArgs(query.Name, query.EntityName, filters, query.Sorts, validSpan,
@@ -123,7 +128,7 @@ public sealed class QueryService(
         return items;
     }
 
-    private async Task<Record?> OneWithAction(QueryContext ctx, StrArgs strArgs, CancellationToken token = default)
+    private async Task<Record?> OneWithAction(QueryContext ctx, StrArgs args, CancellationToken token = default)
     {
         var (query, filters) = ctx;
         var res = await hook.QueryPreGetOne.Trigger(provider,
@@ -137,7 +142,7 @@ public sealed class QueryService(
         var item = await executor.One(kateQuery, token);
         if (item is not null)
         {
-            await AttachRelated(query.Selection, strArgs, [item], token);
+            await AttachRelated(query.Selection, args, [item], token);
             SetSpan(false, query.Selection, [item], [], null);
         }
 

@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using FluentCMS.Utils.ResultExt;
 using FluentResults;
 
 namespace FluentCMS.Utils.QueryBuilder;
@@ -25,39 +26,33 @@ public static class SortHelper
 {
     public static Result<Sort[]> ParseSortExpr(IDataProvider provider)
     {
-        /*
-        if (!provider.Objects(out var objects))
+        if (!provider.TryGetNodes(out var nodes))
         {
             return Result.Fail($"Failed to get sort expression for {provider.Name()}");
         }
-        */
         var sorts = new List<Sort>();
         
         //[{field:"course.teacher.name", sortOrder:Asc}]
-        /*
-        foreach (var dictionary in objects)
+        foreach (var node in nodes)
         {
-            if (dictionary.TryGetValue(SortConstant.FieldKey, out var field ) && field is string fieldStr &&
-                dictionary.TryGetValue(SortConstant.OrderKey, out var order) && order is string orderStr)
+            if (node.TryGetVal(SortConstant.FieldKey, out var field ) )
             {
-                sorts.Add(new Sort(fieldStr,orderStr));
+                var order = node.TryGetVal(SortConstant.OrderKey, out var val) ? val : SortOrder.Asc;
+                sorts.Add(new Sort(field,order));
             }
             else
             {
-                return Result.Fail("Failed to get sort expression.");
+                return Result.Fail("Failed to parse sort expression, no field Key");
             }
         }
-        */
         return sorts.ToArray();
     }
     
     public static Result<Sort[]> ParseSorts( IDataProvider dataProvider)
     {
-        if (!dataProvider.TryGetVals(out var array))
-        {
-            return Result.Fail("Fail to parse sort");
-        }
-        return array.Select(ToSort).ToArray();
+        return dataProvider.TryGetVals(out var array)
+            ? array.Select(ToSort).ToArray()
+            : Result.Fail("Fail to parse sort");
 
         Sort ToSort(string s)
         {
@@ -81,10 +76,10 @@ public static class SortHelper
         var ret = new List<ValidSort>();
         foreach (var sort in sorts)             
         {
-            var (ok,_,attr,e) = await vectorResolver.ResolveVector(entity, sort.FieldName);
-            if (!ok)
+            if (!(await vectorResolver.ResolveVector(entity, sort.FieldName))
+                .Try(out var attr, out var err))
             {
-                return Result.Fail(e);
+                return Result.Fail(err);
             }
             ret.Add(new ValidSort(attr,sort.Order));
         }
@@ -102,10 +97,9 @@ public static class SortHelper
         if (!dictionary.TryGetValue(SortConstant.SortKey, out var dict)) return ret.ToArray();
         foreach (var (fieldName, orderStr) in dict)
         {
-            var (ok, _, vector, errors) = await vectorResolver.ResolveVector(entity, fieldName);
-            if (!ok)
+            if (!(await vectorResolver.ResolveVector(entity, fieldName)).Try(out var vector, out var err))
             {
-                return Result.Fail(errors);
+                return Result.Fail(err);
             }
                 
             var order = orderStr.ToString() == "1" ? SortOrder.Asc : SortOrder.Desc;
@@ -137,10 +131,9 @@ public static class SortHelper
 
         foreach (var attr in attributes)
         {
-            var res = attr.Sorts.Verify(attr.Selection, false);
-            if (res.IsFailed)
+            if (!attr.Sorts.Verify(attr.Selection, false).Try(out var err))
             {
-                return Result.Fail(res.Errors);
+                return Result.Fail(err);
             }
         }
         return Result.Ok();

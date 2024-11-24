@@ -17,18 +17,12 @@ public static class DictionaryExt
         return true;
     }
 
-    public static bool DictObjToPair(object obj, out (string, object)[] pairs)
+    public static bool TryGetInt(this StrArgs dictionary, string key, out int intValue)
     {
-        pairs = [];
-        var ret = new List<(string, object)>();
-        if (obj is not Dictionary<string, object> dictionary) return false;
-
-        foreach (var (key, value) in dictionary)
-        {
-            ret.Add((key, value));
-        }
-
-        pairs = ret.ToArray();
+        intValue = 0;
+        if (!dictionary.TryGetValue(key, out var value) || !int.TryParse(value.ToString(), out var result))
+            return false;
+        intValue = result;
         return true;
     }
 
@@ -109,5 +103,4 @@ public static class DictionaryExt
         }
         return result;
     }
-   
 }

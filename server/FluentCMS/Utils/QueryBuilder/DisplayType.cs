@@ -7,4 +7,6 @@ public static class DisplayType
     public const string Number = "number";
     public const string Lookup = "lookup";
     public const string Crosstable = "crosstable";
+    public const string Dropdown = "dropdown";
+    public const string Multiselect = "multiselect";
 }

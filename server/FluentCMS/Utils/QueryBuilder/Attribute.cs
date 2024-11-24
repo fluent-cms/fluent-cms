@@ -160,6 +160,11 @@ public static class AttributeHelper
         val = a.Options;
         return !string.IsNullOrWhiteSpace(val);
     }
+    public static bool GetSelectItems(this Attribute a, out string[] arr)
+    {
+        arr = a.Options.Split(',');
+        return arr.Length > 0;
+    }
 
     public static bool GetCrosstableTarget(this Attribute a, out string val)
     {
