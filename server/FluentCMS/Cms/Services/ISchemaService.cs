@@ -20,7 +20,8 @@ public static class SchemaName
 
 public interface ISchemaService
 {
-    Task<Schema[]> AllWithAction(string type, CancellationToken token);
+    Task<Schema[]>  All(string type, IEnumerable<string>? names, CancellationToken cancellationToken = default);
+    Task<Schema[]> AllWithAction(string type, CancellationToken token = default);
 
     Task<Schema?> ByIdWithAction(int id, CancellationToken token = default);
     Task<Schema?> ById(int id, CancellationToken cancellationToken = default);
@@ -34,6 +35,5 @@ public interface ISchemaService
     Task Delete(int id, CancellationToken token);
     Task EnsureTopMenuBar(CancellationToken token);
     Task EnsureSchemaTable(CancellationToken token);
-    Task CacheSchema(string type);
-    bool GetCachedSchema(string type, out ImmutableArray<Schema> entities);
+
 }

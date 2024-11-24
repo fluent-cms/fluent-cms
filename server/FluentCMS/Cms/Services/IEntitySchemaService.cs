@@ -12,5 +12,8 @@ public interface IEntitySchemaService: IEntityVectorResolver, IAttributeValueRes
     Task<Schema> SaveTableDefine(Schema schemaDto, CancellationToken token);
     Task<Schema> AddOrUpdateByName(Entity entity, CancellationToken token);
     Task<Result<LoadedAttribute>> LoadOneCompoundAttribute(LoadedEntity entity, LoadedAttribute attr,HashSet<string> visitedCrosstable, CancellationToken token);
-
+    Task ReplaceCache();
+    bool GetCachedSchema(string type, out ImmutableArray<Entity> entities);
+    Task Delete(Schema schema, CancellationToken token);
+    Task<Schema> Save(Schema schema, CancellationToken token);
 }

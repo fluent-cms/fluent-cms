@@ -26,7 +26,7 @@ public class SchemasController(
     {
         return dto.Type switch
         {
-            SchemaType.Query => await querySchemaService.Save(dto, token), //query need extra check
+            SchemaType.Entity => await entitySchemaService.Save(dto,token),
             _ => await schemaService.SaveWithAction(dto, token)
         };
     }
@@ -60,13 +60,17 @@ public class SchemasController(
     public async Task<IActionResult> Delete(int id, CancellationToken token)
     {
         var schema = await schemaService.ById(id, token);
-        if (schema?.Type == SchemaType.Query)
+        switch (schema?.Type)
         {
-            await querySchemaService.Delete(schema, token);
-        }
-        else
-        {
-            await schemaService.Delete(id, token);
+            case SchemaType.Query:
+                await querySchemaService.Delete(schema, token);
+                break;
+            case SchemaType.Entity:
+                await entitySchemaService.Delete(schema, token);
+                break;
+            default:
+                await schemaService.Delete(id, token);
+                break;
         }
 
         return NoContent();

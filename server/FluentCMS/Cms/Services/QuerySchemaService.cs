@@ -74,14 +74,6 @@ public sealed class QuerySchemaService(
         return query.ToLoadedQuery(entity, selection, sorts);
     }
 
-    public async Task<Schema> Save(Schema schema, CancellationToken cancellationToken)
-    {
-        await VerifyQuery(schema.Settings.Query, cancellationToken);
-        var ret = await schemaSvc.SaveWithAction(schema, cancellationToken);
-        queryCache.Remove(schema.Name);
-        return ret;
-    }
-
     public async Task Delete(Schema schema, CancellationToken token)
     {
         await schemaSvc.Delete(schema.Id, token);
@@ -131,9 +123,9 @@ public sealed class QuerySchemaService(
                 return Result.Fail(err);
             }
 
-            if (graphAttr.Type == DisplayType.Crosstable && field.Arguments is not null)
+            if (graphAttr.Type == DisplayType.Crosstable)
             {
-                var inputs = field.Arguments.Select(x => new GraphQlArgumentDataProvider(x));
+                var inputs = field.Arguments?.Select(x => new GraphQlArgumentDataProvider(x)) ?? [];
                 if (!QueryHelper.ParseSimpleArguments(inputs).Try(out var res, out var parseErr))
                 {
                     return Result.Fail(parseErr);
@@ -141,8 +133,8 @@ public sealed class QuerySchemaService(
 
                 var (sorts, filters, pagination) = res;
                 var target = graphAttr.Crosstable!.TargetEntity;
-                var (validOk, _, validSorts, validErr) = await sorts.ToValidSorts(target, entitySchemaSvc);
-                if (!validOk)
+                
+                if (!(await sorts.ToValidSorts(target, entitySchemaSvc)).Try(out var validSorts,out var  validErr))
                 {
                     return Result.Fail(validErr);
                 }
@@ -153,6 +145,11 @@ public sealed class QuerySchemaService(
             attributes.Add(graphAttr);
         }
 
+        if (attributes.FindOneAttr(entity.PrimaryKey) == default)
+        {
+            return Result.Fail($"Primary Key [{entity.PrimaryKey}] not found in [{prefix}]");
+        }
+        
         return attributes.ToImmutableArray();
     }
 
@@ -170,7 +167,7 @@ public sealed class QuerySchemaService(
         if (!(await SelectionSetToNode(prefix, targetEntity, field.SelectionSet.SubFields(), token))
             .Try(out var children, out var err))
         {
-            return Result.Fail($"Fail to get subfield of {attr}, errors: {err}");
+            return Result.Fail(err);
         }
 
         attr = attr with { Selection = children };

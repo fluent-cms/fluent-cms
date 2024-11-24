@@ -201,7 +201,10 @@ public static class KateQueryExt
 
         void ApplyCompare(SqlKata.Query q, ValidSort sort)
         {
-            q.Where(sort.Vector.Attribute.AddTableModifier(sort.Vector.TableAlias), cursor.Span.GetCompareOperator(sort.Order), cursor.Edge(sort.Vector.FullPath));
+            q.Where(
+                sort.Vector.Attribute.AddTableModifier(sort.Vector.TableAlias), 
+                cursor.Span.GetCompareOperator(sort.Order), 
+                cursor.Edge(sort.Vector.FullPath));
         }
         
     }

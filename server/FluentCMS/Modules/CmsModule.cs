@@ -59,8 +59,8 @@ public sealed class CmsModule(
         void InjectServices()
         {
             builder.Services.AddMemoryCache();
-            builder.Services.AddSingleton<NonExpiringKeyValueCache<ImmutableArray<Schema>>>(p =>
-                new NonExpiringKeyValueCache<ImmutableArray<Schema>>(p.GetRequiredService<IMemoryCache>(), "entities"));
+            builder.Services.AddSingleton<NonExpiringKeyValueCache<ImmutableArray<Entity>>>(p =>
+                new NonExpiringKeyValueCache<ImmutableArray<Entity>>(p.GetRequiredService<IMemoryCache>(), "entities"));
             
             builder.Services.AddSingleton<ExpiringKeyValueCache<LoadedQuery>>(p =>
                 new ExpiringKeyValueCache<LoadedQuery>(p.GetRequiredService<IMemoryCache>(), 30, "query"));
@@ -179,7 +179,7 @@ public sealed class CmsModule(
         async Task InitCache()
         {
             using var scope = app.Services.CreateScope();
-            await scope.ServiceProvider.GetRequiredService<ISchemaService>().CacheSchema(SchemaType.Entity);
+            await scope.ServiceProvider.GetRequiredService<IEntitySchemaService>().ReplaceCache();
         }
         
         async Task InitSchema()

@@ -1,5 +1,7 @@
+using System.Collections.Immutable;
 using FluentCMS.Cms.Models;
 using FluentCMS.Services;
+using FluentCMS.Utils.Cache;
 using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.QueryBuilder;
 using FluentResults;
@@ -10,9 +12,24 @@ using static InvalidParamExceptionFactory;
 
 public sealed class EntitySchemaService(
     ISchemaService schemaSvc,
-    IDefinitionExecutor executor
+    IDefinitionExecutor executor,
+    NonExpiringKeyValueCache<ImmutableArray<Entity>> entityCache
 ) : IEntitySchemaService
 {
+    public async Task ReplaceCache()
+    {
+        var schemas = await schemaSvc.All(SchemaType.Entity,null);
+        var entities = schemas
+            .Where(x=>x.Settings.Entity is not null)
+            .Select(x=>x.Settings.Entity!).ToArray();
+        entityCache.Replace("", [..entities]);
+    }
+
+    public bool GetCachedSchema(string type, out ImmutableArray<Entity> entities)
+    {
+        return entityCache.TryGetValue(type, out entities);
+    }
+
     public bool ResolveVal(Attribute attr, string v, out object? result) =>
         executor.TryParseDataType(v, attr.DataType, out result);
 
@@ -109,6 +126,7 @@ public sealed class EntitySchemaService(
         await CreateCrosstables();
         await SaveMainTable();
         await schemaSvc.EnsureEntityInTopMenuBar(entity, token);
+        await ReplaceCache();
         return dto;
 
         async Task SaveSchema()
@@ -226,6 +244,19 @@ public sealed class EntitySchemaService(
             DisplayType.Lookup => await LoadLookup(attr, token),
             _ => attr
         };
+    }
+
+    public async Task Delete(Schema schema, CancellationToken token)
+    {
+        await schemaSvc.Delete(schema.Id, token);
+        await ReplaceCache();
+    }
+
+    public async Task<Schema> Save(Schema schema, CancellationToken token)
+    {
+        var ret = await schemaSvc.SaveWithAction(schema, token);
+        await ReplaceCache();
+        return ret;
     }
 
     private async Task<Result<LoadedEntity>> LoadCompoundAttributes(LoadedEntity entity, HashSet<string> visitedCrosstable, CancellationToken token)

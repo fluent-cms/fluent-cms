@@ -7,15 +7,12 @@ namespace FluentCMS.Utils.Graph;
 public record GraphInfo(Entity Entity, ObjectGraphType SingleType, ListGraphType ListType);
 public sealed class GraphQuery : ObjectGraphType
 {
-    public GraphQuery(ISchemaService schemaService, IQueryService queryService)
+    public GraphQuery(IEntitySchemaService entitySchemaService, IQueryService queryService)
     {
-        if (!schemaService.GetCachedSchema(SchemaType.Entity,out var schemas))
+        if (!entitySchemaService.GetCachedSchema(SchemaType.Entity,out var entities))
         {
             return;
         }
-        var entities = schemas
-            .Where(x=>x.Settings.Entity is not null)
-            .Select(x=>x.Settings.Entity!).ToArray();
         
         var dict = new Dictionary<string, GraphInfo>();
         

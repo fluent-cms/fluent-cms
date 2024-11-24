@@ -24,10 +24,10 @@ public static class PaginationHelper
         return pagination == null || pagination.Offset == null && pagination.Limit == null;
     }
 
-    public static ValidPagination ToValid(this Pagination pagination, int defaultPageSize)
+    public static ValidPagination ToValid(this Pagination? pagination, int defaultPageSize)
     {
-        var offset = pagination.Offset ?? 0;
-        var limit = pagination.Limit is null || pagination.Limit.Value == 0 || pagination.Limit.Value > defaultPageSize
+        var offset = pagination?.Offset ?? 0;
+        var limit = pagination?.Limit is null || pagination.Limit.Value == 0 || pagination.Limit.Value > defaultPageSize
             ? defaultPageSize
             : pagination.Limit.Value;
         return new ValidPagination(offset, limit);

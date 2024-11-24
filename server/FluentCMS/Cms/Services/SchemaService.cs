@@ -16,8 +16,7 @@ public sealed  class SchemaService(
     IDefinitionExecutor ddlExecutor,
     KateQueryExecutor queryExecutor,
     HookRegistry hook,
-    IServiceProvider provider,
-    NonExpiringKeyValueCache<ImmutableArray<Schema>>schemaCache
+    IServiceProvider provider
 ) : ISchemaService
 {
     public async Task<Schema[]> AllWithAction(string type, CancellationToken token = default)
@@ -158,16 +157,7 @@ public sealed  class SchemaService(
             token);
     }
 
-    public async Task CacheSchema(string type)
-    {
-        var entities = await All(type, null);
-        schemaCache.Replace(type, [..entities]);
-    }
-
-    public bool GetCachedSchema(string type, out ImmutableArray<Schema> entities)
-    {
-        return schemaCache.TryGetValue(type, out entities);
-    }
+    
 
     public async Task EnsureEntityInTopMenuBar(Entity entity, CancellationToken token)
     {

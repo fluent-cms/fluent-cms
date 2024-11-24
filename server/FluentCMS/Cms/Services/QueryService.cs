@@ -54,7 +54,7 @@ public sealed class QueryService(
             query.Selection.GetLocalAttrs());
         var items = await executor.Many(kateQuery, token);
         await AttachRelated(query.Selection, args, items, token);
-        SetSpan(false, query.Selection, items, [], null);
+        SpanHelper.SetSpan(false, query.Selection, items, [], null);
         return items;
     }
 
@@ -74,8 +74,9 @@ public sealed class QueryService(
 
         var validSpan = Ok(span.ToValid([], resolver));
         var fields = attribute.Selection.GetLocalAttrs();
+        
         var filters = Ok(await attribute.Filters.ToValid(cross.TargetEntity, args, resolver, resolver));
-        var sorts = Ok(await attribute.Sorts.ToValidSorts(query.Entity, resolver));
+        var sorts = Ok(await attribute.Sorts.ToValidSorts(cross.TargetEntity, resolver));
 
         var kateQuery = cross.GetRelatedItems(fields, filters, [..sorts], validSpan, pagination.PlusLimitOne(),
             [validSpan.SourceId()]);
@@ -86,7 +87,7 @@ public sealed class QueryService(
 
         await AttachRelated(attribute.Selection, args, records, token);
         var sourceId = records.First()[cross.SourceAttribute.Field];
-        SetSpan(true, attribute.Selection, records, attribute.Sorts, sourceId);
+        SpanHelper.SetSpan(true, attribute.Selection, records, attribute.Sorts, sourceId);
         return records;
     }
     
@@ -123,7 +124,7 @@ public sealed class QueryService(
         if (items.Length <= 0) return items;
         await AttachRelated(query.Selection, args, items, token);
 
-        SetSpan(true, query.Selection, items, query.Sorts, null);
+        SpanHelper.SetSpan(true, query.Selection, items, query.Sorts, null);
 
         return items;
     }
@@ -140,12 +141,9 @@ public sealed class QueryService(
 
         var kateQuery = Ok(query.Entity.OneQuery(res.Filters, query.Sorts, query.Selection.GetLocalAttrs()));
         var item = await executor.One(kateQuery, token);
-        if (item is not null)
-        {
-            await AttachRelated(query.Selection, args, [item], token);
-            SetSpan(false, query.Selection, [item], [], null);
-        }
-
+        if (item is null) return item;
+        await AttachRelated(query.Selection, args, [item], token);
+        SpanHelper.SetSpan(false, query.Selection, [item], [], null);
         return item;
     }
 
@@ -196,7 +194,7 @@ public sealed class QueryService(
         }
         else
         {
-            var validPagination = new Pagination().ToValid(attr.Crosstable.TargetEntity.DefaultPageSize);
+            var validPagination = pagination.ToValid(attr.Crosstable.TargetEntity.DefaultPageSize);
             foreach (var id in ids)
             {
                 var query = cross.GetRelatedItems(fields, filters, [..sorts], null, validPagination.PlusLimitOne(), [id]);
@@ -244,37 +242,6 @@ public sealed class QueryService(
                          local[attr.Field] is not null && local[attr.Field].Equals(lookupId)))
             {
                 item[attr.Field] = lookupRecord;
-            }
-        }
-    }
-
-    private static void SetSpan(bool needAddCursor, ImmutableArray<GraphAttribute> attrs, Record[] items,
-        IEnumerable<ValidSort> sorts, object? sourceId)
-    {
-        var arr = sorts.ToArray();
-        if (needAddCursor)
-        {
-            if (items.Length == 0) return;
-            SpanHelper.SetCursor(sourceId, items.First(), arr);
-            if (items.Length > 1) SpanHelper.SetCursor(sourceId, items.Last(), arr);
-        }
-
-        foreach (var item in items)
-        {
-            foreach (var attribute in attrs.GetAttrByType(DisplayType.Lookup))
-            {
-                if (item.TryGetValue(attribute.Field, out var value) && value is Record record)
-                {
-                    SetSpan(false, attribute.Selection, [record], [], null);
-                }
-            }
-
-            foreach (var attribute in attrs.GetAttrByType(DisplayType.Crosstable))
-            {
-                if (!item.TryGetValue(attribute.Field, out var value) || value is not Record[] records ||
-                    records.Length <= 0) continue;
-                var nextSourceId = records.First()[attribute.Crosstable!.SourceAttribute.Field];
-                SetSpan(true, attribute.Selection, records, attribute.Sorts, nextSourceId);
             }
         }
     }
