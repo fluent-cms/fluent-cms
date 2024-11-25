@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using FluentCMS.Utils.DictionaryExt;
+using FluentCMS.Utils.ResultExt;
 using FluentResults;
 
 namespace FluentCMS.Utils.QueryBuilder;
@@ -41,21 +42,20 @@ public static class ConstraintsHelper
         var ret = new List<ValidConstraint>();
         foreach (var (match, fromValues) in constraints)
         {
-            var resolveValResult = ResolveValues(fromValues, attribute, args,resolver);
-            if (!resolveValResult.IsSuccess)
+            if (!ResolveValues(fromValues, attribute, args,resolver).Try(out var values, out var err))
             {
-                return Result.Fail(resolveValResult.Errors);
+                return Result.Fail(err);
             }
 
-            if (resolveValResult.Value.Length > 0)
+            if (values.Length > 0)
             {
-                ret.Add(new ValidConstraint(match, resolveValResult.Value));
+                ret.Add(new ValidConstraint(match, [..values]));
             }
         }
         return ret.ToImmutableArray();
     }
 
-    private static Result<ImmutableArray<object>> ResolveValues(IEnumerable<string> fromValues, Attribute attribute,
+    private static Result<object[]> ResolveValues(IEnumerable<string> fromValues, Attribute attribute,
         StrArgs? args, IAttributeValueResolver resolver)
     {
         var list = new List<object>();
@@ -65,9 +65,14 @@ public static class ConstraintsHelper
             if (fromValue.StartsWith(QueryConstants.VariablePrefix))
             {
                 var key = fromValue[QueryConstants.VariablePrefix.Length..];
-                if (args.GetStrings(key, out var strings))
+                if (!args.GetStrings(key, out var strings)) continue;
+                foreach (var se in strings)
                 {
-                    list.AddRange(strings);
+                    if (!resolver.ResolveVal(attribute, se, out var obj))
+                    {
+                        return Result.Fail($"can not cast value {se} to {attribute.DataType}");
+                    }
+                    list.Add(obj!);
                 }
             }
             else
@@ -79,7 +84,7 @@ public static class ConstraintsHelper
                 list.Add(dbTypeValue!);
             }
         }
-        return list.ToImmutableArray();
+        return list.ToArray();
     }
 }
 

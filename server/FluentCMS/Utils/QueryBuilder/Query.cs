@@ -8,11 +8,11 @@ public sealed record Query(
     string Name,
     string EntityName,
     string Source,
-    string IdeUrl,
-    Pagination? Pagination,
     ImmutableArray<Filter> Filters,
     ImmutableArray<Sort> Sorts,
-    ImmutableArray<string> ReqVariables
+    ImmutableArray<string> ReqVariables,
+    string IdeUrl = "",
+    Pagination? Pagination= default
 );
 
 

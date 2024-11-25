@@ -53,14 +53,27 @@ public class AccountService<TUser, TRole,TCtx>(
             Email: item.Key.Email!,
             Id: item.Key.Id,
             Roles: [..item.Values.Where(x => x.role is not null).Select(x => x.role.Name!).Distinct()],
-            ReadWriteEntities: [..item.Values.Where(x => x.userClaim?.ClaimType == AccessScope.FullAccess)
-                .Select(x => x.userClaim.ClaimValue!).Distinct()],
-            RestrictedReadWriteEntities: [..item.Values.Where(x => x.userClaim?.ClaimType == AccessScope.RestrictedAccess)
-                .Select(x => x.userClaim.ClaimValue!).Distinct()],
-            ReadonlyEntities: [..item.Values.Where(x => x.userClaim?.ClaimType == AccessScope.FullRead)
-                .Select(x => x.userClaim.ClaimValue!).Distinct()],
-            RestrictedReadonlyEntities: [..item.Values.Where(x => x.userClaim?.ClaimType == AccessScope.RestrictedRead)
-                .Select(x => x.userClaim.ClaimValue!).Distinct()]
+            ReadWriteEntities:
+            [
+                ..item.Values.Where(x => x.userClaim?.ClaimType == AccessScope.FullAccess)
+                    .Select(x => x.userClaim.ClaimValue!).Distinct()
+            ],
+            RestrictedReadWriteEntities:
+            [
+                ..item.Values.Where(x => x.userClaim?.ClaimType == AccessScope.RestrictedAccess)
+                    .Select(x => x.userClaim.ClaimValue!).Distinct()
+            ],
+            ReadonlyEntities:
+            [
+                ..item.Values.Where(x => x.userClaim?.ClaimType == AccessScope.FullRead)
+                    .Select(x => x.userClaim.ClaimValue!).Distinct()
+            ],
+            RestrictedReadonlyEntities:
+            [
+                ..item.Values.Where(x => x.userClaim?.ClaimType == AccessScope.RestrictedRead)
+                    .Select(x => x.userClaim.ClaimValue!).Distinct()
+            ],
+            AllowedMenus: []
         );
     }
 
@@ -82,7 +95,12 @@ public class AccountService<TUser, TRole,TCtx>(
         (
             Email : x.Key.Email!,
             Id : x.Key.Id,
-            Roles : [..x.Roles.Where(val=>val?.role is not null).Select(val => val.role.Name!).Distinct()]
+            Roles : [..x.Roles.Where(val=>val?.role is not null).Select(val => val.role.Name!).Distinct()],
+            AllowedMenus:[],
+            ReadonlyEntities:[],
+            ReadWriteEntities:[],
+            RestrictedReadonlyEntities:[],
+            RestrictedReadWriteEntities:[]
         ))];
     }
 

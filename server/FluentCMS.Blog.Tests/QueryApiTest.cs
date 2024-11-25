@@ -60,8 +60,8 @@ public class QueryApiTest
         var query = GetPostQuery();
         (await _schemaApiClient.SaveSchema(query)).AssertSuccess();
         var ids = Enumerable.Range(1, 5).ToArray().Select(x => x as object).ToArray();
-        Assert.Equal(QueryPageSize, (await _queryApiClient.GetMany(query.Name, ids)).AssertSuccess().Length);
-
+        var res = (await _queryApiClient.GetMany(query.Name,"id", ids)).AssertSuccess();
+        Assert.Equal(ids.Length, res.Length);
     }
 
     async Task PrepareSimpleData()
@@ -102,7 +102,6 @@ public class QueryApiTest
         var query = new Query(
             Name: Post + suffix,
             EntityName: Post,
-            PageSize: QueryPageSize,
             Source: $$"""
                           { 
                             id, {{Post}},
@@ -112,9 +111,11 @@ public class QueryApiTest
                           """,
             Sorts: [new Sort("id", SortOrder.Desc)],
             Filters: [
-                new Filter("id", "and", [new Constraint(Matches.In, "qs.id")], true)
-            ]
+                new Filter("id", "and", [new Constraint(Matches.In,["$id"] )])
+            ],
+            ReqVariables:[]
         );
+        
         return new Schema
         (
             Name: query.Name,

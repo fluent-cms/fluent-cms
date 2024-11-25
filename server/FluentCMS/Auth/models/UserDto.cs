@@ -3,14 +3,14 @@ using System.Collections.Immutable;
 namespace FluentCMS.Auth.models;
 
 public sealed record UserDto(
+    string Id ,
     string Email ,
-    ImmutableArray<string> Roles = default,
-    ImmutableArray<string> ReadWriteEntities = default,
-    ImmutableArray<string> RestrictedReadWriteEntities = default,
-    ImmutableArray<string> ReadonlyEntities =default ,
-    ImmutableArray<string> RestrictedReadonlyEntities =default,
-    ImmutableArray<string> AllowedMenus =default,
-    string Id = ""
+    ImmutableArray<string> Roles ,
+    ImmutableArray<string> ReadWriteEntities ,
+    ImmutableArray<string> RestrictedReadWriteEntities ,
+    ImmutableArray<string> ReadonlyEntities ,
+    ImmutableArray<string> RestrictedReadonlyEntities ,
+    ImmutableArray<string> AllowedMenus 
 );
 
 

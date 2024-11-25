@@ -27,6 +27,7 @@ where TUser :IdentityUser, new()
             : [];
         return new UserDto
         (
+            Id: "",
             Email : claims.FindFirstValue(ClaimTypes.Email) ?? "",
             Roles : roles,
             ReadWriteEntities : [..claims.FindAll(AccessScope.FullAccess).Select(x=>x.Value)],
