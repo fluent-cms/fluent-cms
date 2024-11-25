@@ -106,4 +106,10 @@ public class SchemasController(
         CancellationToken token
     ) =>
         Ok(await entitySchemaService.AddOrUpdateByName(dto, token));
+
+    [HttpGet("query/create")]
+    public ActionResult RedirectToCreateQuery()
+    {
+        return Redirect(querySchemaService.CreateQueryUrl());
+    }
 }

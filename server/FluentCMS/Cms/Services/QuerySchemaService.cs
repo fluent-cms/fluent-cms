@@ -61,6 +61,20 @@ public sealed class QuerySchemaService(
         return NotNull(query).ValOrThrow($"can not find query [{name}]");
     }
 
+    public string CreateQueryUrl()
+    {
+        return NotNull(graphqlModule).ValOrThrow("query module is not enabled").Path;
+    }
+    
+    public async Task Delete(Schema schema, CancellationToken token)
+    {
+        await schemaSvc.Delete(schema.Id, token);
+        if (schema.Settings.Query is not null)
+        {
+            queryCache.Remove(schema.Settings.Query.Name);
+        }
+    }
+
     private async Task<LoadedQuery> GetByName(string name, CancellationToken token)
     {
         StrNotEmpty(name).ValOrThrow("query name should not be empty");
@@ -72,15 +86,6 @@ public sealed class QuerySchemaService(
         var selection = Ok(await SelectionSetToNode("", entity, fields, token));
         var sorts = Ok(await query.Sorts.ToValidSorts(entity, entitySchemaSvc));
         return query.ToLoadedQuery(entity, selection, sorts);
-    }
-
-    public async Task Delete(Schema schema, CancellationToken token)
-    {
-        await schemaSvc.Delete(schema.Id, token);
-        if (schema.Settings.Query is not null)
-        {
-            queryCache.Remove(schema.Settings.Query.Name);
-        }
     }
 
     private async Task VerifyQuery(Query? query, CancellationToken token = default) 

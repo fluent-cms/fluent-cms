@@ -9,7 +9,7 @@ public sealed class GraphQuery : ObjectGraphType
 {
     public GraphQuery(IEntitySchemaService entitySchemaService, IQueryService queryService)
     {
-        if (!entitySchemaService.GetCachedSchema(SchemaType.Entity,out var entities))
+        if (!entitySchemaService.TryGetCachedSchema(out var entities))
         {
             return;
         }
@@ -19,7 +19,7 @@ public sealed class GraphQuery : ObjectGraphType
         foreach (var entity in entities)
         {
             var t = FieldTypes.PlainType(entity);
-            dict[entity!.Name] = new GraphInfo(entity, t, new ListGraphType(t));
+            dict[entity.Name] = new GraphInfo(entity, t, new ListGraphType(t));
         }
         
         foreach (var entity in entities)
@@ -29,7 +29,7 @@ public sealed class GraphQuery : ObjectGraphType
 
         foreach (var entity in entities)
         {
-            var graphInfo = dict[entity!.Name];
+            var graphInfo = dict[entity.Name];
             var limitArg = new QueryArgument<IntGraphType>{Name = PaginationConstants.LimitKey};
             AddField(new FieldType
             {

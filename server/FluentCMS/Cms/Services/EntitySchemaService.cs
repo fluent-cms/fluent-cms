@@ -25,9 +25,9 @@ public sealed class EntitySchemaService(
         entityCache.Replace("", [..entities]);
     }
 
-    public bool GetCachedSchema(string type, out ImmutableArray<Entity> entities)
+    public bool TryGetCachedSchema(out ImmutableArray<Entity> entities)
     {
-        return entityCache.TryGetValue(type, out entities);
+        return entityCache.TryGetValue("", out entities);
     }
 
     public bool ResolveVal(Attribute attr, string v, out object? result) =>
