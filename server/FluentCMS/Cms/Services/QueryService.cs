@@ -11,46 +11,37 @@ using static InvalidParamExceptionFactory;
 
 public sealed class QueryService(
     KateQueryExecutor executor,
-    IQuerySchemaService querySchemaService,
+    IQuerySchemaService schemaSvc,
     IEntitySchemaService resolver,
     IServiceProvider provider,
     HookRegistry hook
 ) : IQueryService
 {
     public async Task<Record[]> ListWithAction(GraphQlRequestDto dto)
-    {
-        return await ListWithAction(await FromGraphQlRequest(dto, dto.Args), new Span(), new Pagination(), dto.Args);
-    }
+        => await ListWithAction(await FromGraphQlRequest(dto, dto.Args), new Span(),  dto.Args);
 
-    public async Task<Record[]> ListWithAction(string name, Span span, Pagination pagination, StrArgs args,
-        CancellationToken token)
-    {
-        return await ListWithAction(await FromSavedQuery(name, args, token), span, pagination, args, token);
-    }
+    public async Task<Record[]> ListWithAction(string name, Span span, Pagination pagination, StrArgs args, CancellationToken token)
+        => await ListWithAction(await FromSavedQuery(name,pagination, !span.IsEmpty(),args,token), span, args, token);
 
     public async Task<Record?> OneWithAction(GraphQlRequestDto dto)
-    {
-        return await OneWithAction(await FromGraphQlRequest(dto,dto.Args), dto.Args);
-    }
+        => await OneWithAction(await FromGraphQlRequest(dto,dto.Args), dto.Args);
 
     public async Task<Record?> OneWithAction(string name, StrArgs args, CancellationToken token)
-    {
-        return await OneWithAction(await FromSavedQuery(name, args, token),args,token);
-    }
+        => await OneWithAction(await FromSavedQuery(name, null, false,args, token),args,token);
 
     public async Task<Record[]> ManyWithAction(string name, StrArgs args, CancellationToken token)
     {
-        var (query, filters) = await FromSavedQuery(name, args, token);
-        var validPagination = new Pagination().ToValid(query.Entity.DefaultPageSize);
+        var (query, filters,sorts,_) = await FromSavedQuery(name,null,false, args, token);
+        var validPagination = new ValidPagination(0, query.Entity.DefaultPageSize);
 
         var res = await hook.QueryPreGetMany.Trigger(provider,
-            new QueryPreGetManyArgs(name, query.EntityName, filters, validPagination));
+            new QueryPreGetManyArgs(name, query.EntityName, [..filters], validPagination));
         if (res.OutRecords is not null)
         {
             return res.OutRecords;
         }
 
-        var kateQuery = query.Entity.ListQuery(res.Filters, query.Sorts, validPagination, null,
+        var kateQuery = query.Entity.ListQuery(filters, sorts, validPagination, null,
             query.Selection.GetLocalAttrs());
         var items = await executor.Many(kateQuery, token);
         await AttachRelated(query.Selection, args, items, token);
@@ -66,19 +57,19 @@ public sealed class QueryService(
             throw new InvalidParamException("cursor is empty, can not partially execute query");
         }
 
-        var query = await querySchemaService.ByNameAndCache(name, token);
+        var query = await schemaSvc.ByNameAndCache(name, token);
         var attribute = NotNull(query.Selection.RecursiveFind(attr)).ValOrThrow("not find attribute");
         var cross = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable of {attribute.Field})");
 
-        var pagination = new Pagination(0, limit).ToValid(cross.TargetEntity.DefaultPageSize);
+        var pagination = new ValidPagination(0, limit);
 
         var validSpan = Ok(span.ToValid([], resolver));
         var fields = attribute.Selection.GetLocalAttrs();
-        
-        var filters = Ok(await attribute.Filters.ToValid(cross.TargetEntity, args, resolver, resolver));
-        var sorts = Ok(await attribute.Sorts.ToValidSorts(cross.TargetEntity, resolver));
 
-        var kateQuery = cross.GetRelatedItems(fields, filters, [..sorts], validSpan, pagination.PlusLimitOne(),
+        var filters = Ok( FilterHelper.ReplaceVariables(attribute.Filters,args, resolver));
+        var sorts = Ok(await SortHelper.ReplaceVariables(attribute.Sorts, args, cross.TargetEntity, resolver)); 
+        
+        var kateQuery = cross.GetRelatedItems(fields, filters, sorts, validSpan, pagination.PlusLimitOne(),
             [validSpan.SourceId()]);
         var records = await executor.Many(kateQuery, token);
 
@@ -91,36 +82,23 @@ public sealed class QueryService(
         return records;
     }
     
-    private async Task<Record[]> ListWithAction(QueryContext ctx, Span span, Pagination pagination, StrArgs args,
-        CancellationToken token = default)
+    private async Task<Record[]> ListWithAction(QueryContext ctx, Span span, StrArgs args,CancellationToken token = default)
     {
-        var (query, filters) = ctx;
+        var (query, filters,sorts,pagination) = ctx;
         var validSpan = Ok(span.ToValid(query.Entity.Attributes, resolver));
 
-        if (pagination.IsEmpty() && query.Pagination is not null)
-        {
-            pagination = query.Pagination;
-        }
-        
-        if (!span.IsEmpty())
-        {
-            pagination = pagination with { Offset = 0 };
-        }
-        
-        var validPagination = pagination.ToValid(query.Entity.DefaultPageSize);
-
-        var hookParam = new QueryPreGetListArgs(query.Name, query.EntityName, filters, query.Sorts, validSpan,
-            validPagination.PlusLimitOne());
+        var hookParam = new QueryPreGetListArgs(query.Name, query.EntityName, [..filters], query.Sorts, validSpan,
+            pagination.PlusLimitOne());
         var res = await hook.QueryPreGetList.Trigger(provider, hookParam);
         if (res.OutRecords is not null)
         {
-            return span.ToPage(res.OutRecords, validPagination.Limit);
+            return span.ToPage(res.OutRecords, pagination.Limit);
         }
 
-        var kateQuery = query.Entity.ListQuery(filters, query.Sorts, validPagination.PlusLimitOne(), validSpan,
+        var kateQuery = query.Entity.ListQuery(filters, sorts, pagination.PlusLimitOne(), validSpan,
             query.Selection.GetLocalAttrs());
         var items = await executor.Many(kateQuery, token);
-        items = span.ToPage(items, validPagination.Limit);
+        items = span.ToPage(items, pagination.Limit);
         if (items.Length <= 0) return items;
         await AttachRelated(query.Selection, args, items, token);
 
@@ -131,15 +109,15 @@ public sealed class QueryService(
 
     private async Task<Record?> OneWithAction(QueryContext ctx, StrArgs args, CancellationToken token = default)
     {
-        var (query, filters) = ctx;
+        var (query, filters,sorts,_) = ctx;
         var res = await hook.QueryPreGetOne.Trigger(provider,
-            new QueryPreGetOneArgs(ctx.Query.Name, query.EntityName, filters));
+            new QueryPreGetOneArgs(ctx.Query.Name, query.EntityName, [..filters]));
         if (res.OutRecord is not null)
         {
             return res.OutRecord;
         }
 
-        var kateQuery = Ok(query.Entity.OneQuery(res.Filters, query.Sorts, query.Selection.GetLocalAttrs()));
+        var kateQuery = Ok(query.Entity.OneQuery(filters, sorts, query.Selection.GetLocalAttrs()));
         var item = await executor.One(kateQuery, token);
         if (item is null) return item;
         await AttachRelated(query.Selection, args, [item], token);
@@ -163,25 +141,25 @@ public sealed class QueryService(
         }
     }
 
-    private async Task AttachCrosstable(GraphAttribute attr, StrArgs strArgs, Record[] items, CancellationToken token)
+    private async Task AttachCrosstable(GraphAttribute attr, StrArgs args, Record[] items, CancellationToken token)
     {
         var cross = NotNull(attr.Crosstable).ValOrThrow($"not find crosstable of {attr.AddTableModifier()}");
+        var target = cross.TargetEntity;
         //no need to attach, ignore
         var ids = cross.SourceEntity.PrimaryKeyAttribute.GetUniq(items);
         if (ids.Length == 0) return;
 
         var fields = attr.Selection.GetLocalAttrs();
-        var filters = Ok(await attr.Filters.ToValid(cross.TargetEntity, strArgs, resolver, resolver));
-        var sorts = Ok(await attr.Sorts.ToValidSorts(attr.Crosstable!.TargetEntity, resolver));
+        var filters = Ok( FilterHelper.ReplaceVariables(attr.Filters,args, resolver));
+        var sorts = Ok(await SortHelper.ReplaceVariables(attr.Sorts,args,target, resolver));
 
-        
-        var pagination = PaginationHelper.ResolvePagination(attr, strArgs)?? attr.Pagination;
-        if (pagination.IsEmpty())
+        var fly = PaginationHelper.ResolvePagination(attr, args) ?? attr.Pagination;
+        if (fly.IsEmpty())
         {
             //get all items and no pagination
             var query = cross.GetRelatedItems(fields, filters, [..sorts], null, null, ids);
             var targetRecords = await executor.Many(query, token);
-            await AttachRelated(attr.Selection, strArgs, targetRecords, token);
+            await AttachRelated(attr.Selection, args, targetRecords, token);
             var targetItemGroups = targetRecords.GroupBy(x => x[cross.SourceAttribute.Field], x => x);
             foreach (var targetGroup in targetItemGroups)
             {
@@ -194,16 +172,16 @@ public sealed class QueryService(
         }
         else
         {
-            var validPagination = pagination.ToValid(attr.Crosstable.TargetEntity.DefaultPageSize);
+            var pagination = PaginationHelper.ToValid(fly, attr.Pagination, target.DefaultPageSize, false, args);
             foreach (var id in ids)
             {
-                var query = cross.GetRelatedItems(fields, filters, [..sorts], null, validPagination.PlusLimitOne(), [id]);
+                var query = cross.GetRelatedItems(fields, filters, [..sorts], null, pagination.PlusLimitOne(), [id]);
                 var targetRecords = await executor.Many(query, token);
 
-                targetRecords = new Span().ToPage(targetRecords, validPagination.Limit);
+                targetRecords = new Span().ToPage(targetRecords, pagination.Limit);
                 if (targetRecords.Length > 0)
                 {
-                    await AttachRelated(attr.Selection, strArgs, targetRecords,
+                    await AttachRelated(attr.Selection, args, targetRecords,
                         token);
                 }
 
@@ -246,20 +224,27 @@ public sealed class QueryService(
         }
     }
 
-    private record QueryContext(LoadedQuery Query, ImmutableArray<ValidFilter> Filters);
+    private record QueryContext(LoadedQuery Query, ValidFilter[] Filters, ValidSort[] Sorts, ValidPagination Pagination);
 
-    private async Task<QueryContext> FromSavedQuery(string name, StrArgs strArgs, CancellationToken token)
+    private async Task<QueryContext> FromSavedQuery(
+        string name, Pagination? pagination,  bool haveCursor, StrArgs args, CancellationToken token =default)
     {
-        var query = await querySchemaService.ByNameAndCache(name, token);
-        CheckResult(query.VerifyVariable(strArgs));
-        var filters = Ok(await query.Filters.ToValid(query.Entity, strArgs, resolver, resolver));
-        return new QueryContext(query, [..filters]);
+        var query = await schemaSvc.ByNameAndCache(name, token);
+        Ok(query.VerifyVariable(args));
+        return await GetQueryContext(query, pagination,haveCursor,args);
     }
 
     private async Task<QueryContext> FromGraphQlRequest(GraphQlRequestDto dto, StrArgs args)
     {
-         var loadedQuery = await querySchemaService.ByGraphQlRequest(dto);
-         var filters = Ok(await loadedQuery.Filters.ToValid(loadedQuery.Entity, args, resolver, resolver));
-         return new QueryContext(loadedQuery, [..filters]);
+         var loadedQuery = await schemaSvc.ByGraphQlRequest(dto);
+         return await GetQueryContext(loadedQuery, null,false,args);
+    }
+
+    private async Task<QueryContext> GetQueryContext(LoadedQuery query, Pagination? fly, bool haveCursor, StrArgs args)
+    {
+        var validPagination = PaginationHelper.ToValid(fly, query.Pagination, query.Entity.DefaultPageSize, haveCursor,args);
+        var sort =Ok(await SortHelper.ReplaceVariables(query.Sorts,args, query.Entity, resolver));
+        var filters = Ok(FilterHelper.ReplaceVariables(query.Filters,args, resolver));
+        return new QueryContext(query, filters, sort,validPagination);
     }
 }

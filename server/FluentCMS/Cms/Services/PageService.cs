@@ -47,7 +47,7 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
         Record[] items;
         if (!string.IsNullOrWhiteSpace(part.DataSource.Query))
         {
-            var pagination = new Pagination(0, part.DataSource.Limit);
+            var pagination = new Pagination(null, part.DataSource.Limit.ToString());
             items = await querySvc.ListWithAction(part.DataSource.Query, cursor, pagination, args, token);
         }
         else
@@ -73,7 +73,7 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
     private async Task<string> RenderPage(PageContext ctx, Record data, StrArgs args, CancellationToken token)
     {
         await LoadRelatedData(data, args, ctx.Nodes, token);
-        CheckResult(TagPagination(ctx, data,args));
+        Ok(TagPagination(ctx, data,args));
 
         foreach (var repeatNode in ctx.Nodes)
         {
@@ -101,7 +101,7 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
     {
         foreach (var repeatNode in nodes.Where(x => !string.IsNullOrWhiteSpace(x.DataSource.Query)))
         {
-            var pagination = new Pagination(repeatNode.DataSource.Offset, repeatNode.DataSource.Limit);
+            var pagination = new Pagination(repeatNode.DataSource.Offset.ToString(), repeatNode.DataSource.Limit.ToString());
             var qs = QueryHelpers.ParseQuery(repeatNode.DataSource.QueryString);
             var result = await querySvc.ListWithAction(repeatNode.DataSource.Query, new Span(), pagination, strArgs.MergeByOverwriting(qs), token);
             data[repeatNode.DataSource.Field] = result;

@@ -23,7 +23,7 @@ public sealed record LoadedQuery(
     LoadedEntity Entity,
     Pagination? Pagination,
     ImmutableArray<GraphAttribute> Selection ,
-    ImmutableArray<Filter> Filters, // filter need to resolve according to user input
+    ImmutableArray<ValidFilter> Filters, 
     ImmutableArray<ValidSort> Sorts,
     ImmutableArray<string> ReqVariables
 );
@@ -34,7 +34,12 @@ public static class QueryConstants
 }
 
 public static class QueryHelper{
-    public static LoadedQuery ToLoadedQuery(this Query query, LoadedEntity entity, IEnumerable<GraphAttribute> selection, IEnumerable<ValidSort> sorts)
+    public static LoadedQuery ToLoadedQuery(this Query query, 
+        LoadedEntity entity, 
+        IEnumerable<GraphAttribute> selection, 
+        IEnumerable<ValidSort> sorts,
+        IEnumerable<ValidFilter> filters
+        )
     {
         return new LoadedQuery(
             Name:query.Name,
@@ -42,10 +47,10 @@ public static class QueryHelper{
             EntityName:query.EntityName,
             Pagination:query.Pagination,
             ReqVariables:query.ReqVariables,
+            Entity:entity,
             Selection:[..selection],
             Sorts:[..sorts],
-            Filters:query.Filters,
-            Entity:entity
+            Filters:[..filters]
         );
     }
 
@@ -94,15 +99,15 @@ public static Result<(Sort[], Filter[], Pagination)> ParseArguments(IDataProvide
     {
         var sorts = new List<Sort>();
         var filters = new List<Filter>();
-        var limit = 0;
-        var offset = 0;
+        string? limit = null;
+        string? offset = null;
         foreach (var input in args)
         {
             var name = input.Name();
             var res = name switch
             {
-                PaginationConstants.OffsetKey => IntValue(input).BindAction(v => offset = v),
-                PaginationConstants.LimitKey => IntValue(input).BindAction(v => limit = v),
+                PaginationConstants.OffsetKey => Val(input).BindAction(v => offset = v),
+                PaginationConstants.LimitKey => Val(input).BindAction(v => limit = v),
                 SortConstant.SortKey => SortHelper.ParseSorts(input).BindAction(s => sorts.AddRange(s)),
                 _ => FilterHelper.ParseFilter(input).BindAction(f => filters.Add(f)),
             };
@@ -114,9 +119,9 @@ public static Result<(Sort[], Filter[], Pagination)> ParseArguments(IDataProvide
 
         return (sorts.ToArray(), filters.ToArray(), new Pagination(offset, limit));
 
-        Result<int> IntValue(IDataProvider input) => input.TryGetVal(out var val) && val is IntValue intVal
-            ? intVal.Value
-            : Result.Fail($"Fail to parse int of {input.Name()}");
+        Result<string> Val(IDataProvider input) => input.TryGetVal(out var val) && !string.IsNullOrWhiteSpace(val) 
+            ? val
+            : Result.Fail($"Fail to parse value of {input.Name()}");
     }
     
 }

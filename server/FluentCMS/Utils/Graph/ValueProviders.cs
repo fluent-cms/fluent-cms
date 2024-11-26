@@ -20,17 +20,9 @@ public record GraphQlArgumentDataProvider(GraphQLArgument Argument) : IDataProvi
         return array.Length > 0;
     }
 
-    public bool TryGetVal(out ScalarValue? value)
+    public bool TryGetVal(out string? value)
     {
-        value = Argument.Value switch
-        {
-            GraphQLBooleanValue boolValue => new BooleanValue(boolValue.BoolValue),
-            GraphQLStringValue stringValue => new StringValue(stringValue.Value.ToString()),
-            GraphQLEnumValue enumValue => new StringValue(enumValue.Name.StringValue),
-            GraphQLIntValue intValue => new IntValue(int.Parse(intValue.Value)),
-            _=> null
-        };
-        return value is not null;
+        return Argument.Value.ToPrimitiveString(out value);
     }
 
     public bool TryGetPairs(out StrPair[] pairs)

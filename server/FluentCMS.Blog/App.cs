@@ -33,8 +33,8 @@ public static class App
       }
       await Migrate(app);
       await app.UseCmsAsync();
-      InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [RoleConstants.Sa]));
-      InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("admin@cms.com", "Admin1!", [RoleConstants.Admin]));
+      InvalidParamExceptionFactory.Ok(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [RoleConstants.Sa]));
+      InvalidParamExceptionFactory.Ok(await app.EnsureCmsUser("admin@cms.com", "Admin1!", [RoleConstants.Admin]));
       await app.RunAsync();
       
    }

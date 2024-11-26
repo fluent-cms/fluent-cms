@@ -163,7 +163,7 @@ public static class KateQueryExt
     }
 
     
-    public static void ApplyCursor(this SqlKata.Query? query,  ValidSpan? cursor,ImmutableArray<ValidSort> sorts)
+    public static void ApplyCursor(this SqlKata.Query? query,  ValidSpan? cursor,ValidSort[] sorts)
     {
         
         if (query is null || cursor?.EdgeItem is null)

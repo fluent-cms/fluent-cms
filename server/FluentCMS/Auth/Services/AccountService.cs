@@ -154,11 +154,11 @@ public class AccountService<TUser, TRole,TCtx>(
         True(accessor.HttpContext.HasRole(RoleConstants.Sa)).ThrowNotTrue("Only supper admin have permission");
         var user = await MustFindUser(dto.Id);
         var claims = await userManager.GetClaimsAsync(user);
-        CheckResult(await AssignRole(user, dto.Roles));
-        CheckResult(await AssignClaim(user, claims, AccessScope.FullAccess, dto.ReadWriteEntities));
-        CheckResult(await AssignClaim(user, claims, AccessScope.RestrictedAccess, dto.RestrictedReadWriteEntities));
-        CheckResult(await AssignClaim(user, claims, AccessScope.FullRead, dto.ReadonlyEntities));
-        CheckResult(await AssignClaim(user, claims, AccessScope.RestrictedRead, dto.RestrictedReadonlyEntities));
+        Ok(await AssignRole(user, dto.Roles));
+        Ok(await AssignClaim(user, claims, AccessScope.FullAccess, dto.ReadWriteEntities));
+        Ok(await AssignClaim(user, claims, AccessScope.RestrictedAccess, dto.RestrictedReadWriteEntities));
+        Ok(await AssignClaim(user, claims, AccessScope.FullRead, dto.ReadonlyEntities));
+        Ok(await AssignClaim(user, claims, AccessScope.RestrictedRead, dto.RestrictedReadonlyEntities));
     }
 
     private async Task<TUser> MustFindUser(string id)
@@ -267,13 +267,13 @@ public class AccountService<TUser, TRole,TCtx>(
         {
             throw new InvalidParamException("Role name can not be null");
         }
-        CheckResult(await EnsureRoles([roleDto.Name]));
+        Ok(await EnsureRoles([roleDto.Name]));
         var role = await roleManager.FindByNameAsync(roleDto.Name);
         var claims =await roleManager.GetClaimsAsync(role!);
-        CheckResult(await AddClaimsToRole(role!, claims, AccessScope.FullAccess, roleDto.ReadWriteEntities));
-        CheckResult(await AddClaimsToRole(role!, claims, AccessScope.RestrictedAccess, roleDto.RestrictedReadWriteEntities));
-        CheckResult(await AddClaimsToRole(role!, claims, AccessScope.FullRead, roleDto.ReadonlyEntities));
-        CheckResult(await AddClaimsToRole(role!, claims, AccessScope.RestrictedRead, roleDto.RestrictedReadonlyEntities));
+        Ok(await AddClaimsToRole(role!, claims, AccessScope.FullAccess, roleDto.ReadWriteEntities));
+        Ok(await AddClaimsToRole(role!, claims, AccessScope.RestrictedAccess, roleDto.RestrictedReadWriteEntities));
+        Ok(await AddClaimsToRole(role!, claims, AccessScope.FullRead, roleDto.ReadonlyEntities));
+        Ok(await AddClaimsToRole(role!, claims, AccessScope.RestrictedRead, roleDto.RestrictedReadonlyEntities));
     }
 
     private async Task<Result> AddClaimsToRole(TRole role,  IList<Claim> claims, string type, IEnumerable<string> list )

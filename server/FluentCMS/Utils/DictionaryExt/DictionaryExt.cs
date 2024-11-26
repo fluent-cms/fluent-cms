@@ -1,4 +1,5 @@
 using System.Text;
+using Microsoft.Extensions.Primitives;
 
 namespace FluentCMS.Utils.DictionaryExt;
 
@@ -27,25 +28,14 @@ public static class DictionaryExt
         return queryString.ToString();
         
     } 
-    public static bool GetStrings(this StrArgs? args, string key, out string[] strings)
-    {
-        strings = [];
-        if (args is null || !args.TryGetValue(key, out var vals))
-        {
-            return false;
-        }
 
-        strings = vals.Where(s => s is not null).Select(s => s!).ToArray();
-        return true;
-    }
-
-    public static bool TryGetInt(this StrArgs dictionary, string key, out int intValue)
+    public static StringValues GetVariableStr(this StrArgs dictionary, string? key, string variablePrefix)
     {
-        intValue = 0;
-        if (!dictionary.TryGetValue(key, out var value) || !int.TryParse(value.ToString(), out var result))
-            return false;
-        intValue = result;
-        return true;
+        if (key is null) return StringValues.Empty;
+        if (!key.StartsWith(variablePrefix)) return key;
+        return dictionary.TryGetValue(key[variablePrefix.Length..], out var val) 
+            ? val
+            : StringValues.Empty;
     }
 
     public static Dictionary<Tk, Tv> MergeByOverwriting<Tk, Tv>(this Dictionary<Tk, Tv> a, Dictionary<Tk, Tv> b)

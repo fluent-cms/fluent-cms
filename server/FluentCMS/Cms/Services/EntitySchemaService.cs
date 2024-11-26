@@ -117,10 +117,10 @@ public sealed class EntitySchemaService(
 
     public async Task<Schema> SaveTableDefine(Schema dto, CancellationToken token = default)
     {
-        CheckResult(await schemaSvc.NameNotTakenByOther(dto, token));
+        Ok(await schemaSvc.NameNotTakenByOther(dto, token));
         var entity = NotNull(dto.Settings.Entity).ValOrThrow("invalid payload").WithDefaultAttr();
         var cols = await executor.GetColumnDefinitions(entity.TableName, token);
-        CheckResult(EnsureTableNotExist());
+        Ok(EnsureTableNotExist());
         await VerifyEntity(entity, token);
         await SaveSchema(); //need  to save first because it will call trigger
         await CreateCrosstables();

@@ -119,7 +119,7 @@ public static class CrosstableHelper
         this Crosstable c,
         IEnumerable<LoadedAttribute> selectAttributes,
         IEnumerable<ValidFilter> filters,
-        ImmutableArray<ValidSort> sorts,
+        ValidSort[] sorts,
         ValidSpan? span,
         ValidPagination? pagination,
         IEnumerable<object> sourceIds)

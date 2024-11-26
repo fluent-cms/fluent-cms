@@ -32,11 +32,7 @@ public sealed class QuerySchemaService(
         }
 
         var query = dto.Query;
-        var entity = Ok(await entitySchemaSvc.GetLoadedEntity(query.EntityName));
-        var selection = Ok(await SelectionSetToNode("", entity, dto.Fields));
-        var validSorts = Ok(await query.Sorts.ToValidSorts(entity, entitySchemaSvc));
-        var loadedQuery = dto.Query.ToLoadedQuery(entity, selection, validSorts);
-
+        var loadedQuery = await ToLoadedQuery(query, dto.Fields);
         if (string.IsNullOrWhiteSpace(query.Name)) return loadedQuery;
         
         if (graphqlModule is not null)
@@ -81,11 +77,16 @@ public sealed class QuerySchemaService(
         var item = NotNull(await schemaSvc.GetByNameDefault(name, SchemaType.Query, token))
             .ValOrThrow($"can not find query by name {name}");
         var query = NotNull(item.Settings.Query).ValOrThrow("invalid view format");
-        var entity = Ok(await entitySchemaSvc.GetLoadedEntity(query.EntityName, token));
         var fields = Ok(Converter.GetRootGraphQlFields(query.Source));
+        return await ToLoadedQuery(query,fields,token);
+    }
+
+    private async Task<LoadedQuery> ToLoadedQuery(Query query, IEnumerable<GraphQLField> fields, CancellationToken token = default){
+        var entity = Ok(await entitySchemaSvc.GetLoadedEntity(query.EntityName, token));
         var selection = Ok(await SelectionSetToNode("", entity, fields, token));
-        var sorts = Ok(await query.Sorts.ToValidSorts(entity, entitySchemaSvc));
-        return query.ToLoadedQuery(entity, selection, sorts);
+        var sorts = Ok(await SortHelper.ToValidSorts(query.Sorts,entity, entitySchemaSvc));
+        var validFilter = Ok(await query.Filters.ToValid(entity, entitySchemaSvc, entitySchemaSvc));
+        return query.ToLoadedQuery(entity, selection, sorts,validFilter);
     }
 
     private async Task VerifyQuery(Query? query, CancellationToken token = default) 
@@ -96,13 +97,11 @@ public sealed class QuerySchemaService(
         }
 
         var entity = Ok(await entitySchemaSvc.GetLoadedEntity(query.EntityName, token));
-        CheckResult(await query.Filters.Verify(entity, entitySchemaSvc, entitySchemaSvc));
+        Ok(await query.Filters.ToValid(entity,entitySchemaSvc,entitySchemaSvc));
 
         var fields = Ok(Converter.GetRootGraphQlFields(query.Source));
-        var selection = Ok(await SelectionSetToNode("", entity, fields, token));
-        var sorts = Ok(await query.Sorts.ToValidSorts(entity, entitySchemaSvc));
-        //todo: subfields can not order/filter by sub-sub-fields for now
-        CheckResult(sorts.Verify(selection, true));
+        Ok(await SelectionSetToNode("", entity, fields, token));
+        Ok(await SortHelper.ToValidSorts(query.Sorts,entity, entitySchemaSvc));
     }
 
     private async Task<Result<ImmutableArray<GraphAttribute>>> SelectionSetToNode(
@@ -139,12 +138,18 @@ public sealed class QuerySchemaService(
                 var (sorts, filters, pagination) = res;
                 var target = graphAttr.Crosstable!.TargetEntity;
                 
-                if (!(await sorts.ToValidSorts(target, entitySchemaSvc)).Try(out var validSorts,out var  validErr))
+                if (!(await SortHelper.ToValidSorts(sorts,target, entitySchemaSvc)).Try(out var validSorts,out   err))
                 {
-                    return Result.Fail(validErr);
+                    return Result.Fail(err);
                 }
 
-                graphAttr = graphAttr with { Pagination = pagination, Filters = [..filters], Sorts = [..validSorts] };
+                if (!(await filters.ToValid(target, entitySchemaSvc, entitySchemaSvc)).Try(out var validFilters,
+                        out err))
+                {
+                    return Result.Fail(err);
+                }
+                
+                graphAttr = graphAttr with { Pagination = pagination, Filters = [..validFilters], Sorts = [..validSorts] };
             }
 
             attributes.Add(graphAttr);

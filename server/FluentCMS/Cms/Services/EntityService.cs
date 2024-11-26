@@ -55,7 +55,7 @@ public sealed class EntityService(
 
         var filters = Ok(await FilterHelper.Parse(entity, groupQs, entitySchemaSvc, entitySchemaSvc));
         var sorts = Ok(await SortHelper.Parse(entity, groupQs, entitySchemaSvc));
-        return await List(entity, [..filters], ImmutableArray.CreateRange(sorts), pagination, token);
+        return await List(entity, [..filters], [..sorts], pagination, token);
     }
     public async Task<Record> Insert(string name, JsonElement ele, CancellationToken token)
     {
@@ -118,11 +118,11 @@ public sealed class EntityService(
         var dictionary = args.GroupByFirstIdentifier();
         var filter = Ok(await FilterHelper.Parse(target, dictionary, entitySchemaSvc, entitySchemaSvc));
         var sorts = Ok(await SortHelper.Parse(target, dictionary, entitySchemaSvc));
-        var validPagination = pagination.ToValid(ctx.Crosstable.TargetEntity.DefaultPageSize);
+        var validPagination = PaginationHelper.ToValid(pagination,target.DefaultPageSize);
 
         var pagedListQuery = exclude
             ? ctx.Crosstable.GetNotRelatedItems(selectAttributes, filter, sorts, validPagination, [ctx.Id])
-            : ctx.Crosstable.GetRelatedItems(selectAttributes, filter, ImmutableArray.CreateRange(sorts), null, validPagination, [ctx.Id]);
+            : ctx.Crosstable.GetRelatedItems(selectAttributes, filter, [..sorts], null, validPagination, [ctx.Id]);
 
         var countQuery = exclude
             ? ctx.Crosstable.GetNotRelatedItemsCount(filter, [ctx.Id])
@@ -133,14 +133,14 @@ public sealed class EntityService(
     }
 
     private async Task<ListResult?> List(LoadedEntity entity, ImmutableArray<ValidFilter> filters,
-        ImmutableArray<ValidSort> sorts, Pagination pagination, CancellationToken token)
+        ValidSort[] sorts, Pagination pagination, CancellationToken token)
     {
-
+        var validPagination = PaginationHelper.ToValid(pagination, entity.DefaultPageSize);
         var res = await hookRegistry.EntityPreGetList.Trigger(provider,
-            new EntityPreGetListArgs(entity.Name, entity, filters, sorts, pagination.ToValid(entity.DefaultPageSize)));
+            new EntityPreGetListArgs(entity.Name, entity, filters, [..sorts], validPagination));
         var attributes = entity.Attributes.GetLocalAttrs(InListOrDetail.InList);
 
-        var query = entity.ListQuery(res.RefFilters, res.RefSorts, res.RefPagination, null, attributes);
+        var query = entity.ListQuery([..res.RefFilters], [..res.RefSorts], res.RefPagination, null, attributes);
 
         var records = await queryExecutor.Many(query, token);
 
@@ -197,8 +197,8 @@ public sealed class EntityService(
             throw new InvalidParamException("Can not find id ");
         }
 
-        CheckResult(entity.ValidateLocalAttributes(record));
-        CheckResult(entity.ValidateTitleAttributes(record));
+        Ok(entity.ValidateLocalAttributes(record));
+        Ok(entity.ValidateTitleAttributes(record));
 
 
         var res = await hookRegistry.EntityPreUpdate.Trigger(provider,
@@ -214,8 +214,8 @@ public sealed class EntityService(
     private async Task<Record> Insert(RecordContext ctx, CancellationToken token)
     {
         var (entity, record) = ctx;
-        CheckResult(entity.ValidateLocalAttributes(ctx.Record));
-        CheckResult(ctx.Entity.ValidateTitleAttributes(ctx.Record));
+        Ok(entity.ValidateLocalAttributes(ctx.Record));
+        Ok(ctx.Entity.ValidateTitleAttributes(ctx.Record));
 
         var res = await hookRegistry.EntityPreAdd.Trigger(provider,
             new EntityPreAddArgs(entity.Name, record));

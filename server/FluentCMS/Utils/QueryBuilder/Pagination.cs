@@ -3,8 +3,9 @@ using Microsoft.Extensions.Primitives;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
-// Offset, Limit have to bu nullable so they can be resolved from controller
-public sealed record Pagination(int? Offset = null, int? Limit = null);
+// Offset, Limit have to be nullable so they can be resolved from controller
+// set it to sting to support graphQL variable
+public sealed record Pagination(string? Offset = default, string? Limit = default);
 
 public sealed record ValidPagination(int Offset, int Limit);
 
@@ -21,16 +22,38 @@ public static class PaginationHelper
 {
     public static bool IsEmpty(this Pagination? pagination)
     {
-        return pagination == null || 
-               pagination.Offset is null or 0 && pagination.Limit is null or 0;
+        return string.IsNullOrEmpty(pagination?.Offset) && string.IsNullOrEmpty(pagination?.Limit);
     }
 
-    public static ValidPagination ToValid(this Pagination? pagination, int defaultPageSize)
+    private static Pagination ReplaceVariable(this Pagination pagination, StrArgs args)
     {
-        var offset = pagination?.Offset ?? 0;
-        var limit = pagination?.Limit is null || pagination.Limit.Value == 0 || pagination.Limit.Value > defaultPageSize
-            ? defaultPageSize
-            : pagination.Limit.Value;
+        return new Pagination(
+            Offset: args.GetVariableStr(pagination.Offset, QueryConstants.VariablePrefix).ToString(),
+            Limit: args.GetVariableStr(pagination.Limit, QueryConstants.VariablePrefix).ToString());
+    }
+
+    public static ValidPagination ToValid(Pagination? fly, int defaultPageSize) =>
+        ToValid(fly, null, defaultPageSize, false, []);
+        
+    public static ValidPagination ToValid(Pagination? fly, Pagination? fallback, int defaultPageSize, bool haveCursor, StrArgs args)
+    {
+        fly ??= fallback ??= new Pagination();
+        if (fly.Offset is null)
+        {
+            fly = fly with { Offset = fallback?.Offset };
+        }
+
+        if (fly.Limit is null)
+        {
+            fly = fly with { Limit = fallback?.Limit };
+        }
+
+        fly = fly.ReplaceVariable(args);
+        
+        var offset = !haveCursor && int.TryParse(fly?.Offset, out var offsetVal) ? offsetVal : 0;
+        var limit = int.TryParse(fly?.Limit, out var limitVal) && limitVal > 0 && limitVal < defaultPageSize
+            ? limitVal
+            : defaultPageSize;
         return new ValidPagination(offset, limit);
     }
 
@@ -50,8 +73,8 @@ public static class PaginationHelper
 
         key += attribute.Field;
 
-        var offsetOk = dictionary.TryGetInt(key + PaginationConstants.OffsetSuffix, out var offset);
-        var limitOk = dictionary.TryGetInt(key + PaginationConstants.LimitSuffix, out var limit);
+        var offsetOk = dictionary.TryGetValue(key + PaginationConstants.OffsetSuffix, out var offset);
+        var limitOk = dictionary.TryGetValue(key + PaginationConstants.LimitSuffix, out var limit);
         return offsetOk || limitOk ? new Pagination(offset, limit) : null;
     }
 }

@@ -1,9 +1,6 @@
 using System.Collections.Immutable;
-using System.Globalization;
-using FluentCMS.Utils.Graph;
 using FluentCMS.Utils.ResultExt;
 using FluentResults;
-using MongoDB.Driver.Linq;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
@@ -92,35 +89,32 @@ public static class FilterHelper
         return new Filter(field, matchType, [..constraints]);
     }
 
-    public static async Task<Result> Verify(
-        this IEnumerable<Filter> filters,
-        LoadedEntity entity,
-        IEntityVectorResolver vectorResolver,
+    public static Result<ValidFilter[]> ReplaceVariables(
+        IEnumerable<ValidFilter> filters,
+        StrArgs? args,
         IAttributeValueResolver valueResolver
     )
     {
+        var ret = new List<ValidFilter>();
         foreach (var filter in filters)
         {
-            if (!(await vectorResolver.ResolveVector(entity, filter.FieldName))
-                .Try(out var vector, out var resolveErr))
+            if (!filter.Constraints.ReplaceVariables(filter.Vector.Attribute, args, valueResolver)
+                    .Try(out var constraints, out var err))
             {
-                return Result.Fail(resolveErr);
+                return Result.Fail(err);
             }
 
-            if (!filter.Constraints.Verify(vector.Attribute, valueResolver)
-                    .Try(out var verifyErr))
+            if (constraints.Length > 0)
             {
-                return Result.Fail(verifyErr);
+                ret.Add(filter with{Constraints = [..constraints]});
             }
         }
-
-        return Result.Ok();
+        return ret.ToArray();
     }
 
     public static async Task<Result<ValidFilter[]>> ToValid(
         this IEnumerable<Filter> filters,
         LoadedEntity entity,
-        StrArgs? args,
         IEntityVectorResolver vectorResolver,
         IAttributeValueResolver valueResolver
     )
@@ -134,7 +128,7 @@ public static class FilterHelper
                 return Result.Fail(resolveErr);
             }
 
-            if (!filter.Constraints.Resolve(vector.Attribute, args, valueResolver)
+            if (!filter.Constraints.ResolveValues(vector.Attribute, valueResolver)
                     .Try(out var constraints, out var constraintsErr))
             {
                 return Result.Fail(constraintsErr);
@@ -142,7 +136,7 @@ public static class FilterHelper
 
             if (constraints.Length > 0)
             {
-                ret.Add(new ValidFilter(vector, filter.MatchType, constraints));
+                ret.Add(new ValidFilter(vector, filter.MatchType, [..constraints]));
             }
         }
 

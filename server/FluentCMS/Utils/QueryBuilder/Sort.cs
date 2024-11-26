@@ -1,6 +1,8 @@
 using System.Collections.Immutable;
+using FluentCMS.Utils.DictionaryExt;
 using FluentCMS.Utils.ResultExt;
 using FluentResults;
+using Microsoft.Extensions.Primitives;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
@@ -10,9 +12,9 @@ public static class SortOrder
     public const string Desc = "Desc";
 }
 
-public record Sort(string FieldName, string Order);
+public record Sort(string Field, string Order);
 
-public sealed record ValidSort(AttributeVector Vector,string Order):Sort(Vector.FullPath, Order);
+public sealed record ValidSort(AttributeVector Vector,string Field,string Order):Sort(Field, Order);
 
 public static class SortConstant
 {
@@ -24,6 +26,12 @@ public static class SortConstant
 
 public static class SortHelper
 {
+    private static bool HasVariable(this Sort sort)
+    {
+        return sort.Field.StartsWith(QueryConstants.VariablePrefix) || sort.Order.Contains(QueryConstants.VariablePrefix); 
+    }
+    
+   
     public static Result<Sort[]> ParseSortExpr(IDataProvider provider)
     {
         if (!provider.TryGetNodes(out var nodes))
@@ -56,14 +64,75 @@ public static class SortHelper
 
         Sort ToSort(string s)
         {
+            if (s.StartsWith(QueryConstants.VariablePrefix))
+            {
+                //sort : [$field], not know order yet, keep it empty
+                return new Sort(s,"");
+            }
             //sort: [id, nameDesc]
             return s.EndsWith(SortOrder.Desc)
                 ? new Sort(s[..^SortOrder.Desc.Length], SortOrder.Desc)
                 : new Sort(s, SortOrder.Asc);
         }
     }
+    
+    public static async Task<Result<ValidSort[]>> ReplaceVariables(IEnumerable<ValidSort> sorts,StrArgs args, LoadedEntity entity, IEntityVectorResolver vectorResolver)
+    {
+        var ret = new List<ValidSort>();
+        foreach (var sort in sorts)
+        {
+            if (sort.HasVariable())
+            {
+                var current = sort;
+                if (current.Field.StartsWith(QueryConstants.VariablePrefix))
+                {
+                    var vals = args.GetVariableStr(current.Field, QueryConstants.VariablePrefix);
+                    if (vals ==StringValues.Empty) return Result.Fail($"Failed to resolve sort field {current.Field}");
+
+                    var field = vals.ToString();
+                    if(string.IsNullOrWhiteSpace(field)) return Result.Fail($"Failed to resolve sort field {current.Field}");
+                    current = (current.Order, field) switch
+                    {
+                        ("", { } f) when f.EndsWith(SortOrder.Desc) => 
+                            current with { Field = f[..^SortOrder.Desc.Length], Order = SortOrder.Desc },
+
+                        ("", { } f) => 
+                            current with { Field = f, Order = SortOrder.Asc },
+
+                        (_, { } f) => 
+                            current with { Field = f }
+                    };
+                    
+                    if (!(await vectorResolver.ResolveVector(entity, current.Field))
+                        .Try(out var vector, out var err))
+                    {
+                        return Result.Fail(err);
+                    }
+                    
+                    current = current with {Vector = vector};
+                }
+
+                if (sort.Order.StartsWith(QueryConstants.VariablePrefix))
+                {
+                    var order = args.GetVariableStr(sort.Field, QueryConstants.VariablePrefix);
+                    if (order ==StringValues.Empty )
+                    {
+                        return Result.Fail($"Failed to resolve order of {sort.Field}");
+                    }
+                    current = current with{Order = order.ToString()};
+                }
+                ret.Add(current);
+            }
+            else
+            {
+                ret.Add(sort);
+            }
+        }
+        return ret.ToArray();
+    }
+    
     public static async Task<Result<ValidSort[]>> ToValidSorts(
-        this IEnumerable<Sort> list, 
+        IEnumerable<Sort> list, 
         LoadedEntity entity,
         IEntityVectorResolver vectorResolver)
     {
@@ -76,12 +145,21 @@ public static class SortHelper
         var ret = new List<ValidSort>();
         foreach (var sort in sorts)             
         {
-            if (!(await vectorResolver.ResolveVector(entity, sort.FieldName))
-                .Try(out var attr, out var err))
+            if (sort.Field.StartsWith(QueryConstants.VariablePrefix))
             {
-                return Result.Fail(err);
+                var emptyVector = new AttributeVector("", "", [], new LoadedAttribute("", ""));
+                ret.Add(new ValidSort(emptyVector,sort.Field,sort.Order));
             }
-            ret.Add(new ValidSort(attr,sort.Order));
+            else
+            {
+                if (!(await vectorResolver.ResolveVector(entity, sort.Field))
+                    .Try(out var attr, out var err))
+                {
+                    return Result.Fail(err);
+                }
+
+                ret.Add(new ValidSort(attr, sort.Field, sort.Order));
+            }
         }
 
         return ret.ToArray();
@@ -103,7 +181,7 @@ public static class SortHelper
             }
                 
             var order = orderStr.ToString() == "1" ? SortOrder.Asc : SortOrder.Desc;
-            ret.Add(new ValidSort(vector,order));
+            ret.Add(new ValidSort(vector, fieldName,order));
         }
         return ret.ToArray();
     }
@@ -114,28 +192,5 @@ public static class SortHelper
             ..sorts.Select(sort =>
                 sort with { Order = sort.Order == SortOrder.Asc ? SortOrder.Desc : SortOrder.Asc })
         ];
-    }
-    
-    public static Result Verify(this IEnumerable<ValidSort> sorts,ImmutableArray<GraphAttribute> attributes, bool allowRecursive)
-    {
-        foreach (var sort in sorts)
-        {
-            var find = allowRecursive
-                ? attributes.RecursiveFind(sort.FieldName)
-                : attributes.FindOneAttr(sort.FieldName);
-            if (find is null)
-            {
-                return Result.Fail($"can not find sort field {sort.FieldName} in selection");
-            }
-        }
-
-        foreach (var attr in attributes)
-        {
-            if (!attr.Sorts.Verify(attr.Selection, false).Try(out var err))
-            {
-                return Result.Fail(err);
-            }
-        }
-        return Result.Ok();
     }
 }

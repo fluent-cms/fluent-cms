@@ -123,7 +123,7 @@ public static class SpanHelper
         var dict = new Dictionary<string, object>();
         foreach (var sort in sorts)
         {
-            if (item.GetValueByPath<object>(sort.FieldName, out var val)) dict[sort.FieldName] = val!;
+            if (item.GetValueByPath<object>(sort.Field, out var val)) dict[sort.Field] = val!;
         }
 
         if (sourceId is not null)

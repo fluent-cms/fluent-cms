@@ -10,39 +10,16 @@ public sealed record ValidConstraint(string Match, ImmutableArray<object> Values
 
 public static class ConstraintsHelper
 {
-    public static Result Verify(this IEnumerable<Constraint> constraints, Attribute attribute,
-        IAttributeValueResolver resolver)
-    {
-        foreach (var (_, value) in constraints)
-        {
-            if (value.Length == 0)
-            {
-                return Result.Fail($"value not set for field {attribute.Field}");
-            }
-
-            foreach (var se in value)
-            {
-                if (!se.StartsWith(QueryConstants.VariablePrefix) && !resolver.ResolveVal(attribute, se, out var _))
-                {
-                    return Result.Fail(
-                        $"Can not cast value `{value}` of `{attribute.Field}` to `{attribute.DataType}`");
-                }
-            }
-        }
-        return Result.Ok();
-    }
-
-    public static Result<ImmutableArray<ValidConstraint>> Resolve(
-        this IEnumerable<Constraint> constraints, 
-        Attribute attribute,  
-        StrArgs? args,
+    public static Result<ValidConstraint[]> ResolveValues(
+        this IEnumerable<Constraint> constraints,
+        Attribute attribute,
         IAttributeValueResolver resolver
-        )
+    )
     {
         var ret = new List<ValidConstraint>();
         foreach (var (match, fromValues) in constraints)
         {
-            if (!ResolveValues(fromValues, attribute, args,resolver).Try(out var values, out var err))
+            if (!ResolveValues(fromValues, attribute, resolver).Try(out var values, out var err))
             {
                 return Result.Fail(err);
             }
@@ -52,11 +29,71 @@ public static class ConstraintsHelper
                 ret.Add(new ValidConstraint(match, [..values]));
             }
         }
-        return ret.ToImmutableArray();
+
+        return ret.ToArray();
     }
 
-    private static Result<object[]> ResolveValues(IEnumerable<string> fromValues, Attribute attribute,
+    public static Result<ValidConstraint[]> ReplaceVariables(
+        this IEnumerable<ValidConstraint> constraints,
+        Attribute attribute,
+        StrArgs? args,
+        IAttributeValueResolver resolver
+    )
+    {
+        var ret = new List<ValidConstraint>();
+        foreach (var (match, fromValues) in constraints)
+        {
+            if (!ReplaceVariables(fromValues, attribute, args, resolver).Try(out var values, out var err))
+            {
+                return Result.Fail(err);
+            }
+
+            if (values.Length > 0)
+            {
+                ret.Add(new ValidConstraint(match, [..values]));
+            }
+        }
+
+        return ret.ToArray();
+    }
+
+    
+    private static Result<object[]> ReplaceVariables(IEnumerable<object> fromValues, Attribute attribute,
         StrArgs? args, IAttributeValueResolver resolver)
+    {
+        var list = new List<object>();
+
+        foreach (var fromValue in fromValues)
+        {
+            if (fromValue is string s && s.StartsWith(QueryConstants.VariablePrefix))
+            {
+                if (args is null)
+                {
+                    return Result.Fail($"can not resolve {fromValue} when replace filter");
+                }
+                
+                foreach (var se in args.GetVariableStr(s, QueryConstants.VariablePrefix))
+                {
+                    if (se is not null && resolver.ResolveVal(attribute, se, out var obj))
+                    {
+                        list.Add(obj!);
+                    }
+                    else
+                    {
+                        return Result.Fail($"can not cast value {se} to {attribute.DataType}");
+                    }
+                }
+            }
+            else
+            {
+                list.Add(fromValue);
+            }
+        }
+
+        return list.ToArray();
+    }
+
+    private static Result<object[]> ResolveValues(IEnumerable<string> fromValues, Attribute attribute, IAttributeValueResolver resolver)
     {
         var list = new List<object>();
 
@@ -64,25 +101,14 @@ public static class ConstraintsHelper
         {
             if (fromValue.StartsWith(QueryConstants.VariablePrefix))
             {
-                var key = fromValue[QueryConstants.VariablePrefix.Length..];
-                if (!args.GetStrings(key, out var strings)) continue;
-                foreach (var se in strings)
-                {
-                    if (!resolver.ResolveVal(attribute, se, out var obj))
-                    {
-                        return Result.Fail($"can not cast value {se} to {attribute.DataType}");
-                    }
-                    list.Add(obj!);
-                }
+                list.Add(fromValue);
+                continue;
             }
-            else
+            if (!resolver.ResolveVal(attribute, fromValue, out var dbTypeValue))
             {
-                if (!resolver.ResolveVal(attribute, fromValue, out var dbTypeValue))
-                {
-                    return Result.Fail("can not cast value " + fromValue + " to " + attribute.DataType);
-                }
-                list.Add(dbTypeValue!);
+                return Result.Fail("can not cast value " + fromValue + " to " + attribute.DataType);
             }
+            list.Add(dbTypeValue!);
         }
         return list.ToArray();
     }

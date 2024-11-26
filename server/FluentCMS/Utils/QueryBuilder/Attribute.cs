@@ -47,12 +47,11 @@ public record LoadedAttribute(
     ValidationMessage:ValidationMessage,
     Options: Options
 );
-public record GraphAttribute(
+
+public sealed record GraphAttribute(
     ImmutableArray<GraphAttribute> Selection,
     ImmutableArray<ValidSort> Sorts,
-    
-    // filter need to resolve at the runtime
-    ImmutableArray<Filter> Filters,
+    ImmutableArray<ValidFilter> Filters,
     
     string Prefix,
     string TableName,
