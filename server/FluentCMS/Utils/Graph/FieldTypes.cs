@@ -60,13 +60,11 @@ public static class FieldTypes
         QueryArguments CrosstableARgs(string target)
         {
             var find = dict[target].Entity;
-            var offsetArg = new QueryArgument<IntGraphType>{Name = PaginationConstants.OffsetKey};
-            var limitArg = new QueryArgument<IntGraphType>{Name = PaginationConstants.LimitKey};
             return new QueryArguments([
-                offsetArg,
-                limitArg,
-                find.SortArg(),
-                ..find.FilterArgs()
+                Args.OffsetArg,
+                Args.LimitArg,
+                Args.SortArg(find),
+                ..Args.FilterArgs(find)
             ]);
         }
     }

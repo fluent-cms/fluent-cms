@@ -30,29 +30,29 @@ public sealed class GraphQuery : ObjectGraphType
         foreach (var entity in entities)
         {
             var graphInfo = dict[entity.Name];
-            var limitArg = new QueryArgument<IntGraphType>{Name = PaginationConstants.LimitKey};
             AddField(new FieldType
             {
                 Name = entity.Name,
                 ResolvedType = graphInfo.SingleType,
-                Resolver = Resolvers.GetSingleResolver(queryService,entity.Name),
+                Resolver = Resolvers.GetSingleResolver(queryService, entity.Name),
                 Arguments = new QueryArguments([
-                    ..entity.FilterArgs(), 
-                    ArgumentTypes.FilterExpr()
+                    ..Args.FilterArgs(entity), 
+                    Args.FilterExprArg
                 ])
             });
             
             AddField(new FieldType
             {
                 Name = entity.Name + "List",
-                ResolvedType = dict[entity.Name].ListType,
+                ResolvedType = graphInfo.ListType,
                 Resolver = Resolvers.GetListResolver(queryService, entity.Name),
                 Arguments = new QueryArguments([
-                    limitArg,
-                    entity.SortArg(),
-                    ..entity.FilterArgs(), 
-                    ArgumentTypes.SortExpr(), 
-                    ArgumentTypes.FilterExpr()
+                    Args.OffsetArg,
+                    Args.LimitArg,
+                    Args.SortArg(entity),
+                    ..Args.FilterArgs(entity), 
+                    Args.SortExprArg,
+                    Args.FilterExprArg
                 ])
             });
         }

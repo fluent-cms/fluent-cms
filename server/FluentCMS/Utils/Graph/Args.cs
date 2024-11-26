@@ -1,3 +1,4 @@
+using System.Globalization;
 using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.QueryBuilder;
 using GraphQL.Types;
@@ -5,9 +6,9 @@ using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.Utils.Graph;
 
-public static class ArgumentTypes
+public static class Args
 {
-    public static QueryArgument[] FilterArgs(this Entity entity)
+    public static QueryArgument[] FilterArgs(Entity entity)
     {
         var args = new List<QueryArgument>();
         var arr = entity.Attributes.GetLocalAttrs();
@@ -16,29 +17,24 @@ public static class ArgumentTypes
         return args.ToArray();
     }
 
-    public static QueryArgument SortArg(this Entity entity) =>
-        new(new ListGraphType(entity.GetSortFieldEnumGraphType()))
+    public static QueryArgument SortArg(Entity entity) =>
+        new(new ListGraphType(GetSortFieldEnumGraphType(entity)))
         {
             Name = SortConstant.SortKey
         };
 
 
-    public static QueryArgument SortExpr() => new QueryArgument<ListGraphType<SortExpr>>
+    private static QueryArgument ComplexFilter(Attribute attr)
     {
-        Name = SortConstant.SortExprKey
-    };
+        QueryArgument arg = attr.DataType switch
+        {
+            DataType.Int => IntClauseArg(attr.Field),
+            DataType.Datetime => DateClauseArg(attr.Field),
+            _ => StringClauseArg(attr.Field)
+        };
+        return arg;
+    }
 
-    public static QueryArgument FilterExpr() => new QueryArgument<ListGraphType<FilterExpr>>
-    {
-        Name = FilterConstants.FilterExprKey
-    };
-
-    private static QueryArgument ComplexFilter( Attribute attr) => attr.DataType switch
-    {
-        DataType.Int => new QueryArgument<ListGraphType<IntClause>> { Name = attr.Field },
-        DataType.Datetime => new QueryArgument<ListGraphType<DateClause>> { Name = attr.Field },
-        _ => new QueryArgument<ListGraphType<StringClause>> { Name = attr.Field }
-    };
 
     private static QueryArgument SimpleFilter(Attribute attr)
     {
@@ -53,16 +49,16 @@ public static class ArgumentTypes
                 _ => new QueryArgument<ListGraphType<StringGraphType>>()
             }
         };
-        
+
         arg.Name = attr.Field + FilterConstants.SetSuffix;
         return arg;
     }
 
-    private static EnumerationGraphType GetSortFieldEnumGraphType(this Entity entity)
+    private static EnumerationGraphType GetSortFieldEnumGraphType(Entity entity)
     {
         var type = new EnumerationGraphType
         {
-            Name = "SortFields"
+            Name = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(entity.Name) + "SortEnum"
         };
         var arr = entity.Attributes.GetLocalAttrs();
         foreach (var attribute in arr)
@@ -91,4 +87,46 @@ public static class ArgumentTypes
 
         return type;
     }
+
+    //have to create a new arguments for each field
+    private static QueryArgument StringClauseArg(string name) => new QueryArgument<ListGraphType<StringClause>>
+    {
+        Name = name
+    };
+
+    private static QueryArgument DateClauseArg(string name) => new QueryArgument<ListGraphType<DateClause>>
+    {
+        Name = name
+    };
+
+    private static QueryArgument IntClauseArg(string name) => new QueryArgument<ListGraphType<IntClause>>
+    {
+        Name = name
+    };
+    
+    public static  QueryArgument LimitArg => new QueryArgument<IntGraphType>
+    {
+        Name = PaginationConstants.LimitKey
+    };
+
+    public static  QueryArgument OffsetArg => new QueryArgument<IntGraphType>
+    {
+        Name = PaginationConstants.OffsetKey
+    };
+
+    public static QueryArgument SortExprArg => new QueryArgument<ListGraphType<SortExpr>>
+    {
+        Name = SortConstant.SortExprKey
+    };
+
+    public static  QueryArgument FilterExprArg => new  QueryArgument<ListGraphType<FilterExpr>>
+    {
+        Name = FilterConstants.FilterExprKey
+    };
 }
+
+
+
+
+
+

@@ -12,6 +12,7 @@ public sealed class GraphqlModule( ILogger<GraphqlModule> logger, string path)
         builder.Services.AddSingleton<GraphqlModule>(p => 
             new GraphqlModule(p.GetRequiredService<ILogger<GraphqlModule>>(), path));
         
+        // init for each request, make sure get the latest entity definition
         builder.Services.AddScoped<Schema>();
         builder.Services.AddScoped<GraphQuery>();
         builder.Services.AddScoped<DateClause>();
