@@ -4,7 +4,7 @@
 ## Online Course System Frontend
 <details> 
 <summary> 
-Having established our understanding of Fluent CMS essentials like Entity Schemas, GraphQL-style Querying, and GrapeJS-based Page Design, we’re ready to build a frontend for an online course website.
+Having established our understanding of Fluent CMS essentials like Entity, Query, and Page, we're ready to build a frontend for an online course website.
 </summary>
 
 ### Introduction of online course website

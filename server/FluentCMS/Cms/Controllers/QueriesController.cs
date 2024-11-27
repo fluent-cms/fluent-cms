@@ -1,5 +1,4 @@
 using FluentCMS.Cms.Services;
-using FluentCMS.Modules;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using FluentCMS.Utils.QueryBuilder;
@@ -29,12 +28,5 @@ public class QueriesController(IQueryService queryService) : ControllerBase
     {
         var args = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
         return Ok(await queryService.Partial(name, attr, span, limit,args, token));
-    }
-
-    [HttpGet("{name}/many")]
-    public async Task<ActionResult> GetMany(string name, CancellationToken token)
-    {
-        var args = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
-        return Ok(await queryService.ManyWithAction(name, args,token));
     }
 }

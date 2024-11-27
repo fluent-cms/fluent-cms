@@ -29,26 +29,6 @@ public sealed class QueryService(
     public async Task<Record?> OneWithAction(string name, StrArgs args, CancellationToken token)
         => await OneWithAction(await FromSavedQuery(name, null, false,args, token),args,token);
 
-    public async Task<Record[]> ManyWithAction(string name, StrArgs args, CancellationToken token)
-    {
-        var (query, filters,sorts,_) = await FromSavedQuery(name,null,false, args, token);
-        var validPagination = new ValidPagination(0, query.Entity.DefaultPageSize);
-
-        var res = await hook.QueryPreGetMany.Trigger(provider,
-            new QueryPreGetManyArgs(name, query.EntityName, [..filters], validPagination));
-        if (res.OutRecords is not null)
-        {
-            return res.OutRecords;
-        }
-
-        var kateQuery = query.Entity.ListQuery(filters, sorts, validPagination, null,
-            query.Selection.GetLocalAttrs());
-        var items = await executor.Many(kateQuery, token);
-        await AttachRelated(query.Selection, args, items, token);
-        SpanHelper.SetSpan(false, query.Selection, items, [], null);
-        return items;
-    }
-
     public async Task<Record[]> Partial(string name, string attr, Span span, int limit, StrArgs args,
         CancellationToken token)
     {
@@ -61,10 +41,12 @@ public sealed class QueryService(
         var attribute = NotNull(query.Selection.RecursiveFind(attr)).ValOrThrow("not find attribute");
         var cross = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable of {attribute.Field})");
 
-        var pagination = new ValidPagination(0, limit);
+        var flyPagination = new Pagination(null, limit.ToString());
+        var pagination = PaginationHelper.ToValid(flyPagination, attribute.Pagination,
+            cross.TargetEntity.DefaultPageSize, true, args);
 
-        var validSpan = Ok(span.ToValid([], resolver));
         var fields = attribute.Selection.GetLocalAttrs();
+        var validSpan = Ok(span.ToValid(fields, resolver));
 
         var filters = Ok( FilterHelper.ReplaceVariables(attribute.Filters,args, resolver));
         var sorts = Ok(await SortHelper.ReplaceVariables(attribute.Sorts, args, cross.TargetEntity, resolver)); 

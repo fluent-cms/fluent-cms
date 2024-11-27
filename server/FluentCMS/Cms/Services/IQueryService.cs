@@ -18,6 +18,4 @@ public interface IQueryService
 
     Task<Record[]> Partial(string name, string attr, Span span, int limit, StrArgs args,
         CancellationToken token);
-
-    Task<Record[]> ManyWithAction(string name, StrArgs args, CancellationToken token);
 }

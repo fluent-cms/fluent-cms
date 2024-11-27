@@ -8,7 +8,7 @@ public sealed class SortOrderEnum : EnumerationGraphType
 {
     public SortOrderEnum()
     {
-        Name = SortConstant.SortKey;
+        Name = "SortOrderEnum";
         Add(new EnumValueDefinition(SortOrder.Asc, SortOrder.Asc));
         Add(new EnumValueDefinition(SortOrder.Desc, SortOrder.Desc));
     }

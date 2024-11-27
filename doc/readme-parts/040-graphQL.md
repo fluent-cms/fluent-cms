@@ -4,10 +4,11 @@
 
 <details><summary>FluentCMS simplifies frontend development by offering robust GraphQL support.</summary>
 
-### Only the fly GraphQL
+### Realtime Query
 #### Accessing the GraphQL IDE
 To get started, launch the web application and navigate to `/graph`. You can also try our [online demo](https://fluent-cms-admin.azurewebsites.net/graph).
 
+---
 #### Singular vs. List Queries
 For each entity in FluentCMS, two types of GraphQL queries are automatically generated:
 - `<entityName>`: Returns a singular response.
@@ -35,9 +36,9 @@ For each entity in FluentCMS, two types of GraphQL queries are automatically gen
 ```
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A)
 
+---
 #### Field Selection
-You can query specific fields of the current entity and related entities.
-
+You can query specific fields for both the current entity and its related entities.
 **Example Query:**
 ```graphql
 {
@@ -62,10 +63,12 @@ You can query specific fields of the current entity and related entities.
 ```
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%20%20teacher%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20firstname%0A%20%20%20%20%20%20lastname%0A%20%20%20%20%20%20skills%7B%0A%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20name%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%20%20materials%7B%0A%20%20%20%20%20%20id%2C%0A%20%20%20%20%20%20name%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D%0A)
 
-#### Filtering Results - `in` 
-FluentCMS supports `in` filters using scalar values or lists.
+---
+#### Filtering with `Value Match` in FluentCMS
 
-**Match one value example Query:**
+FluentCMS provides flexible filtering capabilities using the `idSet` field (or any other field), enabling precise data queries by matching either a single value or a list of values.
+
+**Filter by a Single Value Example:**
 ```graphql
 {
   courseList(idSet: 5) {
@@ -76,41 +79,82 @@ FluentCMS supports `in` filters using scalar values or lists.
 ```
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(idSet%3A5)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A)
 
-**Match list example Query:**
+**Filter by Multiple Values Example:**
 ```graphql
 {
-  courseList(idSet:[5,7]){
-    id,
+  courseList(idSet: [5, 7]) {
+    id
     name
   }
 }
 ```
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(idSet%3A%5B5%2C7%5D)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A)
 
-#### Filtering Result - specify match
-matchAll, In the following example filtering `id > 3 and id < 5`
+---
+#### Advanced Filtering with `Operator Match` in FluentCMS
+
+FluentCMS supports advanced filtering options with `Operator Match`, allowing users to combine various conditions for precise queries.
+
+##### `matchAll` Example:
+Filters where all specified conditions must be true.  
+In this example: `id > 5 and id < 15`.
+
 ```graphql
 {
-  courseList(id:{matchType:matchAll,gt:5,lt:15}){
-    id,
+  courseList(id: {matchType: matchAll, gt: 5, lt: 15}) {
+    id
     name
   }
 }
 ```
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(id%3A%7BmatchType%3AmatchAll%2Cgt%3A5%2Clt%3A15%7D)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A)
 
-matchAny, filtering `name like 'a%' or name like 'b%'`
+##### `matchAny` Example:
+Filters where at least one of the conditions must be true.  
+In this example: `name starts with "A"` or `name starts with "I"`.
+
 ```graphql
 {
-  courseList(name:[{matchType:matchAny}, {startsWith:"A"},{startsWith:"I"}]){
-    id,
+  courseList(name: [{matchType: matchAny}, {startsWith: "A"}, {startsWith: "I"}]) {
+    id
     name
   }
 }
 ```
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(name%3A%5B%7BmatchType%3AmatchAny%7D%2C%20%7BstartsWith%3A%22A%22%7D%2C%7BstartsWith%3A%22I%22%7D%5D)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A)
 
-#### Sorting Result 
+These flexible filtering capabilities make it easy to craft complex queries tailored to your data needs.
+
+---
+
+#### `Filter Expressions` in FluentCMS
+
+Filter Expressions allow precise filtering by specifying a field, including nested fields using JSON path syntax. This enables filtering on subfields for complex data structures.
+
+***Example: Filter by Teacher's Last Name***
+This query returns courses taught by a teacher whose last name is "Circuit."
+
+```graphql
+{
+  courseList(filterExpr: {field: "teacher.lastname", clause: {equals: "Circuit"}}) {
+    id
+    name
+    teacher {
+      id
+      lastname
+    }
+  }
+}
+```
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(filterExpr%3A%20%7Bfield%3A%20%22teacher.lastname%22%2C%20clause%3A%20%7Bequals%3A%20%22Circuit%22%7D%7D)%20%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%20%20teacher%20%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20lastname%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D)
+
+
+
+This feature offers powerful filtering capabilities, making it easy to query nested or related data fields efficiently.
+
+---
+
+#### Sorting  
 Sorting by a single field
 ```graphql
 {
@@ -133,6 +177,31 @@ Sorting by multiple fields
 }
 ```
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(sort%3A%5Blevel%2Cid%5D)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20level%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A)
+
+---
+
+#### Sort Expressions in FluentCMS
+
+
+Sort Expressions allow precise sorting by specifying a field, including nested fields using JSON path syntax. This enables sorting on subfields for complex data structures.
+
+***Example: Sort by Teacher's Last Name***
+
+```graphql
+{
+  courseList(sortExpr:{field:"teacher.lastname", order:Desc}) {
+    id
+    name
+    teacher {
+      id
+      lastname
+    }
+  }
+}
+```
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(sortExpr%3A%7Bfield%3A%22teacher.lastname%22%2C%20order%3ADesc%7D)%20%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%20%20teacher%20%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20lastname%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D)
+
+---
 
 #### Pagination
 Pagination on root field
@@ -159,40 +228,15 @@ Pagination on sub field
 }
 ```
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%20%20%7B%0A%20%20%20%20courseList%7B%0A%20%20%20%20%20%20id%2C%0A%20%20%20%20%20%20name%0A%20%20%20%20%20%20materials(limit%3A2)%7B%0A%20%20%20%20%20%20%20%20id%2C%0A%20%20%20%20%20%20%20%20name%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%7D%0A)
-#### Filter on sub field
-query all course taught by teacher "Circuit"
-```graphql
-{
-  courseList(filterExpr: {field: "teacher.lastname", clause: {equals: "Circuit"}}) {
-    id
-    name
-    teacher {
-      id
-      lastname
-    }
-  }
-}
-```
-[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(filterExpr%3A%20%7Bfield%3A%20%22teacher.lastname%22%2C%20clause%3A%20%7Bequals%3A%20%22Circuit%22%7D%7D)%20%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%20%20teacher%20%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20lastname%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D)
 
-#### sort on sub field
-```graphql
-{
-  courseList(sortExpr:{field:"teacher.lastname", order:Desc}) {
-    id
-    name
-    teacher {
-      id
-      lastname
-    }
-  }
-}
-```
-[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(sortExpr%3A%7Bfield%3A%22teacher.lastname%22%2C%20order%3ADesc%7D)%20%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%20%20teacher%20%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20lastname%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D)
+---
 
-#### variable
+
+
+#### Variable
+
 Variables are used to make queries more dynamic, reusable, and secure.
-***filter variable***
+##### Variable in `Value filter`
 ```
 query ($id: Int!) {
   teacher(idSet: [$id]) {
@@ -204,7 +248,62 @@ query ($id: Int!) {
 ```
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24id%3A%20Int!)%20%7B%0A%20%20teacher(idSet%3A%20%5B%24id%5D)%20%7B%0A%20%20%20%20id%0A%20%20%20%20firstname%0A%20%20%20%20lastname%0A%20%20%7D%0A%7D&variables=%7B%0A%20%20%22id%22%3A3%0A%7D)
 
-***pagination variable***
+##### Variable in `Operator Match` filter
+```
+query ($id: Int!) {
+  teacherList(id:{equals:$id}){
+    id
+    firstname
+    lastname
+  }
+}
+```
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24id%3A%20Int!)%20%7B%0A%20%20teacherList(id%3A%7Bequals%3A%24id%7D)%7B%0A%20%20%20%20id%0A%20%20%20%20firstname%0A%20%20%20%20lastname%0A%20%20%7D%0A%7D&variables=%7B%0A%20%20%22id%22%3A%203%0A%7D)
+
+##### Variable in `Filter Expression`
+```
+query ($years: String) {
+  teacherList(filterExpr:{field:"skills.years",clause:{gt:$years}}){
+    id
+    firstname
+    lastname
+    skills{
+      id
+      name
+      years
+    }
+  }
+}
+```
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24years%3A%20String)%20%7B%0A%20%20teacherList(filterExpr%3A%7Bfield%3A%22skills.years%22%2Cclause%3A%7Bgt%3A%24years%7D%7D)%7B%0A%20%20%20%20id%0A%20%20%20%20firstname%0A%20%20%20%20lastname%0A%20%20%20%20skills%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20name%0A%20%20%20%20%20%20years%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D&variables=%7B%0A%20%20%22years%22%3A%20%229%22%0A%7D)
+
+##### Variable in Sort 
+```
+query ($sort_field:TeacherSortEnum) {
+  teacherList(sort:[$sort_field]) {
+    id
+    firstname
+    lastname
+  }
+}
+```
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24sort_field%3ATeacherSortEnum)%20%7B%0A%20%20teacherList(sort%3A%5B%24sort_field%5D)%20%7B%0A%20%20%20%20id%0A%20%20%20%20firstname%0A%20%20%20%20lastname%0A%20%20%7D%0A%7D&variables=%7B%22sort_field%22%3A%20%22idDesc%22%7D)
+##### Variable in Sort Expression
+```
+query ($sort_order:  SortOrderEnum) {
+  courseList(sortExpr:{field:"teacher.id", order:$sort_order}){
+    id,
+    name,
+    teacher{
+      id,
+      firstname
+    }
+  }
+}
+```
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24sort_order%3A%20%20SortOrderEnum)%20%7B%0A%20%20courseList(sortExpr%3A%7Bfield%3A%22teacher.id%22%2C%20order%3A%24sort_order%7D)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%2C%0A%20%20%20%20teacher%7B%0A%20%20%20%20%20%20id%2C%0A%20%20%20%20%20%20firstname%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D&variables=%7B%0A%20%20%22sort_order%22%3A%20%22Asc%22%0A%7D)
+
+##### Variable in Pagination
 ```
 query ($offset:Int) {
   teacherList(limit:2, offset:$offset) {
@@ -215,69 +314,154 @@ query ($offset:Int) {
 }
 ```
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24offset%3AInt)%20%7B%0A%20%20teacherList(limit%3A2%2C%20offset%3A%24offset)%20%7B%0A%20%20%20%20id%0A%20%20%20%20firstname%0A%20%20%20%20lastname%0A%20%20%7D%0A%7D&variables=%7B%0A%09%22offset%22%3A%202%0A%7D)
-***Sort field variable***
 
+---
 
-required,
-optional
-
-
+#### Required vs Optional
+If you want a variable to be mandatory, you can add a  `!` to the end of the type
+```
+query ($id: Int!) {
+  teacherList(id:{equals:$id}){
+    id
+    firstname
+    lastname
+  }
+}
+```
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24id%3A%20Int!)%20%7B%0A%20%20teacherList(id%3A%7Bequals%3A%24id%7D)%7B%0A%20%20%20%20id%0A%20%20%20%20firstname%0A%20%20%20%20lastname%0A%20%20%7D%0A%7D)
 
 Explore the power of FluentCMS GraphQL and streamline your development workflow!
-
+***
+***
 ### Saved Query
 
-#### why save, cache improve performance, hide field details, only expose necessary variable
+**Realtime queries** may expose excessive technical details, potentially leading to security vulnerabilities.
 
-#### Operation Name as query name
+**Saved Queries** address this issue by abstracting the GraphQL query details. They allow clients to provide only variables, enhancing security while retaining full functionality.
 
-#### overwrite variable, filter, sort, pagination
+---
 
-#### paginating by cursor
+#### Transitioning from **Real-Time Queries** to **Saved Queries**
 
-#### paginating sub field by cursor
+##### Using `OperationName` as the Saved Query Identifier
+In FluentCMS, the **Operation Name** in a GraphQL query serves as a unique identifier for saved queries. For instance, executing the following query automatically saves it as `TeacherQuery`:
 
-#### Query Endpoints
+```graphql
+query TeacherQuery($id: Int) {
+  teacherList(idSet: [$id]) {
+    id
+    firstname
+    lastname
+    skills {
+      id
+      name
+    }
+  }
+}
+```
 
-Each query has three corresponding endpoints:
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=query%20TeacherQuery(%24id%3A%20Int)%20%7B%0A%20%20teacherList(idSet%3A%5B%24id%5D)%7B%0A%20%20%20%20id%0A%20%20%20%20firstname%0A%20%20%20%20lastname%0A%20%20%20%20skills%7B%0A%20%20%20%20%20%20id%2C%0A%20%20%20%20%20%20name%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D&operationName=TeacherQuery)
 
-- **List**: `/api/queries/<query-name>` retrieves a paginated list.
-The example response is, if this page has previous page, the `hasPreviousPage` is set to ture. if the page has next page,
-the `hasNextPage` is set to true. 
+---
+
+##### Saved Query Endpoints
+FluentCMS generates two API endpoints for each saved query:
+
+1. **List Records:**  
+   [https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery)
+
+2. **Single Record:**  
+   [https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/one/](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/one)
+
+---
+
+##### Using REST API Query Strings as Variables
+The Saved Query API allows passing variables via query strings:
+
+- **Single Value:**  
+  [https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/?id=3](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/?id=3)
+
+- **Array of Values:**  
+  [https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?id=3&id=4](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?id=3&id=4)  
+  This passes `[3, 4]` to the `idSet` argument.
+
+---
+
+#### Additional Features of `Saved Query`
+
+Beyond performance and security improvements, `Saved Query` introduces enhanced functionalities to simplify development workflows.
+
+---
+
+##### Pagination by `offset`
+Built-in variables `offset` and `limit` enable efficient pagination. For example:  
+[https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=2&offset=2](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=2&offset=2)
+
+---
+
+##### `offset` Pagination for Subfields
+To display a limited number of subfield items (e.g., the first two skills of a teacher), use the JSON path variable, such as `skills.limit`:  
+[https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?skills.limit=2](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?skills.limit=2)
+
+---
+
+##### Pagination by `cursor`
+For large datasets, `offset` pagination can strain the database. For example, querying with `offset=1000&limit=10` forces the database to retrieve 1010 records and discard the first 1000.
+
+To address this, `Saved Query` supports **cursor-based pagination**, which reduces database overhead.  
+Example response for [https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=3](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=3):
 
 ```json
 [
   {
-    "name": "The Art of Pizza Making",
-    "id": 23,
     "hasPreviousPage": false,
-    "cursor": "eyJpZCI6MjJ9"
+    "cursor": "eyJpZCI6M30"
   },
   {
-    "name": "Functional Programming",
-    "id": 22
   },
   {
-    "id": 21,
-    "name": "Functional Programming",
-    "hasPreviousPage": true,
+    "hasNextPage": true,
+    "cursor": "eyJpZCI6NX0"
+  }
+]
+```
+
+- If `hasNextPage` is `true`, use the cursor to retrieve the next page:  
+  [https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=3&last=eyJpZCI6NX0](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=3&last=eyJpZCI6NX0)
+
+- Similarly, if `hasPreviousPage` is `true`, use the cursor to retrieve the previous page:  
+  [https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=3&first=eyJpZCI6Nn0](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=3&first=eyJpZCI6Nn0)
+
+---
+
+##### Cursor-Based Pagination for Subfields
+Subfields also support cursor-based pagination. For instance, querying [https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?skills.limit=2](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?skills.limit=2) returns a response like this:
+
+```json
+[
+  {
+    "id": 3,
+    "firstname": "Jane",
+    "lastname": "Debuggins",
+    "hasPreviousPage": false,
+    "skills": [
+      {
+        "hasPreviousPage": false,
+        "cursor": "eyJpZCI6MSwic291cmNlSWQiOjN9"
+      },
+      {
+        "hasNextPage": true,
+        "cursor": "eyJpZCI6Miwic291cmNlSWQiOjN9"
+      }
+    ],
     "cursor": "eyJpZCI6M30"
   }
 ]
 ```
-The cursor field value of the two edge items is used to fetch the next or previous page.
-  - To view the next page: `/api/queries/<query-name>?last=<cursor>`
-  - To view the previous page: `/api/queries/<query-name>?first=<cursor>`
 
-`sorts` was applied when retrieving next page or previous page.
+To fetch the next two skills, use the cursor:  
+[http://127.0.0.1:5000/api/queries/TeacherQuery/part/skills?limit=2&last=eyJpZCI6Miwic291cmNlSWQiOjN9](http://127.0.0.1:5000/api/queries/TeacherQuery/part/skills?limit=2&last=eyJpZCI6Miwic291cmNlSWQiOjN9)
 
-
-- **Single Record**: `/api/queries/<query-name>/one` returns the first record.
-  - Example: `/api/queries/<query-name>/one?id=***`
-
-- **Multiple Records**: `/api/queries/<query-name>/many` returns multiple records.
-  - Example: `/api/queries/<query-name>/many?id=1&id=2&id=3`
-
-If the number of IDs exceeds the page size, only the first set will be returned.
+---
 
 </details>

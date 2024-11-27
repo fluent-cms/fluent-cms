@@ -52,6 +52,7 @@ public static class SortHelper
             {
                 return Result.Fail("Failed to parse sort expression, no field Key");
             }
+            
         }
         return sorts.ToArray();
     }
@@ -114,7 +115,7 @@ public static class SortHelper
 
                 if (sort.Order.StartsWith(QueryConstants.VariablePrefix))
                 {
-                    var order = args.GetVariableStr(sort.Field, QueryConstants.VariablePrefix);
+                    var order = args.GetVariableStr(sort.Order, QueryConstants.VariablePrefix);
                     if (order ==StringValues.Empty )
                     {
                         return Result.Fail($"Failed to resolve order of {sort.Field}");
