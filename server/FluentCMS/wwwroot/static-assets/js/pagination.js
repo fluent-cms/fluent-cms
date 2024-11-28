@@ -7,7 +7,7 @@ $(document).ready(function() {
     setPaginationStatus();
     
     function setPaginationStatus(){
-        $('[data-source-type="multiple-records"]').each(function() {
+        $('[data-source="data-list"]').each(function() {
             let pagination = $(this).attr('pagination');
             let first = $(this).attr('first');
             let last = $(this).attr('last');
@@ -33,7 +33,7 @@ $(document).ready(function() {
     function handlePaginationButton(event,button, isNext) {
         event.preventDefault();
         let container = button.parentElement.parentElement;
-        let list = container.querySelector('[data-source-type="multiple-records"]');
+        let list = container.querySelector('[data-source="data-list"]');
         loadMore(list.attributes[isNext ? "last" : "first"].value, response => {
             list.outerHTML = response;
             setPaginationStatus();

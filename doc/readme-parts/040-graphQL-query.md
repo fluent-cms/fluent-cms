@@ -1,20 +1,23 @@
 
 
-## **GraphQL**
+## **GraphQL Query**
 
-<details><summary>FluentCMS simplifies frontend development by offering robust GraphQL support.</summary>
+<details>
+<summary>
+FluentCMS simplifies frontend development by offering robust GraphQL support.
+</summary>
 
-### Realtime Query
+### Getting Started
 #### Accessing the GraphQL IDE
 To get started, launch the web application and navigate to `/graph`. You can also try our [online demo](https://fluent-cms-admin.azurewebsites.net/graph).
 
 ---
-#### Singular vs. List Queries
-For each entity in FluentCMS, two types of GraphQL queries are automatically generated:
-- `<entityName>`: Returns a singular response.
-- `<entityNameList>`: Returns a list of responses.
+#### Singular vs. List Response
+For each entity in FluentCMS, two GraphQL fields are automatically generated:  
+- `<entityName>`: Returns a record.
+- `<entityNameList>`: Returns a list of records.  
 
-**Single Course Query**
+**Single Course **
 ```graphql
 {
   course {
@@ -25,7 +28,7 @@ For each entity in FluentCMS, two types of GraphQL queries are automatically gen
 ```
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20course%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A)
 
-**List of Courses Query**
+**List of Courses **
 ```graphql
 {
   courseList {
@@ -123,7 +126,6 @@ In this example: `name starts with "A"` or `name starts with "I"`.
 ```
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(name%3A%5B%7BmatchType%3AmatchAny%7D%2C%20%7BstartsWith%3A%22A%22%7D%2C%7BstartsWith%3A%22I%22%7D%5D)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A)
 
-These flexible filtering capabilities make it easy to craft complex queries tailored to your data needs.
 
 ---
 
@@ -147,10 +149,6 @@ This query returns courses taught by a teacher whose last name is "Circuit."
 }
 ```
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(filterExpr%3A%20%7Bfield%3A%20%22teacher.lastname%22%2C%20clause%3A%20%7Bequals%3A%20%22Circuit%22%7D%7D)%20%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%20%20teacher%20%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20lastname%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D)
-
-
-
-This feature offers powerful filtering capabilities, making it easy to query nested or related data fields efficiently.
 
 ---
 
@@ -183,7 +181,7 @@ Sorting by multiple fields
 #### Sort Expressions in FluentCMS
 
 
-Sort Expressions allow precise sorting by specifying a field, including nested fields using JSON path syntax. This enables sorting on subfields for complex data structures.
+Sort Expressions allow sorting by nested fields using JSON path syntax. 
 
 ***Example: Sort by Teacher's Last Name***
 
@@ -213,7 +211,7 @@ Pagination on root field
   }
 }
 ```
-[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%20%20%7B%0A%20%20%20%20courseList(offset%3A2%2C%20limit%3A3)%7B%0A%20%20%20%20%20%20id%2C%0A%20%20%20%20%20%20name%0A%20%20%20%20%7D%0A%20%20%7D%0A)
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%20%20%7B%0A%20%20%20%20courseList(offset%3A2%2C%20limit%3A3)%7B%0A%20%20%20%20%20%20id%2C%0A%20%20%20%20%20%20name%0A%20%20%20%20%7D%0A%20%20%7D%0A)   
 Pagination on sub field
 ```graphql
 {
@@ -426,10 +424,10 @@ Example response for [https://fluent-cms-admin.azurewebsites.net/api/queries/Tea
 ]
 ```
 
-- If `hasNextPage` is `true`, use the cursor to retrieve the next page:  
+- If `hasNextPage` of the last record is `true`, use the cursor to retrieve the next page:  
   [https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=3&last=eyJpZCI6NX0](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=3&last=eyJpZCI6NX0)
 
-- Similarly, if `hasPreviousPage` is `true`, use the cursor to retrieve the previous page:  
+- Similarly, if `hasPreviousPage` of the first record is `true`, use the cursor to retrieve the previous page:  
   [https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=3&first=eyJpZCI6Nn0](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=3&first=eyJpZCI6Nn0)
 
 ---
@@ -460,7 +458,7 @@ Subfields also support cursor-based pagination. For instance, querying [https://
 ```
 
 To fetch the next two skills, use the cursor:  
-[http://127.0.0.1:5000/api/queries/TeacherQuery/part/skills?limit=2&last=eyJpZCI6Miwic291cmNlSWQiOjN9](http://127.0.0.1:5000/api/queries/TeacherQuery/part/skills?limit=2&last=eyJpZCI6Miwic291cmNlSWQiOjN9)
+[https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/part/skills?limit=2&last=eyJpZCI6Miwic291cmNlSWQiOjN9](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/part/skills?limit=2&last=eyJpZCI6Miwic291cmNlSWQiOjN9)
 
 ---
 

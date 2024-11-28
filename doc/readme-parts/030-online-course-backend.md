@@ -1,5 +1,6 @@
 
 
+---
 ## Online Course System Backend
 
 <details> 
@@ -61,6 +62,8 @@ The `Materials` table inventories resources linked to courses.
 | `link`           | Link        | String        |
 | `file`           | File        | String        |
 
+---
+
 ### Relationships
 - **Teachers to Courses**: One-to-Many (Each teacher can teach multiple courses; each course is assigned to one teacher).
 - **Teachers to Skills**: Many-to-Many (Multiple teachers can share skills, and one teacher may have multiple skills).
@@ -74,50 +77,47 @@ The `Materials` table inventories resources linked to courses.
 After launching the web application, locate the **Schema Builder** menu on the homepage to start defining your schema.
 
 #### Adding Entities
+[Example Configuration](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/schema-ui/list.html?schema=entity)  
 1. Navigate to the **Entities** section of the Schema Builder.
 2. Create entities such as "Teacher" and "Course."
-3. For the `Course` entity:
-    - Add attributes such as `name`, `status`, `level`, and `description`.
-    - Define relationships using specific attribute types.
+3. For the `Course` entity, add attributes such as `name`, `status`, `level`, and `description`.
+---
+### Defining Relationships
+[Example Configuration](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/schema-ui/edit.html?schema=entity&id=27)  
 
-#### Example Attribute Definitions
-1. **Lookup Attribute**
-    - Represents a many-to-one relationship (e.g., `Course` to `Teacher`).
+#### 1. **Course and Teacher (Many-to-One Relationship)**
+To establish a many-to-one relationship between the `Course` and `Teacher` entities, you can include a `Lookup` attribute in the `Course` entity. This allows selecting a single `Teacher` record when adding or updating a `Course`.
 
-| **Attribute**    | **Value**     |
-|-------------------|---------------|
-| **Field**         | `teacher`    |
-| **Header**        | Teacher      |
-| **Data Type**     | Int          |
-| **In List**       | True         |
-| **In Detail**     | True         |
-| **Is Default**    | False        |
-| **Type**          | Lookup       |
-| **Options**       | Teacher      |
+| **Attribute**  | **Value**    |
+|----------------|--------------|
+| **Field**      | `teacher`    |
+| **Type**       | Lookup       |
+| **Options**    | Teacher      |
 
-2. **Crosstable Attribute**
-    - Defines a many-to-many relationship (e.g., `Course` to `Material`).
+**Description:** When a course is created or modified, a teacher record can be looked up and linked to the course.
 
-| **Attribute**    | **Value**     |
-|-------------------|---------------|
-| **Field**         | `materials`  |
-| **Header**        | Materials    |
-| **In List**       | False        |
-| **In Detail**     | True         |
-| **Is Default**    | False        |
-| **Type**          | Crosstable   |
-| **Options**       | Material     |
+#### 2. **Course and Materials (Many-to-Many Relationship)**
+To establish a many-to-many relationship between the `Course` and `Material` entities, use a `Crosstable` attribute in the `Course` entity. This enables associating multiple materials with a single course.
+
+| **Attribute**    | **Value**    |
+|-------------------|--------------|
+| **Field**         | `materials` |
+| **Type**          | Crosstable  |
+| **Options**       | Material    |
+
+**Description:** When managing a course, you can select multiple material records from the `Material` table to associate with the course.
 
 ---
 
 ### Admin Panel: Data Management Features
 
 #### 1. **List Page**
+[Example Course List Page](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&limit=20)  
 The **List Page** displays entities in a tabular format, enabling sorting, searching, and pagination. Users can efficiently browse or locate specific records.
 
 #### 2. **Detail Page**
+[Example Course Detail Page](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course/22)  
 The **Detail Page** provides an interface for viewing and managing detailed attributes. Related data such as teachers and materials can be selected or modified.
 
 --- 
-This structured approach ensures a systematic development and management of the online course system backend.
 </details>

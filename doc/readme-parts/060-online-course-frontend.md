@@ -1,6 +1,5 @@
 
 
-
 ## Online Course System Frontend
 <details> 
 <summary> 
@@ -35,6 +34,7 @@ The online course website is designed to help users easily find courses tailored
 Course Details <-------> Teacher Details 
 
 ```
+---
 ### Designing the Home Page
 The home page's screenshot shows below.
 ![Page](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/page-home-course.png)
@@ -76,6 +76,7 @@ For example, with the URL `/pages/course/20`, we obtain `{course_id: 20}`. This 
 ```
 The query service produces a where clause as  `where id in (20)`.
 
+---
 ### Link to Teacher Detail Page
 We set the link of each teacher item as  `/pages/teacher/{{teacher.id}}`, allowing navigation from Course Details to Teacher Details:
 For below example data, HandlerBar render the link as `/pages/teacher/3`.
@@ -132,4 +133,6 @@ The QueryService Apply below filter, resulting in  `WHERE teacher in (3)`.
     }
 ```
 This design creates an interconnected online course site, ensuring users can explore course details, instructors.
+
+---
 </details>

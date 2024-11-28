@@ -1,4 +1,5 @@
 
+---
 ## What is Fluent CMS?
 
 **Fluent CMS** is an open-source Content Management System designed to simplify and accelerate web development workflows. While it's particularly suited for CMS projects, it is also highly beneficial for general web applications, reducing the need for repetitive REST/GraphQL API development.

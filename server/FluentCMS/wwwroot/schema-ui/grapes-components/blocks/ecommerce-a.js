@@ -1,6 +1,6 @@
 export const ecommerceA =
     {
-        category:'Multiple Records',
+        category:'Data List',
         name: 'ecommerce-a',
         label: `Ecommerce A`,
         media: `<svg viewBox="-0.5 0 19 19" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns">
@@ -20,7 +20,7 @@ export const ecommerceA =
 <section class="text-gray-600 body-font">
   <div class="container px-5 py-10 mx-auto">
     <h1 class="sm:text-3xl text-2xl font-medium title-font mb-2 text-gray-900">Category Name</h1>
-    <div class="flex flex-wrap -m-4" data-gjs-type="multiple-records" data-source-type="multiple-records">
+    <div class="flex flex-wrap -m-4" data-gjs-type="data-list" data-source="data-list">
       <div class="lg:w-1/4 md:w-1/2 p-4 w-full">
         <a  style="display: inline-block" href="/pages/pageName/{{slug}}">
           <img alt="ecommerce" class="object-cover object-center w-full h-full block" src="/files{{image}}">

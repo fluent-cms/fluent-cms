@@ -20,7 +20,7 @@ public static class RenderUtil
 
     public static Result<DataNode[]> GetDataNodes(this HtmlDocument doc)
     {
-        var nodeCollection = doc.DocumentNode.SelectNodes($"//*[@{Constants.AttrDataSourceType}='{Constants.MultipleRecords}']");
+        var nodeCollection = doc.DocumentNode.SelectNodes($"//*[@{Constants.AttrDataSource}='{Constants.DataList}']");
         if (nodeCollection is null) return Result.Ok<DataNode[]>([]);
         var ret = new List<DataNode>();
         foreach (var n in nodeCollection)

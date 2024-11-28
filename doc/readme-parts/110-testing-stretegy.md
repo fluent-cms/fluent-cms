@@ -1,8 +1,10 @@
 
 
 ## Testing Strategy
-
-<details><summary>This chapter describes Fluent CMS's automated testing strategy</summary>
+<details>
+<summary>
+This chapter describes Fluent CMS's automated testing strategy
+</summary>
 
 Fluent CMS favors integration testing over unit testing because integration tests can catch more real-world issues. For example, when inserting a record into the database, multiple modules are involved:
 - `EntitiesController`

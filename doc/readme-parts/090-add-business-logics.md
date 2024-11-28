@@ -1,7 +1,10 @@
 
+
 ## Add business logics 
 <details>
-  <summary> The following chapter will guide you through add your own business logic by add validation logic, hook functions, and produce events to Kafka. </summary>
+<summary> 
+The following chapter will guide you through add your own business logic by add validation logic, hook functions, and produce events to Kafka. 
+</summary>
 
 ### Add validation logic using simple c# express
 
@@ -14,6 +17,7 @@ You can also add `Validation Error Message`, the end user can see this message i
 `Dynamic Expresso` supports regex, for example you can write Validation Rule `Regex.IsMatch(email, "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$")`.   
 Because `Dyamic Expresso` doesn't support [Verbatim String](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/tokens/verbatim), you have to escape `\`.
 
+---
 ### Extent functionality by add Hook functions
 You need to add your own Business logic, for examples, you want to verify if the email and phone number of entity `teacher` is valid.
 you can register a cook function before insert or update teacher
@@ -32,6 +36,7 @@ registry.EntityPreUpdate.Register("teacher", args =>
 
 ```
 
+---
 ### Produce Events to Event Broker(e.g.Kafka)
 You can also choose produce events to Event Broker(e.g.Kafka), so Consumer Application function can implement business logic in a async manner.
 The producing event functionality is implemented by adding hook functions behind the scene,  to enable this functionality, you need add two line of code,

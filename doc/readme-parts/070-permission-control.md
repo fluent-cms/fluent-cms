@@ -1,7 +1,10 @@
 
 
 ## Permissions Control
-<details> <summary>FluentCMS authorizes access to each entity by using role-based permissions and custom policies that control user actions like create, read, update, and delete.</summary>
+<details> 
+<summary>
+FluentCMS authorizes access to each entity by using role-based permissions and custom policies that control user actions like create, read, update, and delete.
+</summary>
 
 Fluent CMS' permission control module is decoupled from the Content Management module, allowing you to implement your own permission logic or forgo permission control entirely.
 The built-in permission control in Fluent CMS offers four privilege types for each entity:
@@ -23,4 +26,6 @@ And add the follow line after app was built if you want to add  a default user.
 InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]));
 ```
 Behind the scene, fluentCMS leverage the hook mechanism.
+
+---
 </details>

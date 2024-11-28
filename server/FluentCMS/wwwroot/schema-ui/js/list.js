@@ -11,11 +11,10 @@ $(document).ready(function() {
     getUserInfo().then(({data,error})=>
     {
         if (error){
-            console.log(error)
-            window.location.href = "/admin?ref=/schema";
-        }else {
-            renderTable();
+            window.location.href = "/admin?ref=" +encodeURIComponent(window.location.href);
+            return;
         }
+        renderTable();
     });
     async function deleteSchema(e) {
         if (confirm("Do you want to delete schema: " + e.getAttribute('data-name'))) {

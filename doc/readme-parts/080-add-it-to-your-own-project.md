@@ -26,4 +26,5 @@ The following chapter will guid you through add Fluent CMS to your own project b
 
 When the web server is up and running,  you can access Admin Panel by url `/admin`, you can access Schema builder by url `/schema`.
 The example project can be found at [Example Project](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).
+---
 </details>

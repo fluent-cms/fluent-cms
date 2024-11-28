@@ -7,7 +7,15 @@ let editor ;
 $(document).ready(function() {
     $("#entityActions").prop('hidden', schema !=="entity");
     $("#menuActions").prop('hidden', schema !=="menu");
-    editor = loadEditor();
+
+    getUserInfo().then(({data,error})=>
+    {
+        if (error){
+            window.location.href = "/admin?ref=" + encodeURIComponent(window.location.href);
+            return;
+        }
+        editor = loadEditor();
+    });    
 });
 
 function loadEditor() {
