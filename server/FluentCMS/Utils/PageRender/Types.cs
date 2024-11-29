@@ -1,5 +1,7 @@
 using System.Text.Json;
+using FluentCMS.Utils.DictionaryExt;
 using HtmlAgilityPack;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.IdentityModel.Tokens;
 
 namespace FluentCMS.Utils.PageRender;
@@ -38,6 +40,8 @@ public static class PagePartHelper
 
 public static class DataNodeHelper
 {
+    public static StrArgs MergeArgs(this DataNode node, StrArgs args) =>
+        args.MergeByOverwriting(QueryHelpers.ParseQuery(node.DataSource.QueryString));
     public static PagePart ToPagePart(this DataNode node, string page)
     {
         return new PagePart(

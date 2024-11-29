@@ -97,14 +97,13 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
         return ret;
     }
 
-    private async Task LoadRelatedData(Record data, StrArgs strArgs, DataNode[] nodes, CancellationToken token)
+    private async Task LoadRelatedData(Record data, StrArgs args, DataNode[] nodes, CancellationToken token)
     {
-        foreach (var repeatNode in nodes.Where(x => !string.IsNullOrWhiteSpace(x.DataSource.Query)))
+        foreach (var node in nodes.Where(x => !string.IsNullOrWhiteSpace(x.DataSource.Query)))
         {
-            var pagination = new Pagination(repeatNode.DataSource.Offset.ToString(), repeatNode.DataSource.Limit.ToString());
-            var qs = QueryHelpers.ParseQuery(repeatNode.DataSource.QueryString);
-            var result = await querySvc.ListWithAction(repeatNode.DataSource.Query, new Span(), pagination, strArgs.MergeByOverwriting(qs), token);
-            data[repeatNode.DataSource.Field] = result;
+            var pagination = new Pagination(node.DataSource.Offset.ToString(), node.DataSource.Limit.ToString());
+            var result = await querySvc.ListWithAction(node.DataSource.Query, new Span(), pagination, node.MergeArgs(args), token);
+            data[node.DataSource.Field] = result;
         }
     }
 
@@ -117,7 +116,7 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
                 return Result.Fail($"Fail to tag pagination for {node.DataSource.Field}");
             }
 
-            var nodeWithArg = node with { DataSource = node.DataSource with { QueryString = args.ToQueryString() } };
+            var nodeWithArg = node with { DataSource = node.DataSource with { QueryString = node.MergeArgs(args).ToQueryString() } };
             TagPagination(data, value!, nodeWithArg.ToPagePart(ctx.Page.Name));
         }
 

@@ -93,7 +93,7 @@
         <PackageReadmeFile>readme.md</PackageReadmeFile>
         <TargetFramework>net8.0</TargetFramework>
         <PackageId>FluentCMS</PackageId>
-        <Version>0.2.8</Version>
+        <Version>0.2.8.1</Version>
         <Authors>Jason C</Authors>
         <Company>fluent-cms</Company>
         <Description>A headless CMS with GraphQL API and drag-and-drop page designer.</Description>
