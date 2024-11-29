@@ -91,7 +91,7 @@ public static class KateQueryExt
             {
                 foreach (var c in filter.Constraints)
                 {
-                    var ret = filter.Operator == "or"
+                    var ret = filter.MatchType == MatchTypes.MatchAny
                         ? q.ApplyOrConstraint(filedName, c.Match, c.Values)
                         : q.ApplyAndConstraint(filedName, c.Match, c.Values);
                     if (ret.IsFailed)
@@ -108,7 +108,7 @@ public static class KateQueryExt
         return result;
     }
 
-    private static Result<SqlKata.Query> ApplyAndConstraint(this SqlKata.Query query, string field, string match, object[] values)
+    private static Result<SqlKata.Query> ApplyAndConstraint(this SqlKata.Query query, string field, string match, ImmutableArray<object> values)
     {
         return match switch
         {
@@ -128,14 +128,14 @@ public static class KateQueryExt
             Matches.DateIsNot => query.WhereNotDate(field, values[0]),
             Matches.DateBefore => query.WhereDate(field, "<", values[0]),
             Matches.DateAfter => query.WhereDate(field, ">", values[0]),
-            Matches.Between => values?.Length == 2
+            Matches.Between => values.Length == 2
                 ? query.WhereBetween(field, values[0], values[1])
                 : Result.Fail("show provide two values for between"),
             _ => Result.Fail($"{match} is not support ")
         };
     }
 
-    private static Result<SqlKata.Query> ApplyOrConstraint(this SqlKata.Query query, string field, string match, object[] values)
+    private static Result<SqlKata.Query> ApplyOrConstraint(this SqlKata.Query query, string field, string match, ImmutableArray<object> values)
     {
         return match switch
         {
@@ -155,7 +155,7 @@ public static class KateQueryExt
             Matches.DateIsNot => query.OrWhereNotDate(field, values[0]),
             Matches.DateBefore => query.OrWhereDate(field, "<", values[0]),
             Matches.DateAfter => query.OrWhereDate(field, ">", values[0]),
-            Matches.Between => values?.Length == 2
+            Matches.Between => values.Length == 2
                 ? query.OrWhereBetween(field, values[0], values[1])
                 : Result.Fail("show provide two values for between"),
             _ => Result.Fail($"{match} is not support ")
@@ -163,8 +163,9 @@ public static class KateQueryExt
     }
 
     
-    public static void ApplyCursor(this SqlKata.Query? query,  ValidSpan? cursor,ImmutableArray<ValidSort> sorts)
+    public static void ApplyCursor(this SqlKata.Query? query,  ValidSpan? cursor,ValidSort[] sorts)
     {
+        
         if (query is null || cursor?.EdgeItem is null)
         {
             return;
@@ -200,7 +201,10 @@ public static class KateQueryExt
 
         void ApplyCompare(SqlKata.Query q, ValidSort sort)
         {
-            q.Where(sort.Vector.Attribute.AddTableModifier(sort.Vector.TableAlias), cursor.Span.GetCompareOperator(sort.Order), cursor.Edge(sort.Vector.FullPath));
+            q.Where(
+                sort.Vector.Attribute.AddTableModifier(sort.Vector.TableAlias), 
+                cursor.Span.GetCompareOperator(sort.Order), 
+                cursor.Edge(sort.Vector.FullPath));
         }
         
     }

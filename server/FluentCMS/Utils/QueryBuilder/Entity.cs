@@ -62,7 +62,7 @@ public static class EntityHelper
         );
     }
     
-    public static Result<SqlKata.Query> OneQuery(this LoadedEntity e,ImmutableArray<ValidFilter> filters, ImmutableArray<ValidSort> sorts,IEnumerable<LoadedAttribute> attributes)
+    public static Result<SqlKata.Query> OneQuery(this LoadedEntity e,ValidFilter[] filters, ValidSort[] sorts,IEnumerable<LoadedAttribute> attributes)
     {
         var query = e.Basic().Select(attributes.Select(x => x.AddTableModifier()));
         query.ApplyJoin([..filters.Select(x=>x.Vector),..sorts.Select(x=>x.Vector)]);
@@ -83,7 +83,7 @@ public static class EntityHelper
         return query;
     }
 
-    public static SqlKata.Query ListQuery(this LoadedEntity e,ImmutableArray<ValidFilter> filters, ImmutableArray<ValidSort> sorts, 
+    public static SqlKata.Query ListQuery(this LoadedEntity e,ValidFilter[] filters, ValidSort[] sorts, 
         ValidPagination pagination, ValidSpan? cursor, IEnumerable<LoadedAttribute> attributes)
     {
         var query = e.Basic().Select(attributes.Select(x => x.AddTableModifier()));

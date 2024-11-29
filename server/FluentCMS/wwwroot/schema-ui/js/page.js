@@ -1,25 +1,15 @@
 import {loadEditor} from "../grapes-components/grapes.js";
-$(document).ready(function() {
-    const editor = loadEditor("#gjs");
 
-    const searchParams = new URLSearchParams(window.location.search);
-    let id = searchParams.get("id");
-    
-    editor.on('load',async () => {
-        if (id) {
-            $.LoadingOverlay("show");
-            const {data, error} = await one(id);
-            $.LoadingOverlay("hide");
-            if (data){
-                $('title').text(`🏠${data.name} - page setting - Fluent CMS Schema Builder`);
-                id = data.id;
-                restoreFormData(data);
-                editor.setComponents(JSON.parse(data.components));
-                editor.setStyle(JSON.parse(data.styles));
-            }else {
-                $('#errorPanel').text(error).show();
-            }
+let id = new URLSearchParams(window.location.search).get("id");
+$(document).ready(function() {
+    let editor
+    getUserInfo().then(({data,error})=>
+    {
+        if (error){
+            window.location.href = "/admin?ref=" + encodeURIComponent(window.location.href);
+            return;
         }
+        editor = loadEditor("#gjs", loadData);
     });
 
     $('#visitPage').on('click', function () {
@@ -30,7 +20,6 @@ $(document).ready(function() {
     });
     
     $('#savePage').on('click', async function() {
-        console.log(editor.getHtml());
         
         const payload = {
             html: editor.getHtml(),
@@ -68,6 +57,24 @@ $(document).ready(function() {
 });
 
 const controls = ['name','title', 'query', 'queryString'];
+
+async function loadData(editor)  {
+   
+    if (id) {
+        $.LoadingOverlay("show");
+        const {data, error} = await one(id);
+        $.LoadingOverlay("hide");
+        if (data){
+            $('title').text(`🏠${data.name} - page setting - Fluent CMS Schema Builder`);
+            id = data.id;
+            restoreFormData(data);
+            editor.setComponents(JSON.parse(data.components));
+            editor.setStyle(JSON.parse(data.styles));
+        }else {
+            $('#errorPanel').text(error).show();
+        }
+    }
+}
 
 function restoreFormData(payload){
     for (const ctl of controls){

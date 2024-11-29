@@ -12,7 +12,7 @@ public class QueriesController(IQueryService queryService) : ControllerBase
     public async Task<ActionResult> GetList(string name, [FromQuery] Span span, [FromQuery] Pagination pagination,CancellationToken token)
     {
         var dict = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
-        var res = await queryService.List(name, span,pagination, dict,token);
+        var res = await queryService.ListWithAction(name, span,pagination, dict,token);
         return Ok( res);
    
     }
@@ -20,7 +20,7 @@ public class QueriesController(IQueryService queryService) : ControllerBase
     public async Task<ActionResult> GetOne(string name, CancellationToken token)
     {
         var args = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
-        return Ok(await queryService.One(name, args,token));
+        return Ok(await queryService.OneWithAction(name, args,token));
     }
 
     [HttpGet("{name}/part/{attr}")]
@@ -28,12 +28,5 @@ public class QueriesController(IQueryService queryService) : ControllerBase
     {
         var args = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
         return Ok(await queryService.Partial(name, attr, span, limit,args, token));
-    }
-
-    [HttpGet("{name}/many")]
-    public async Task<ActionResult> GetMany(string name, CancellationToken token)
-    {
-        var args = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
-        return Ok(await queryService.Many(name, args,token));
     }
 }

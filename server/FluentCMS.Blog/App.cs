@@ -21,8 +21,8 @@ public static class App
       AddCms(builder, databaseProvider,connectionString);
       AddDbContext(builder, databaseProvider, connectionString);
       builder.AddCmsAuth<MyUser, IdentityRole, AppDbContext>();
-
       var app = builder.Build();
+
       app.UseHttpsRedirection();
       if (app.Environment.IsDevelopment())
       {
@@ -32,9 +32,10 @@ public static class App
       }
       await Migrate(app);
       await app.UseCmsAsync();
-      InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [RoleConstants.Sa]));
-      InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("admin@cms.com", "Admin1!", [RoleConstants.Admin]));
-      app.Run();
+      InvalidParamExceptionFactory.Ok(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [RoleConstants.Sa]));
+      InvalidParamExceptionFactory.Ok(await app.EnsureCmsUser("admin@cms.com", "Admin1!", [RoleConstants.Admin]));
+      await app.RunAsync();
+      
    }
 
    private static async Task Migrate(WebApplication app)
@@ -44,7 +45,7 @@ public static class App
       await ctx.Database.EnsureCreatedAsync();
    }
 
-   private static void AddCms(WebApplicationBuilder builder,string databaseProvider, string connectionString)
+   private static void AddCms(WebApplicationBuilder builder,string databaseProvider, string connectionString )
    {
       switch (databaseProvider)
       {

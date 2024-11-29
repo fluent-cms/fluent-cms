@@ -7,7 +7,7 @@ $(document).ready(function() {
     setPaginationStatus();
     
     function setPaginationStatus(){
-        $('[data-source-type="multiple-records"]').each(function() {
+        $('[data-source="data-list"]').each(function() {
             let pagination = $(this).attr('pagination');
             let first = $(this).attr('first');
             let last = $(this).attr('last');
@@ -16,15 +16,16 @@ $(document).ready(function() {
             if (pagination !== 'Button' || !first && ! last){
                 nav.remove();
             }else{
-                if (!first || first.length === 0) {
-                    nav.find('[data-command="previous"]').hide();
-                }else {
+                if (first && first.length > 0) {
                     nav.find('[data-command="previous"]').show();
+                }else {
+                    nav.find('[data-command="previous"]').hide();
                 }
-                if (!last || last.length === 0){
-                    nav.find('[data-command="next"]').hide();  
-                } else {
+                
+                if (last && last.length > 0){
                     nav.find('[data-command="next"]').show();
+                } else {
+                    nav.find('[data-command="next"]').hide();
                 }
             }
         });
@@ -33,7 +34,7 @@ $(document).ready(function() {
     function handlePaginationButton(event,button, isNext) {
         event.preventDefault();
         let container = button.parentElement.parentElement;
-        let list = container.querySelector('[data-source-type="multiple-records"]');
+        let list = container.querySelector('[data-source="data-list"]');
         loadMore(list.attributes[isNext ? "last" : "first"].value, response => {
             list.outerHTML = response;
             setPaginationStatus();

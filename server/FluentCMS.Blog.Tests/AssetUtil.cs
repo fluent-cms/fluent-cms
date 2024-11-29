@@ -1,7 +1,7 @@
 
 using FluentResults;
 
-namespace FluentCMS.IntegrationTests;
+namespace FluentCMS.Blog.Tests;
 
 public static class ResultUtilExt
 {

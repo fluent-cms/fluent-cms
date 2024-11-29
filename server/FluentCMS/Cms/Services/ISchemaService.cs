@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using FluentCMS.Cms.Models;
 using FluentResults;
 using FluentCMS.Utils.QueryBuilder;
@@ -19,15 +20,20 @@ public static class SchemaName
 
 public interface ISchemaService
 {
-    public Task EnsureEntityInTopMenuBar(Entity entity, CancellationToken cancellationToken);
-    Task<Result> NameNotTakenByOther(Schema schema, CancellationToken cancellationToken);
-    Task<Schema[]> GetAll(string type,CancellationToken cancellationToken);
-    Task<Schema?> GetByIdWithTrigger(int id, CancellationToken cancellationToken = default);
-    Task<Schema?> GetByIdDefault(int id, CancellationToken cancellationToken = default);
-    Task<Schema?> GetByNameDefault(string name, string type, CancellationToken cancellationToken = default);
-    Task<Schema?> GetByNamePrefixDefault(string name, string type, CancellationToken cancellationToken = default);
-    Task<Schema> Save(Schema schema, CancellationToken cancellationToken);
-    Task Delete(int id, CancellationToken cancellationToken);
-    Task EnsureTopMenuBar(CancellationToken cancellationToken);
-    Task EnsureSchemaTable(CancellationToken cancellationToken);
+    Task<Schema[]>  All(string type, IEnumerable<string>? names, CancellationToken cancellationToken = default);
+    Task<Schema[]> AllWithAction(string type, CancellationToken token = default);
+
+    Task<Schema?> ByIdWithAction(int id, CancellationToken token = default);
+    Task<Schema?> ById(int id, CancellationToken cancellationToken = default);
+
+    public Task EnsureEntityInTopMenuBar(Entity entity, CancellationToken token);
+    Task<Result> NameNotTakenByOther(Schema schema, CancellationToken token);
+    Task<Schema?> GetByNameDefault(string name, string type, CancellationToken token = default);
+    Task<Schema?> GetByNamePrefixDefault(string name, string type, CancellationToken token = default);
+    Task<Schema> SaveWithAction(Schema schema, CancellationToken token);
+    Task<Schema> AddOrUpdateByNameWithAction(Schema schema, CancellationToken token);
+    Task Delete(int id, CancellationToken token);
+    Task EnsureTopMenuBar(CancellationToken token);
+    Task EnsureSchemaTable(CancellationToken token);
+
 }

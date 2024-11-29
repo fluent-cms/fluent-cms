@@ -5,7 +5,7 @@ using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.QueryBuilder;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
-namespace FluentCMS.IntegrationTests;
+namespace FluentCMS.Blog.Tests;
 
 public class SchemaApiTest
 {

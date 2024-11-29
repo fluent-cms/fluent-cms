@@ -1,5 +1,5 @@
 export const contentB = {
-    category: 'Multiple Records',
+    category: 'Data List',
     name: 'content-b',
     label: 'Content B',
     media: `<svg fill="#000000" viewBox="0 0 512 512" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -116,7 +116,7 @@ export const contentB = {
       </div>
       <p class="lg:w-1/2 w-full leading-relaxed text-gray-500">Whatever cardigan tote bag tumblr hexagon brooklyn asymmetrical gentrify, subway tile poke farm-to-table. Franzen you probably haven't heard of them man bun deep jianbing selfies heirloom prism food truck ugh squid celiac humblebrag.</p>
     </div>
-    <div class="flex flex-wrap -m-4" data-gjs-type="multiple-records" data-source-type="multiple-records">
+    <div class="flex flex-wrap -m-4" data-gjs-type="data-list" data-source="data-list">
       <div class="xl:w-1/4 md:w-1/2 p-4">
         <div class="bg-gray-100 p-6 rounded-lg">
           <a href="/pages/page-name/{{slug}}" style="display: inline-block" >

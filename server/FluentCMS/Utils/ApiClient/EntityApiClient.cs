@@ -2,7 +2,6 @@ using System.Text.Json;
 using FluentCMS.Utils.HttpClientExt;
 using FluentCMS.Utils.QueryBuilder;
 using FluentResults;
-using Xunit;
 
 namespace FluentCMS.Utils.ApiClient;
 

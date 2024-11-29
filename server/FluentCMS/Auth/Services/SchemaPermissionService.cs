@@ -14,7 +14,6 @@ using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 namespace FluentCMS.Auth.Services;
 using static InvalidParamExceptionFactory;
 
-
 public class SchemaPermissionService<TUser>(
     IHttpContextAccessor contextAccessor,
     SignInManager<TUser> signInManager,
@@ -22,141 +21,118 @@ public class SchemaPermissionService<TUser>(
     ISchemaService schemaService
 ) :ISchemaPermissionService
     where TUser : IdentityUser, new()
-
 {
     public string[] GetAll()
     {
-        if (contextAccessor.HttpContext.HasRole(RoleConstants.Sa))
+        if (!contextAccessor.HttpContext.HasRole(RoleConstants.Sa) &&
+            !contextAccessor.HttpContext.HasRole(RoleConstants.Admin))
         {
-            return [];
+            throw new InvalidParamException($"Fail to get schema list, you don't have [Sa] or [Admin] role.");
         }
-
-        if (contextAccessor.HttpContext.HasRole(RoleConstants.Admin))
-        {
-            return contextAccessor.HttpContext!.User.Claims
-                .Where(x=>x.Type is AccessScope.RestrictedAccess or AccessScope.FullAccess or AccessScope.FullRead or AccessScope.RestrictedRead)
-                .Select(x=>x.Value)
-                .ToArray();
-        }
-        
-        throw new InvalidParamException($"You don't have permission to access schemas");
+        return [];
     }
 
-    public void GetOne(string schemaName)
+    public void GetOne(Schema schema)
     {
-        if (contextAccessor.HttpContext.HasRole(RoleConstants.Sa) 
-            || contextAccessor.HttpContext.HasClaims(AccessScope.FullAccess,schemaName)
-            || contextAccessor.HttpContext.HasClaims(AccessScope.FullRead,schemaName)
-            || contextAccessor.HttpContext.HasClaims(AccessScope.RestrictedAccess,schemaName)
-            || contextAccessor.HttpContext.HasClaims(AccessScope.RestrictedRead,schemaName)
-            )
+        if (!contextAccessor.HttpContext.HasRole(RoleConstants.Sa) &&
+            !contextAccessor.HttpContext.HasRole(RoleConstants.Admin))
         {
-            return;
+            throw new InvalidParamException($"You don't have permission to access {schema.Type}:{schema.Name}");
         }
-
-        throw new InvalidParamException($"You don't have permission to access {schemaName}");
     }
-
 
     public async Task Delete(int schemaId)
     {
-        var currentUserId = MustGetCurrentUserId();
-        var find = NotNull(await schemaService.GetByIdDefault(schemaId)).ValOrThrow($"can not find schema");
-        await CheckSchemaPermission(find, currentUserId);
+        var find = NotNull(await schemaService.ById(schemaId)).ValOrThrow($"can not find schema by id ${schemaId}");
+        await EnsureWritePermissionAsync(find);
     }
 
     public async Task<Schema> Save(Schema schema)
     {
-        var currentUserId = MustGetCurrentUserId();
-        await CheckSchemaPermission(schema, currentUserId);
-        //create
-        if (schema.Id == 0)
+        if (!contextAccessor.HttpContext.GetUserId(out var userId))
         {
-            schema = schema with { CreatedBy = currentUserId };
-            if (schema.Type == SchemaType.Entity)
-            {
-                await EnsureUserHaveAccessEntity(schema);
-                schema = CheckResult(EnsureCreatedByField(schema));
-            }
+            throw new InvalidParamException($"You are not logged in, can not save schema {schema.Type} [{schema.Name}]");
         }
+        await EnsureWritePermissionAsync(schema);
+        
+        if (schema.Id != 0) return schema;
+        
+        schema = schema with { CreatedBy = userId};
+        if (schema.Type != SchemaType.Entity) return schema;
+        
+        await EnsureCurrentUserHaveEntityAccess(schema);
+        schema = Ok(EnsureSchemaHaveCreatedByField(schema));
         return schema;
     }
 
-    private async Task CheckSchemaPermission(Schema schema, string currentUserId)
+    private async Task EnsureWritePermissionAsync(Schema schema)
     {
-        switch (schema.Type)
+        if (contextAccessor.HttpContext?.User.Identity?.IsAuthenticated == false)
         {
-            case SchemaType.Menu:
-                True(contextAccessor.HttpContext.HasRole(RoleConstants.Sa))
-                    .ThrowNotTrue("Only Supper Admin has the permission to modify menu");
-                break;
-            default:
-                await SaOrAdminHaveAccessToSchema(schema, currentUserId);
-                break;
+            throw new InvalidParamException($"You are not logged in, can not save {schema.Type} [{schema.Name}]");
+        }
+        var hasPermission = schema.Type switch
+        {
+            SchemaType.Menu => contextAccessor.HttpContext.HasRole(RoleConstants.Sa),
+            _ when schema.Id == 0 => 
+                contextAccessor.HttpContext.HasRole(RoleConstants.Admin) || 
+                contextAccessor.HttpContext.HasRole(RoleConstants.Sa),
+            _ => 
+                contextAccessor.HttpContext.HasRole(RoleConstants.Sa) || 
+                await IsCreatedByCurrentUser(schema)
+        };
+
+        if (!hasPermission)
+        {
+            throw new InvalidParamException($"You don't have permission to save {schema.Type} [{schema.Name}]");
         }
     }
 
-    private async Task EnsureUserHaveAccessEntity(Schema schema)
+    private async Task EnsureCurrentUserHaveEntityAccess(Schema schema)
     {
-        if (contextAccessor.HttpContext.HasRole(RoleConstants.Sa))
-        {
-            return;
-        }
-
-        //use have restricted access to the entity data
         var user = await userManager.GetUserAsync(contextAccessor.HttpContext!.User);
-        var claims = await userManager.GetClaimsAsync(user!);
-
-        if (claims.FirstOrDefault(x =>
-                x.Value == schema.Name && x.Type is AccessScope.RestrictedAccess or AccessScope.FullAccess) == null)
+        if (user == null)
         {
-            await userManager.AddClaimAsync(user!, new Claim(AccessScope.RestrictedAccess, schema.Name));
+            throw new Exception("User not found.");
         }
 
-        await signInManager.RefreshSignInAsync(user!);
+        var claims = await userManager.GetClaimsAsync(user);
+
+        var hasAccess = claims.Any(claim => 
+            claim.Value == schema.Name && 
+            (claim.Type == AccessScope.RestrictedAccess || claim.Type == AccessScope.FullAccess)
+        );
+
+        if (!hasAccess)
+        {
+            await userManager.AddClaimAsync(user, new Claim(AccessScope.RestrictedAccess, schema.Name));
+            await signInManager.RefreshSignInAsync(user);
+        }
     }
 
-    private static Result<Schema> EnsureCreatedByField(Schema schema)
+    private static Result<Schema> EnsureSchemaHaveCreatedByField(Schema schema)
     {
         var entity = schema.Settings.Entity;
-        if (entity is null) return Result.Fail("Invalid Entity payload");
+        if (entity is null) return Result.Fail("can not ensure schema have created_by field, invalid Entity payload");
         if (schema.Settings.Entity?.Attributes.FindOneAttr(Constants.CreatedBy) is not null) return schema;
 
         ImmutableArray<Attribute> attributes =
         [
             ..entity.Attributes,
-                new Attribute(Field: Constants.CreatedBy, Header: Constants.CreatedBy, DataType: DataType.String)
-            
+            new(Field: Constants.CreatedBy, Header: Constants.CreatedBy, DataType: DataType.String)
         ];
         return schema with{Settings = new Settings(Entity: entity with{Attributes = attributes})};
     }
 
-    private async Task SaOrAdminHaveAccessToSchema(Schema schema, string currentUserId)
+    private async Task<bool> IsCreatedByCurrentUser(Schema schema)
     {
-        if (contextAccessor.HttpContext.HasRole(RoleConstants.Sa))
+        if (!contextAccessor.HttpContext.GetUserId(out var userId))
         {
-            return;
+            throw new InvalidParamException("Can not verify schema is created by you, you are not logged in.");
         }
-
-        if (!contextAccessor.HttpContext.HasRole(RoleConstants.Admin))
-        {
-            throw new InvalidParamException("Only Admin and Super Admin can has this permission");
-        }
-
-        //modifying schema, make sure admin can only modify his own schema
-        var isUpdate = schema.Id > 0;
-
-        if (isUpdate)
-        {
-            var find = NotNull(await schemaService.GetByIdDefault(schema.Id)).ValOrThrow("not find schema");
-            if (find.CreatedBy != currentUserId)
-            {
-                throw new InvalidParamException("You are not supper admin,  you can only change your own schema");
-            }
-        }
+        var find = NotNull(await schemaService.ById(schema.Id))
+            .ValOrThrow($"Can not verify schema is created by you, can not find schema by id [{schema.Id}]");
+        return find.CreatedBy == userId;
     }
-
-    private string MustGetCurrentUserId() =>
-        StrNotEmpty(contextAccessor.HttpContext.GetUserId()).ValOrThrow("not logged in");
 }
   

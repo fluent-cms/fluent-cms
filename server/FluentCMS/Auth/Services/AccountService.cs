@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using System.Security.Claims;
 using FluentCMS.Auth.models;
 using FluentCMS.Services;
@@ -54,14 +53,27 @@ public class AccountService<TUser, TRole,TCtx>(
             Email: item.Key.Email!,
             Id: item.Key.Id,
             Roles: [..item.Values.Where(x => x.role is not null).Select(x => x.role.Name!).Distinct()],
-            ReadWriteEntities: [..item.Values.Where(x => x.userClaim?.ClaimType == AccessScope.FullAccess)
-                .Select(x => x.userClaim.ClaimValue!).Distinct()],
-            RestrictedReadWriteEntities: [..item.Values.Where(x => x.userClaim?.ClaimType == AccessScope.RestrictedAccess)
-                .Select(x => x.userClaim.ClaimValue!).Distinct()],
-            ReadonlyEntities: [..item.Values.Where(x => x.userClaim?.ClaimType == AccessScope.FullRead)
-                .Select(x => x.userClaim.ClaimValue!).Distinct()],
-            RestrictedReadonlyEntities: [..item.Values.Where(x => x.userClaim?.ClaimType == AccessScope.RestrictedRead)
-                .Select(x => x.userClaim.ClaimValue!).Distinct()]
+            ReadWriteEntities:
+            [
+                ..item.Values.Where(x => x.userClaim?.ClaimType == AccessScope.FullAccess)
+                    .Select(x => x.userClaim.ClaimValue!).Distinct()
+            ],
+            RestrictedReadWriteEntities:
+            [
+                ..item.Values.Where(x => x.userClaim?.ClaimType == AccessScope.RestrictedAccess)
+                    .Select(x => x.userClaim.ClaimValue!).Distinct()
+            ],
+            ReadonlyEntities:
+            [
+                ..item.Values.Where(x => x.userClaim?.ClaimType == AccessScope.FullRead)
+                    .Select(x => x.userClaim.ClaimValue!).Distinct()
+            ],
+            RestrictedReadonlyEntities:
+            [
+                ..item.Values.Where(x => x.userClaim?.ClaimType == AccessScope.RestrictedRead)
+                    .Select(x => x.userClaim.ClaimValue!).Distinct()
+            ],
+            AllowedMenus: []
         );
     }
 
@@ -83,7 +95,12 @@ public class AccountService<TUser, TRole,TCtx>(
         (
             Email : x.Key.Email!,
             Id : x.Key.Id,
-            Roles : [..x.Roles.Where(val=>val?.role is not null).Select(val => val.role.Name!).Distinct()]
+            Roles : [..x.Roles.Where(val=>val?.role is not null).Select(val => val.role.Name!).Distinct()],
+            AllowedMenus:[],
+            ReadonlyEntities:[],
+            ReadWriteEntities:[],
+            RestrictedReadonlyEntities:[],
+            RestrictedReadWriteEntities:[]
         ))];
     }
 
@@ -137,11 +154,11 @@ public class AccountService<TUser, TRole,TCtx>(
         True(accessor.HttpContext.HasRole(RoleConstants.Sa)).ThrowNotTrue("Only supper admin have permission");
         var user = await MustFindUser(dto.Id);
         var claims = await userManager.GetClaimsAsync(user);
-        CheckResult(await AssignRole(user, dto.Roles));
-        CheckResult(await AssignClaim(user, claims, AccessScope.FullAccess, dto.ReadWriteEntities));
-        CheckResult(await AssignClaim(user, claims, AccessScope.RestrictedAccess, dto.RestrictedReadWriteEntities));
-        CheckResult(await AssignClaim(user, claims, AccessScope.FullRead, dto.ReadonlyEntities));
-        CheckResult(await AssignClaim(user, claims, AccessScope.RestrictedRead, dto.RestrictedReadonlyEntities));
+        Ok(await AssignRole(user, dto.Roles));
+        Ok(await AssignClaim(user, claims, AccessScope.FullAccess, dto.ReadWriteEntities));
+        Ok(await AssignClaim(user, claims, AccessScope.RestrictedAccess, dto.RestrictedReadWriteEntities));
+        Ok(await AssignClaim(user, claims, AccessScope.FullRead, dto.ReadonlyEntities));
+        Ok(await AssignClaim(user, claims, AccessScope.RestrictedRead, dto.RestrictedReadonlyEntities));
     }
 
     private async Task<TUser> MustFindUser(string id)
@@ -150,8 +167,9 @@ public class AccountService<TUser, TRole,TCtx>(
         return NotNull(user).ValOrThrow($"not find user by id {id}");
     }
 
-    private async Task<Result> AssignClaim(TUser user, IList<Claim> claims, string type, ImmutableArray<string> values)
+    private async Task<Result> AssignClaim(TUser user, IList<Claim> claims, string type, IEnumerable<string> list)
     {
+        string[] values = [..list];
         var currentValues = claims.Where(x => x.Type == type).Select(x => x.Value).ToArray();
         // Calculate roles to be removed and added
         var toRemove = currentValues.Except(values).ToArray();
@@ -179,8 +197,9 @@ public class AccountService<TUser, TRole,TCtx>(
         return Result.Ok();
     }
 
-    private async Task<Result> AssignRole(TUser user, ImmutableArray<string> roles)
+    private async Task<Result> AssignRole(TUser user, IEnumerable<string> list )
     {
+        string[] roles = [..list];
         var currentRoles = await userManager.GetRolesAsync(user);
 
         // Calculate roles to be removed and added
@@ -248,17 +267,18 @@ public class AccountService<TUser, TRole,TCtx>(
         {
             throw new InvalidParamException("Role name can not be null");
         }
-        CheckResult(await EnsureRoles([roleDto.Name]));
+        Ok(await EnsureRoles([roleDto.Name]));
         var role = await roleManager.FindByNameAsync(roleDto.Name);
         var claims =await roleManager.GetClaimsAsync(role!);
-        CheckResult(await AddClaimsToRole(role!, claims, AccessScope.FullAccess, roleDto.ReadWriteEntities));
-        CheckResult(await AddClaimsToRole(role!, claims, AccessScope.RestrictedAccess, roleDto.RestrictedReadWriteEntities));
-        CheckResult(await AddClaimsToRole(role!, claims, AccessScope.FullRead, roleDto.ReadonlyEntities));
-        CheckResult(await AddClaimsToRole(role!, claims, AccessScope.RestrictedRead, roleDto.RestrictedReadonlyEntities));
+        Ok(await AddClaimsToRole(role!, claims, AccessScope.FullAccess, roleDto.ReadWriteEntities));
+        Ok(await AddClaimsToRole(role!, claims, AccessScope.RestrictedAccess, roleDto.RestrictedReadWriteEntities));
+        Ok(await AddClaimsToRole(role!, claims, AccessScope.FullRead, roleDto.ReadonlyEntities));
+        Ok(await AddClaimsToRole(role!, claims, AccessScope.RestrictedRead, roleDto.RestrictedReadonlyEntities));
     }
 
-    private async Task<Result> AddClaimsToRole(TRole role,  IList<Claim> claims, string type, ImmutableArray<string> values )
+    private async Task<Result> AddClaimsToRole(TRole role,  IList<Claim> claims, string type, IEnumerable<string> list )
     {
+        string[] values = [..list];
         var currentValues = claims.Where(x => x.Type == type).Select(x => x.Value).ToArray();
         // Calculate roles to be removed and added
         var toRemove = currentValues.Except(values).ToArray();

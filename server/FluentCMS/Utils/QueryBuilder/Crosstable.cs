@@ -31,7 +31,7 @@ public static class CrosstableHelper
     public static Crosstable Crosstable(LoadedEntity sourceEntity, LoadedEntity targetEntity,
         LoadedAttribute crossAttribute)
     {
-        var tableName = GetTableName();
+        var tableName = GetCrosstableTableName(sourceEntity.Name, targetEntity.Name);
         var id = new LoadedAttribute(tableName, DefaultFields.Id);
         var deleted = new LoadedAttribute(tableName, DefaultFields.Deleted);
         sourceEntity = sourceEntity with
@@ -71,13 +71,15 @@ public static class CrosstableHelper
             TargetAttribute: targetAttribute
         );
 
-        string GetTableName()
-        {
-            string[] strs = [sourceEntity.Name, targetEntity.Name];
-            var sorted = strs.OrderBy(x => x).ToArray();
 
-            return $"{sorted[0]}_{sorted[1]}";
-        }
+    }
+
+    public static string GetCrosstableTableName(string sourceName, string targetName)
+    {
+        string[] arr = [sourceName, targetName];
+        var sorted = arr.OrderBy(x => x).ToArray();
+
+        return $"{sorted[0]}_{sorted[1]}";
     }
 
     public static SqlKata.Query Delete(this Crosstable c, object id, Record[] targetItems)
@@ -117,7 +119,7 @@ public static class CrosstableHelper
         this Crosstable c,
         IEnumerable<LoadedAttribute> selectAttributes,
         IEnumerable<ValidFilter> filters,
-        ImmutableArray<ValidSort> sorts,
+        ValidSort[] sorts,
         ValidSpan? span,
         ValidPagination? pagination,
         IEnumerable<object> sourceIds)

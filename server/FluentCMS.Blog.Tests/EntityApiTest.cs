@@ -1,6 +1,6 @@
 using FluentCMS.Utils.ApiClient;
 
-namespace FluentCMS.IntegrationTests;
+namespace FluentCMS.Blog.Tests;
 public class EntityApiTest 
 {
     private const string Post = "entity_api_test_post";

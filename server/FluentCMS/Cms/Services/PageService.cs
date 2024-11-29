@@ -13,31 +13,32 @@ using static InvalidParamExceptionFactory;
 
 public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc, PageTemplate template) : IPageService
 {
-    public async Task<string> GetDetail(string name, string param, QueryArgs args, CancellationToken token)
+    public async Task<string> GetDetail(string name, string param, StrArgs strArgs, CancellationToken token)
     {
         //detail page format <pageName>/{<routerName>}, not know the exact page name now, match with prefix '/{'. 
         var ctx = (await GetContext(name+ "/{" , true,token)).ToPageContext();
-        args = GetLocalPaginationArgs(ctx, args); 
+        strArgs = GetLocalPaginationArgs(ctx, strArgs); 
         
         var routerName =ctx.Page.Name.Split("/").Last()[1..^1]; // remove '{' and '}'
-        args[routerName] = param;
+        strArgs[routerName] = param;
         
         var data = string.IsNullOrWhiteSpace(ctx.Page.Query)
             ? new Dictionary<string, object>()
-            : await querySvc.One(ctx.Page.Query, args, token);
+            : NotNull(await querySvc.OneWithAction(ctx.Page.Query, strArgs, token))
+                .ValOrThrow($"not find data by of {param}");
         
-        return await RenderPage(ctx, data, args, token);
+        return await RenderPage(ctx, data, strArgs, token);
     }
 
-    public async Task<string> Get(string name, QueryArgs args, CancellationToken token)
+    public async Task<string> Get(string name, StrArgs strArgs, CancellationToken token)
     {
         var ctx = await GetContext(name , false, token);
-        return await RenderPage(ctx.ToPageContext(),  new Dictionary<string, object>(), args, token);
+        return await RenderPage(ctx.ToPageContext(),  new Dictionary<string, object>(), strArgs, token);
     }
 
-    public async Task<string> GetPart(string pageId, CancellationToken token)
+    public async Task<string> GetPart(string partStr, CancellationToken token)
     {
-        var part = NotNull(PagePartHelper.Parse(pageId)).ValOrThrow("Invalid Partial Part");
+        var part = NotNull(PagePartHelper.Parse(partStr)).ValOrThrow("Invalid Partial Part");
         var ctx = (await GetContext(part.Page, false, token)).ToPartialContext(part.NodeId);
 
         var cursor = new Span(part.First, part.Last);
@@ -46,8 +47,8 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
         Record[] items;
         if (!string.IsNullOrWhiteSpace(part.DataSource.Query))
         {
-            var pagination = new Pagination(0, part.DataSource.Limit);
-            items = await querySvc.List(part.DataSource.Query, cursor, pagination, args, token);
+            var pagination = new Pagination(null, part.DataSource.Limit.ToString());
+            items = await querySvc.ListWithAction(part.DataSource.Query, cursor, pagination, args, token);
         }
         else
         {
@@ -69,10 +70,10 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
         return render(data);
     }
 
-    private async Task<string> RenderPage(PageContext ctx, Record data, QueryArgs args, CancellationToken token)
+    private async Task<string> RenderPage(PageContext ctx, Record data, StrArgs args, CancellationToken token)
     {
-        await LoadRelatedData(ctx.Page.Name, data, args, ctx.Nodes, token);
-        CheckResult(TagPagination(ctx, data));
+        await LoadRelatedData(data, args, ctx.Nodes, token);
+        Ok(TagPagination(ctx, data,args));
 
         foreach (var repeatNode in ctx.Nodes)
         {
@@ -84,9 +85,9 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
         return template.Build(title, body, ctx.Page.Css);
     }
 
-    private static QueryArgs GetLocalPaginationArgs(PageContext ctx,QueryArgs args)
+    private static StrArgs GetLocalPaginationArgs(PageContext ctx,StrArgs strArgs)
     {
-        var ret = new QueryArgs(args);
+        var ret = new StrArgs(strArgs);
         foreach (var node in ctx.Nodes.Where(x => 
                 string.IsNullOrWhiteSpace(x.DataSource.Query) && (x.DataSource.Offset > 0 || x.DataSource.Limit > 0)))
         {
@@ -96,18 +97,18 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
         return ret;
     }
 
-    private async Task LoadRelatedData(string name, Record data, QueryArgs args, DataNode[] nodes, CancellationToken token)
+    private async Task LoadRelatedData(Record data, StrArgs strArgs, DataNode[] nodes, CancellationToken token)
     {
         foreach (var repeatNode in nodes.Where(x => !string.IsNullOrWhiteSpace(x.DataSource.Query)))
         {
-            var pagination = new Pagination(repeatNode.DataSource.Offset, repeatNode.DataSource.Limit);
+            var pagination = new Pagination(repeatNode.DataSource.Offset.ToString(), repeatNode.DataSource.Limit.ToString());
             var qs = QueryHelpers.ParseQuery(repeatNode.DataSource.QueryString);
-            var result = await querySvc.List(repeatNode.DataSource.Query, new Span(), pagination, args.MergeByOverwriting(qs), token);
+            var result = await querySvc.ListWithAction(repeatNode.DataSource.Query, new Span(), pagination, strArgs.MergeByOverwriting(qs), token);
             data[repeatNode.DataSource.Field] = result;
         }
     }
 
-    private static Result TagPagination(PageContext ctx, Record data)
+    private static Result TagPagination(PageContext ctx, Record data, StrArgs args)
     {
         foreach (var node in ctx.Nodes.Where(x => x.DataSource.Offset > 0 || x.DataSource.Limit > 0))
         {
@@ -115,7 +116,9 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
             {
                 return Result.Fail($"Fail to tag pagination for {node.DataSource.Field}");
             }
-            TagPagination(data, value!, node.ToPagePart(ctx.Page.Name));
+
+            var nodeWithArg = node with { DataSource = node.DataSource with { QueryString = args.ToQueryString() } };
+            TagPagination(data, value!, nodeWithArg.ToPagePart(ctx.Page.Name));
         }
 
         return Result.Ok();
@@ -125,24 +128,24 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
     {
         if (SpanHelper.HasPrevious(items))
         {
-            data[RenderUtil.FirstAttrTag(token.DataSource.Field) ] = (token with { First = SpanHelper.FirstCursor(items), Last = ""}).GenerateToken();
+            data[RenderUtil.FirstAttrTag(token.DataSource.Field) ] = PagePartHelper.ToString((token with { First = SpanHelper.FirstCursor(items), Last = ""}));
         }
 
         if (SpanHelper.HasNext(items))
         {
-            data[RenderUtil.LastAttrTag(token.DataSource.Field)] = (token with { Last = SpanHelper.LastCursor(items),First = ""}).GenerateToken();
+            data[RenderUtil.LastAttrTag(token.DataSource.Field)] = PagePartHelper.ToString((token with { Last = SpanHelper.LastCursor(items),First = ""}));
         }
     }
     record Context(Page Page, HtmlDocument Doc)
     {
-        public PartialContext ToPartialContext(string nodeId) => new (Page, Doc, Doc.GetElementbyId(nodeId));
+        public PartialContext ToPartialContext(string nodeId) => new (Page, Doc.GetElementbyId(nodeId));
     
-        public PageContext ToPageContext() => new (Page, Doc, CheckResult(Doc.GetDataNodes()));
+        public PageContext ToPageContext() => new (Page, Doc, Ok(Doc.GetDataNodes()));
     }
 
     record PageContext(Page Page, HtmlDocument HtmlDocument, DataNode[] Nodes);
     
-    record PartialContext(Page Page, HtmlDocument HtmlDocument, HtmlNode Node);
+    record PartialContext(Page Page, HtmlNode Node);
     
     private async Task<Context> GetContext(string name, bool matchPrefix, CancellationToken token)
     {

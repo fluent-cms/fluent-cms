@@ -6,14 +6,14 @@ namespace FluentCMS.Utils.PageRender;
 
 public static class Constants
 {
-    public const string AttrDataSourceType = "data-source-type";
+    public const string AttrDataSource = "data-source";
     public const string AttrQuery = "query";
     public const string AttrOffset = "offset";
     public const string AttrLimit = "limit";
     public const string AttrQueryString = "qs";
     public const string AttrField = "field";
     public const string AttrPagination = "pagination";
-    public const string MultipleRecords = "multiple-records";
+    public const string DataList = "data-list";
 }
 
 public enum PageMode { None, Button, InfiniteScroll }
@@ -23,7 +23,7 @@ public record PagePart(string Page, string NodeId, string First, string Last, Da
 
 public static class PagePartHelper
 {
-    public static string GenerateToken(this PagePart part)
+    public static string ToString(this PagePart part)
     {
         var cursor = JsonSerializer.Serialize(part);
         return Base64UrlEncoder.Encode(cursor);

@@ -1,7 +1,11 @@
 
 
 ## Development Guide
-<details><summary>The backend is written in ASP.NET Core, the Admin Panel uses React, and the Schema Builder is developed with jQuery</summary>
+<details>
+<summary>
+The backend is written in ASP.NET Core, the Admin Panel uses React, and the Schema Builder is developed with jQuery.
+</summary>
+
 
 ### System Overviews
 ![System Overview](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/overview.png)   
@@ -29,4 +33,6 @@
     - **jsoneditor**: [JSON Editor](https://github.com/json-editor/json-editor)
 
 ![Schema Builder Sequence](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/schema-builder-sequence.png)
+
+---
 </details>

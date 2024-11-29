@@ -61,10 +61,7 @@ public static class SpanHelper
 
     public static Record[] ToPage(this Span c, Record[] items, int takeCount)
     {
-        if (items.Length == 0)
-        {
-            return [];
-        }
+        if (items.Length == 0) return [];
 
         var hasMore = items.Length > takeCount;
         if (hasMore)
@@ -90,13 +87,43 @@ public static class SpanHelper
         items.Last()[SpanConstants.HasNextPage] = next;
         return items;
     }
+    public static void SetSpan(bool needAddCursor, ImmutableArray<GraphAttribute> attrs, Record[] items,
+        IEnumerable<ValidSort> sorts, object? sourceId)
+    {
+        var arr = sorts.ToArray();
+        if (needAddCursor)
+        {
+            if (items.Length == 0) return;
+            SpanHelper.SetCursor(sourceId, items.First(), arr);
+            if (items.Length > 1) SetCursor(sourceId, items.Last(), arr);
+        }
 
-    public static void SetCursor(object? sourceId, Record item, IEnumerable<Sort> sorts)
+        foreach (var item in items)
+        {
+            foreach (var attribute in attrs.GetAttrByType(DisplayType.Lookup))
+            {
+                if (item.TryGetValue(attribute.Field, out var value) && value is Record record)
+                {
+                    SetSpan(false, attribute.Selection, [record], [], null);
+                }
+            }
+
+            foreach (var attribute in attrs.GetAttrByType(DisplayType.Crosstable))
+            {
+                if (!item.TryGetValue(attribute.Field, out var value) || value is not Record[] records ||
+                    records.Length <= 0) continue;
+                var nextSourceId = records.First()[attribute.Crosstable!.SourceAttribute.Field];
+                SetSpan(true, attribute.Selection, records, attribute.Sorts, nextSourceId);
+            }
+        }
+    }
+
+    public static void SetCursor(object? sourceId, Record item, IEnumerable<ValidSort> sorts)
     {
         var dict = new Dictionary<string, object>();
         foreach (var sort in sorts)
         {
-            if (item.GetValueByPath<object>(sort.FieldName, out var val)) dict[sort.FieldName] = val!;
+            if (item.GetValueByPath<object>(sort.Field, out var val)) dict[sort.Field] = val!;
         }
 
         if (sourceId is not null)

@@ -9,9 +9,14 @@ public class DummyProfileService: IProfileService
     {
         return new UserDto
         (
+            Id:"",
             Email : "sadmin@cms.com",
             Roles : [RoleConstants.Sa],
-            AllowedMenus : [UserConstants.MenuSchemaBuilder]
+            AllowedMenus : [UserConstants.MenuSchemaBuilder],
+            ReadonlyEntities:[],
+            RestrictedReadonlyEntities:[],
+            ReadWriteEntities:[],
+            RestrictedReadWriteEntities:[]
         );
     }
     

@@ -1,10 +1,14 @@
-using FluentCMS.Cms.Models;
+using FluentCMS.Utils.Graph;
 using FluentCMS.Utils.QueryBuilder;
+using Schema = FluentCMS.Cms.Models.Schema;
 
 namespace FluentCMS.Cms.Services;
 
-public interface IQuerySchemaService 
+public interface IQuerySchemaService
 {
-    Task<LoadedQuery> GetByNameAndCache(string name, CancellationToken token);
-    Task<Schema> Save(Schema schema, CancellationToken cancellationToken);
+    Task<LoadedQuery> ByGraphQlRequest(GraphQlRequestDto qlRequest);
+    Task<LoadedQuery> ByNameAndCache(string name, CancellationToken token);
+    Task Delete(Schema schema, CancellationToken token);
+    string CreateQueryUrl();
+
 }

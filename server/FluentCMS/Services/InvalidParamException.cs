@@ -70,7 +70,7 @@ public static class InvalidParamExceptionFactory
     {
         return new MustTrueExceptionBuilder(condition);
     }
-    public static void CheckResult(Result? result)
+    public static void Ok(Result? result)
     {
         if (result is not null && result.IsFailed)
         {
@@ -78,7 +78,7 @@ public static class InvalidParamExceptionFactory
         }
     }
     
-    public static T CheckResult<T>(Result<T> result)
+    public static T Ok<T>(Result<T> result)
     {
         return result switch
         {

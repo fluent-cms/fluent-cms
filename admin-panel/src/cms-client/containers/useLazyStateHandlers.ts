@@ -1,13 +1,24 @@
 import {useReducer} from "react";
 import {FilterMatchMode} from "primereact/api";
+import {decodeLazyState} from "../services/lazyState";
 
-function createDefaultState(rows:any, cols:any[]) {
+function createDefaultState(rows:any, cols:any[],qs: string) {
     const defaultState :any= {
         first: 0,
         rows,
         filters : createDefaultFilter(cols),
     }
-
+    if (qs){
+        const s = decodeLazyState(qs);
+        defaultState.first = s.first;
+        defaultState.rows = s.rows;
+        defaultState.multiSortMeta = s.multiSortMeta;
+        Object.keys(defaultState.filters).forEach(k =>{
+           if (s.filters[k]){
+               defaultState.filters[k] = s.filters[k];
+           }
+        });
+    }
     return defaultState
 }
 
@@ -45,8 +56,9 @@ function reducer(state: any, action: any) {
     return state
 }
 
-export function useLazyStateHandlers(rows:number, cols: any[]) {
-    const [lazyState, dispatch] = useReducer(reducer, createDefaultState(rows, cols))
+export function useLazyStateHandlers(rows:number, cols: any[], qs: string) {
+    const defaultState:any = createDefaultState(rows,cols,qs);
+    const [lazyState, dispatch] = useReducer(reducer, defaultState)
     return {
         lazyState,
         eventHandlers: {

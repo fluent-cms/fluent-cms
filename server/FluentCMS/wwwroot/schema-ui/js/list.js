@@ -11,11 +11,10 @@ $(document).ready(function() {
     getUserInfo().then(({data,error})=>
     {
         if (error){
-            console.log(error)
-            window.location.href = "/admin?ref=/schema";
-        }else {
-            renderTable();
+            window.location.href = "/admin?ref=" +encodeURIComponent(window.location.href);
+            return;
         }
+        renderTable();
     });
     async function deleteSchema(e) {
         if (confirm("Do you want to delete schema: " + e.getAttribute('data-name'))) {
@@ -39,10 +38,21 @@ $(document).ready(function() {
             const $tableBody = $('#' + elementId);
             data.forEach(item => {
                 const $row = $('<tr></tr>');
-                const target = item.type ==='page'? 'page.html':'edit.html';
+                let url = ""
+                switch (item.type){
+                    case 'page':
+                        url = `page.html?schema=${item.type}&id=${item.id}`;
+                        break;
+                    case 'query':
+                        url = item.settings.query.ideUrl;
+                        break;
+                    default:
+                        url = `edit.html?schema=${item.type}&id=${item.id}`;
+                        break;
+                }
                 $row.html(`
                         <td>${item.id}</td>
-                        <td><a href="${target}?schema=${item.type}&id=${item.id}">${item.name}</a></td>
+                        <td><a href="${url}">${item.name}</a></td>
                         <td>${item.type}</td>
                         <td><button class="btn badge btn-danger btn-sm delete-btn" id="${item.id}" data-name="${item.name}">Delete</button></td>
                     `);

@@ -7,7 +7,7 @@ namespace FluentCMS.Auth.Services;
 public interface ISchemaPermissionService
 {
     string[] GetAll();
-    void GetOne(string schemaName);
-    Task Delete(int schemaId);
+    void GetOne(Schema schema);
+    Task Delete(int id);
     Task<Schema> Save(Schema schema); 
 }

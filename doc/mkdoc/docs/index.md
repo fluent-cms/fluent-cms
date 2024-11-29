@@ -2,508 +2,585 @@
 Welcome to [Fluent CMS](https://github.com/fluent-cms/fluent-cms)! 
 If you'd like to contribute to the project, please check out our [CONTRIBUTING guide](https://github.com/fluent-cms/fluent-cms/blob/main/CONTRIBUTING.md).Don’t forget to give us a star  ⭐ if you find Fluent CMS helpful!  
 
-## What is it
-Fluent CMS is an open-source Content Management System designed to streamline web development workflows.  
-It proves valuable even for non-CMS projects by eliminating the need for tedious CRUD API and page development.  
-- **CRUD:** Fluent CMS offers built-in RESTful CRUD (Create, Read, Update, Delete) APIs along with an Admin Panel that supports a wide range of input types, including datetime, dropdown, image, and rich text, all configurable to suit your needs.  
-- **GraphQL-style Query** Retrieve multiple related entities in a single call, enhancing security, performance, and flexibility on the client side.  
-- **Drag and Drop Web Page Designer:** Leveraging [Grapes.js](https://grapesjs.com/) and [HandleBars](https://handlebarsjs.com/), the page designer allows you to create pages and bind query data without coding.  
-- **Permission Control** Assign read/write, read-only, access to entities based on user roles or individual permissions.  
-- **Integration and extension** Fluent CMS can be integrated into projects via a NuGet package.  
-  Validation logic can be implemented using C# statements through [DynamicExpresso](https://github.com/dynamicexpresso/DynamicExpresso),
-  and complex functionalities can be extended using CRUD Hook Functions.
-  Additionally, Fluent CMS supports message brokers like Kafka for CRUD operations.  
-- **Performance:** Utilizing [SqlKata](https://sqlkata.com/) and [Dapper](https://www.learndapper.com/), Fluent CMS achieves performance levels comparable to manually written RESTful APIs using Entity Framework Core. Performance benchmarks include comparisons against Strapi and Entity Framework.  
-    - [performance vs Strapi](https://github.com/fluent-cms/fluent-cms/blob/main/doc%2Fpeformance-tests%2Fperformance-test-fluent-cms-vs-strapi.md)  
-    - [performance vs EF](https://github.com/fluent-cms/fluent-cms/blob/main/doc%2Fpeformance-tests%2Fperformance-test-fluent-cms-vs-entity-framework.md)  
-## Live Demo - A online course website based on Fluent CMS
-source code [Example Blog Project](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).  
-- Admin Panel https://fluent-cms-admin.azurewebsites.net/admin  
-    - Email: `admin@cms.com`  
-    - Password: `Admin1!`  
-- Public Site : https://fluent-cms-admin.azurewebsites.net/  
+---
+## What is Fluent CMS?
+
+**Fluent CMS** is an open-source Content Management System designed to simplify and accelerate web development workflows. While it's particularly suited for CMS projects, it is also highly beneficial for general web applications, reducing the need for repetitive REST/GraphQL API development.
+
+- **Effortless CRUD Operations:** Fluent CMS includes built-in RESTful APIs for Create, Read, Update, and Delete (CRUD) operations, complemented by a React-based admin panel for efficient data management.
+
+- **Powerful GraphQL Queries:** Access multiple related entities in a single query, enhancing client-side performance, security, and flexibility.
+
+- **Drag-and-Drop Page Designer:** Build dynamic pages effortlessly using the integrated page designer powered by [Grapes.js](https://grapesjs.com/) and [Handlebars](https://handlebarsjs.com/). Easily bind data sources for an interactive and streamlined design experience.
 
 
-## Adding Fluent CMS to your own project
-The following chapter will guid you through add Fluent CMS to your own project by adding a nuget package. 
+---
+## Online Course System Demo
 
-1. Create your own Asp.net Core WebApplication.
-2. Add FluentCMS package
-   ```shell
-   dotnet add package FluentCMS
-   ```
-3. Modify Program.cs, add the following line before builder.Build(), the input parameter is the connection string of database.
-   ```
-   builder.AddSqliteCms("Data Source=cms.db");
-   var app = builder.Build();
-   ```
-   Currently FluentCMS support `AddSqliteCms`, `AddSqlServerCms`, `AddPostgresCMS`.
+### Source Code
+[Example Blog Project on GitHub](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples)
 
-4. Add the following line After builder.Build()
-   ```
-   await app.UseCmsAsync();
-   ```
-   this function bootstrap router, initialize Fluent CMS schema table
+### Live Demo
+- **Public Site:** [fluent-cms-admin.azurewebsites.net](https://fluent-cms-admin.azurewebsites.net/)
+- **Admin Panel:** [fluent-cms-admin.azurewebsites.net/admin](https://fluent-cms-admin.azurewebsites.net/admin)
+  - **Email:** `admin@cms.com`
+  - **Password:** `Admin1!`
 
-When the web server is up and running,  you can access Admin Panel by url `/admin`, you can access Schema builder by url `/schema`.
-The example project can be found at [Example Project](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).
+### Additional Resources
+- **GraphQL Playground:** [fluent-cms-admin.azurewebsites.net/graph](https://fluent-cms-admin.azurewebsites.net/graph)
+- **Documentation:** [fluent-cms-admin.azurewebsites.net/doc/index.html](https://fluent-cms-admin.azurewebsites.net/doc/index.html)  
 
 
-## Developing backend of a simple online course system use Fluent CMS
-The following chapter will guide you through developing a simple online course system, starts with three entity `Teachers`, `Courses`, and `Students`. 
+---
+## Online Course System Backend
+
+This section provides detailed guidance on developing a foundational online course system, encompassing key entities: `teacher`, `course`, `skill`, and `material`.
 
 ### Database Schema
-#### 1. **Teachers Table**
-This table stores information about the teachers.
 
-| Column Name   | Data Type  | Description                 |
-|---------------|------------|-----------------------------|
-| `Id`          | `INT`      | Primary Key, unique ID for each teacher. |
-| `FirstName`   | `VARCHAR`  | Teacher's first name.        |
-| `LastName`    | `VARCHAR`  | Teacher's last name.         |
-| `Email`       | `VARCHAR`  | Teacher's email address.     |
-| `PhoneNumber` | `VARCHAR`  | Teacher's contact number.    |
+#### 1. **Teachers Table**
+The `Teachers` table maintains information about instructors, including their personal and professional details.
+
+| **Field**        | **Header**       | **Data Type** |
+|-------------------|------------------|---------------|
+| `id`             | ID               | Int           |
+| `firstname`      | First Name       | String        |
+| `lastname`       | Last Name        | String        |
+| `email`          | Email            | String        |
+| `phone_number`   | Phone Number     | String        |
+| `image`          | Image            | String        |
+| `bio`            | Bio              | Text          |
 
 #### 2. **Courses Table**
-This table stores information about the courses.
+The `Courses` table captures the details of educational offerings, including their scope, duration, and prerequisites.
 
-| Column Name   | Data Type  | Description                   |
-|---------------|------------|-------------------------------|
-| `Id`          | `INT`      | Primary Key, unique ID for each course. |
-| `CourseName`  | `VARCHAR`  | Name of the course.            |
-| `Description` | `TEXT`     | Brief description of the course. |
-| `TeacherId`   | `INT`      | Foreign Key, references `TeacherId` in the `Teachers` table. |
+| **Field**        | **Header**       | **Data Type** |
+|-------------------|------------------|---------------|
+| `id`             | ID               | Int           |
+| `name`           | Course Name      | String        |
+| `status`         | Status           | String        |
+| `level`          | Level            | String        |
+| `summary`        | Summary          | String        |
+| `image`          | Image            | String        |
+| `desc`           | Description      | Text          |
+| `duration`       | Duration         | String        |
+| `start_date`     | Start Date       | Datetime      |
 
-#### 3. **Students Table**
-This table stores information about the students.
+#### 3. **Skills Table**
+The `Skills` table records competencies attributed to teachers.
 
-| Column Name      | Data Type  | Description                   |
-|------------------|------------|-------------------------------|
-| `Id`             | `INT`      | Primary Key, unique ID for each student. |
-| `FirstName`      | `VARCHAR`  | Student's first name.         |
-| `LastName`       | `VARCHAR`  | Student's last name.          |
-| `Email`          | `VARCHAR`  | Student's email address.      |
-| `EnrollmentDate` | `DATE`     | Date when the student enrolled. |
+| **Field**        | **Header**       | **Data Type** |
+|-------------------|------------------|---------------|
+| `id`             | ID               | Int           |
+| `name`           | Skill Name       | String        |
+| `years`          | Years of Experience | Int      |
+| `created_by`     | Created By       | String        |
+| `created_at`     | Created At       | Datetime      |
+| `updated_at`     | Updated At       | Datetime      |
 
-#### 4. **Enrollments Table (Junction Table)**
-This table manages the many-to-many relationship between `Students` and `Courses`, since a student can enroll in multiple courses, and a course can have multiple students.
+#### 4. **Materials Table**
+The `Materials` table inventories resources linked to courses.
 
-| Column Name   | Data Type  | Description                           |
-|---------------|------------|---------------------------------------|
-| `EnrollmentId`| `INT`      | Primary Key, unique ID for each enrollment. |
-| `StudentId`   | `INT`      | Foreign Key, references `StudentId` in the `Students` table. |
-| `CourseId`    | `INT`      | Foreign Key, references `CourseId` in the `Courses` table. |
+| **Field**        | **Header**  | **Data Type** |
+|-------------------|-------------|---------------|
+| `id`             | ID          | Int           |
+| `name`           | Name        | String        |
+| `type`           | Type        | String        |
+| `image`          | Image       | String        |
+| `link`           | Link        | String        |
+| `file`           | File        | String        |
 
-#### Relationships:
-- **Teachers to Courses**: One-to-Many (A teacher can teach multiple courses, but a course is taught by only one teacher).
-- **Students to Courses**: Many-to-Many (A student can enroll in multiple courses, and each course can have multiple students).
-### Build Schema use Fluent CMS Schema builder
-After starting your ASP.NET Core application, you will find a menu item labeled "Schema Builder" on the application's home page.
+---
 
-In the Schema Builder, you can add entities such as "Teacher" and "Student."
+### Relationships
+- **Teachers to Courses**: One-to-Many (Each teacher can teach multiple courses; each course is assigned to one teacher).
+- **Teachers to Skills**: Many-to-Many (Multiple teachers can share skills, and one teacher may have multiple skills).
+- **Courses to Materials**: Many-to-Many (A course may include multiple materials, and the same material can be used in different courses).
 
-When adding the "Course" entity, start by adding basic attributes like "Name" and "Description." You can then define relationships by adding attributes as follows:
+---
 
-1. **Teacher Attribute:**  
-   Configure it with the following settings:
-   ```json
-   {
-      "DataType": "Int",
-      "Field": "teacher",
-      "Header": "Teacher",
-      "InList": true,
-      "InDetail": true,
-      "IsDefault": false,
-      "Type": "lookup",
-      "Options": "teacher"
-   }
-   ```
+### Schema Creation via Fluent CMS Schema Builder
 
-2. **Students Attribute:**  
-   Configure it with these settings:
-   ```json
-   {
-      "DataType": "Na",
-      "Field": "students",
-      "Header": "Students",
-      "InList": false,
-      "InDetail": true,
-      "IsDefault": false,
-      "Type": "crosstable",
-      "Options": "student"
-   }
-   ```
+#### Accessing Schema Builder
+After launching the web application, locate the **Schema Builder** menu on the homepage to start defining your schema.
 
-With these configurations, your minimal viable product is ready to use.
+#### Adding Entities
+[Example Configuration](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/schema-ui/list.html?schema=entity)  
+1. Navigate to the **Entities** section of the Schema Builder.
+2. Create entities such as "Teacher" and "Course."
+3. For the `Course` entity, add attributes such as `name`, `status`, `level`, and `description`.
+---
+### Defining Relationships
+[Example Configuration](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/schema-ui/edit.html?schema=entity&id=27)  
 
-## Adding your own business logics 
-  <summary> The following chapter will guide you through add your own business logic by add validation logic, hook functions, and produce events to Kafka. </summary>
+#### 1. **Course and Teacher (Many-to-One Relationship)**
+To establish a many-to-one relationship between the `Course` and `Teacher` entities, you can include a `Lookup` attribute in the `Course` entity. This allows selecting a single `Teacher` record when adding or updating a `Course`.
 
-### Add validation logic using simple c# express
+| **Attribute**  | **Value**    |
+|----------------|--------------|
+| **Field**      | `teacher`    |
+| **Type**       | Lookup       |
+| **Options**    | Teacher      |
 
-#### Simple C# logic
-You can add simple c# expression to  `Validation Rule` of attributes, the expression is supported by [Dynamic Expresso](https://github.com/dynamicexpresso/DynamicExpresso).  
-For example, you can add simple expression like `name != null`.  
-You can also add `Validation Error Message`, the end user can see this message if validate fail.
+**Description:** When a course is created or modified, a teacher record can be looked up and linked to the course.
 
-#### Regular Expression Support
-`Dynamic Expresso` supports regex, for example you can write Validation Rule `Regex.IsMatch(email, "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$")`.   
-Because `Dyamic Expresso` doesn't support [Verbatim String](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/tokens/verbatim), you have to escape `\`.
+#### 2. **Course and Materials (Many-to-Many Relationship)**
+To establish a many-to-many relationship between the `Course` and `Material` entities, use a `Crosstable` attribute in the `Course` entity. This enables associating multiple materials with a single course.
 
-### Extent functionality by add Hook functions
-You need to add your own Business logic, for examples, you want to verify if the email and phone number of entity `teacher` is valid.
-you can register a cook function before insert or update teacher
-```
-var registry = app.GetHookRegistry();
-registry.EntityPreAdd.Register("teacher", args =>
-{
-    VerifyTeacher(args.RefRecord);
-    return args;
-});
-registry.EntityPreUpdate.Register("teacher", args =>
-{
-    VerifyTeacher(args.RefRecord);
-    return args;
-});
+| **Attribute**    | **Value**    |
+|-------------------|--------------|
+| **Field**         | `materials` |
+| **Type**          | Crosstable  |
+| **Options**       | Material    |
 
-```
+**Description:** When managing a course, you can select multiple material records from the `Material` table to associate with the course.
 
-### Produce Events to Event Broker(e.g.Kafka)
-You can also choose produce events to Event Broker(e.g.Kafka), so Consumer Application function can implement business logic in a async manner.
-The producing event functionality is implemented by adding hook functions behind the scene,  to enable this functionality, you need add two line of code,
-`builder.AddKafkaMessageProducer("localhost:9092");` and `app.RegisterMessageProducerHook()`.
+---
 
-```
-builder.AddSqliteCms("Data Source=cmsapp.db").PrintVersion();
-builder.AddKafkaMessageProducer("localhost:9092");
-var app = builder.Build();
-await app.UseCmsAsync(false);
-app.RegisterMessageProducerHook();
-```
+### Admin Panel: Data Management Features
+
+#### 1. **List Page**
+[Example Course List Page](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&limit=20)  
+The **List Page** displays entities in a tabular format, enabling sorting, searching, and pagination. Users can efficiently browse or locate specific records.
+
+#### 2. **Detail Page**
+[Example Course Detail Page](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course/22)  
+The **Detail Page** provides an interface for viewing and managing detailed attributes. Related data such as teachers and materials can be selected or modified.
+
+--- 
 
 
-## Permissions Control
+## **GraphQL Query**
 
-Fluent CMS' permission control module is decoupled from the Content Management module, allowing you to implement your own permission logic or forgo permission control entirely.
-The built-in permission control in Fluent CMS offers four privilege types for each entity:
-- **ReadWrite**: Full access to read and write.
-- **RestrictedReadWrite**: Users can only modify records they have created.
-- **Readonly**: View-only access.
-- **RestrictedReadonly**: Users can only view records they have created.
+FluentCMS simplifies frontend development by offering robust GraphQL support.
 
-Additionally, Fluent CMS supports custom roles, where a user's privileges are a combination of their individual entity privileges and the privileges assigned to their role.
+### Getting Started
+#### Accessing the GraphQL IDE
+To get started, launch the web application and navigate to `/graph`. You can also try our [online demo](https://fluent-cms-admin.azurewebsites.net/graph).
 
-To enable fluentCMS' build-in permission control feature, add the following line .
-```
-//add fluent cms' permission control service 
-builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
-builder.AddCmsAuth<IdentityUser, IdentityRole, AppDbContext>();
-```
-And add the follow line after app was built if you want to add  a default user.
-```
-InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]));
-```
-Behind the scene, fluentCMS leverage the hook mechanism.
+---
+#### Singular vs. List Response
+For each entity in FluentCMS, two GraphQL fields are automatically generated:  
+- `<entityName>`: Returns a record.
+- `<entityNameList>`: Returns a list of records.  
 
-
-## **Designing Queries in FluentCMS**
-
-### Requirements
-
-#### 1. Retrieve all related data with one API call
-As shown in the screenshot below, we aim to design a course detail page. In addition to displaying basic course information, 
-the page should also show related entity data, such as:
-- Teacher's bio and skills
-- Course-related materials, such as videos   
-![Course](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/page-course.png)
-#### 2. Filter data by related entity
-In the example below, when displaying a skill, we want to show which teachers have that skill and the courses they teach. 
-The tables involved include `courses`, `teachers`, `teacher-skill` (the cross referencing table), and `skills`.
-![Related](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/page-related.png)
-
-### Query Settings
-To create or edit a query, navigate to `Schema Builder` > `Queries`.  
-![Query](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/query-setting.png)
-
-### Query Structure
-To understand the structure of a FluentCMS query, consider the SQL generated by FluentCMS below, with `course` as the primary entity:
-
-- `teacher` is a lookup attribute of the course.
-- `skills` is a cross-table attribute of teacher.
-
-
-```
- SELECT DISTINCT "courses"."name", "courses"."id", "courses"."desc", "courses"."image", "courses"."summary", "courses"."level", "courses"."status", "courses"."teacher" 
-   from "courses" 
-      left join "teachers" as "teacher" on "courses"."teacher" = "teacher"."id"
-      left join "skill_teacher" as "skills_skill_teacher" on "teacher"."id" = "teacher_skills_skill_teacher"."teacher_id"
-      left join "skills" as "teacher_skills" on "teacher_skills_skill_teacher"."skill_id" = "teacher_skills"."id" 
- WHERE "courses"."deleted" = 0 AND "teacher"."deleted" = 0 AND "teacher_skills_skill_teacher"."deleted" = 0 AND "teacher_skills"."deleted" = 0 
-  AND ("teacher_skills"."id" IN (1)) 
- ORDER BY "courses"."id" 
- DESC LIMIT 20
-```
-
-#### 1. Selection Set
-The Selection Set specifies which columns to retrieve. You can include columns from the main entity as well as `lookup` and `crosstable` entities.
+**Single Course **
 ```graphql
 {
-    id,
-    name,
-    desc,
-    image,
-    level,
-    status,
+  course {
+    id
+    name
+  }
+}
+```
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20course%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A)
+
+**List of Courses **
+```graphql
+{
+  courseList {
+    id
+    name
+  }
+}
+```
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A)
+
+---
+#### Field Selection
+You can query specific fields for both the current entity and its related entities.
+**Example Query:**
+```graphql
+{
+  courseList{
+    id
+    name
     teacher{
-        firstname,
-        lastname,
-        image,
-        bio,
-        skills{
-            name,
-            years
-        }
-    },
+      id
+      firstname
+      lastname
+      skills{
+        id
+        name
+      }
+    }
     materials{
-        name,
-        image,
-        link
+      id,
+      name
     }
+  }
 }
 ```
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%20%20teacher%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20firstname%0A%20%20%20%20%20%20lastname%0A%20%20%20%20%20%20skills%7B%0A%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20name%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%20%20materials%7B%0A%20%20%20%20%20%20id%2C%0A%20%20%20%20%20%20name%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D%0A)
 
-#### 2. From Entity
-Each query is based on a main Entity,  setting the main entity's table name as `From` clause.
-#### 3. Limit
-The query's `Page Size` property sets to `Limit clause`.
-#### 4. Sorts
-Sorts define the `order by` clause. Sorting can be applied to the main entity or related entities, e.g., below settings corresponds to:
+---
+#### Filtering with `Value Match` in FluentCMS
 
-```
-select * from course left join teachers 
-  on course.teacher = teachers.id
-  order by teacher.firstname asc, course.id desc
-```
+FluentCMS provides flexible filtering capabilities using the `idSet` field (or any other field), enabling precise data queries by matching either a single value or a list of values.
 
-```json
+**Filter by a Single Value Example:**
+```graphql
 {
-  "sorts": [
-    {
-      "fieldName": "teacher.firstname",
-      "order": "Asc"
-    },
-    {
-      "fieldName": "id",
-      "order": "Desc"
-    }
-  ]
+  courseList(idSet: 5) {
+    id
+    name
+  }
 }
 ```
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(idSet%3A5)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A)
 
-#### 5. Filter
-Filter settings define the `WHERE` clause to control which data is retrieved.
-- **fieldName**: Specifies a column in either the main entity or a related entity.
-- **operator**: `and` requires all constraints to match, while `or` matches any single constraint.
-- **constraints**:
-  - **match**: Defines how to match values, such as `in` or `startWith`.
-  - **value**: Can be hardcoded within the query or passed as a query string parameter.   
-  For example, `qs.course_id` pulls the ID from the query string parameter `course_id`, where the prefix `qs.` indicates that the value comes from the query string.  
-  Example API call: `/api/queries/<query-name>/one?course_id=3`  
-  SQL equivalent: `SELECT * FROM courses WHERE id = 3`  
-- **omitFail**: If the query string does not contain a specific constraint value, this option omits the filter. In the example below, if `skill_id` and `material_id` are not provided, FluentCMS ignores these filters.
-
-```json
+**Filter by Multiple Values Example:**
+```graphql
 {
-  "filters": [
-    {
-      "fieldName": "id",
-      "operator": "and",
-      "omitFail": true,
-      "constraints": [
-        {
-          "match": "in",
-          "value": "qs.course_id"
-        }
-      ]
-    },
-    {
-      "fieldName": "materials.id",
-      "operator": "and",
-      "omitFail": true,
-      "constraints": [
-        {
-          "match": "in",
-          "value": "qs.material_id"
-        }
-      ]
-    },
-    {
-      "fieldName": "teacher.skills.id",
-      "operator": "and",
-      "omitFail": true,
-      "constraints": [
-        {
-          "match": "in",
-          "value": "qs.skill_id"
-        }
-      ]
-    }
-  ]
+  courseList(idSet: [5, 7]) {
+    id
+    name
+  }
 }
 ```
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(idSet%3A%5B5%2C7%5D)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A)
 
-#### 6. Join
-When sorting or filtering by related entities, FluentCMS joins the relevant tables. For example, with `course` as the main entity and a filter like `teacher.skills.id`, FluentCMS will join these tables:
+---
+#### Advanced Filtering with `Operator Match` in FluentCMS
 
-```
-FROM "courses"
-LEFT JOIN "teachers" AS "teacher" ON "courses"."teacher" = "teacher"."id"
-LEFT JOIN "skill_teacher" AS "skills_skill_teacher" ON "teacher"."id" = "teacher_skills_skill_teacher"."teacher_id"
-LEFT JOIN "skills" AS "teacher_skills" ON "teacher_skills_skill_teacher"."skill_id" = "teacher_skills"."id"
-```
+FluentCMS supports advanced filtering options with `Operator Match`, allowing users to combine various conditions for precise queries.
 
-### Subfield
-
-Subfields in GraphQL are useful for querying complex data structures and handling relationships between entities. For example, when querying for a list of courses, each course could include a nested `teacher` object. Within the `teacher`, additional subfields like `firstname`, `lastname`, and `bio` can be queried. Each level of nesting defines a new layer of subfields.
+##### `matchAll` Example:
+Filters where all specified conditions must be true.  
+In this example: `id > 5 and id < 15`.
 
 ```graphql
 {
+  courseList(id: {matchType: matchAll, gt: 5, lt: 15}) {
+    id
+    name
+  }
+}
+```
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(id%3A%7BmatchType%3AmatchAll%2Cgt%3A5%2Clt%3A15%7D)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A)
+
+##### `matchAny` Example:
+Filters where at least one of the conditions must be true.  
+In this example: `name starts with "A"` or `name starts with "I"`.
+
+```graphql
+{
+  courseList(name: [{matchType: matchAny}, {startsWith: "A"}, {startsWith: "I"}]) {
+    id
+    name
+  }
+}
+```
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(name%3A%5B%7BmatchType%3AmatchAny%7D%2C%20%7BstartsWith%3A%22A%22%7D%2C%7BstartsWith%3A%22I%22%7D%5D)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A)
+
+
+---
+
+#### `Filter Expressions` in FluentCMS
+
+Filter Expressions allow precise filtering by specifying a field, including nested fields using JSON path syntax. This enables filtering on subfields for complex data structures.
+
+***Example: Filter by Teacher's Last Name***
+This query returns courses taught by a teacher whose last name is "Circuit."
+
+```graphql
+{
+  courseList(filterExpr: {field: "teacher.lastname", clause: {equals: "Circuit"}}) {
     id
     name
     teacher {
-        firstname
-        lastname
-        bio
-        skills {
-            name
-            years
-        }
+      id
+      lastname
     }
+  }
+}
+```
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(filterExpr%3A%20%7Bfield%3A%20%22teacher.lastname%22%2C%20clause%3A%20%7Bequals%3A%20%22Circuit%22%7D%7D)%20%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%20%20teacher%20%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20lastname%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D)
+
+---
+
+#### Sorting  
+Sorting by a single field
+```graphql
+{
+  courseList(sort:nameDesc){
+    id,
+    name
+  }
+}
+```
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(sort%3AnameDesc)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A)
+
+Sorting by multiple fields
+```graphql
+{
+  courseList(sort:[level,id]){
+    id,
+    level
+    name
+  }
+}
+```
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(sort%3A%5Blevel%2Cid%5D)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20level%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A)
+
+---
+
+#### Sort Expressions in FluentCMS
+
+
+Sort Expressions allow sorting by nested fields using JSON path syntax. 
+
+***Example: Sort by Teacher's Last Name***
+
+```graphql
+{
+  courseList(sortExpr:{field:"teacher.lastname", order:Desc}) {
+    id
+    name
+    teacher {
+      id
+      lastname
+    }
+  }
+}
+```
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(sortExpr%3A%7Bfield%3A%22teacher.lastname%22%2C%20order%3ADesc%7D)%20%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%20%20teacher%20%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20lastname%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D)
+
+---
+
+#### Pagination
+Pagination on root field
+```graphql
+{
+  courseList(offset:2, limit:3){
+    id,
+    name
+  }
+}
+```
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%20%20%7B%0A%20%20%20%20courseList(offset%3A2%2C%20limit%3A3)%7B%0A%20%20%20%20%20%20id%2C%0A%20%20%20%20%20%20name%0A%20%20%20%20%7D%0A%20%20%7D%0A)   
+Pagination on sub field
+```graphql
+{
+  courseList{
+    id,
+    name
+    materials(limit:2){
+      id,
+      name
+    }
+  }
+}
+```
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%20%20%7B%0A%20%20%20%20courseList%7B%0A%20%20%20%20%20%20id%2C%0A%20%20%20%20%20%20name%0A%20%20%20%20%20%20materials(limit%3A2)%7B%0A%20%20%20%20%20%20%20%20id%2C%0A%20%20%20%20%20%20%20%20name%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%7D%0A)
+
+---
+
+
+
+#### Variable
+
+Variables are used to make queries more dynamic, reusable, and secure.
+##### Variable in `Value filter`
+```
+query ($id: Int!) {
+  teacher(idSet: [$id]) {
+    id
+    firstname
+    lastname
+  }
+}
+```
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24id%3A%20Int!)%20%7B%0A%20%20teacher(idSet%3A%20%5B%24id%5D)%20%7B%0A%20%20%20%20id%0A%20%20%20%20firstname%0A%20%20%20%20lastname%0A%20%20%7D%0A%7D&variables=%7B%0A%20%20%22id%22%3A3%0A%7D)
+
+##### Variable in `Operator Match` filter
+```
+query ($id: Int!) {
+  teacherList(id:{equals:$id}){
+    id
+    firstname
+    lastname
+  }
+}
+```
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24id%3A%20Int!)%20%7B%0A%20%20teacherList(id%3A%7Bequals%3A%24id%7D)%7B%0A%20%20%20%20id%0A%20%20%20%20firstname%0A%20%20%20%20lastname%0A%20%20%7D%0A%7D&variables=%7B%0A%20%20%22id%22%3A%203%0A%7D)
+
+##### Variable in `Filter Expression`
+```
+query ($years: String) {
+  teacherList(filterExpr:{field:"skills.years",clause:{gt:$years}}){
+    id
+    firstname
+    lastname
+    skills{
+      id
+      name
+      years
+    }
+  }
+}
+```
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24years%3A%20String)%20%7B%0A%20%20teacherList(filterExpr%3A%7Bfield%3A%22skills.years%22%2Cclause%3A%7Bgt%3A%24years%7D%7D)%7B%0A%20%20%20%20id%0A%20%20%20%20firstname%0A%20%20%20%20lastname%0A%20%20%20%20skills%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20name%0A%20%20%20%20%20%20years%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D&variables=%7B%0A%20%20%22years%22%3A%20%229%22%0A%7D)
+
+##### Variable in Sort 
+```
+query ($sort_field:TeacherSortEnum) {
+  teacherList(sort:[$sort_field]) {
+    id
+    firstname
+    lastname
+  }
+}
+```
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24sort_field%3ATeacherSortEnum)%20%7B%0A%20%20teacherList(sort%3A%5B%24sort_field%5D)%20%7B%0A%20%20%20%20id%0A%20%20%20%20firstname%0A%20%20%20%20lastname%0A%20%20%7D%0A%7D&variables=%7B%22sort_field%22%3A%20%22idDesc%22%7D)
+##### Variable in Sort Expression
+```
+query ($sort_order:  SortOrderEnum) {
+  courseList(sortExpr:{field:"teacher.id", order:$sort_order}){
+    id,
+    name,
+    teacher{
+      id,
+      firstname
+    }
+  }
+}
+```
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24sort_order%3A%20%20SortOrderEnum)%20%7B%0A%20%20courseList(sortExpr%3A%7Bfield%3A%22teacher.id%22%2C%20order%3A%24sort_order%7D)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%2C%0A%20%20%20%20teacher%7B%0A%20%20%20%20%20%20id%2C%0A%20%20%20%20%20%20firstname%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D&variables=%7B%0A%20%20%22sort_order%22%3A%20%22Asc%22%0A%7D)
+
+##### Variable in Pagination
+```
+query ($offset:Int) {
+  teacherList(limit:2, offset:$offset) {
+    id
+    firstname
+    lastname
+  }
+}
+```
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24offset%3AInt)%20%7B%0A%20%20teacherList(limit%3A2%2C%20offset%3A%24offset)%20%7B%0A%20%20%20%20id%0A%20%20%20%20firstname%0A%20%20%20%20lastname%0A%20%20%7D%0A%7D&variables=%7B%0A%09%22offset%22%3A%202%0A%7D)
+
+---
+
+#### Required vs Optional
+If you want a variable to be mandatory, you can add a  `!` to the end of the type
+```
+query ($id: Int!) {
+  teacherList(id:{equals:$id}){
+    id
+    firstname
+    lastname
+  }
+}
+```
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24id%3A%20Int!)%20%7B%0A%20%20teacherList(id%3A%7Bequals%3A%24id%7D)%7B%0A%20%20%20%20id%0A%20%20%20%20firstname%0A%20%20%20%20lastname%0A%20%20%7D%0A%7D)
+
+Explore the power of FluentCMS GraphQL and streamline your development workflow!
+***
+***
+### Saved Query
+
+**Realtime queries** may expose excessive technical details, potentially leading to security vulnerabilities.
+
+**Saved Queries** address this issue by abstracting the GraphQL query details. They allow clients to provide only variables, enhancing security while retaining full functionality.
+
+---
+
+#### Transitioning from **Real-Time Queries** to **Saved Queries**
+
+##### Using `OperationName` as the Saved Query Identifier
+In FluentCMS, the **Operation Name** in a GraphQL query serves as a unique identifier for saved queries. For instance, executing the following query automatically saves it as `TeacherQuery`:
+
+```graphql
+query TeacherQuery($id: Int) {
+  teacherList(idSet: [$id]) {
+    id
+    firstname
+    lastname
+    skills {
+      id
+      name
+    }
+  }
 }
 ```
 
-With FluentCMS, you can add `filter`, `sort`, `offset`, and `limit` options to subfields, allowing for even more control over returned data.
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=query%20TeacherQuery(%24id%3A%20Int)%20%7B%0A%20%20teacherList(idSet%3A%5B%24id%5D)%7B%0A%20%20%20%20id%0A%20%20%20%20firstname%0A%20%20%20%20lastname%0A%20%20%20%20skills%7B%0A%20%20%20%20%20%20id%2C%0A%20%20%20%20%20%20name%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D&operationName=TeacherQuery)
 
-#### Filter in Subfields
+---
 
-Filtering can be specified in three forms:
+##### Saved Query Endpoints
+FluentCMS generates two API endpoints for each saved query:
 
-1. **`fieldName:value` format**
+1. **List Records:**  
+   [https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery)
 
-   ```graphql
-   firstname
-   lastname
-   skills(years: 3) {
-       name
-       years
-   }
-   ```
+2. **Single Record:**  
+   [https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/one/](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/one)
 
-   Here, the argument `years: 3` for the `skills` subfield generates a query with a `WHERE` clause equivalent to `years = 3`.
+---
 
-2. **`fieldName: { match: value }` format**
+##### Using REST API Query Strings as Variables
+The Saved Query API allows passing variables via query strings:
 
-   ```graphql
-   firstname
-   lastname
-   skills(years: { gt: 3 }) {
-       name
-       years
-   }
-   ```
+- **Single Value:**  
+  [https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/?id=3](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/?id=3)
 
-   Using `years: { gt: 3 }` as an argument for the `skills` subfield generates a `WHERE` clause `years > 3`.
+- **Array of Values:**  
+  [https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?id=3&id=4](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?id=3&id=4)  
+  This passes `[3, 4]` to the `idSet` argument.
 
-3. **Advanced filter with multiple conditions**
+---
 
-   ```graphql
-   firstname
-   lastname
-   skills(years: { equals: 3, equals: 4, operator: or }) {
-       name
-       years
-   }
-   ```
+#### Additional Features of `Saved Query`
 
-   With `years: { equals: 3, equals: 4, operator: or }`, the query service generates a `WHERE` clause `years = 3 OR years = 4`.
+Beyond performance and security improvements, `Saved Query` introduces enhanced functionalities to simplify development workflows.
 
-#### Sort in subfields
+---
 
-Sort arguments can be provided in two forms:
+##### Pagination by `offset`
+Built-in variables `offset` and `limit` enable efficient pagination. For example:  
+[https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=2&offset=2](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=2&offset=2)
 
-1. **Simple sort by field**
+---
 
-   ```graphql
-   firstname
-   lastname
-   skills(years: 3, sort: years) {
-       name
-       years
-   }
-   ```
+##### `offset` Pagination for Subfields
+To display a limited number of subfield items (e.g., the first two skills of a teacher), use the JSON path variable, such as `skills.limit`:  
+[https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?skills.limit=2](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?skills.limit=2)
 
-   With `sort: years`, the query service generates an `ORDER BY` clause like `ORDER BY years`.
+---
 
-2. **Sort by multiple fields and directions**
+##### Pagination by `cursor`
+For large datasets, `offset` pagination can strain the database. For example, querying with `offset=1000&limit=10` forces the database to retrieve 1010 records and discard the first 1000.
 
-   ```graphql
-   firstname
-   lastname
-   skills(years: 3, sort: { years: desc, name: asc }) {
-       name
-       years
-   }
-   ```
-
-   Here, `sort: { years: desc, name: asc }` generates an `ORDER BY` clause `ORDER BY years DESC, name ASC`.
-
-#### Offset and Limit in subfields
-
-`offset` and `limit` can be passed as query string parameters to control pagination. For instance, calling `/api/queries/teacher` might return a set of results:
+To address this, `Saved Query` supports **cursor-based pagination**, which reduces database overhead.  
+Example response for [https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=3](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=3):
 
 ```json
 [
   {
-    "id": 3,
-    "firstname": "Jane",
-    "lastname": "Debuggins",
-    "skills": [
-      {
-        "id": 13,
-        "name": "Html",
-        "years": 7,
-        "teacher_id": 3,
-        "cursor": "eyJ5ZWFycyI6NywiaWQiOjEzLCJzb3VyY2VJZCI6M30"
-      },
-      {
-        "id": 2,
-        "name": "C#",
-        "years": 5,
-        "teacher_id": 3,
-        "cursor": null
-      },
-      {
-        "id": 15,
-        "name": "Database",
-        "years": 4,
-        "teacher_id": 3,
-        "cursor": null
-      },
-      {
-        "id": 1,
-        "name": "C++",
-        "years": 3,
-        "teacher_id": 3,
-        "cursor": "eyJ5ZWFycyI6MywiaWQiOjEsInNvdXJjZUlkIjozfQ"
-      }
-    ],
     "hasPreviousPage": false,
     "cursor": "eyJpZCI6M30"
+  },
+  {
+  },
+  {
+    "hasNextPage": true,
+    "cursor": "eyJpZCI6NX0"
   }
 ]
 ```
 
-Calling `/api/queries/teacher?skills.limit=2&skills.offset=1` retrieves the second and third skills in the list:
+- If `hasNextPage` of the last record is `true`, use the cursor to retrieve the next page:  
+  [https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=3&last=eyJpZCI6NX0](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=3&last=eyJpZCI6NX0)
+
+- Similarly, if `hasPreviousPage` of the first record is `true`, use the cursor to retrieve the previous page:  
+  [https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=3&first=eyJpZCI6Nn0](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=3&first=eyJpZCI6Nn0)
+
+---
+
+##### Cursor-Based Pagination for Subfields
+Subfields also support cursor-based pagination. For instance, querying [https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?skills.limit=2](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?skills.limit=2) returns a response like this:
 
 ```json
 [
@@ -511,154 +588,113 @@ Calling `/api/queries/teacher?skills.limit=2&skills.offset=1` retrieves the seco
     "id": 3,
     "firstname": "Jane",
     "lastname": "Debuggins",
+    "hasPreviousPage": false,
     "skills": [
       {
-        "id": 2,
-        "name": "C#",
-        "years": 5,
-        "teacher_id": 3,
         "hasPreviousPage": false,
-        "cursor": "eyJ5ZWFycyI6NSwiaWQiOjIsInNvdXJjZUlkIjozfQ"
+        "cursor": "eyJpZCI6MSwic291cmNlSWQiOjN9"
       },
       {
-        "id": 15,
-        "name": "Database",
-        "years": 4,
-        "teacher_id": 3,
         "hasNextPage": true,
-        "cursor": "eyJ5ZWFycyI6NCwiaWQiOjE1LCJzb3VyY2VJZCI6M30"
+        "cursor": "eyJpZCI6Miwic291cmNlSWQiOjN9"
       }
     ],
-    "hasPreviousPage": false,
     "cursor": "eyJpZCI6M30"
   }
 ]
 ```
-#### Paginating subfields
 
-Calling `/api/queries/teacher/part/skills?last=<cursor>` retrieves the records after the third skill.
-```json
-[
-  {
-    "id": 15,
-    "name": "Database",
-    "years": 4,
-    "teacher_id": 3,
-    "hasPreviousPage": true,
-    "cursor": "eyJ5ZWFycyI6NCwiaWQiOjE1LCJzb3VyY2VJZCI6M30"
-  },
-  {
-    "id": 1,
-    "name": "C++",
-    "years": 3,
-    "teacher_id": 3,
-    "hasNextPage": false,
-    "cursor": "eyJ5ZWFycyI6MywiaWQiOjEsInNvdXJjZUlkIjozfQ"
-  }
-]
-```
-This setup allows precise control over filtering, sorting, and paginating nested data in FluentCMS.
+To fetch the next two skills, use the cursor:  
+[https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/part/skills?limit=2&last=eyJpZCI6Miwic291cmNlSWQiOjN9](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/part/skills?limit=2&last=eyJpZCI6Miwic291cmNlSWQiOjN9)
 
-
-### Query Endpoints
-
-Each query has three corresponding endpoints:
-
-- **List**: `/api/queries/<query-name>` retrieves a paginated list.
-The example response is, if this page has previous page, the `hasPreviousPage` is set to ture. if the page has next page,
-the `hasNextPage` is set to true. 
-
-```json
-[
-  {
-    "name": "The Art of Pizza Making",
-    "id": 23,
-    "hasPreviousPage": false,
-    "cursor": "eyJpZCI6MjJ9"
-  },
-  {
-    "name": "Functional Programming",
-    "id": 22
-  },
-  {
-    "id": 21,
-    "name": "Functional Programming",
-    "hasPreviousPage": true,
-    "cursor": "eyJpZCI6M30"
-  }
-]
-```
-The cursor field value of the two edge items is used to fetch the next or previous page.
-  - To view the next page: `/api/queries/<query-name>?last=<cursor>`
-  - To view the previous page: `/api/queries/<query-name>?first=<cursor>`
-
-`sorts` was applied when retrieving next page or previous page.
-
-
-- **Single Record**: `/api/queries/<query-name>/one` returns the first record.
-  - Example: `/api/queries/<query-name>/one?id=***`
-
-- **Multiple Records**: `/api/queries/<query-name>/many` returns multiple records.
-  - Example: `/api/queries/<query-name>/many?id=1&id=2&id=3`
-
-If the number of IDs exceeds the page size, only the first set will be returned.
+---
 
 
 
+## Drag and Drop Page Designer
+The page designer utilizes the open-source GrapesJS and Handlebars, enabling seamless binding of `GrapesJS Components` with `FluentCMS Queries` for dynamic content rendering. 
 
-## Designing Web Page in FluentCMS
-
-
-### Introduction to GrapesJS Panels
-The GrapesJS Page Designer UI provides a toolbox with four main panels:  
-![GrapesJS Toolbox](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/grapes-toolbox.png)  
-1. **Style Manager**: Lets users customize CSS properties of selected elements on the canvas. FluentCMS does not modify this panel.  
-2. **Traits Panel**: Allows you to modify attributes of selected elements. FluentCMS adds custom traits to bind data to components here.  
-3. **Layers Panel**: Displays a hierarchical view of page elements similar to the DOM structure. FluentCMS does not customize this panel, but it’s useful for locating FluentCMS blocks.  
-4. **Blocks Panel**: Contains pre-made blocks or components for drag-and-drop functionality. FluentCMS adds its own customized blocks here.  
-
-### Tailwind CSS Support
-FluentCMS includes Tailwind CSS by default for page rendering, using the following styles:
-
-```html
-<link rel="stylesheet" href="https://unpkg.com/tailwindcss@1.4.6/dist/base.min.css">
-<link rel="stylesheet" href="https://unpkg.com/tailwindcss@1.4.6/dist/components.min.css">
-<link rel="stylesheet" href="https://unpkg.com/@tailwindcss/typography@0.1.2/dist/typography.min.css">
-<link rel="stylesheet" href="https://unpkg.com/tailwindcss@1.4.6/dist/utilities.min.css">
-```
-
+---
 ### Page Types: Landing Page, Detail Page, and Home Page
 
-#### **Landing Page**: A landing page is typically the first page a visitor sees.   
-The URL format is `/page/<pagename>`.    
-A landing page is typically composed of multiple `Multiple Records Components`, each with its own `Query`, making the page-level `Query` optional.
+#### **Landing Page**
+A landing page is typically the first page a visitor sees.  
+- **URL format**: `/page/<pagename>`  
+- **Structure**: Comprised of multiple sections, each section retrieves data via a `query`.  
 
-![Landing Page](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/page-landing.png)
+**Example**:    
+[Landing Page](https://fluent-cms-admin.azurewebsites.net/)    
+This page fetches data from:  
+- [https://fluent-cms-admin.azurewebsites.net/api/queries/course/?status=featured](https://fluent-cms-admin.azurewebsites.net/api/queries/course/?status=featured)  
+- [https://fluent-cms-admin.azurewebsites.net/api/queries/course/?level=Advanced](https://fluent-cms-admin.azurewebsites.net/api/queries/course/?level=Advanced)  
 
-#### **Detail Page**: A detail page provides specific information about an item.  
-The URL format is `/page/<pagename>/<router parameter>`, FluentCMS retrieves data by passing the router parameter to the `FluentCMS Query`. 
+---
 
-For the following settings  
-- Page Name: `course/{id}`  
-- Query: `courses`  
-FluentCMS will call the query `https://fluent-cms-admin.azurewebsites.net/api/queries/courses/one?id=3` for URL `https://fluent-cms-admin.azurewebsites.net/pages/course/3`
+#### **Detail Page**
+A detail page provides specific information about an item.  
+- **URL format**: `/page/<pagename>/<router parameter>`  
+- **Data Retrieval**: FluentCMS fetches data by passing the router parameter to a `query`.  
 
-![Course Detail Page](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/page-course.png)
+**Example**:  
+[Course Detail Page](https://fluent-cms-admin.azurewebsites.net/pages/course/22)  
+This page fetches data from:  
+[https://fluent-cms-admin.azurewebsites.net/api/queries/course/one?course_id=22](https://fluent-cms-admin.azurewebsites.net/api/queries/course/one?course_id=22)
 
-#### **Home Page**:
-The homepage is a special landing page with the name `home`. Its URL is `/pages/home`. If no other route handles the path `/`, FluentCMS will render `/` as `/pages/home`.
+---
 
-### Data Binding: Singleton or Multiple Records
+#### **Home Page**
+The homepage is a special type of landing page named `home`.  
+- **URL format**: `/pages/home`   
+- **Special Behavior**: If no other route matches the path `/`, FluentCMS renders `/pages/home` by default.  
 
-FluentCMS uses [Handlebars expression](https://github.com/Handlebars-Net/Handlebars.Net) for dynamic data binding.
+**Example**:    
+The URL `/` will be resolved to `/pages/home` unless explicitly overridden.  
 
-#### Singleton
-Singleton fields are enclosed within `{{ }}`.
+---
+### Introduction to GrapesJS Panels
 
-![Singleton Field](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-single-field.png)
+Understanding the panels in GrapesJS is crucial for leveraging FluentCMS's customization capabilities in the Page Designer UI. This section explains the purpose of each panel and highlights how FluentCMS enhances specific areas to streamline content management and page design. 
 
-#### Multiple Records
-`Handlebars` loops over arrays using the `each` block.
+![GrapesJS Toolbox](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/grapes-toolbox.png)
+
+1. **Style Manager**:
+    - Used to customize CSS properties of elements selected on the canvas.
+    - *FluentCMS Integration*: This panel is left unchanged by FluentCMS, as it already provides powerful styling options.
+
+2. **Traits Panel**:
+    - Allows modification of attributes for selected elements.
+    - *FluentCMS Integration*: Custom traits are added to this panel, enabling users to bind data to components dynamically.
+
+3. **Layers Panel**:
+    - Displays a hierarchical view of elements on the page, resembling a DOM tree.
+    - *FluentCMS Integration*: While FluentCMS does not alter this panel, it’s helpful for locating and managing FluentCMS blocks within complex page designs.
+
+4. **Blocks Panel**:
+    - Contains pre-made components that can be dragged and dropped onto the page.
+    - *FluentCMS Integration*: FluentCMS enhances this panel by adding custom-designed blocks tailored for its CMS functionality.
+
+By familiarizing users with these panels and their integration points, this chapter ensures a smoother workflow and better utilization of FluentCMS's advanced page-building tools.
+
+---
+### Data Binding: Singleton or List
+
+FluentCMS leverages [Handlebars expressions](https://github.com/Handlebars-Net/Handlebars.Net) for dynamic data binding in pages and components.
+
+---
+
+#### **Singleton**
+
+Singleton fields are enclosed within `{{ }}` to dynamically bind individual values.
+
+- **Example Page Settings:** [Page Schema Settings](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/schema-ui/page.html?schema=page&id=33)
+- **Example Query:** [Retrieve Course Data](https://fluent-cms-admin.azurewebsites.net/api/queries/course/?course_id=22)
+- **Example Rendered Page:** [Rendered Course Page](https://fluent-cms-admin.azurewebsites.net/pages/course/22)
+
+---
+
+#### **List**
+
+`Handlebars` supports iterating over arrays using the `{{#each}}` block for repeating data structures.
 
 ```handlebars
 {{#each course}}
@@ -666,73 +702,47 @@ Singleton fields are enclosed within `{{ }}`.
 {{/each}}
 ```
 
-However, you won’t see the `{{#each}}` statement in the GrapesJS Page Designer. FluentCMS adds it automatically for any block under the `Multiple Records` category.
+In FluentCMS, you won’t explicitly see the `{{#each}}` statement in the Page Designer. If a block's data source is set to `data-list`, FluentCMS automatically generates the loop.
 
-Steps to bind multiple records:  
-1. Drag a block from the `Multiple Records` category.
-    ![Multiple Record Blocks](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-multiple-record-block.png)
-2. Hover over the GrapesJS components to find a block with the `Multiple-records` tag in the top-left corner, then click the `Traits` panel. You can also use the GrapesJS Layers Panel to locate the component.
-    ![Multiple Record Select](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-multiple-record-select.png)  
-3. In the `Traits` panel, you have the following options:
-    - **Field**: Specify the field name for the Page-Level Query (e.g., for the FluentCMS Query below, you could set the field as `teacher.skills`).  
-      ```json
-      {
-        "teacher": {
-          "firstname": "",
-          "skills": [
-            {
-              "name": "cooking fish",
-              "years": 3
-            }
-          ]
-        }
-      }
-      ```   
-    - **Query**: The query to retrieve data.  
-    - **Qs**: Query string parameters to pass (e.g., `?status=featured`, `?level=Advanced`).  
-    - **Offset**: Number of records to skip.  
-    - **Limit**: Number of records to retrieve.  
-    - **Pagination** There are 3 Options: 
-      - `Button`, content is divided into multiple pages, and navigation buttons (e.g., "Next," "Previous," or numbered buttons) are provided to allow users to move between the pages.
-      - `Infinite Scroll` , Content automatically loads as the user scrolls down the page, providing a seamless browsing experience without manual page transitions. It's better to set only one component to `infinite scroll`, and put it to the bottom of the pages. 
-      - `None`. Users see all the available content at once, without the need for additional actions.
-   ![Multiple Record Trait](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-multiple-record-trait.png)
+- **Example Page Settings:** [Page Schema Settings](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/schema-ui/page.html?schema=page&id=32)
+- **Example Rendered Page:** [Rendered List Page](https://fluent-cms-admin.azurewebsites.net/)
+- **Example Queries:**
+   - [Featured Courses](https://fluent-cms-admin.azurewebsites.net/api/queries/course/?status=featured)
+   - [Advanced Level Courses](https://fluent-cms-admin.azurewebsites.net/api/queries/course/?level=Advanced)
 
-### Linking and Images
-
-FluentCMS does not customize GrapesJS' Image and Link components, but locating where to input `Query Field` can be challenging. The steps below explain how to bind them.
-
-- **Link**:
-  Locate the link by hovering over the GrapesJS component or finding it in the `GrapesJS Layers Panel`. Then switch to the `Traits Panel` and input the detail page link, e.g., `/pages/course/{{id}}`. FluentCMS will render this as `<a href="/pages/course/3">...</a>`.
-
-- **Image**:
-  Double-click on the image component, input the image path, and select the image. For example, if the image field is `thumbnail_image_url`, input `/files/{{thumbnail_image_url}}`. FluentCMS will replace `{{thumbnail_image_url}}` with the actual field value.
-
-  ![Designer Image](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-image.png)
-
-### Customized Blocks
-FluentCMS adds customized blocks to simplify web page design and data binding for `FluentCMS Queries`. These blocks use Tailwind CSS.
-
-- **Multiple Records**: Components in this category contain subcomponents with a `Multiple-Records` trait.
-- **Card**: Typically used in detail pages.
-- **Header**: Represents a navigation bar or page header.
-
-
-
-## Developing Frontend of a online course website
-Having established our understanding of Fluent CMS essentials like Entity Schemas, GraphQL-style Querying, and GrapeJS-based Page Design, we’re ready to build a frontend for an online course website.
-
-### Introduction of online course website
-The online course website is designed to help users easily find courses tailored to their interests and goals. 
-
-- **Home Page(`home`)**: This is the main entry point, providing `Featured Course`, `Advanced Course`, etc. Each course in these sections links to its Course Details page.
-
-- **Latest Courses(`course`)**: A curated list of the newest courses. Each course in this section links to its Course Details page.
-
-- **Course Details(`course/{course_id}`)**: This page provides a comprehensive view of a selected course. Users can navigate to the **Teacher Details** page to learn more about the instructor. 
-
-- **Teacher Details(`teacher/{teacher_id}`)**: Here, users can explore the profile of the instructor, This page contains a `teacher's latest course section`, each course in the sections links back to **Course Details** 
 ---
+
+#### **Steps to Bind a Data Source**
+
+To bind a `Data List` to a component, follow these steps:
+
+1. Drag a block from the **Data List** category in the Page Designer.
+2. Open the **Layers Panel** and select the `Data List` component.
+3. In the **Traits Panel**, configure the following fields:
+
+| **Field**     | **Description**                                                                                                                                                        |
+|---------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Query**     | The query to retrieve data.                                                                                                                                           |
+| **Qs**        | Query string parameters to pass (e.g., `?status=featured`, `?level=Advanced`).                                                                                        |
+| **Offset**    | Number of records to skip.                                                                                                                                            |
+| **Limit**     | Number of records to retrieve.                                                                                                                                        |
+| **Pagination**| Options for displaying content:                                                                                                                                       |
+|               | - **Button**: Divides content into multiple pages with navigation buttons (e.g., "Next," "Previous," or numbered buttons).                                            |
+|               | - **Infinite Scroll**: Automatically loads more content as users scroll. Ideal for a single component at the bottom of the page.                                      |
+|               | - **None**: Displays all available content at once without requiring additional user actions.                                                                          |
+
+
+
+## Online Course System Frontend
+Having established our understanding of Fluent CMS essentials like Entity, Query, and Page, we're ready to build a frontend for an online course website.
+
+---
+### Key Pages
+
+- **Home Page (`home`)**: The main entry point, featuring sections like *Featured Courses* and *Advanced Courses*. Each course links to its respective **Course Details** page.
+- **Course Details (`course/{course_id}`)**: Offers detailed information about a specific course and includes links to the **Teacher Details** page.
+- **Teacher Details (`teacher/{teacher_id}`)**: Highlights the instructor’s profile and includes a section displaying their latest courses, which link back to the **Course Details** page.
+
 
 ```plaintext
              Home Page
@@ -746,108 +756,166 @@ The online course website is designed to help users easily find courses tailored
        |                   |       
        v                   v            
 Course Details <-------> Teacher Details 
-
 ```
+
+---
+
 ### Designing the Home Page
-The home page's screenshot shows below.
-![Page](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/page-home-course.png)
 
-In the page designer, we drag a component `Content-B`, set it's `multiple-records` component's data source to Query  `course`.  
-The query might return data like
-```json
-[
-  {
-    "name": "Object-Oriented Programming(OOP)",
-    "id": 20,
-    "teacher":{
-      "id": 3,
-      "firstname": "jane"
-    }
-  }
-]
-```
-We set link href of each course item to `/pages/course/{{id}}`. 
-![Link](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-link.png)   
-HandleBar rendering engine renders the link as  `/pages/course/20` by replacing `{{id}}` to `20`.
+1. **Drag and Drop Components**: Use the Fluent CMS page designer to drag a `Content-B` component.
+2. **Set Data Source**: Assign the component's data source to the `course` query.
+3. **Link Course Items**: Configure the link for each course to `/pages/course/{{id}}`. The Handlebars expression `{{id}}` is dynamically replaced with the actual course ID during rendering.
 
-### Creating Course Detail Page
-We name this page `course/{course_id}` to capture the path parameter course_id. 
-For example, with the URL `/pages/course/20`, we obtain `{course_id: 20}`. This parameter is passed to the Query Service, which then filters data to match:
+![Link Example](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-link.png)
 
-```json
+---
+
+### Creating the Course Details Page
+
+1. **Page Setup**: Name the page `course/{course_id}` to capture the `course_id` parameter from the URL (e.g., `/pages/course/20`).
+2. **Query Configuration**: The variable `{course_id:20}` is passed to the `course` query, generating a `WHERE id IN (20)` clause to fetch the relevant course data.
+3. **Linking to Teacher Details**: Configure the link for each teacher item on this page to `/pages/teacher/{{teacher.id}}`. Handlebars dynamically replaces `{{teacher.id}}` with the teacher’s ID. For example, if a teacher object has an ID of 3, the link renders as `/pages/teacher/3`.
+
+---
+
+### Creating the Teacher Details Page
+
+1. **Page Setup**: Define the page as `teacher/{teacher_id}` to capture the `teacher_id` parameter from the URL.
+2. **Set Data Source**: Assign the `teacher` query as the page’s data source.
+
+#### Adding a Teacher’s Courses Section
+
+- Drag a `ECommerce A` component onto the page.
+- Set its data source to the `course` query, filtered by the teacher’s ID (`WHERE teacher IN (3)`).
+
+![Teacher Page Designer](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-teacher.png)
+
+When rendering the page, the `PageService` automatically passes the `teacher_id` (e.g., `{teacher_id: 3}`) to the query.
+## Integrating it into Your Project
+
+Follow these steps to integrate Fluent CMS into your project using a NuGet package.
+
+---
+
+1. **Create a New ASP.NET Core Web Application**.
+
+2. **Add the FluentCMS NuGet Package**:
+   To add Fluent CMS, run the following command:  
+   ```
+   dotnet add package FluentCMS
+   ```
+
+3. **Modify `Program.cs`**:
+   Add the following line before `builder.Build()` to configure the database connection (use your actual connection string):  
+   ```
+   builder.AddSqliteCms("Data Source=cms.db");
+   var app = builder.Build();
+   ```
+
+   Currently, Fluent CMS supports `AddSqliteCms`, `AddSqlServerCms`, and `AddPostgresCms`.
+
+4. **Initialize Fluent CMS**:
+   Add this line after `builder.Build()` to initialize the CMS:  
+   ```
+   await app.UseCmsAsync();
+   ```  
+   This will bootstrap the router and initialize the Fluent CMS schema table.
+
+5. **Optional: Set Up User Authorization**:
+   If you wish to manage user authorization, you can add the following code. If you're handling authorization yourself or don’t need it, you can skip this step.  
+   ```
+   builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
+   builder.AddCmsAuth<IdentityUser, IdentityRole, AppDbContext>();
+   ```
+
+   If you'd like to create a default user, add this after `app.Build()`:
+   ```
+   InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]));
+   ```
+
+Once your web server is running, you can access the **Admin Panel** at `/admin` and the **Schema Builder** at `/schema`.
+
+You can find an example project [here](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).
+
+---
+
+
+
+## Adding Business Logic
+
+Learn how to customize your application by adding validation logic, hook functions, and producing events to Kafka.
+
+---
+
+### Adding Validation Logic with Simple C# Expressions
+
+#### Simple C# Validation
+You can define simple C# expressions in the `Validation Rule` of attributes using [Dynamic Expresso](https://github.com/dynamicexpresso/DynamicExpresso). For example, a rule like `name != null` ensures the `name` attribute is not null.
+
+Additionally, you can specify a `Validation Error Message` to provide users with feedback when validation fails.
+
+#### Using Regular Expressions
+`Dynamic Expresso` supports regular expressions, allowing you to write rules like `Regex.IsMatch(email, "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$")`.
+
+> Note: Since `Dynamic Expresso` doesn't support [verbatim strings](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/tokens/verbatim), you must escape backslashes (`\`).
+
+---
+
+### Extending Functionality with Hook Functions
+
+To implement custom business logic, such as verifying that a `teacher` entity has valid email and phone details, you can register hook functions to run before adding or updating records:
+
+```csharp
+var registry = app.GetHookRegistry();
+
+// Hook function for pre-add validation
+registry.EntityPreAdd.Register("teacher", args =>
 {
-  "fieldName": "id",
-  "operator": "and",
-  "omitFail": true,
-  "constraints": [
-    {
-      "match": "in",
-      "value": "qs.course_id"
-    }
-  ]
-}
-```
-The query service produces a where clause as  `where id in (20)`.
+    VerifyTeacher(args.RefRecord);
+    return args;
+});
 
-### Link to Teacher Detail Page
-We set the link of each teacher item as  `/pages/teacher/{{teacher.id}}`, allowing navigation from Course Details to Teacher Details:
-For below example data, HandlerBar render the link as `/pages/teacher/3`.
-```json
-[
-  {
-    "name": "Object-Oriented Programming(OOP)",
-    "id": 20,
-    "teacher":{
-      "id": 3,
-      "firstname": "jane"
-    }
-  }
-]
-```
-### Creating Teacher's Detail Page
-![](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/page-teacher.png)
-
-Similarly, we name this page as `teacher/{teacher_id}` and set its data source Query to `teacher`. For the URL /pages/teacher/3, the query returns:
-```json
+// Hook function for pre-update validation
+registry.EntityPreUpdate.Register("teacher", args =>
 {
-  "id": 3,
-  "firstname": "Jane",
-  "lastname": "Debuggins",
-  "image": "/2024-10/b44dcb4c.jpg",
-  "bio": "<p><strong>Ms. Debuggins</strong> is a seasoned software developer with over a decade of experience in full-stack development and system architecture. </p>",
-  "skills": [
-    {
-      "id": 1,
-      "name": "C++",
-      "years": 3,
-      "teacher_id": 3
-    }
-  ]
-}
+    VerifyTeacher(args.RefRecord);
+    return args;
+});
 ```
 
-To add a list of courses by the teacher, we set a `multiple-records` component with Query `course`. 
-![](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-teacher.png)
-When rendering the Teacher Page, PageService sends `{teacher_id: 3}` to Query `course`. 
-The QueryService Apply below filter, resulting in  `WHERE teacher in (3)`.
+---
 
-``` json
-    {
-      "fieldName": "teacher",
-      "operator": "and",
-      "omitFail": true,
-      "constraints": [
-        {
-          "match": "in",
-          "value": "qs.teacher_id"
-        }
-      ]
-    }
+### Producing Events to an Event Broker (e.g., Kafka)
+
+To enable asynchronous business logic through an event broker like Kafka, you can produce events using hook functions. This feature requires just a few additional setup steps:
+
+1. Add the Kafka producer configuration:
+   ```csharp
+   builder.AddKafkaMessageProducer("localhost:9092");
+   ```
+
+2. Register the message producer hook:
+   ```csharp
+   app.RegisterMessageProducerHook();
+   ```
+
+Here’s a complete example:
+
+```csharp
+builder.AddSqliteCms("Data Source=cmsapp.db").PrintVersion();
+builder.AddKafkaMessageProducer("localhost:9092");
+var app = builder.Build();
+await app.UseCmsAsync(false);
+app.RegisterMessageProducerHook();
 ```
-This design creates an interconnected online course site, ensuring users can explore course details, instructors.
+
+With this setup, events are produced to Kafka, allowing consumers to process business logic asynchronously.
+
 
 
 ## Development Guide
+The backend is written in ASP.NET Core, the Admin Panel uses React, and the Schema Builder is developed with jQuery.
+
 
 ### System Overviews
 ![System Overview](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/overview.png)   
@@ -876,9 +944,11 @@ This design creates an interconnected online course site, ensuring users can exp
 
 ![Schema Builder Sequence](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/schema-builder-sequence.png)
 
+---
 
-## Testing
 
+## Testing Strategy
+This chapter describes Fluent CMS's automated testing strategy
 
 Fluent CMS favors integration testing over unit testing because integration tests can catch more real-world issues. For example, when inserting a record into the database, multiple modules are involved:
 - `EntitiesController`

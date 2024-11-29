@@ -2,7 +2,7 @@ import {DataTable} from "primereact/datatable";
 import {Column} from "primereact/column";
 import {createColumn} from "./columns/createColumn";
 
-export function SelectDataTable({primaryKey, titleAttribute, columns, data, selectedItems, setSelectedItems, lazyState, eventHandlers,getFullURL}: {
+export function SelectDataTable({baseRouter,primaryKey, titleAttribute, columns, data, selectedItems, setSelectedItems, lazyState, eventHandlers,getFullAssetsURL,entityName}: {
     primaryKey: string
     titleAttribute: string
     columns: any[]
@@ -11,8 +11,11 @@ export function SelectDataTable({primaryKey, titleAttribute, columns, data, sele
     setSelectedItems: any
     lazyState: any
     eventHandlers: any
-    getFullURL : (arg:string) => string,
+    getFullAssetsURL : (arg:string) => string,
+    entityName:string
+    baseRouter: string
 }) {
+    console.log({entityName});
     const {items, totalRecords} = data ?? {}
     return columns && data && <DataTable
         sortMode="multiple"
@@ -33,6 +36,6 @@ export function SelectDataTable({primaryKey, titleAttribute, columns, data, sele
         onSelectionChange={(e) => setSelectedItems(e.value)}
     >
         <Column selectionMode="multiple" headerStyle={{width: '3rem'}}></Column>
-        {columns.map((column: any, i: number) => createColumn({column, primaryKey, titleAttribute,getFullURL }))}
+        {columns.map((column: any, i: number) => createColumn({column, primaryKey, titleAttribute,getFullAssetsURL, entityName,baseRouter}))}
     </DataTable>
 }

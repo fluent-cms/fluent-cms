@@ -1,6 +1,6 @@
 using FluentCMS.Utils.ApiClient;
 
-namespace FluentCMS.IntegrationTests;
+namespace FluentCMS.Blog.Tests;
 public class BasicFlowTest
 {
     private const string Tutor = "basic_test_tutor";

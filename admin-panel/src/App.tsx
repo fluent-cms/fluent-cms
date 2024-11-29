@@ -32,8 +32,8 @@ function App() {
         profile? <>
             <TopMenuBar start={start} end={end} profile={profile}/>
             <Routes>
-                <Route path={`${configs.entityBaseRouter}/*`} element={<EntityRouter/>}/>
-                <Route path={configs.adminBaseRouter} element={<EntityRouter />} />
+                <Route path={`${configs.entityBaseRouter}/*`} element={<EntityRouter baseRouter={configs.entityBaseRouter}/>}/>
+                <Route path={configs.adminBaseRouter} element={<EntityRouter baseRouter={configs.entityBaseRouter} />} />
                 <Route path={`${configs.authBaseRouter}/*`} element={<AccountRouter/>}/>
             </Routes>
         </>:<>

@@ -1,5 +1,21 @@
 import qs from 'qs';
 
+export function decodeLazyState(querystring :string){
+    const s = qs.parse(querystring);
+    const state :any = {
+        first: s.offset,
+        rows: s.limit,
+        multiSortMeta: convertSortMapToArray(s.sort as any)
+    }
+    state.filters = {};
+    Object.entries(s).forEach(([k,v])=>{
+        if (k != "offset" && k != "limit" && k != "sort" ){
+            state.filters[k] = unFlatFilter(v as any);
+        }
+    });
+    return state;
+}
+
 export function encodeLazyState(state:any) {
     if (!state){
         return ''
@@ -19,25 +35,43 @@ function sanitizeLazyState(payload:any){
         offset: payload.first,
         limit: payload.rows,
         ...payload.filters,
-        sort: flatSort(payload.multiSortMeta),
+        sort: convertSortArrayToMap(payload.multiSortMeta),
     }
     deleteEmptyProperties(state)
     return state
 }
 
+function convertSortMapToArray(sorts:any){
+     return Object.entries(sorts ??[]).map(([field, order])=>({field,order}))
+}
 
-function flatSort(sorts:any[]){
-    const item:any = {}
-    sorts = sorts ?? [];
-    sorts.forEach((sort:any) =>{
+function convertSortArrayToMap(sorts:any[]){
+    const item:any = {};
+    (sorts??[]).forEach((sort:any) =>{
         item[sort.field] = sort.order;
     })
     return item
 }
+function unFlatFilter(condition:any) {
+    const ret:any = {constraints:[]};
+    Object.entries(condition).forEach(([matchMode,val])=>{
+        if (matchMode != "operator"){
+            if (Array.isArray(val)){
+                val.forEach(v =>{
+                    ret.constraints.push({matchMode, value: v});
+                })
+            }else {
+                ret.constraints.push({matchMode, value: val});
+            }
+        }else {
+            ret[matchMode] = val;
+        }
+    })
+    return ret;
+}
 
-function flatFilter(filter:any){
-    Object.keys(filter??{}).forEach(k =>{
-        const item = filter[k];
+function flatFilter(filter:{[k: string]: any}){
+    Object.entries(filter??{}).forEach( ([_,item])=>{
         item.constraints.forEach((constraint:any) =>{
             if (!item[constraint.matchMode]){
                 item[constraint.matchMode] = [constraint.value];

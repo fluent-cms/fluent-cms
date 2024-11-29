@@ -1,61 +1,80 @@
+using FluentCMS.Utils.DictionaryExt;
 using Microsoft.Extensions.Primitives;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
-// Offset, Limit have to bu nullable so they can be resolved from controller
-public sealed record Pagination(int? Offset = null, int? Limit = null);
+// Offset, Limit have to be nullable so they can be resolved from controller
+// set it to sting to support graphQL variable
+public sealed record Pagination(string? Offset = default, string? Limit = default);
+
 public sealed record ValidPagination(int Offset, int Limit);
 
 public static class PaginationConstants
 {
-    public const string OffsetSuffix = ".offset";
-    public const string LimitSuffix = ".limit";
-    
+    public const string LimitKey = "limit";
+    public const string OffsetKey = "offset";
+    public const string PaginationSeparator = ".";
+    public const string OffsetSuffix = $"{PaginationSeparator}{OffsetKey}";
+    public const string LimitSuffix = $"{PaginationSeparator}{LimitKey}";
 }
+
 public static class PaginationHelper
 {
-    public static ValidPagination ToValid(this Pagination pagination, int defaultPageSize)
+    public static bool IsEmpty(this Pagination? pagination)
     {
-        var offset = pagination.Offset ?? 0;
-        var limit = pagination.Limit is null || pagination.Limit.Value == 0 || pagination.Limit.Value > defaultPageSize 
-            ? defaultPageSize
-            : pagination.Limit.Value;
-        return new ValidPagination(offset, limit);
+        return string.IsNullOrEmpty(pagination?.Offset) && string.IsNullOrEmpty(pagination?.Limit);
     }
 
+    private static Pagination ReplaceVariable(this Pagination pagination, StrArgs args)
+    {
+        return new Pagination(
+            Offset: args.GetVariableStr(pagination.Offset, QueryConstants.VariablePrefix).ToString(),
+            Limit: args.GetVariableStr(pagination.Limit, QueryConstants.VariablePrefix).ToString());
+    }
+
+    public static ValidPagination ToValid(Pagination? fly, int defaultPageSize) =>
+        ToValid(fly, null, defaultPageSize, false, []);
+        
+    public static ValidPagination ToValid(Pagination? fly, Pagination? fallback, int defaultPageSize, bool haveCursor, StrArgs args)
+    {
+        fly ??= fallback ??= new Pagination();
+        if (fly.Offset is null)
+        {
+            fly = fly with { Offset = fallback?.Offset };
+        }
+
+        if (fly.Limit is null)
+        {
+            fly = fly with { Limit = fallback?.Limit };
+        }
+
+        fly = fly.ReplaceVariable(args);
+        
+        var offset = !haveCursor && int.TryParse(fly?.Offset, out var offsetVal) ? offsetVal : 0;
+        var limit = int.TryParse(fly?.Limit, out var limitVal) && limitVal > 0 && limitVal < defaultPageSize
+            ? limitVal
+            : defaultPageSize;
+        return new ValidPagination(offset, limit);
+    }
 
     public static ValidPagination PlusLimitOne(this ValidPagination pagination)
     {
         return pagination with { Limit = pagination.Limit + 1 };
     }
-    
-    
+
     public static Pagination? ResolvePagination(GraphAttribute attribute,
         Dictionary<string, StringValues> dictionary)
     {
-        var key = attribute.Prefix ;
+        var key = attribute.Prefix;
         if (!string.IsNullOrWhiteSpace(attribute.Prefix))
         {
-            key += ".";
+            key += PaginationConstants.PaginationSeparator;
         }
 
         key += attribute.Field;
-        if (dictionary.TryGetValue(key + PaginationConstants.OffsetSuffix, out var offsetStr) ||
-            dictionary.TryGetValue(key + PaginationConstants.LimitSuffix, out var limitStr))
-        {
-            var offset = GetIntFromDictionary(dictionary, key + PaginationConstants.OffsetSuffix, defaultValue: 0);
-            var limit = GetIntFromDictionary(dictionary, key + PaginationConstants.LimitSuffix, defaultValue: 0);
-            return new Pagination(offset, limit);
-        }
 
-        return null;
+        var offsetOk = dictionary.TryGetValue(key + PaginationConstants.OffsetSuffix, out var offset);
+        var limitOk = dictionary.TryGetValue(key + PaginationConstants.LimitSuffix, out var limit);
+        return offsetOk || limitOk ? new Pagination(offset, limit) : null;
     }
-    
-    private static int GetIntFromDictionary(Dictionary<string, StringValues> dictionary, string key, int defaultValue)
-    {
-        if (dictionary.TryGetValue(key, out var value) && int.TryParse(value.ToString(), out int result))
-        {
-            return result;
-        }
-        return defaultValue;
-    }}
+}

@@ -1,14 +1,47 @@
-using FluentResults;
+using System.Text;
 using Microsoft.Extensions.Primitives;
 
 namespace FluentCMS.Utils.DictionaryExt;
 
 public static class DictionaryExt
 {
-    public static Dictionary<TK, TV> MergeByOverwriting<TK, TV>(this Dictionary<TK, TV> a, Dictionary<TK, TV> b)
-        where TK : notnull
+    public static string ToQueryString(this StrArgs? args)
     {
-        var ret = new Dictionary<TK, TV>(a);
+        if (args == null || args.Count == 0)
+            return string.Empty;
+
+        var queryString = new StringBuilder();
+
+        foreach (var kvp in args)
+        {
+            if (string.IsNullOrEmpty(kvp.Key) || string.IsNullOrEmpty(kvp.Value)) continue;
+            if (queryString.Length > 0)
+            {
+                queryString.Append("&");
+            }
+
+            queryString.Append(Uri.EscapeDataString(kvp.Key))
+                .Append('=')
+                .Append(Uri.EscapeDataString(kvp.Value!));
+        }
+
+        return queryString.ToString();
+        
+    } 
+
+    public static StringValues GetVariableStr(this StrArgs dictionary, string? key, string variablePrefix)
+    {
+        if (key is null) return StringValues.Empty;
+        if (!key.StartsWith(variablePrefix)) return key;
+        return dictionary.TryGetValue(key[variablePrefix.Length..], out var val) 
+            ? val
+            : StringValues.Empty;
+    }
+
+    public static Dictionary<Tk, Tv> MergeByOverwriting<Tk, Tv>(this Dictionary<Tk, Tv> a, Dictionary<Tk, Tv> b)
+        where Tk : notnull
+    {
+        var ret = new Dictionary<Tk, Tv>(a);
         foreach (var (k, v) in b)
         {
             ret[k] = v;
@@ -55,10 +88,10 @@ public static class DictionaryExt
      *      }
      * }
      */
-    public static Dictionary<string, Dictionary<string, StringValues>> GroupByFirstIdentifier(
-        this Dictionary<string, StringValues> dictionary, string startDelimiter = "[", string endDelimiter = "]")
+    public static Dictionary<string, StrArgs> GroupByFirstIdentifier(
+        this StrArgs dictionary, string startDelimiter = "[", string endDelimiter = "]")
     {
-        var result = new Dictionary<string, Dictionary<string, StringValues>>();
+        var result = new Dictionary<string, StrArgs>();
         foreach (var (key,value) in dictionary)
         {
             var parts = key.Split(startDelimiter);
@@ -82,5 +115,4 @@ public static class DictionaryExt
         }
         return result;
     }
-   
 }

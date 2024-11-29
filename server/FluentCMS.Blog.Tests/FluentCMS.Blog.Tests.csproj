@@ -7,7 +7,6 @@
 
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>
-        <RootNamespace>FluentCMS.IntegrationTests</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>

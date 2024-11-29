@@ -6,7 +6,6 @@ using FluentCMS.Utils.IdentityExt;
 using FluentCMS.Utils.QueryBuilder;
 
 namespace FluentCMS.Auth.Services;
-using static InvalidParamExceptionFactory;
 
 public class EntityPermissionService(    
     IHttpContextAccessor contextAccessor ,
@@ -16,6 +15,10 @@ public class EntityPermissionService(
 {
     public ImmutableArray<ValidFilter> List(string entityName, LoadedEntity entity, ImmutableArray<ValidFilter> filters)
     {
+        if (!contextAccessor.HttpContext.GetUserId(out var userId))
+        {
+            throw new InvalidParamException($"You don't have permission to read [{entityName}], not logged in");
+        }
         if (contextAccessor.HttpContext.HasRole(RoleConstants.Sa))
         {
             return filters;
@@ -37,12 +40,18 @@ public class EntityPermissionService(
         return
         [
             ..filters,
-            new ValidFilter(new AttributeVector("","",[],createBy),"and", [new ValidConstraint(Matches.EqualsTo, [MustGetCurrentUserId()])])
+            new ValidFilter(new AttributeVector("","",[],createBy),"and", 
+                [new ValidConstraint(Matches.EqualsTo, [userId])])
         ];
     }
 
     public async Task GetOne(string entityName, string recordId)
     {
+        if (!contextAccessor.HttpContext.GetUserId(out var userId))
+        {
+            throw new InvalidParamException("You don't have permission to read [" + entityName + "]");
+        }
+        
         if (contextAccessor.HttpContext.HasRole(RoleConstants.Sa) ||
             contextAccessor.HttpContext.HasClaims(AccessScope.FullAccess, entityName) ||
             contextAccessor.HttpContext.HasClaims(AccessScope.FullRead,entityName))
@@ -56,7 +65,7 @@ public class EntityPermissionService(
             string[] attrs = [Constants.CreatedBy];
             //need to query database to get userId in case client fake data
             var record = await entityService.OneByAttributes(entityName, recordId, attrs);
-            if (record.TryGetValue(Constants.CreatedBy, out var createdBy) && (string)createdBy == MustGetCurrentUserId())
+            if (record.TryGetValue(Constants.CreatedBy, out var createdBy) && (string)createdBy == userId)
             {
                 return;
             }
@@ -78,6 +87,10 @@ public class EntityPermissionService(
 
     public async Task Change(string entityName, string recordId)
     {
+        if (!contextAccessor.HttpContext.GetUserId(out var userId))
+        {
+            throw new InvalidParamException("You don't have permission to read [" + entityName + "]");
+        }
 
         if (contextAccessor.HttpContext.HasRole(RoleConstants.Sa) ||
             contextAccessor.HttpContext.HasClaims(AccessScope.FullAccess, entityName))
@@ -90,7 +103,7 @@ public class EntityPermissionService(
             string[] attrs = [Constants.CreatedBy];
             //need to query database to get userId in case client fake data
             var record = await entityService.OneByAttributes(entityName, recordId, attrs);
-            if (record.TryGetValue(Constants.CreatedBy, out var createdBy) && (string)createdBy == MustGetCurrentUserId())
+            if (record.TryGetValue(Constants.CreatedBy, out var createdBy) && (string)createdBy == userId)
             {
                 return;
             }
@@ -104,8 +117,11 @@ public class EntityPermissionService(
 
     public void AssignCreatedBy(Record record)
     {
-        record[Constants.CreatedBy] = MustGetCurrentUserId();
+        if (!contextAccessor.HttpContext.GetUserId(out var userId))
+        {
+            throw new InvalidParamException("Can not assign created by, user not logged in");
+        }
+
+        record[Constants.CreatedBy] = userId;
     }
-    private string MustGetCurrentUserId() =>
-        StrNotEmpty(contextAccessor.HttpContext.GetUserId()).ValOrThrow("not logged in");
 }
