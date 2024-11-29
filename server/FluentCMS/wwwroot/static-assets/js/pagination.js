@@ -16,15 +16,16 @@ $(document).ready(function() {
             if (pagination !== 'Button' || !first && ! last){
                 nav.remove();
             }else{
-                if (!first || first.length === 0) {
-                    nav.find('[data-command="previous"]').hide();
-                }else {
+                if (first && first.length > 0) {
                     nav.find('[data-command="previous"]').show();
+                }else {
+                    nav.find('[data-command="previous"]').hide();
                 }
-                if (!last || last.length === 0){
-                    nav.find('[data-command="next"]').hide();  
-                } else {
+                
+                if (last && last.length > 0){
                     nav.find('[data-command="next"]').show();
+                } else {
+                    nav.find('[data-command="next"]').hide();
                 }
             }
         });

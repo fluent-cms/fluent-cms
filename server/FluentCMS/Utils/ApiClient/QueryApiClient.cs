@@ -27,7 +27,7 @@ public class QueryApiClient(HttpClient client)
     public async Task<Result<Record[]>> GetMany(string queryName, string primaryKey, object[]ids)
     {
         var param = string.Join("&", ids.Select(x=>$"{primaryKey}={x}"));
-        var url = $"/api/queries/{queryName}/many?" + param;
+        var url = $"/api/queries/{queryName}/?" + param;
         return await client.GetObject<Record[]>(url);
     }
 }

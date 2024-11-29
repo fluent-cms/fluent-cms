@@ -7,19 +7,19 @@ namespace FluentCMS.WebAppExt;
 
 public static class BuilderExt
 {
-    public static void AddPostgresCms(this WebApplicationBuilder builder, string connectionString)
+    public static void AddPostgresCms(this WebApplicationBuilder builder, string connectionString,string graphQlPath= "/graph")
     {
-        CmsModule.AddCms(builder, DatabaseProvider.Postgres, connectionString);
+        CmsModule.AddCms(builder, DatabaseProvider.Postgres, connectionString,graphQlPath);
     }
 
-    public static void AddSqliteCms(this WebApplicationBuilder builder, string connectionString)
+    public static void AddSqliteCms(this WebApplicationBuilder builder, string connectionString, string graphQlPath= "/graph")
     {
-        CmsModule.AddCms(builder, DatabaseProvider.Sqlite, connectionString);
+        CmsModule.AddCms(builder, DatabaseProvider.Sqlite, connectionString,graphQlPath);
     }
 
-    public static void AddSqlServerCms(this WebApplicationBuilder builder, string connectionString)
+    public static void AddSqlServerCms(this WebApplicationBuilder builder, string connectionString,string graphQlPath = "/graph")
     {
-        CmsModule.AddCms(builder, DatabaseProvider.SqlServer, connectionString);
+        CmsModule.AddCms(builder, DatabaseProvider.SqlServer, connectionString,graphQlPath);
     }
 
     public static void AddCmsAuth<TUser, TRole, TContext>(this WebApplicationBuilder builder)
@@ -38,10 +38,5 @@ public static class BuilderExt
     public static void AddMongoView(this WebApplicationBuilder builder, MongoConfig config)
     {
         MongoViewModule.AddMongoView(builder,config);
-    }
-
-    public static void AddCmsGraphQl(this WebApplicationBuilder builder, string path)
-    {
-        GraphqlModule.AddGraphql(builder, path);
     }
 }

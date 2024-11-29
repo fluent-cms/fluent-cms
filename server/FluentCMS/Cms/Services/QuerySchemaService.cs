@@ -18,7 +18,7 @@ public sealed class QuerySchemaService(
     ISchemaService schemaSvc,
     IEntitySchemaService entitySchemaSvc,
     ExpiringKeyValueCache<LoadedQuery> queryCache,
-    GraphqlModule? graphqlModule
+    CmsModule cmsModule
 ) : IQuerySchemaService
 {
     public async Task<LoadedQuery> ByGraphQlRequest(GraphQlRequestDto dto)
@@ -34,14 +34,11 @@ public sealed class QuerySchemaService(
         var query = dto.Query;
         var loadedQuery = await ToLoadedQuery(query, dto.Fields);
         if (string.IsNullOrWhiteSpace(query.Name)) return loadedQuery;
-        
-        if (graphqlModule is not null)
+
+        query = query with
         {
-            query = query with
-            {
-                IdeUrl = $"{graphqlModule.Path}?query={Uri.EscapeDataString(query.Source)}&operationName={query.Name}"
-            };
-        }
+            IdeUrl = $"{cmsModule.GraphPath}?query={Uri.EscapeDataString(query.Source)}&operationName={query.Name}"
+        };
 
         await VerifyQuery(query);
         var schema = new Schema(query.Name, SchemaType.Query, new Settings(Query: query));
@@ -59,7 +56,7 @@ public sealed class QuerySchemaService(
 
     public string CreateQueryUrl()
     {
-        return NotNull(graphqlModule).ValOrThrow("query module is not enabled").Path;
+        return NotNull(cmsModule).ValOrThrow("query module is not enabled").GraphPath;
     }
     
     public async Task Delete(Schema schema, CancellationToken token)

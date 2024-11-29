@@ -54,7 +54,7 @@ public sealed class AuthModule<TCmsUser>(ILogger<IAuthModule> logger) : IAuthMod
         registry.SchemaPostGetOne.RegisterDynamic("*",
             (ISchemaPermissionService schemaPermissionService, SchemaPostGetOneArgs args) =>
             {
-                schemaPermissionService.GetOne(args.Schema.Name);
+                schemaPermissionService.GetOne(args.Schema);
                 return args;
             });
 

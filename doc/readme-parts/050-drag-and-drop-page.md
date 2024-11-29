@@ -70,15 +70,23 @@ By familiarizing users with these panels and their integration points, this chap
 ---
 ### Data Binding: Singleton or List
 
-FluentCMS uses [Handlebars expression](https://github.com/Handlebars-Net/Handlebars.Net) for dynamic data binding.
+FluentCMS leverages [Handlebars expressions](https://github.com/Handlebars-Net/Handlebars.Net) for dynamic data binding in pages and components.
 
-#### Singleton
-Singleton fields are enclosed within `{{ }}`.
+---
 
-![Singleton Field](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-single-field.png)
+#### **Singleton**
 
-#### Multiple Records
-`Handlebars` loops over arrays using the `each` block.
+Singleton fields are enclosed within `{{ }}` to dynamically bind individual values.
+
+- **Example Page Settings:** [Page Schema Settings](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/schema-ui/page.html?schema=page&id=33)
+- **Example Query:** [Retrieve Course Data](https://fluent-cms-admin.azurewebsites.net/api/queries/course/?course_id=22)
+- **Example Rendered Page:** [Rendered Course Page](https://fluent-cms-admin.azurewebsites.net/pages/course/22)
+
+---
+
+#### **List**
+
+`Handlebars` supports iterating over arrays using the `{{#each}}` block for repeating data structures.
 
 ```handlebars
 {{#each course}}
@@ -86,56 +94,33 @@ Singleton fields are enclosed within `{{ }}`.
 {{/each}}
 ```
 
-However, you won’t see the `{{#each}}` statement in the GrapesJS Page Designer. FluentCMS adds it automatically for any block under the `List` category.
+In FluentCMS, you won’t explicitly see the `{{#each}}` statement in the Page Designer. If a block's data source is set to `data-list`, FluentCMS automatically generates the loop.
 
-Steps to bind multiple records:  
-1. Drag a block from the `List` category.
-    ![Multiple Record Blocks](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-multiple-record-block.png)
-2. Hover over the GrapesJS components to find a block with the `Multiple-records` tag in the top-left corner, then click the `Traits` panel. You can also use the GrapesJS Layers Panel to locate the component.
-    ![Multiple Record Select](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-multiple-record-select.png)  
-3. In the `Traits` panel, you have the following options:
-    - **Field**: Specify the field name for the Page-Level Query (e.g., for the FluentCMS Query below, you could set the field as `teacher.skills`).  
-      ```json
-      {
-        "teacher": {
-          "firstname": "",
-          "skills": [
-            {
-              "name": "cooking fish",
-              "years": 3
-            }
-          ]
-        }
-      }
-      ```   
-    - **Query**: The query to retrieve data.  
-    - **Qs**: Query string parameters to pass (e.g., `?status=featured`, `?level=Advanced`).  
-    - **Offset**: Number of records to skip.  
-    - **Limit**: Number of records to retrieve.  
-    - **Pagination** There are 3 Options: 
-      - `Button`, content is divided into multiple pages, and navigation buttons (e.g., "Next," "Previous," or numbered buttons) are provided to allow users to move between the pages.
-      - `Infinite Scroll` , Content automatically loads as the user scrolls down the page, providing a seamless browsing experience without manual page transitions. It's better to set only one component to `infinite scroll`, and put it to the bottom of the pages. 
-      - `None`. Users see all the available content at once, without the need for additional actions.
-   ![Multiple Record Trait](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-multiple-record-trait.png)
+- **Example Page Settings:** [Page Schema Settings](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/schema-ui/page.html?schema=page&id=32)
+- **Example Rendered Page:** [Rendered List Page](https://fluent-cms-admin.azurewebsites.net/)
+- **Example Queries:**
+   - [Featured Courses](https://fluent-cms-admin.azurewebsites.net/api/queries/course/?status=featured)
+   - [Advanced Level Courses](https://fluent-cms-admin.azurewebsites.net/api/queries/course/?level=Advanced)
 
 ---
-### Linking and Images
 
-FluentCMS does not customize GrapesJS' Image and Link components, but locating where to input `Query Field` can be challenging. The steps below explain how to bind them.
+#### **Steps to Bind a Data Source**
 
-- **Link**:
-  Locate the link by hovering over the GrapesJS component or finding it in the `GrapesJS Layers Panel`. Then switch to the `Traits Panel` and input the detail page link, e.g., `/pages/course/{{id}}`. FluentCMS will render this as `<a href="/pages/course/3">...</a>`.
+To bind a `Data List` to a component, follow these steps:
 
-- **Image**:
-  Double-click on the image component, input the image path, and select the image. For example, if the image field is `thumbnail_image_url`, input `/files/{{thumbnail_image_url}}`. FluentCMS will replace `{{thumbnail_image_url}}` with the actual field value.
+1. Drag a block from the **Data List** category in the Page Designer.
+2. Open the **Layers Panel** and select the `Data List` component.
+3. In the **Traits Panel**, configure the following fields:
 
-  ![Designer Image](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-image.png)
+| **Field**     | **Description**                                                                                                                                                        |
+|---------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Query**     | The query to retrieve data.                                                                                                                                           |
+| **Qs**        | Query string parameters to pass (e.g., `?status=featured`, `?level=Advanced`).                                                                                        |
+| **Offset**    | Number of records to skip.                                                                                                                                            |
+| **Limit**     | Number of records to retrieve.                                                                                                                                        |
+| **Pagination**| Options for displaying content:                                                                                                                                       |
+|               | - **Button**: Divides content into multiple pages with navigation buttons (e.g., "Next," "Previous," or numbered buttons).                                            |
+|               | - **Infinite Scroll**: Automatically loads more content as users scroll. Ideal for a single component at the bottom of the page.                                      |
+|               | - **None**: Displays all available content at once without requiring additional user actions.                                                                          |
 
----
-### Customized Blocks
-FluentCMS adds customized blocks to simplify web page design and data binding for `FluentCMS Queries`. These blocks use Tailwind CSS.
-
-- **Multiple Records**: Components in this category contain subcomponents with a `Multiple-Records` trait.
-- **Card**: Typically used in detail pages.
-- **Header**: Represents a navigation bar or page header.
 </details>

@@ -21,7 +21,6 @@ public static class App
       AddCms(builder, databaseProvider,connectionString);
       AddDbContext(builder, databaseProvider, connectionString);
       builder.AddCmsAuth<MyUser, IdentityRole, AppDbContext>();
-      builder.AddCmsGraphQl("/graph");
       var app = builder.Build();
 
       app.UseHttpsRedirection();
@@ -46,7 +45,7 @@ public static class App
       await ctx.Database.EnsureCreatedAsync();
    }
 
-   private static void AddCms(WebApplicationBuilder builder,string databaseProvider, string connectionString)
+   private static void AddCms(WebApplicationBuilder builder,string databaseProvider, string connectionString )
    {
       switch (databaseProvider)
       {

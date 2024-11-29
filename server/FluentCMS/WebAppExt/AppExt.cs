@@ -10,7 +10,6 @@ public static class AppExt
     {
         await app.Services.GetRequiredService<CmsModule>().UseCmsAsync(app);
         app.Services.GetService<IAuthModule>()?.UseCmsAuth(app);
-        app.Services.GetService<GraphqlModule>()?.UseGraphqlAsync(app);
     }
 
     public static HookRegistry GetHookRegistry(this WebApplication app) =>

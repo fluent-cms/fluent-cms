@@ -83,17 +83,12 @@
               </ul>
             </li>
             
-            <li class="nav-item" data-bs-level="2"><a href="#permissions-control" class="nav-link">Permissions Control</a>
+            <li class="nav-item" data-bs-level="2"><a href="#integrating-it-into-your-project" class="nav-link">Integrating it into Your Project</a>
               <ul class="nav flex-column">
               </ul>
             </li>
             
-            <li class="nav-item" data-bs-level="2"><a href="#add-it-to-your-own-project" class="nav-link">Add it to your own project</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            
-            <li class="nav-item" data-bs-level="2"><a href="#add-business-logics" class="nav-link">Add business logics</a>
+            <li class="nav-item" data-bs-level="2"><a href="#adding-business-logic" class="nav-link">Adding Business Logic</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -859,87 +854,90 @@ The URL <code>/</code> will be resolved to <code>/pages/home</code> unless expli
 </ol>
 <p>By familiarizing users with these panels and their integration points, this chapter ensures a smoother workflow and better utilization of FluentCMS's advanced page-building tools.</p>
 <hr />
-<h3 id="data-binding-singleton-or-multiple-records">Data Binding: Singleton or Multiple Records</h3>
-<p>FluentCMS uses <a href="https://github.com/Handlebars-Net/Handlebars.Net">Handlebars expression</a> for dynamic data binding.</p>
-<h4 id="singleton">Singleton</h4>
-<p>Singleton fields are enclosed within <code>{{ }}</code>.</p>
-<p><img alt="Singleton Field" src="https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-single-field.png" /></p>
-<h4 id="multiple-records">Multiple Records</h4>
-<p><code>Handlebars</code> loops over arrays using the <code>each</code> block.</p>
+<h3 id="data-binding-singleton-or-list">Data Binding: Singleton or List</h3>
+<p>FluentCMS leverages <a href="https://github.com/Handlebars-Net/Handlebars.Net">Handlebars expressions</a> for dynamic data binding in pages and components.</p>
+<hr />
+<h4 id="singleton"><strong>Singleton</strong></h4>
+<p>Singleton fields are enclosed within <code>{{ }}</code> to dynamically bind individual values.</p>
+<ul>
+<li><strong>Example Page Settings:</strong> <a href="https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/schema-ui/page.html?schema=page&amp;id=33">Page Schema Settings</a></li>
+<li><strong>Example Query:</strong> <a href="https://fluent-cms-admin.azurewebsites.net/api/queries/course/?course_id=22">Retrieve Course Data</a></li>
+<li><strong>Example Rendered Page:</strong> <a href="https://fluent-cms-admin.azurewebsites.net/pages/course/22">Rendered Course Page</a></li>
+</ul>
+<hr />
+<h4 id="list"><strong>List</strong></h4>
+<p><code>Handlebars</code> supports iterating over arrays using the <code>{{#each}}</code> block for repeating data structures.</p>
 <pre><code class="language-handlebars">{{#each course}}
     &lt;li&gt;{{title}}&lt;/li&gt;
 {{/each}}
 </code></pre>
-<p>However, you won’t see the <code>{{#each}}</code> statement in the GrapesJS Page Designer. FluentCMS adds it automatically for any block under the <code>Multiple Records</code> category.</p>
-<p>Steps to bind multiple records:<br />
-1. Drag a block from the <code>Multiple Records</code> category.
-    <img alt="Multiple Record Blocks" src="https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-multiple-record-block.png" />
-2. Hover over the GrapesJS components to find a block with the <code>Multiple-records</code> tag in the top-left corner, then click the <code>Traits</code> panel. You can also use the GrapesJS Layers Panel to locate the component.
-    <img alt="Multiple Record Select" src="https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-multiple-record-select.png" /><br />
-3. In the <code>Traits</code> panel, you have the following options:
-    - <strong>Field</strong>: Specify the field name for the Page-Level Query (e.g., for the FluentCMS Query below, you could set the field as <code>teacher.skills</code>).<br />
-<code>json
-      {
-        "teacher": {
-          "firstname": "",
-          "skills": [
-            {
-              "name": "cooking fish",
-              "years": 3
-            }
-          ]
-        }
-      }</code> <br />
-    - <strong>Query</strong>: The query to retrieve data.<br />
-    - <strong>Qs</strong>: Query string parameters to pass (e.g., <code>?status=featured</code>, <code>?level=Advanced</code>).<br />
-    - <strong>Offset</strong>: Number of records to skip.<br />
-    - <strong>Limit</strong>: Number of records to retrieve.<br />
-    - <strong>Pagination</strong> There are 3 Options: 
-      - <code>Button</code>, content is divided into multiple pages, and navigation buttons (e.g., "Next," "Previous," or numbered buttons) are provided to allow users to move between the pages.
-      - <code>Infinite Scroll</code> , Content automatically loads as the user scrolls down the page, providing a seamless browsing experience without manual page transitions. It's better to set only one component to <code>infinite scroll</code>, and put it to the bottom of the pages. 
-      - <code>None</code>. Users see all the available content at once, without the need for additional actions.
-   <img alt="Multiple Record Trait" src="https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-multiple-record-trait.png" /></p>
-<hr />
-<h3 id="linking-and-images">Linking and Images</h3>
-<p>FluentCMS does not customize GrapesJS' Image and Link components, but locating where to input <code>Query Field</code> can be challenging. The steps below explain how to bind them.</p>
+<p>In FluentCMS, you won’t explicitly see the <code>{{#each}}</code> statement in the Page Designer. If a block's data source is set to <code>data-list</code>, FluentCMS automatically generates the loop.</p>
 <ul>
-<li>
-<p><strong>Link</strong>:
-  Locate the link by hovering over the GrapesJS component or finding it in the <code>GrapesJS Layers Panel</code>. Then switch to the <code>Traits Panel</code> and input the detail page link, e.g., <code>/pages/course/{{id}}</code>. FluentCMS will render this as <code>&lt;a href="/pages/course/3"&gt;...&lt;/a&gt;</code>.</p>
-</li>
-<li>
-<p><strong>Image</strong>:
-  Double-click on the image component, input the image path, and select the image. For example, if the image field is <code>thumbnail_image_url</code>, input <code>/files/{{thumbnail_image_url}}</code>. FluentCMS will replace <code>{{thumbnail_image_url}}</code> with the actual field value.</p>
-</li>
+<li><strong>Example Page Settings:</strong> <a href="https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/schema-ui/page.html?schema=page&amp;id=32">Page Schema Settings</a></li>
+<li><strong>Example Rendered Page:</strong> <a href="https://fluent-cms-admin.azurewebsites.net/">Rendered List Page</a></li>
+<li><strong>Example Queries:</strong></li>
+<li><a href="https://fluent-cms-admin.azurewebsites.net/api/queries/course/?status=featured">Featured Courses</a></li>
+<li><a href="https://fluent-cms-admin.azurewebsites.net/api/queries/course/?level=Advanced">Advanced Level Courses</a></li>
 </ul>
-<p><img alt="Designer Image" src="https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-image.png" /></p>
 <hr />
-<h3 id="customized-blocks">Customized Blocks</h3>
-<p>FluentCMS adds customized blocks to simplify web page design and data binding for <code>FluentCMS Queries</code>. These blocks use Tailwind CSS.</p>
-<ul>
-<li><strong>Multiple Records</strong>: Components in this category contain subcomponents with a <code>Multiple-Records</code> trait.</li>
-<li><strong>Card</strong>: Typically used in detail pages.</li>
-<li><strong>Header</strong>: Represents a navigation bar or page header.</li>
-</ul>
+<h4 id="steps-to-bind-a-data-source"><strong>Steps to Bind a Data Source</strong></h4>
+<p>To bind a <code>Data List</code> to a component, follow these steps:</p>
+<ol>
+<li>Drag a block from the <strong>Data List</strong> category in the Page Designer.</li>
+<li>Open the <strong>Layers Panel</strong> and select the <code>Data List</code> component.</li>
+<li>In the <strong>Traits Panel</strong>, configure the following fields:</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th><strong>Field</strong></th>
+<th><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Query</strong></td>
+<td>The query to retrieve data.</td>
+</tr>
+<tr>
+<td><strong>Qs</strong></td>
+<td>Query string parameters to pass (e.g., <code>?status=featured</code>, <code>?level=Advanced</code>).</td>
+</tr>
+<tr>
+<td><strong>Offset</strong></td>
+<td>Number of records to skip.</td>
+</tr>
+<tr>
+<td><strong>Limit</strong></td>
+<td>Number of records to retrieve.</td>
+</tr>
+<tr>
+<td><strong>Pagination</strong></td>
+<td>Options for displaying content:</td>
+</tr>
+<tr>
+<td></td>
+<td>- <strong>Button</strong>: Divides content into multiple pages with navigation buttons (e.g., "Next," "Previous," or numbered buttons).</td>
+</tr>
+<tr>
+<td></td>
+<td>- <strong>Infinite Scroll</strong>: Automatically loads more content as users scroll. Ideal for a single component at the bottom of the page.</td>
+</tr>
+<tr>
+<td></td>
+<td>- <strong>None</strong>: Displays all available content at once without requiring additional user actions.</td>
+</tr>
+</tbody>
+</table>
 <h2 id="online-course-system-frontend">Online Course System Frontend</h2>
 <p>Having established our understanding of Fluent CMS essentials like Entity, Query, and Page, we're ready to build a frontend for an online course website.</p>
-<h3 id="introduction-of-online-course-website">Introduction of online course website</h3>
-<p>The online course website is designed to help users easily find courses tailored to their interests and goals. </p>
-<ul>
-<li>
-<p><strong>Home Page(<code>home</code>)</strong>: This is the main entry point, providing <code>Featured Course</code>, <code>Advanced Course</code>, etc. Each course in these sections links to its Course Details page.</p>
-</li>
-<li>
-<p><strong>Latest Courses(<code>course</code>)</strong>: A curated list of the newest courses. Each course in this section links to its Course Details page.</p>
-</li>
-<li>
-<p><strong>Course Details(<code>course/{course_id}</code>)</strong>: This page provides a comprehensive view of a selected course. Users can navigate to the <strong>Teacher Details</strong> page to learn more about the instructor. </p>
-</li>
-<li>
-<p><strong>Teacher Details(<code>teacher/{teacher_id}</code>)</strong>: Here, users can explore the profile of the instructor, This page contains a <code>teacher's latest course section</code>, each course in the sections links back to <strong>Course Details</strong> </p>
-</li>
-</ul>
 <hr />
+<h3 id="key-pages">Key Pages</h3>
+<ul>
+<li><strong>Home Page (<code>home</code>)</strong>: The main entry point, featuring sections like <em>Featured Courses</em> and <em>Advanced Courses</em>. Each course links to its respective <strong>Course Details</strong> page.</li>
+<li><strong>Course Details (<code>course/{course_id}</code>)</strong>: Offers detailed information about a specific course and includes links to the <strong>Teacher Details</strong> page.</li>
+<li><strong>Teacher Details (<code>teacher/{teacher_id}</code>)</strong>: Highlights the instructor’s profile and includes a section displaying their latest courses, which link back to the <strong>Course Details</strong> page.</li>
+</ul>
 <pre><code class="language-plaintext">             Home Page
                  |
                  |
@@ -951,175 +949,128 @@ The URL <code>/</code> will be resolved to <code>/pages/home</code> unless expli
        |                   |       
        v                   v            
 Course Details &lt;-------&gt; Teacher Details 
-
 </code></pre>
 <hr />
 <h3 id="designing-the-home-page">Designing the Home Page</h3>
-<p>The home page's screenshot shows below.
-<img alt="Page" src="https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/page-home-course.png" /></p>
-<p>In the page designer, we drag a component <code>Content-B</code>, set it's <code>multiple-records</code> component's data source to Query  <code>course</code>.<br />
-The query might return data like</p>
-<pre><code class="language-json">[
-  {
-    &quot;name&quot;: &quot;Object-Oriented Programming(OOP)&quot;,
-    &quot;id&quot;: 20,
-    &quot;teacher&quot;:{
-      &quot;id&quot;: 3,
-      &quot;firstname&quot;: &quot;jane&quot;
-    }
-  }
-]
-</code></pre>
-<p>We set link href of each course item to <code>/pages/course/{{id}}</code>. 
-<img alt="Link" src="https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-link.png" /> <br />
-HandleBar rendering engine renders the link as  <code>/pages/course/20</code> by replacing <code>{{id}}</code> to <code>20</code>.</p>
-<h3 id="creating-course-detail-page">Creating Course Detail Page</h3>
-<p>We name this page <code>course/{course_id}</code> to capture the path parameter course_id. 
-For example, with the URL <code>/pages/course/20</code>, we obtain <code>{course_id: 20}</code>. This parameter is passed to the Query Service, which then filters data to match:</p>
-<pre><code class="language-json">{
-  &quot;fieldName&quot;: &quot;id&quot;,
-  &quot;operator&quot;: &quot;and&quot;,
-  &quot;omitFail&quot;: true,
-  &quot;constraints&quot;: [
-    {
-      &quot;match&quot;: &quot;in&quot;,
-      &quot;value&quot;: &quot;qs.course_id&quot;
-    }
-  ]
-}
-</code></pre>
-<p>The query service produces a where clause as  <code>where id in (20)</code>.</p>
-<hr />
-<h3 id="link-to-teacher-detail-page">Link to Teacher Detail Page</h3>
-<p>We set the link of each teacher item as  <code>/pages/teacher/{{teacher.id}}</code>, allowing navigation from Course Details to Teacher Details:
-For below example data, HandlerBar render the link as <code>/pages/teacher/3</code>.</p>
-<pre><code class="language-json">[
-  {
-    &quot;name&quot;: &quot;Object-Oriented Programming(OOP)&quot;,
-    &quot;id&quot;: 20,
-    &quot;teacher&quot;:{
-      &quot;id&quot;: 3,
-      &quot;firstname&quot;: &quot;jane&quot;
-    }
-  }
-]
-</code></pre>
-<h3 id="creating-teachers-detail-page">Creating Teacher's Detail Page</h3>
-<p><img alt="" src="https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/page-teacher.png" /></p>
-<p>Similarly, we name this page as <code>teacher/{teacher_id}</code> and set its data source Query to <code>teacher</code>. For the URL /pages/teacher/3, the query returns:</p>
-<pre><code class="language-json">{
-  &quot;id&quot;: 3,
-  &quot;firstname&quot;: &quot;Jane&quot;,
-  &quot;lastname&quot;: &quot;Debuggins&quot;,
-  &quot;image&quot;: &quot;/2024-10/b44dcb4c.jpg&quot;,
-  &quot;bio&quot;: &quot;&lt;p&gt;&lt;strong&gt;Ms. Debuggins&lt;/strong&gt; is a seasoned software developer with over a decade of experience in full-stack development and system architecture. &lt;/p&gt;&quot;,
-  &quot;skills&quot;: [
-    {
-      &quot;id&quot;: 1,
-      &quot;name&quot;: &quot;C++&quot;,
-      &quot;years&quot;: 3,
-      &quot;teacher_id&quot;: 3
-    }
-  ]
-}
-</code></pre>
-<p>To add a list of courses by the teacher, we set a <code>multiple-records</code> component with Query <code>course</code>. 
-<img alt="" src="https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-teacher.png" />
-When rendering the Teacher Page, PageService sends <code>{teacher_id: 3}</code> to Query <code>course</code>. 
-The QueryService Apply below filter, resulting in  <code>WHERE teacher in (3)</code>.</p>
-<pre><code class="language-json">    {
-      &quot;fieldName&quot;: &quot;teacher&quot;,
-      &quot;operator&quot;: &quot;and&quot;,
-      &quot;omitFail&quot;: true,
-      &quot;constraints&quot;: [
-        {
-          &quot;match&quot;: &quot;in&quot;,
-          &quot;value&quot;: &quot;qs.teacher_id&quot;
-        }
-      ]
-    }
-</code></pre>
-<p>This design creates an interconnected online course site, ensuring users can explore course details, instructors.</p>
-<hr />
-<h2 id="permissions-control">Permissions Control</h2>
-<p>FluentCMS authorizes access to each entity by using role-based permissions and custom policies that control user actions like create, read, update, and delete.</p>
-<p>Fluent CMS' permission control module is decoupled from the Content Management module, allowing you to implement your own permission logic or forgo permission control entirely.
-The built-in permission control in Fluent CMS offers four privilege types for each entity:
-- <strong>ReadWrite</strong>: Full access to read and write.
-- <strong>RestrictedReadWrite</strong>: Users can only modify records they have created.
-- <strong>Readonly</strong>: View-only access.
-- <strong>RestrictedReadonly</strong>: Users can only view records they have created.</p>
-<p>Additionally, Fluent CMS supports custom roles, where a user's privileges are a combination of their individual entity privileges and the privileges assigned to their role.</p>
-<p>To enable fluentCMS' build-in permission control feature, add the following line .</p>
-<pre><code>//add fluent cms' permission control service 
-builder.Services.AddDbContext&lt;AppDbContext&gt;(options =&gt; options.UseSqlite(connectionString));
-builder.AddCmsAuth&lt;IdentityUser, IdentityRole, AppDbContext&gt;();
-</code></pre>
-<p>And add the follow line after app was built if you want to add  a default user.</p>
-<pre><code>InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser(&quot;sadmin@cms.com&quot;, &quot;Admin1!&quot;, [Roles.Sa]));
-</code></pre>
-<p>Behind the scene, fluentCMS leverage the hook mechanism.</p>
-<hr />
-<h2 id="add-it-to-your-own-project">Add it to your own project</h2>
-<p>The following chapter will guid you through add Fluent CMS to your own project by adding a nuget package. </p>
 <ol>
-<li>Create your own Asp.net Core WebApplication.</li>
-<li>Add FluentCMS package
-   <code>shell
-   dotnet add package FluentCMS</code></li>
+<li><strong>Drag and Drop Components</strong>: Use the Fluent CMS page designer to drag a <code>Content-B</code> component.</li>
+<li><strong>Set Data Source</strong>: Assign the component's data source to the <code>course</code> query.</li>
+<li><strong>Link Course Items</strong>: Configure the link for each course to <code>/pages/course/{{id}}</code>. The Handlebars expression <code>{{id}}</code> is dynamically replaced with the actual course ID during rendering.</li>
+</ol>
+<p><img alt="Link Example" src="https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-link.png" /></p>
+<hr />
+<h3 id="creating-the-course-details-page">Creating the Course Details Page</h3>
+<ol>
+<li><strong>Page Setup</strong>: Name the page <code>course/{course_id}</code> to capture the <code>course_id</code> parameter from the URL (e.g., <code>/pages/course/20</code>).</li>
+<li><strong>Query Configuration</strong>: The variable <code>{course_id:20}</code> is passed to the <code>course</code> query, generating a <code>WHERE id IN (20)</code> clause to fetch the relevant course data.</li>
+<li><strong>Linking to Teacher Details</strong>: Configure the link for each teacher item on this page to <code>/pages/teacher/{{teacher.id}}</code>. Handlebars dynamically replaces <code>{{teacher.id}}</code> with the teacher’s ID. For example, if a teacher object has an ID of 3, the link renders as <code>/pages/teacher/3</code>.</li>
+</ol>
+<hr />
+<h3 id="creating-the-teacher-details-page">Creating the Teacher Details Page</h3>
+<ol>
+<li><strong>Page Setup</strong>: Define the page as <code>teacher/{teacher_id}</code> to capture the <code>teacher_id</code> parameter from the URL.</li>
+<li><strong>Set Data Source</strong>: Assign the <code>teacher</code> query as the page’s data source.</li>
+</ol>
+<h4 id="adding-a-teachers-courses-section">Adding a Teacher’s Courses Section</h4>
+<ul>
+<li>Drag a <code>ECommerce A</code> component onto the page.</li>
+<li>Set its data source to the <code>course</code> query, filtered by the teacher’s ID (<code>WHERE teacher IN (3)</code>).</li>
+</ul>
+<p><img alt="Teacher Page Designer" src="https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-teacher.png" /></p>
+<p>When rendering the page, the <code>PageService</code> automatically passes the <code>teacher_id</code> (e.g., <code>{teacher_id: 3}</code>) to the query.</p>
+<h2 id="integrating-it-into-your-project">Integrating it into Your Project</h2>
+<p>Follow these steps to integrate Fluent CMS into your project using a NuGet package.</p>
+<hr />
+<ol>
 <li>
-<p>Modify Program.cs, add the following line before builder.Build(), the input parameter is the connection string of database.
-   <code>builder.AddSqliteCms("Data Source=cms.db");
-   var app = builder.Build();</code>
-   Currently FluentCMS support <code>AddSqliteCms</code>, <code>AddSqlServerCms</code>, <code>AddPostgresCMS</code>.</p>
+<p><strong>Create a New ASP.NET Core Web Application</strong>.</p>
 </li>
 <li>
-<p>Add the following line After builder.Build()
-   <code>await app.UseCmsAsync();</code>
-   this function bootstrap router, initialize Fluent CMS schema table</p>
+<p><strong>Add the FluentCMS NuGet Package</strong>:
+   To add Fluent CMS, run the following command:<br />
+<code>dotnet add package FluentCMS</code></p>
+</li>
+<li>
+<p><strong>Modify <code>Program.cs</code></strong>:
+   Add the following line before <code>builder.Build()</code> to configure the database connection (use your actual connection string):<br />
+<code>builder.AddSqliteCms("Data Source=cms.db");
+   var app = builder.Build();</code></p>
 </li>
 </ol>
-<p>When the web server is up and running,  you can access Admin Panel by url <code>/admin</code>, you can access Schema builder by url <code>/schema</code>.
-The example project can be found at <a href="https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples">Example Project</a>.</p>
+<p>Currently, Fluent CMS supports <code>AddSqliteCms</code>, <code>AddSqlServerCms</code>, and <code>AddPostgresCms</code>.</p>
+<ol>
+<li>
+<p><strong>Initialize Fluent CMS</strong>:
+   Add this line after <code>builder.Build()</code> to initialize the CMS:<br />
+<code>await app.UseCmsAsync();</code><br />
+   This will bootstrap the router and initialize the Fluent CMS schema table.</p>
+</li>
+<li>
+<p><strong>Optional: Set Up User Authorization</strong>:
+   If you wish to manage user authorization, you can add the following code. If you're handling authorization yourself or don’t need it, you can skip this step.<br />
+<code>builder.Services.AddDbContext&lt;AppDbContext&gt;(options =&gt; options.UseSqlite(connectionString));
+   builder.AddCmsAuth&lt;IdentityUser, IdentityRole, AppDbContext&gt;();</code></p>
+</li>
+</ol>
+<p>If you'd like to create a default user, add this after <code>app.Build()</code>:
+   <code>InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]));</code></p>
+<p>Once your web server is running, you can access the <strong>Admin Panel</strong> at <code>/admin</code> and the <strong>Schema Builder</strong> at <code>/schema</code>.</p>
+<p>You can find an example project <a href="https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples">here</a>.</p>
 <hr />
-<h2 id="add-business-logics">Add business logics</h2>
-<p>The following chapter will guide you through add your own business logic by add validation logic, hook functions, and produce events to Kafka. </p>
-<h3 id="add-validation-logic-using-simple-c-express">Add validation logic using simple c# express</h3>
-<h4 id="simple-c-logic">Simple C# logic</h4>
-<p>You can add simple c# expression to  <code>Validation Rule</code> of attributes, the expression is supported by <a href="https://github.com/dynamicexpresso/DynamicExpresso">Dynamic Expresso</a>.<br />
-For example, you can add simple expression like <code>name != null</code>.<br />
-You can also add <code>Validation Error Message</code>, the end user can see this message if validate fail.</p>
-<h4 id="regular-expression-support">Regular Expression Support</h4>
-<p><code>Dynamic Expresso</code> supports regex, for example you can write Validation Rule <code>Regex.IsMatch(email, "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$")</code>. <br />
-Because <code>Dyamic Expresso</code> doesn't support <a href="https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/tokens/verbatim">Verbatim String</a>, you have to escape <code>\</code>.</p>
+<h2 id="adding-business-logic">Adding Business Logic</h2>
+<p>Learn how to customize your application by adding validation logic, hook functions, and producing events to Kafka.</p>
 <hr />
-<h3 id="extent-functionality-by-add-hook-functions">Extent functionality by add Hook functions</h3>
-<p>You need to add your own Business logic, for examples, you want to verify if the email and phone number of entity <code>teacher</code> is valid.
-you can register a cook function before insert or update teacher</p>
-<pre><code>var registry = app.GetHookRegistry();
+<h3 id="adding-validation-logic-with-simple-c-expressions">Adding Validation Logic with Simple C# Expressions</h3>
+<h4 id="simple-c-validation">Simple C# Validation</h4>
+<p>You can define simple C# expressions in the <code>Validation Rule</code> of attributes using <a href="https://github.com/dynamicexpresso/DynamicExpresso">Dynamic Expresso</a>. For example, a rule like <code>name != null</code> ensures the <code>name</code> attribute is not null.</p>
+<p>Additionally, you can specify a <code>Validation Error Message</code> to provide users with feedback when validation fails.</p>
+<h4 id="using-regular-expressions">Using Regular Expressions</h4>
+<p><code>Dynamic Expresso</code> supports regular expressions, allowing you to write rules like <code>Regex.IsMatch(email, "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$")</code>.</p>
+<blockquote>
+<p>Note: Since <code>Dynamic Expresso</code> doesn't support <a href="https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/tokens/verbatim">verbatim strings</a>, you must escape backslashes (<code>\</code>).</p>
+</blockquote>
+<hr />
+<h3 id="extending-functionality-with-hook-functions">Extending Functionality with Hook Functions</h3>
+<p>To implement custom business logic, such as verifying that a <code>teacher</code> entity has valid email and phone details, you can register hook functions to run before adding or updating records:</p>
+<pre><code class="language-csharp">var registry = app.GetHookRegistry();
+
+// Hook function for pre-add validation
 registry.EntityPreAdd.Register(&quot;teacher&quot;, args =&gt;
 {
     VerifyTeacher(args.RefRecord);
     return args;
 });
+
+// Hook function for pre-update validation
 registry.EntityPreUpdate.Register(&quot;teacher&quot;, args =&gt;
 {
     VerifyTeacher(args.RefRecord);
     return args;
 });
-
 </code></pre>
 <hr />
-<h3 id="produce-events-to-event-brokeregkafka">Produce Events to Event Broker(e.g.Kafka)</h3>
-<p>You can also choose produce events to Event Broker(e.g.Kafka), so Consumer Application function can implement business logic in a async manner.
-The producing event functionality is implemented by adding hook functions behind the scene,  to enable this functionality, you need add two line of code,
-<code>builder.AddKafkaMessageProducer("localhost:9092");</code> and <code>app.RegisterMessageProducerHook()</code>.</p>
-<pre><code>builder.AddSqliteCms(&quot;Data Source=cmsapp.db&quot;).PrintVersion();
+<h3 id="producing-events-to-an-event-broker-eg-kafka">Producing Events to an Event Broker (e.g., Kafka)</h3>
+<p>To enable asynchronous business logic through an event broker like Kafka, you can produce events using hook functions. This feature requires just a few additional setup steps:</p>
+<ol>
+<li>
+<p>Add the Kafka producer configuration:
+   <code>csharp
+   builder.AddKafkaMessageProducer("localhost:9092");</code></p>
+</li>
+<li>
+<p>Register the message producer hook:
+   <code>csharp
+   app.RegisterMessageProducerHook();</code></p>
+</li>
+</ol>
+<p>Here’s a complete example:</p>
+<pre><code class="language-csharp">builder.AddSqliteCms(&quot;Data Source=cmsapp.db&quot;).PrintVersion();
 builder.AddKafkaMessageProducer(&quot;localhost:9092&quot;);
 var app = builder.Build();
 await app.UseCmsAsync(false);
 app.RegisterMessageProducerHook();
 </code></pre>
+<p>With this setup, events are produced to Kafka, allowing consumers to process business logic asynchronously.</p>
 <h2 id="development-guide">Development Guide</h2>
 <p>The backend is written in ASP.NET Core, the Admin Panel uses React, and the Schema Builder is developed with jQuery.</p>
 <h3 id="system-overviews">System Overviews</h3>
@@ -1253,5 +1204,5 @@ app.RegisterMessageProducerHook();
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2024-11-28 13:18:10.509911+00:00
+Build Date UTC : 2024-11-29 14:29:33.583913+00:00
 -->

@@ -6,19 +6,13 @@
 Having established our understanding of Fluent CMS essentials like Entity, Query, and Page, we're ready to build a frontend for an online course website.
 </summary>
 
-### Introduction of online course website
-The online course website is designed to help users easily find courses tailored to their interests and goals. 
-
-- **Home Page(`home`)**: This is the main entry point, providing `Featured Course`, `Advanced Course`, etc. Each course in these sections links to its Course Details page.
-
-- **Latest Courses(`course`)**: A curated list of the newest courses. Each course in this section links to its Course Details page.
-
-- **Course Details(`course/{course_id}`)**: This page provides a comprehensive view of a selected course. Users can navigate to the **Teacher Details** page to learn more about the instructor. 
-
-- **Teacher Details(`teacher/{teacher_id}`)**: Here, users can explore the profile of the instructor, This page contains a `teacher's latest course section`, each course in the sections links back to **Course Details** 
-
-
 ---
+### Key Pages
+
+- **Home Page (`home`)**: The main entry point, featuring sections like *Featured Courses* and *Advanced Courses*. Each course links to its respective **Course Details** page.
+- **Course Details (`course/{course_id}`)**: Offers detailed information about a specific course and includes links to the **Teacher Details** page.
+- **Teacher Details (`teacher/{teacher_id}`)**: Highlights the instructor’s profile and includes a section displaying their latest courses, which link back to the **Course Details** page.
+
 
 ```plaintext
              Home Page
@@ -32,107 +26,39 @@ The online course website is designed to help users easily find courses tailored
        |                   |       
        v                   v            
 Course Details <-------> Teacher Details 
-
 ```
+
 ---
+
 ### Designing the Home Page
-The home page's screenshot shows below.
-![Page](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/page-home-course.png)
 
-In the page designer, we drag a component `Content-B`, set it's `multiple-records` component's data source to Query  `course`.  
-The query might return data like
-```json
-[
-  {
-    "name": "Object-Oriented Programming(OOP)",
-    "id": 20,
-    "teacher":{
-      "id": 3,
-      "firstname": "jane"
-    }
-  }
-]
-```
-We set link href of each course item to `/pages/course/{{id}}`. 
-![Link](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-link.png)   
-HandleBar rendering engine renders the link as  `/pages/course/20` by replacing `{{id}}` to `20`.
+1. **Drag and Drop Components**: Use the Fluent CMS page designer to drag a `Content-B` component.
+2. **Set Data Source**: Assign the component's data source to the `course` query.
+3. **Link Course Items**: Configure the link for each course to `/pages/course/{{id}}`. The Handlebars expression `{{id}}` is dynamically replaced with the actual course ID during rendering.
 
-### Creating Course Detail Page
-We name this page `course/{course_id}` to capture the path parameter course_id. 
-For example, with the URL `/pages/course/20`, we obtain `{course_id: 20}`. This parameter is passed to the Query Service, which then filters data to match:
-
-```json
-{
-  "fieldName": "id",
-  "operator": "and",
-  "omitFail": true,
-  "constraints": [
-    {
-      "match": "in",
-      "value": "qs.course_id"
-    }
-  ]
-}
-```
-The query service produces a where clause as  `where id in (20)`.
+![Link Example](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-link.png)
 
 ---
-### Link to Teacher Detail Page
-We set the link of each teacher item as  `/pages/teacher/{{teacher.id}}`, allowing navigation from Course Details to Teacher Details:
-For below example data, HandlerBar render the link as `/pages/teacher/3`.
-```json
-[
-  {
-    "name": "Object-Oriented Programming(OOP)",
-    "id": 20,
-    "teacher":{
-      "id": 3,
-      "firstname": "jane"
-    }
-  }
-]
-```
-### Creating Teacher's Detail Page
-![](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/page-teacher.png)
 
-Similarly, we name this page as `teacher/{teacher_id}` and set its data source Query to `teacher`. For the URL /pages/teacher/3, the query returns:
-```json
-{
-  "id": 3,
-  "firstname": "Jane",
-  "lastname": "Debuggins",
-  "image": "/2024-10/b44dcb4c.jpg",
-  "bio": "<p><strong>Ms. Debuggins</strong> is a seasoned software developer with over a decade of experience in full-stack development and system architecture. </p>",
-  "skills": [
-    {
-      "id": 1,
-      "name": "C++",
-      "years": 3,
-      "teacher_id": 3
-    }
-  ]
-}
-```
+### Creating the Course Details Page
 
-To add a list of courses by the teacher, we set a `multiple-records` component with Query `course`. 
-![](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-teacher.png)
-When rendering the Teacher Page, PageService sends `{teacher_id: 3}` to Query `course`. 
-The QueryService Apply below filter, resulting in  `WHERE teacher in (3)`.
-
-``` json
-    {
-      "fieldName": "teacher",
-      "operator": "and",
-      "omitFail": true,
-      "constraints": [
-        {
-          "match": "in",
-          "value": "qs.teacher_id"
-        }
-      ]
-    }
-```
-This design creates an interconnected online course site, ensuring users can explore course details, instructors.
+1. **Page Setup**: Name the page `course/{course_id}` to capture the `course_id` parameter from the URL (e.g., `/pages/course/20`).
+2. **Query Configuration**: The variable `{course_id:20}` is passed to the `course` query, generating a `WHERE id IN (20)` clause to fetch the relevant course data.
+3. **Linking to Teacher Details**: Configure the link for each teacher item on this page to `/pages/teacher/{{teacher.id}}`. Handlebars dynamically replaces `{{teacher.id}}` with the teacher’s ID. For example, if a teacher object has an ID of 3, the link renders as `/pages/teacher/3`.
 
 ---
-</details>
+
+### Creating the Teacher Details Page
+
+1. **Page Setup**: Define the page as `teacher/{teacher_id}` to capture the `teacher_id` parameter from the URL.
+2. **Set Data Source**: Assign the `teacher` query as the page’s data source.
+
+#### Adding a Teacher’s Courses Section
+
+- Drag a `ECommerce A` component onto the page.
+- Set its data source to the `course` query, filtered by the teacher’s ID (`WHERE teacher IN (3)`).
+
+![Teacher Page Designer](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-teacher.png)
+
+When rendering the page, the `PageService` automatically passes the `teacher_id` (e.g., `{teacher_id: 3}`) to the query.
+</details>  

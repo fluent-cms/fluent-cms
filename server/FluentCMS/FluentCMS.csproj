@@ -93,10 +93,10 @@
         <PackageReadmeFile>readme.md</PackageReadmeFile>
         <TargetFramework>net8.0</TargetFramework>
         <PackageId>FluentCMS</PackageId>
-        <Version>0.2.6</Version>
+        <Version>0.2.8</Version>
         <Authors>Jason C</Authors>
         <Company>fluent-cms</Company>
-        <Description>CRUD (Create, Read, Update, Delete) for any entities</Description>
+        <Description>A headless CMS with GraphQL API and drag-and-drop page designer.</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageProjectUrl>https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS</PackageProjectUrl>
         <RepositoryUrl>https://github.com/fluent-cms/fluent-cms</RepositoryUrl>

@@ -40,8 +40,8 @@ function addCustomTypes(editor){
 }
 
 //copy from grapes.js demo
-export function loadEditor(container) {
-    var editor = grapesjs.init({
+export function loadEditor(container, loadData) {
+    let editor = grapesjs.init({
         storageManager: false,
         container: container,
         plugins: [
@@ -105,10 +105,10 @@ export function loadEditor(container) {
             command: 'core:component-outline',
             'active': true,
         });
+        loadData(editor);
     });
     
     addCustomTypes(editor);
     addCustomBlocks(editor);
-
-    return editor
+    return editor;
 }

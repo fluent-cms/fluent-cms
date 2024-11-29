@@ -20,10 +20,9 @@ public static class HttpContextExt
         return context?.User.IsInRole(role) == true;
     }
 
-    public static string? GetUserId(this HttpContext? context)
-
+    public static bool GetUserId(this HttpContext? context, out string userId)
     {
-        var user = context?.User;
-        return user?.Identity?.IsAuthenticated == true ? user.FindFirstValue(ClaimTypes.NameIdentifier) : null;
+        userId = context?.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
+        return !string.IsNullOrWhiteSpace(userId);
     }
 }

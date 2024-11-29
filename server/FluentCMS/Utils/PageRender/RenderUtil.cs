@@ -33,7 +33,7 @@ public static class RenderUtil
             var field = n.GetAttributeValue(Constants.AttrField, string.Empty);
             if (string.IsNullOrWhiteSpace(field) && string.IsNullOrWhiteSpace(query))
             {
-                return Result.Fail( $"both field and query was not set for multiple-record element [{n.OuterHtml}]");
+                return Result.Fail($"Error: Both the 'field' and 'query' properties are missing for the {Constants.DataList} element. Please ensure that the element is configured correctly. Element details: [{n.OuterHtml}]");
             }
 
             field = string.IsNullOrWhiteSpace(field) ? n.Id : field;
