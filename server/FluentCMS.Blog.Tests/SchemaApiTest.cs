@@ -15,7 +15,6 @@ public class SchemaApiTest
     private const string TableName = "schema_api_test";
     private const string TitleAttribute = "title";
 
-
     public SchemaApiTest()
     {
         WebAppClient<Program> webAppClient = new();

@@ -9,29 +9,32 @@ namespace FluentCMS.Cms.Controllers;
 [Route("api/[controller]")]
 public class EntitiesController(IEntityService entityService) : ControllerBase
 {
-    [HttpGet("{entityName}")]
-    public async Task<ActionResult<ListResult>> List(string entityName, CancellationToken cancellationToken,
-        [FromQuery] Pagination pagination)
+    [HttpGet("{name}")]
+    public async Task<ActionResult<ListResult>> List(string name, [FromQuery] Pagination pagination, CancellationToken ct
+        )
     {
         var queryDictionary = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
-        return Ok(await entityService.List(entityName, pagination, queryDictionary,cancellationToken));
+        return Ok(await entityService.List(name, pagination, queryDictionary,ct));
     }
 
-    [HttpGet("{entityName}/{id}")]
-    public async Task<ActionResult<object>> One(string entityName, string id,CancellationToken cancellationToken) =>
-        Ok(await entityService.One(entityName, id,cancellationToken));
+    [HttpGet("{name}/{id}")]
+    public async Task<ActionResult<object>> One(string name, string id,CancellationToken ct) =>
+        Ok(await entityService.One(name, id,ct));
 
-    [HttpPost("{entityName}/insert")]
-    public async Task<ActionResult<int>> Insert(string entityName,CancellationToken cancellationToken, [FromBody] JsonElement item) =>
-        Ok(await entityService.Insert(entityName, item,cancellationToken));
+    [HttpPost("{name}/insert")]
+    public async Task<ActionResult<int>> Insert(string name, [FromBody] JsonElement ele,CancellationToken ct)
+    {
+        var item = await entityService.Insert(name, ele, ct);
+        return Ok(item);
+    }
 
-    [HttpPost("{entityName}/update")]
-    public async Task<ActionResult<int>> Update(string entityName, CancellationToken cancellationToken, [FromBody] JsonElement item) =>
-        Ok(await entityService.Update(entityName, item,cancellationToken));
+    [HttpPost("{name}/update")]
+    public async Task<ActionResult<int>> Update(string name, CancellationToken ct, [FromBody] JsonElement ele) =>
+        Ok(await entityService.Update(name, ele,ct));
 
-    [HttpPost("{entityName}/delete")]
-    public async Task<ActionResult<int>> Delete(string entityName,CancellationToken cancellationToken, [FromBody] JsonElement item) =>
-        Ok(await entityService.Delete(entityName, item,cancellationToken));
+    [HttpPost("{name}/delete")]
+    public async Task<ActionResult<int>> Delete(string name, [FromBody] JsonElement ele,CancellationToken ct) =>
+        Ok(await entityService.Delete(name, ele,ct));
 
     [HttpPost("{entityName}/{id}/{attributeName}/delete")]
     public async Task<ActionResult<int>> CrosstableDelete(string entityName, string id, string attributeName, 
@@ -40,21 +43,23 @@ public class EntitiesController(IEntityService entityService) : ControllerBase
         Ok(await entityService.CrosstableDelete(entityName, id, attributeName, items,cancellationToken));
 
 
-    [HttpPost("{entityName}/{id}/{attributeName}/save")]
-    public async Task<ActionResult<int>> CrosstableSave(string entityName, string id, string attributeName,
-        CancellationToken cancellationToken,
-        [FromBody] JsonElement[] items) =>
-        Ok(await entityService.CrosstableAdd(entityName, id, attributeName, items, cancellationToken));
+    [HttpPost("{name}/{id}/{attr}/save")]
+    public async Task<ActionResult<int>> CrosstableSave(string name, string id, string attr,
+        [FromBody] JsonElement[] elements,
+        CancellationToken ct
+        ) =>
+        Ok(await entityService.CrosstableAdd(name, id, attr, elements, ct));
 
-    [HttpGet("{entityName}/{id}/{attributeName}")]
+    [HttpGet("{name}/{id}/{attr}")]
     public async Task<ActionResult<object>> CrosstableList(
-        string entityName, 
+        string name, 
         string id, 
-        string attributeName, 
+        string attr, 
         [FromQuery] Pagination pagination,
-        CancellationToken cancellationToken,
-        [FromQuery] bool exclude) {
+        [FromQuery] bool exclude,
+        CancellationToken ct
+        ) {
         var queryDictionary = QueryHelpers.ParseQuery(HttpContext.Request.QueryString.Value);
-        return Ok(await entityService.CrosstableList(entityName, id, attributeName, exclude, queryDictionary, pagination, cancellationToken));
+        return Ok(await entityService.CrosstableList(name, id, attr, exclude, queryDictionary, pagination, ct));
     }
 }

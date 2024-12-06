@@ -19,7 +19,7 @@ public static class HttpClientExt
         if (!msg.IsSuccessStatusCode)
         {
             return Result.Fail(
-                $"fail to request {msg.RequestMessage?.RequestUri}, message= {await msg.Content.ReadAsStringAsync()}");
+                $"fail to request {msg.RequestMessage?.RequestUri}, message= {str}");
         }
         var item = JsonSerializer.Deserialize<T>(str, CaseInsensitiveOption);
         return item is null ? Result.Fail("Fail to Deserialize") : item;

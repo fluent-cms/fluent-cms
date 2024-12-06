@@ -121,7 +121,7 @@ void RegisterHooks()
     var attr = new LoadedAttribute(TestEntity.EntityName, TestEntity.FieldName);
     var vector = new AttributeVector(TestEntity.FieldName, "", [], attr);
     registry.EntityPreGetList.Register(TestEntity.EntityName,
-        param => param with { RefSorts = [..param.RefSorts, new ValidSort(vector, SortOrder.Asc)] });
+        param => param with { RefSorts = [..param.RefSorts, new ValidSort(vector,TestEntity.FieldName, SortOrder.Asc)] });
 
     registry.EntityPostGetList.Register(TestEntity.EntityName, (param) =>
     {

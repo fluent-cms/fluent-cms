@@ -90,18 +90,6 @@ public class PostgresDefinitionExecutor(string connectionString, ILogger<Postgre
         };
     }
 
-    private string StringToDataType(string s)
-    {
-        s = s.ToLower();
-        return s switch
-        {
-            "integer" => DataType.Int,
-            "text" => DataType.Text,
-            "timestamp" => DataType.Datetime,
-            _ => DataType.String
-        };
-    }
-    
     //use callback  instead of return QueryFactory to ensure proper disposing connection
     private async Task<T> ExecuteQuery<T>(string sql, Func<NpgsqlCommand, Task<T>> executeFunc, params (string, object)[] parameters)
     {

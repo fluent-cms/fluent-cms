@@ -1,4 +1,4 @@
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 
 namespace FluentCMS.Utils.DataDefinitionExecutor;
 
@@ -95,7 +95,7 @@ public class SqlServerDefinitionExecutor(string connectionString, ILogger<SqlSer
             DataType.Int => "INT",
             DataType.Text => "TEXT",
             DataType.Datetime => "DATETIME",
-            DataType.String => "VARCHAR(255)",
+            DataType.String => "NVARCHAR(255)",
             _ => throw new NotSupportedException($"Type {dataType} is not supported")
         };
     }
@@ -129,4 +129,3 @@ public class SqlServerDefinitionExecutor(string connectionString, ILogger<SqlSer
         return await executeFunc(command);
     }
 }
-
