@@ -38,7 +38,6 @@ public sealed class CmsModule(
     private const string FluentCmsContentRoot = "/_content/FluentCMS";
     public string GraphPath => graphPath;
 
-    public  HookRegistry GetHookRegistry(WebApplication app) => app.Services.GetRequiredService<HookRegistry>();
     public static void AddCms(WebApplicationBuilder builder,DatabaseProvider databaseProvider, string connectionString, string graphPath)
     {
         builder.Services.AddSingleton<CmsModule>(p => new CmsModule(
@@ -206,7 +205,7 @@ public sealed class CmsModule(
                                     """;
                         try
                         {
-                            html = await pageService.Get(PageConstants.HomePage, new Dictionary<string, StringValues>());
+                            html = await pageService.Get(PageConstants.HomePage, new StrArgs());
                         }
                         catch (Exception e)
                         {

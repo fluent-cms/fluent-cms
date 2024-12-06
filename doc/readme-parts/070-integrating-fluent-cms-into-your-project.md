@@ -8,8 +8,6 @@
 Follow these steps to integrate Fluent CMS into your project using a NuGet package.
 </summary>
 
----
-
 1. **Create a New ASP.NET Core Web Application**.
 
 2. **Add the FluentCMS NuGet Package**:
@@ -49,7 +47,5 @@ Follow these steps to integrate Fluent CMS into your project using a NuGet packa
 Once your web server is running, you can access the **Admin Panel** at `/admin` and the **Schema Builder** at `/schema`.
 
 You can find an example project [here](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).
-
----
 
 </details>

@@ -32,7 +32,7 @@ public sealed class AuthModule<TCmsUser>(ILogger<IAuthModule> logger) : IAuthMod
         app.MapGroup("/api").MapIdentityApi<TCmsUser>();
         app.MapGet("/api/logout", async (SignInManager<TCmsUser> signInManager) => await signInManager.SignOutAsync());
 
-        var registry = app.Services.GetRequiredService<CmsModule>().GetHookRegistry(app);
+        var registry = app.Services.GetRequiredService<HookRegistry>();
 
         registry.SchemaPreSave.RegisterDynamic("*",
             async (ISchemaPermissionService schemaPermissionService, SchemaPreSaveArgs args) => args with

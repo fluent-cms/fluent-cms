@@ -1,5 +1,5 @@
 
-
+---
 ## **GraphQL Query**
 
 <details>
@@ -459,7 +459,5 @@ Subfields also support cursor-based pagination. For instance, querying [https://
 
 To fetch the next two skills, use the cursor:  
 [https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/part/skills?limit=2&last=eyJpZCI6Miwic291cmNlSWQiOjN9](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/part/skills?limit=2&last=eyJpZCI6Miwic291cmNlSWQiOjN9)
-
----
 
 </details>

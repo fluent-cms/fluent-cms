@@ -1,5 +1,6 @@
 
 
+---
 ## Development Guide
 <details>
 <summary>
@@ -34,5 +35,4 @@ The backend is written in ASP.NET Core, the Admin Panel uses React, and the Sche
 
 ![Schema Builder Sequence](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/schema-builder-sequence.png)
 
----
 </details>

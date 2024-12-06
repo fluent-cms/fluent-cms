@@ -13,7 +13,7 @@ public static class AppExt
     }
 
     public static HookRegistry GetHookRegistry(this WebApplication app) =>
-        app.Services.GetRequiredService<CmsModule>().GetHookRegistry(app);
+        app.Services.GetRequiredService<HookRegistry>();
 
     public static async Task<Result> EnsureCmsUser(this WebApplication app, string email, string password,
         string[] role) =>
