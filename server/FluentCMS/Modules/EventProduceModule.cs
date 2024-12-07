@@ -5,15 +5,16 @@ namespace FluentCMS.Modules;
 
 public class EventProduceModule(ILogger<EventProduceModule> logger)
 {
-    public static void AddKafkaMessageProducer(WebApplicationBuilder builder, string brokerList)
+    public static IServiceCollection AddKafkaMessageProducer(IServiceCollection services, string brokerList)
     {
-        builder.Services.AddSingleton<EventProduceModule>();
+        services.AddSingleton<EventProduceModule>();
 
-        builder.Services.AddSingleton<IProducer>(p =>
+        services.AddSingleton<IProducer>(p =>
             new KafkaProducer(brokerList, p.GetRequiredService<ILogger<KafkaProducer>>()));
+        return services;
     }
 
-    public void RegisterMessageProducerHook(WebApplication app, string entityName = "*")
+    public WebApplication RegisterMessageProducerHook(WebApplication app, string entityName = "*")
     {
         logger.LogInformation($"Register message producer hook for {entityName}");
         var registry = app.Services.GetRequiredService<HookRegistry>();
@@ -37,6 +38,7 @@ public class EventProduceModule(ILogger<EventProduceModule> logger)
                 parameter.RecordId, parameter.Record);
             return parameter;
         });
+        return app;
     }
 }
     

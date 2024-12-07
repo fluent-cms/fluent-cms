@@ -1,6 +1,0 @@
-@FluentCMS.Blog_HostAddress = http://localhost:5096
-
-GET {{FluentCMS.Blog_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

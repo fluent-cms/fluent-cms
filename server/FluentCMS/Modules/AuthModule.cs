@@ -9,23 +9,24 @@ namespace FluentCMS.Modules;
 public sealed class AuthModule<TCmsUser>(ILogger<IAuthModule> logger) : IAuthModule
     where TCmsUser : IdentityUser, new()
 {
-    public static void AddCmsAuth<TUser, TRole, TContext>(WebApplicationBuilder builder)
+    public static IServiceCollection AddCmsAuth<TUser, TRole, TContext>(IServiceCollection services)
         where TUser : IdentityUser, new()
         where TRole : IdentityRole, new()
         where TContext : IdentityDbContext<TUser>
     {
 
-        builder.Services.AddSingleton<IAuthModule, AuthModule<TUser>>(); 
+        services.AddSingleton<IAuthModule, AuthModule<TUser>>(); 
 
-        builder.Services.AddIdentityApiEndpoints<TUser>().AddRoles<TRole>().AddEntityFrameworkStores<TContext>();
-        builder.Services.AddScoped<IAccountService, AccountService<TUser, TRole, TContext>>();
-        builder.Services.AddScoped<ISchemaPermissionService, SchemaPermissionService<TUser>>();
-        builder.Services.AddScoped<IEntityPermissionService, EntityPermissionService>();
-        builder.Services.AddScoped<IProfileService, ProfileService<TUser>>();
-        builder.Services.AddHttpContextAccessor();
+        services.AddIdentityApiEndpoints<TUser>().AddRoles<TRole>().AddEntityFrameworkStores<TContext>();
+        services.AddScoped<IAccountService, AccountService<TUser, TRole, TContext>>();
+        services.AddScoped<ISchemaPermissionService, SchemaPermissionService<TUser>>();
+        services.AddScoped<IEntityPermissionService, EntityPermissionService>();
+        services.AddScoped<IProfileService, ProfileService<TUser>>();
+        services.AddHttpContextAccessor();
+        return services;
     }
 
-    public void UseCmsAuth(WebApplication app)
+    public WebApplication UseCmsAuth(WebApplication app)
     {
         logger.LogInformation("using cms auth");
         app.UseAuthorization();
@@ -107,6 +108,7 @@ public sealed class AuthModule<TCmsUser>(ILogger<IAuthModule> logger) : IAuthMod
                 return args;
             }
         );
+        return app;
     }
     
     public async Task<Result> EnsureCmsUser(WebApplication app, string email, string password, string[] role)

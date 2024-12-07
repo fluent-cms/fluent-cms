@@ -17,9 +17,9 @@ builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 
 var mongoConfig = builder.Configuration.GetRequiredSection("MongoConfig").Get<MongoConfig>()!;
-builder.AddSqliteCms("Data Source=cms.db");
-builder.AddKafkaMessageProducer("localhost:9092");
-builder.AddMongoView(mongoConfig);
+builder.Services.AddSqliteCms("Data Source=cms.db");
+builder.Services.AddKafkaMessageProducer("localhost:9092");
+builder.Services.AddMongoView(mongoConfig);
 
 var app = builder.Build();
 await app.UseCmsAsync();

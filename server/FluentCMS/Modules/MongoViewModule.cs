@@ -8,13 +8,14 @@ namespace FluentCMS.Modules;
 public class MongoViewModule(ILogger<MongoViewModule> logger)
 {
     
-    public static void AddMongoView(WebApplicationBuilder builder, MongoConfig config)
+    public static IServiceCollection AddMongoView(IServiceCollection services, MongoConfig config)
     {
-        builder.Services.AddSingleton<INosqlDao>(p => new MongoDao(config, p.GetRequiredService<ILogger<MongoDao>>()));
-        builder.Services.AddSingleton<MongoViewModule>();
+        services.AddSingleton<INosqlDao>(p => new MongoDao(config, p.GetRequiredService<ILogger<MongoDao>>()));
+        services.AddSingleton<MongoViewModule>();
+        return services;
     }
 
-    public void RegisterMongoViewHook(WebApplication app, string viewName = "*")
+    public WebApplication RegisterMongoViewHook(WebApplication app, string viewName = "*")
     {
         logger.LogInformation($"Registering mongo view hook {viewName}");
         var hookRegistry = app.Services.GetRequiredService<HookRegistry>();
@@ -43,5 +44,6 @@ public class MongoViewModule(ILogger<MongoViewModule> logger)
                 return p with { OutRecord = records.First() };
             }
         );
+        return app;
     }
 }
