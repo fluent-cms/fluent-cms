@@ -202,10 +202,19 @@ public static class AttributeHelper
     }
 
 
-    public static ImmutableArray<object> GetUniq<T>(this T a, Record[] records)
-        where T : Attribute
+    public static ValidValue[] GetUniq<T>(this T a, IEnumerable<Record> records)
+        where T : Attribute 
     {
-        return [..records.Where(x => x.ContainsKey(a.Field)).Select(x => x[a.Field]).Distinct().Where(x => x != null)];
+        var ret = new List<ValidValue>();
+        foreach (var record in records)
+        {
+            if (record.TryGetValue(a.Field, out var value) && value != null)
+            {
+                ret.Add(value.ToValidValue());
+            }
+        }
+
+        return ret.ToArray();
     }
 
     public static T? FindOneAttr<T>(this IEnumerable<T>? arr, string name)

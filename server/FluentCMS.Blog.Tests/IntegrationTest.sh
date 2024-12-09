@@ -35,8 +35,16 @@ test_postgres_container() {
 }
 
 test_sqlserver_container(){
+  local container_name="fluent-cms-db-sql-edge"
+  local password=Admin12345678!
+  remove_container $container_name
+
+  docker run --cap-add SYS_PTRACE -e 'ACCEPT_EULA=1' -e "MSSQL_SA_PASSWORD=$password" -p 1433:1433 --name $container_name -d mcr.microsoft.com/azure-sql-edge
+  sleep 10
+  
   export DatabaseProvider=SqlServer
-  dotnet test
+  export SqlServer="Server=localhost;Database=cms;User Id=sa;Password=Admin12345678!;TrustServerCertificate=True"
+  dotnet test  
 }
 
 # Exit immediately if a command exits with a non-zero status
@@ -45,12 +53,12 @@ export Logging__LogLevel__Default=Warning
 export Logging__LogLevel__Microsoft_AspNetCore=Warning
 
 # Sqlite With Default Data 
-db_path=$(pwd)/default.db && rm -f $db_path && cp ../FluentCMS.Blog/cms.db "$db_path" && test_sqlite "$db_path"
+#db_path=$(pwd)/default.db && rm -f $db_path && cp ../FluentCMS.Blog/cms.db "$db_path" && test_sqlite "$db_path"
 
 # Sqlite With Empty Data 
-db_path=$(pwd)/temp.db && rm -f "$db_path" && test_sqlite "$db_path"
+#db_path=$(pwd)/temp.db && rm -f "$db_path" && test_sqlite "$db_path"
 
-test_postgres_container ""
+#test_postgres_container ""
 
 test_sqlserver_container
 

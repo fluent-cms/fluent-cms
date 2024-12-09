@@ -18,7 +18,7 @@ public class EntityHookTests
     }
     
     [Fact]
-    public async void TestHooks()
+    public async Task TestHooks()
     {
         var content = new Dictionary<string, object>
         {

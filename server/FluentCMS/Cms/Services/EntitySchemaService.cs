@@ -131,7 +131,7 @@ public sealed class EntitySchemaService(
         await CreateCrosstables();
         await SaveMainTable();
         await schemaSvc.EnsureEntityInTopMenuBar(entity, ct);
-        await GetOrCreate(ct);
+        await entityCache.Remove("",ct);
         return dto;
 
         async Task SaveSchema()
@@ -173,7 +173,7 @@ public sealed class EntitySchemaService(
             var creatingNewEntity = dto.Id == 0;
             var tableExists = cols.Length > 0;
             return creatingNewEntity && tableExists
-                ? Result.Fail($"Fail to add new entity, the table {entity.TableName} aleady exists")
+                ? Result.Fail($"Fail to add new entity, the table {entity.TableName} already exists")
                 : Result.Ok();
         }
     }
@@ -254,13 +254,13 @@ public sealed class EntitySchemaService(
     public async Task Delete(Schema schema, CancellationToken ct)
     {
         await schemaSvc.Delete(schema.Id, ct);
-        await GetOrCreate(ct);
+        await entityCache.Remove("",ct);
     }
 
     public async Task<Schema> Save(Schema schema, CancellationToken ct)
     {
         var ret = await schemaSvc.SaveWithAction(schema, ct);
-        await GetOrCreate(ct);
+        await  entityCache.Remove("",ct);
         return ret;
     }
 

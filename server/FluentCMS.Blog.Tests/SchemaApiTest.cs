@@ -25,7 +25,6 @@ public class SchemaApiTest
     [Fact]
     public async Task AnonymousGetAllSchema()
     {
-        var schema = TestSchema();
         (await _schemaApiClient.GetAll("")).AssertFail();
     }
 

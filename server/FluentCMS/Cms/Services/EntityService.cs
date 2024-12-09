@@ -19,7 +19,7 @@ public sealed class EntityService(
     public async Task<Record> OneByAttributes(string entityName, string id, string[] attributes,
         CancellationToken token)
     {
-        var ctx = await ResolveOneContext(entityName, id, token);
+        var ctx = await GetIdCtx(entityName, id, token);
         var query = ctx.Entity.ByIdQuery(ctx.Id, ctx.Entity.Attributes.GetLocalAttrs(attributes), []);
         return NotNull(await queryExecutor.One(query, token))
             .ValOrThrow($"not find record by [{id}]");
@@ -27,7 +27,7 @@ public sealed class EntityService(
 
     public async Task<Record> One(string entityName, string id, CancellationToken token)
     {
-        var ctx = await ResolveOneContext(entityName, id, token);
+        var ctx = await GetIdCtx(entityName, id, token);
         var res = await hookRegistry.EntityPreGetOne.Trigger(provider,
             new EntityPreGetOneArgs(entityName, id, default));
         if (res.OutRecord is not null)
@@ -59,23 +59,23 @@ public sealed class EntityService(
     }
     public async Task<Record> Insert(string name, JsonElement ele, CancellationToken token)
     {
-        return await Insert(await ResolveRecordContext(name, ele, token), token);
+        return await Insert(await GetRecordCtx(name, ele, token), token);
     }
 
     public async Task<Record> Update(string name, JsonElement ele, CancellationToken token)
     {
-        return await Update(await ResolveRecordContext(name, ele, token), token);
+        return await Update(await GetRecordCtx(name, ele, token), token);
     }
 
     public async Task<Record> Delete(string name, JsonElement ele, CancellationToken token)
     {
-        return await Delete(await ResolveRecordContext(name, ele, token), token);
+        return await Delete(await GetRecordCtx(name, ele, token), token);
     }
 
     public async Task<int> CrosstableDelete(string name, string id, string attr, JsonElement[] elements,
         CancellationToken token)
     {
-        var ctx = await ResolveCrosstableCtx(name, id, attr, token);
+        var ctx = await GetCrosstableCtx(name, id, attr, token);
         var items = elements.Select(ele =>
             Ok(ctx.Crosstable.TargetEntity.Parse(ele, entitySchemaSvc))).ToArray();
 
@@ -92,7 +92,7 @@ public sealed class EntityService(
     public async Task<int> CrosstableAdd(string name, string id, string attr, JsonElement[] elements,
         CancellationToken token)
     {
-        var ctx = await ResolveCrosstableCtx(name, id, attr, token);
+        var ctx = await GetCrosstableCtx(name, id, attr, token);
 
         var items = elements
             .Select(ele => Ok(ctx.Crosstable.TargetEntity.Parse(ele, entitySchemaSvc))).ToArray();
@@ -110,7 +110,7 @@ public sealed class EntityService(
     public async Task<ListResult> CrosstableList(string name, string id, string attr, bool exclude,
         StrArgs args, Pagination pagination, CancellationToken token)
     {
-        var ctx = await ResolveCrosstableCtx(name, id, attr, token);
+        var ctx = await GetCrosstableCtx(name, id, attr, token);
         var target = ctx.Crosstable.TargetEntity;
 
         var selectAttributes = target.Attributes.GetLocalAttrs(InListOrDetail.InList);
@@ -250,9 +250,9 @@ public sealed class EntityService(
         return record;
     }
 
-    record IdContext(LoadedEntity Entity, object Id);
+    record IdContext(LoadedEntity Entity, ValidValue Id);
 
-    private async Task<IdContext> ResolveOneContext(string entityName, string id, CancellationToken token)
+    private async Task<IdContext> GetIdCtx(string entityName, string id, CancellationToken token)
     {
         var entity = Ok(await entitySchemaSvc.GetLoadedEntity(entityName, token));
         if (!entitySchemaSvc.ResolveVal(entity.PrimaryKeyAttribute, id, out var idValue))
@@ -260,12 +260,12 @@ public sealed class EntityService(
             throw new InvalidParamException($"Failed to cast {id} to {entity.PrimaryKeyAttribute.DataType}");
         }
 
-        return new IdContext(entity, idValue!);
+        return new IdContext(entity, idValue);
     }
 
-    record CrosstableContext(LoadedAttribute Attribute, Crosstable Crosstable, Object Id);
+    record CrosstableContext(LoadedAttribute Attribute, Crosstable Crosstable, ValidValue Id);
 
-    private async Task<CrosstableContext> ResolveCrosstableCtx(string entityName, string strId, string attributeName,
+    private async Task<CrosstableContext> GetCrosstableCtx(string entityName, string strId, string attributeName,
         CancellationToken token)
     {
         var entity = Ok(await entitySchemaSvc.GetLoadedEntity(entityName, token));
@@ -278,12 +278,12 @@ public sealed class EntityService(
             throw new InvalidParamException($"Failed to cast {strId} to {crossTable.SourceAttribute.DataType}");
         }
 
-        return new CrosstableContext(attribute, crossTable, id!);
+        return new CrosstableContext(attribute, crossTable, id);
     }
 
     record RecordContext(LoadedEntity Entity, Record Record);
 
-    private async Task<RecordContext> ResolveRecordContext(string name, JsonElement ele, CancellationToken token)
+    private async Task<RecordContext> GetRecordCtx(string name, JsonElement ele, CancellationToken token)
     {
         var entity = Ok(await entitySchemaSvc.GetLoadedEntity(name, token));
         var record = Ok(entity.Parse(ele, entitySchemaSvc));

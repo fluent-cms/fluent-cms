@@ -25,7 +25,7 @@ _ = provider switch
     "Postgres" => builder.Services.AddDbContext<CmsDbContext>(options => options.UseNpgsql(conn))
         .AddPostgresCms(conn),
     "SqlServer" => builder.Services.AddDbContext<CmsDbContext>(options => options.UseSqlServer(conn))
-        .AddSqliteCms(conn),
+        .AddSqlServerCms(conn),
     _ => throw new Exception("Database provider not found")
 };
 

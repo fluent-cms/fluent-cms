@@ -46,8 +46,8 @@ public static class SpanHelper
     }
     
 
-    public static object SourceId(this ValidSpan c) => c.EdgeItem![SpanConstants.SourceId];
-    public static object Edge(this ValidSpan c, string fld) => c.EdgeItem![fld];
+    public static ValidValue SourceId(this ValidSpan c) => c.EdgeItem![SpanConstants.SourceId].ToValidValue();
+    public static ValidValue Edge(this ValidSpan c, string fld) => c.EdgeItem![fld].ToValidValue();
     
     public static bool IsEmpty(this Span c) => string.IsNullOrWhiteSpace(c.First) && string.IsNullOrWhiteSpace(c.Last);
     
@@ -118,7 +118,7 @@ public static class SpanHelper
         }
     }
 
-    public static void SetCursor(object? sourceId, Record item, IEnumerable<ValidSort> sorts)
+    private static void SetCursor(object? sourceId, Record item, IEnumerable<ValidSort> sorts)
     {
         var dict = new Dictionary<string, object>();
         foreach (var sort in sorts)
@@ -136,7 +136,7 @@ public static class SpanHelper
     
     public static Result<ValidSpan> ToValid(this Span c, IEnumerable<Attribute> attrs,IAttributeValueResolver resolver)
     {
-        if (c.IsEmpty()) return new ValidSpan(c, default);
+        if (c.IsEmpty()) return new ValidSpan(c);
 
         var arr = attrs.ToArray();
         try
@@ -158,10 +158,10 @@ public static class SpanHelper
                             return Result.Fail($"Fail to cast s to {field.DataType}");
                         }
 
-                        val = result!.Value;
+                        val = result.Value;
                     }
                 }
-                dict[key] = val!;
+                dict[key] = val;
             }
 
             return new ValidSpan(c,dict.ToImmutableDictionary());

@@ -35,6 +35,7 @@ public class EntityApiTest
         //get first page
         Assert.Equal(5,(await _entityApiClient.GetEntityList(Post, 0, 5)).AssertSuccess().Items.Length);
         //get last page
-        Assert.Equal(2,(await _entityApiClient.GetEntityList(Post, 5, 5)).AssertSuccess().Items.Length);
+        var res = (await _entityApiClient.GetEntityList(Post, 5, 5)).AssertSuccess();
+        Assert.Equal(2,res.Items.Length);
     }
 }
