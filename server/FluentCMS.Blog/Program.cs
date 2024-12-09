@@ -9,14 +9,14 @@ const string cors = "CorsOrigins";
 
 var builder = WebApplication.CreateBuilder(args);
 AddCorsPolicy();
-
+AddHybridCache();
+builder.AddServiceDefaults();
 var provider = builder.Configuration.GetValue<string>("DatabaseProvider")
                ?? throw new Exception("DatabaseProvider not found");
     
 //both key Sqlite and ConnectionString_Sqlite work
 var conn = Environment.GetEnvironmentVariable(provider) ??
            builder.Configuration.GetConnectionString(provider) ?? throw new Exception("ConnectionString not found");
-
 
 _ = provider switch
 {
@@ -32,7 +32,9 @@ _ = provider switch
 builder.Services.AddCmsAuth<IdentityUser,IdentityRole,CmsDbContext>();
 
 var app = builder.Build();
+app.MapDefaultEndpoints();
 app.UseCors(cors);
+
 await EnsureDbCreatedAsync();
 await app.UseCmsAsync();
 InvalidParamExceptionFactory.Ok(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [RoleConstants.Sa]));
@@ -40,6 +42,12 @@ InvalidParamExceptionFactory.Ok(await app.EnsureCmsUser("admin@cms.com", "Admin1
 
 app.Run();
 return;
+
+void AddHybridCache()
+{
+    builder.AddRedisDistributedCache(connectionName: "redis");
+    builder.Services.AddHybridCache();
+}
 
 void AddCorsPolicy()
 {
@@ -55,7 +63,6 @@ void AddCorsPolicy()
         });
     });
 }
-
 
 async Task EnsureDbCreatedAsync()
 {

@@ -13,25 +13,30 @@ using static InvalidParamExceptionFactory;
 public sealed class EntitySchemaService(
     ISchemaService schemaSvc,
     IDefinitionExecutor executor,
-    NonExpiringKeyValueCache<ImmutableArray<Entity>> entityCache
+    KeyValueCache<ImmutableArray<Entity>> entityCache
 ) : IEntitySchemaService
 {
-    public async Task ReplaceCache()
+    public ValueTask<ImmutableArray<Entity>> GetOrCreate(CancellationToken ct = default)
     {
-        var schemas = await schemaSvc.All(SchemaType.Entity,null);
-        var entities = schemas
-            .Where(x=>x.Settings.Entity is not null)
-            .Select(x=>x.Settings.Entity!).ToArray();
-        entityCache.Replace("", [..entities]);
+        return entityCache.GetOrSet("", async token =>
+        {
+            var schemas = await schemaSvc.All(SchemaType.Entity, null, token);
+            var entities = schemas
+                .Where(x => x.Settings.Entity is not null)
+                .Select(x => x.Settings.Entity!);
+            return [..entities];
+        }, ct);
     }
 
-    public bool TryGetCachedSchema(out ImmutableArray<Entity> entities)
+    public bool ResolveVal(Attribute attr, string v, out ValidValue result)
     {
-        return entityCache.TryGetValue("", out entities);
+        result = executor.TryParseDataType(v, attr.DataType, out var val) switch
+        {
+            true => new ValidValue(val!.S, val.I, val.D),
+            _ => new ValidValue()
+        };
+        return !result.IsEmpty();
     }
-
-    public bool ResolveVal(Attribute attr, string v, out object? result) =>
-        executor.TryParseDataType(v, attr.DataType, out result);
 
     public async Task<Result<AttributeVector>> ResolveVector(LoadedEntity entity, string fieldName)
     {
@@ -115,24 +120,24 @@ public sealed class EntitySchemaService(
     }
 
 
-    public async Task<Schema> SaveTableDefine(Schema dto, CancellationToken token = default)
+    public async Task<Schema> SaveTableDefine(Schema dto, CancellationToken ct = default)
     {
-        Ok(await schemaSvc.NameNotTakenByOther(dto, token));
+        Ok(await schemaSvc.NameNotTakenByOther(dto, ct));
         var entity = NotNull(dto.Settings.Entity).ValOrThrow("invalid payload").WithDefaultAttr();
-        var cols = await executor.GetColumnDefinitions(entity.TableName, token);
+        var cols = await executor.GetColumnDefinitions(entity.TableName, ct);
         Ok(EnsureTableNotExist());
-        await VerifyEntity(entity, token);
+        await VerifyEntity(entity, ct);
         await SaveSchema(); //need  to save first because it will call trigger
         await CreateCrosstables();
         await SaveMainTable();
-        await schemaSvc.EnsureEntityInTopMenuBar(entity, token);
-        await ReplaceCache();
+        await schemaSvc.EnsureEntityInTopMenuBar(entity, ct);
+        await GetOrCreate(ct);
         return dto;
 
         async Task SaveSchema()
         {
             dto = dto with { Settings = new Settings(entity) };
-            dto = await schemaSvc.SaveWithAction(dto, token);
+            dto = await schemaSvc.SaveWithAction(dto, ct);
             entity = dto.Settings.Entity!;
         }
 
@@ -144,13 +149,13 @@ public sealed class EntitySchemaService(
                 if (columnDefinitions.Length > 0)
                 {
                     await executor.AlterTableAddColumns(entity.TableName, columnDefinitions,
-                        token);
+                        ct);
                 }
             }
             else
             {
                 await executor.CreateTable(entity.TableName, entity.Definitions().EnsureDeleted(),
-                    token);
+                    ct);
             }
         }
 
@@ -159,7 +164,7 @@ public sealed class EntitySchemaService(
             foreach (var attribute in entity.Attributes.GetAttrByType(DisplayType.Crosstable))
             {
                 await CreateCrosstable(entity.ToLoadedEntity(),
-                    attribute.ToLoaded(entity.TableName), token);
+                    attribute.ToLoaded(entity.TableName), ct);
             }
         }
 
@@ -173,7 +178,7 @@ public sealed class EntitySchemaService(
         }
     }
 
-    private async Task<Result<LoadedAttribute>> LoadLookup(LoadedAttribute attr, CancellationToken token)
+    private async Task<Result<LoadedAttribute>> LoadLookup(LoadedAttribute attr, CancellationToken ct)
     {
         if (attr.Lookup is not null)
         {
@@ -185,7 +190,7 @@ public sealed class EntitySchemaService(
             return Result.Fail($"Lookup Option was not set for attribute `{attr.Field}`");
         }
 
-        var (_, isFailed, value, _) = await GetEntity(lookupName, token);
+        var (_, isFailed, value, _) = await GetEntity(lookupName, ct);
         if (isFailed)
         {
             return Result.Fail(
@@ -246,20 +251,20 @@ public sealed class EntitySchemaService(
         };
     }
 
-    public async Task Delete(Schema schema, CancellationToken token)
+    public async Task Delete(Schema schema, CancellationToken ct)
     {
-        await schemaSvc.Delete(schema.Id, token);
-        await ReplaceCache();
+        await schemaSvc.Delete(schema.Id, ct);
+        await GetOrCreate(ct);
     }
 
-    public async Task<Schema> Save(Schema schema, CancellationToken token)
+    public async Task<Schema> Save(Schema schema, CancellationToken ct)
     {
-        var ret = await schemaSvc.SaveWithAction(schema, token);
-        await ReplaceCache();
+        var ret = await schemaSvc.SaveWithAction(schema, ct);
+        await GetOrCreate(ct);
         return ret;
     }
 
-    private async Task<Result<LoadedEntity>> LoadCompoundAttributes(LoadedEntity entity, HashSet<string> visitedCrosstable, CancellationToken token)
+    private async Task<Result<LoadedEntity>> LoadCompoundAttributes(LoadedEntity entity, HashSet<string> visitedCrosstable, CancellationToken ct)
     {
         var lst = new List<LoadedAttribute>();
 
@@ -268,7 +273,7 @@ public sealed class EntitySchemaService(
             switch (attribute)
             {
                 case { Type: DisplayType.Lookup  or DisplayType.Crosstable }:
-                    var (_, _, value, errors) = await LoadOneCompoundAttribute(entity, attribute, visitedCrosstable,token);
+                    var (_, _, value, errors) = await LoadOneCompoundAttribute(entity, attribute, visitedCrosstable,ct);
                     if (errors is not null)
                     {
                         return Result.Fail(errors);
@@ -286,25 +291,25 @@ public sealed class EntitySchemaService(
         return entity with { Attributes = [..lst] };
     }
 
-    private async Task CreateCrosstable(LoadedEntity entity, LoadedAttribute attr, CancellationToken token)
+    private async Task CreateCrosstable(LoadedEntity entity, LoadedAttribute attr, CancellationToken ct)
     {
         if (!attr.GetCrosstableTarget(out var crosstableName))
         {
             throw new Exception($"Crosstable Option was not set for attribute `{entity.Name}.{attr.Field}`");
         }
 
-        var targetEntity = Ok(await GetLoadedEntity(crosstableName, token));
+        var targetEntity = Ok(await GetLoadedEntity(crosstableName, ct));
         var crossTable = CrosstableHelper.Crosstable(entity, targetEntity, attr);
         var columns =
-            await executor.GetColumnDefinitions(crossTable.CrossEntity.TableName, token);
+            await executor.GetColumnDefinitions(crossTable.CrossEntity.TableName, ct);
         if (columns.Length == 0)
         {
             await executor.CreateTable(crossTable.CrossEntity.TableName, crossTable.GetColumnDefinitions(),
-                token);
+                ct);
         }
     }
 
-    private async Task CheckLookup(Attribute attr, CancellationToken token)
+    private async Task CheckLookup(Attribute attr, CancellationToken ct)
     {
         True(attr.DataType == DataType.Int).ThrowNotTrue("lookup datatype should be int");
         if (!attr.GetLookupTarget(out var lookupName))
@@ -312,23 +317,23 @@ public sealed class EntitySchemaService(
             throw new InvalidParamException($"Lookup Option was not set for attribute `{attr.Field}`");
         }
 
-        NotNull(await GetEntity(lookupName, token))
+        NotNull(await GetEntity(lookupName, ct))
             .ValOrThrow($"not find entity by name {lookupName}");
     }
 
-    private async Task VerifyEntity(Entity entity, CancellationToken token)
+    private async Task VerifyEntity(Entity entity, CancellationToken ct)
     {
         NotNull(entity.Attributes.FindOneAttr(entity.TitleAttribute))
             .ValOrThrow($"`{entity.TitleAttribute}` was not in attributes list");
         foreach (var attribute in entity.Attributes.GetAttrByType(DisplayType.Lookup))
         {
-            await CheckLookup(attribute, token);
+            await CheckLookup(attribute, ct);
         }
     }
 
-    public async Task<Schema> AddOrUpdateByName(Entity entity, CancellationToken token)
+    public async Task<Schema> AddOrUpdateByName(Entity entity, CancellationToken ct)
     {
-        var find = await schemaSvc.GetByNameDefault(entity.Name, SchemaType.Entity, token);
+        var find = await schemaSvc.GetByNameDefault(entity.Name, SchemaType.Entity, ct);
         var schema = new Schema
         (
             Id: find?.Id ?? 0,
@@ -340,6 +345,6 @@ public sealed class EntitySchemaService(
             ),
             CreatedBy: ""
         );
-        return await SaveTableDefine(schema, token);
+        return await SaveTableDefine(schema, ct);
     }
 }

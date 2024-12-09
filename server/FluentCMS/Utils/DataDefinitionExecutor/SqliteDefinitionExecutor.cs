@@ -6,22 +6,18 @@ namespace FluentCMS.Utils.DataDefinitionExecutor;
 
 public sealed class SqliteDefinitionExecutor(string connectionString, ILogger<SqliteDefinitionExecutor> logger) : IDefinitionExecutor
 {
-    public bool TryParseDataType(string s, string type, out object value)
+    public bool TryParseDataType(string s, string type, out DatabaseTypeValue? result)
     {
-        value = s;
-        var ret = true;
-        switch (type)
+        result = type switch
         {
-            case DataType.Int:
-                ret = int.TryParse(s, out var resultInt);
-                value = resultInt;
-                break;
-        }
-
-        return ret;
+            DataType.Datetime or DataType.String or DataType.Text or DataType.Na => new DatabaseTypeValue(s),
+            DataType.Int when int.TryParse(s, out var resultInt) => new DatabaseTypeValue(I: resultInt),
+            _ => null
+        };
+        return result != null;
     }
 
-    public async Task CreateTable(string tableName, ColumnDefinition[] columnDefinitions, CancellationToken cancellationToken)
+   public async Task CreateTable(string tableName, ColumnDefinition[] columnDefinitions, CancellationToken cancellationToken)
    {
        var columnDefinitionStrs = columnDefinitions.Select(column => column.ColumnName.ToLower() switch
        {

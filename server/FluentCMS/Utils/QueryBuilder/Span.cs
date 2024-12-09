@@ -153,10 +153,12 @@ public static class SpanHelper
                     var field = arr.FindOneAttr(key);
                     if (field is not null )
                     {
-                        if (!resolver.ResolveVal(field, s, out val))
+                        if (!resolver.ResolveVal(field, s, out var result))
                         {
                             return Result.Fail($"Fail to cast s to {field.DataType}");
                         }
+
+                        val = result!.Value;
                     }
                 }
                 dict[key] = val!;

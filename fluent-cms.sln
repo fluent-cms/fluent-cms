@@ -12,13 +12,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentCMS.App.Tests", "serv
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApiExamples", "examples\WebApiExamples\WebApiExamples.csproj", "{23F6E543-242A-4738-A450-C1798E295FF4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlogEfExample", "examples\BlogEfExample\BlogEfExample.csproj", "{2046DC4C-DDD1-4DB9-882D-89390D85A669}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentCMS.Consumer", "server\FluentCMS.Consumer\FluentCMS.Consumer.csproj", "{B28C2B85-666C-49A2-B6CF-75B1C3E18E86}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServiceDefaults", "server\ServiceDefaults\ServiceDefaults.csproj", "{2D4A4323-F357-4ADD-A5A8-46563CE77B8C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentCMS.Blog.ServiceDefaults", "server\FluentCMS.Blog.ServiceDefaults\FluentCMS.Blog.ServiceDefaults.csproj", "{2D4A4323-F357-4ADD-A5A8-46563CE77B8C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppHost", "server\AppHost\AppHost.csproj", "{665FF906-EDA4-43A9-91E5-E9C43C36441B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentCMS.Blog.AppHost", "server\FluentCMS.Blog.AppHost\FluentCMS.Blog.AppHost.csproj", "{665FF906-EDA4-43A9-91E5-E9C43C36441B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentCMS.Blog", "server\FluentCMS.Blog\FluentCMS.Blog.csproj", "{FBBAEDB6-802D-453A-A1E4-22C2095F8068}"
 EndProject

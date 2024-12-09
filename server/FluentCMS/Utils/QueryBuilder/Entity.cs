@@ -87,6 +87,7 @@ public static class EntityHelper
         ValidPagination pagination, ValidSpan? cursor, IEnumerable<LoadedAttribute> attributes)
     {
         var query = e.Basic().Select(attributes.Select(x => x.AddTableModifier()));
+        
         query.ApplyJoin([..filters.Select(x=>x.Vector),..sorts.Select(x=>x.Vector)]);
         query.ApplyCursor(cursor, sorts);
         query.ApplyPagination(pagination);

@@ -15,7 +15,6 @@ using FluentCMS.Utils.PageRender;
 using FluentCMS.Utils.QueryBuilder;
 using GraphQL;
 using Microsoft.AspNetCore.Rewrite;
-using Microsoft.Extensions.Caching.Memory;
 using Schema = FluentCMS.Utils.Graph.Schema;
 
 namespace FluentCMS.Modules;
@@ -93,11 +92,11 @@ public sealed class CmsModule(
         void InjectServices()
         {
             services.AddMemoryCache();
-            services.AddSingleton<NonExpiringKeyValueCache<ImmutableArray<Entity>>>(p =>
-                new NonExpiringKeyValueCache<ImmutableArray<Entity>>(p.GetRequiredService<IMemoryCache>(), "entities"));
+            services.AddSingleton<KeyValueCache<ImmutableArray<Entity>>>(p =>
+                new KeyValueCache<ImmutableArray<Entity>>(p, "entities", 60 * 10));
             
-            services.AddSingleton<ExpiringKeyValueCache<LoadedQuery>>(p =>
-                new ExpiringKeyValueCache<LoadedQuery>(p.GetRequiredService<IMemoryCache>(), 30, "query"));
+            services.AddSingleton<KeyValueCache<LoadedQuery>>(p =>
+                new KeyValueCache<LoadedQuery>(p, "query",60));
             
             services.AddSingleton<PageTemplate>(p =>
             {
@@ -105,7 +104,7 @@ public sealed class CmsModule(
                 var fileInfo = provider.GetFileInfo($"{FluentCmsContentRoot}/static-assets/templates/template.html");
                 return new PageTemplate(fileInfo.PhysicalPath??"");
             });
-            services.AddSingleton<LocalFileStore>(p => new LocalFileStore(
+            services.AddSingleton<LocalFileStore>(_ => new LocalFileStore(
                            Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/files"), 1200, 70) ); 
             services.AddSingleton<KateQueryExecutor>(p =>
                 new KateQueryExecutor(p.GetRequiredService<IKateProvider>(), 30));
@@ -160,8 +159,6 @@ public sealed class CmsModule(
     {
         PrintVersion();
         await InitSchema();
-        await InitCache();
-        
         
         UseApiRouters();
         UseGraphql();
@@ -244,12 +241,6 @@ public sealed class CmsModule(
             });
         }
 
-        async Task InitCache()
-        {
-            using var scope = app.Services.CreateScope();
-            await scope.ServiceProvider.GetRequiredService<IEntitySchemaService>().ReplaceCache();
-        }
-        
         async Task InitSchema()
         {
             using var serviceScope = app.Services.CreateScope();

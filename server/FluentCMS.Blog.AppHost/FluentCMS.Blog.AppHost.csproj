@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk" >
+<Project Sdk="Microsoft.NET.Sdk">
   <Sdk Name="Aspire.AppHost.Sdk" Version="9.0.0" />
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -8,10 +8,12 @@
     <IsAspireHost>true</IsAspireHost>
     <UserSecretsId>ec491893-c2dc-4621-87a8-a914a413d383</UserSecretsId>
     <LangVersion>13</LangVersion>
+    <RootNamespace>AppHost</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.AppHost" Version="9.0.0" />
+    <PackageReference Include="Aspire.Hosting.Redis" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup>

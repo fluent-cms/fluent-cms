@@ -83,7 +83,7 @@ public static class MongoExt
         List<FilterDefinition<BsonDocument>> definitions = new();
         foreach (var filterConstraint in filter.Constraints)
         {
-            var resConstraint = GetConstraintDefinition(filter.Vector.FullPath, filterConstraint.Match, filterConstraint.Values);
+            var resConstraint = GetConstraintDefinition(filter.Vector.FullPath, filterConstraint.Match, [..filterConstraint.Values.GetValues()]);
             if (resConstraint.IsFailed)
             {
                 return Result.Fail(resConstraint.Errors);

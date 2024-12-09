@@ -41,7 +41,7 @@ public class EntityPermissionService(
         [
             ..filters,
             new ValidFilter(new AttributeVector("","",[],createBy),"and", 
-                [new ValidConstraint(Matches.EqualsTo, [userId])])
+                [new ValidConstraint(Matches.EqualsTo, [new ValidValue(userId)])])
         ];
     }
 

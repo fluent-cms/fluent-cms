@@ -9,11 +9,7 @@ public sealed class GraphQuery : ObjectGraphType
 {
     public GraphQuery(IEntitySchemaService entitySchemaService, IQueryService queryService)
     {
-        if (!entitySchemaService.TryGetCachedSchema(out var entities))
-        {
-            return;
-        }
-        
+        var entities = entitySchemaService.GetOrCreate().GetAwaiter().GetResult();
         var dict = new Dictionary<string, GraphInfo>();
         
         foreach (var entity in entities)

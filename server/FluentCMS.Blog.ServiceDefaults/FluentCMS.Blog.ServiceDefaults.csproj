@@ -6,6 +6,7 @@
         <Nullable>enable</Nullable>
         <IsAspireSharedProject>true</IsAspireSharedProject>
         <LangVersion>13</LangVersion>
+        <RootNamespace>ServiceDefaults</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
