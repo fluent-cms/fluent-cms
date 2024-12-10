@@ -113,7 +113,7 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
         {
             if (!data.GetValueByPath<Record[]>(node.DataSource.Field, out var value))
             {
-                return Result.Fail($"Fail to tag pagination for {node.DataSource.Field}");
+                return Result.Fail($"Tag Pagination Fail, can not get value by path [{node.DataSource.Field}] ");
             }
 
             var nodeWithArg = node with { DataSource = node.DataSource with { QueryString = node.MergeArgs(args).ToQueryString() } };

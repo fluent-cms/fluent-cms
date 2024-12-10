@@ -32,7 +32,7 @@ public sealed class EntitySchemaService(
     {
         result = executor.TryParseDataType(v, attr.DataType, out var val) switch
         {
-            true => new ValidValue(val!.S, val.I, val.D),
+            true => new ValidValue(S:val!.S, I:val.I,D: val.D),
             _ => new ValidValue()
         };
         return !result.IsEmpty();

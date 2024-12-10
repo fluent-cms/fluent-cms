@@ -51,13 +51,13 @@ public static class MongoExt
         
         FilterDefinition<BsonDocument> GetEq(ValidSort sort)
         {
-            var (f, v) = (sort.Vector.FullPath, span.Edge(sort.Vector.FullPath));
+            var (f, v) = (sort.Vector.FullPath, span.Edge(sort.Vector.FullPath).Value);
             return builder.Eq(f, v);
         }
   
         FilterDefinition<BsonDocument> GetCompare(ValidSort sort)
         {
-            var (f, v) = (sort.Vector.FullPath, span.Edge(sort.Vector.FullPath));
+            var (f, v) = (sort.Vector.FullPath, span.Edge(sort.Vector.FullPath).Value);
             return span.Span.GetCompareOperator(sort.Order) == ">" ? builder.Gt(f, v) : builder.Lt(f, v);
         } 
     }

@@ -1,4 +1,6 @@
 var builder = DistributedApplication.CreateBuilder(args);
-var redis = builder.AddRedis("redis").WithRedisCommander();
-builder.AddProject<Projects.FluentCMS_Blog>("web").WithReference(redis);
+var redis = builder.AddRedis("redis");
+builder.AddProject<Projects.FluentCMS_Blog>("web")
+    .WithReplicas(2)
+    .WithReference(redis);
 builder.Build().Run();

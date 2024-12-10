@@ -66,7 +66,7 @@ public static class EntityHelper
     {
         var query = e.Basic().Select(attributes.Select(x => x.AddTableModifier()));
         query.ApplyJoin([..filters.Select(x=>x.Vector),..sorts.Select(x=>x.Vector)]);
-        var result = query.ApplyFilters(filters); //filters.Apply(this, query);
+        var result = query.ApplyFilters(filters); 
         if (result.IsFailed)
         {
             return Result.Fail(result.Errors);

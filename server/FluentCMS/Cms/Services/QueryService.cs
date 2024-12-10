@@ -167,7 +167,7 @@ public sealed class QueryService(
                         token);
                 }
 
-                foreach (var item in items.Where(x => x[cross.CrossEntity.PrimaryKey].Equals(id)))
+                foreach (var item in items.Where(x => x[cross.CrossEntity.PrimaryKey].Equals(id.Value)))
                 {
                     item[attr.Field] = targetRecords;
                 }
