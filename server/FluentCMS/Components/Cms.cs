@@ -98,10 +98,10 @@ public sealed class Cms(
         {
             services.AddMemoryCache();
             services.AddSingleton<KeyValueCache<ImmutableArray<Entity>>>(p =>
-                new KeyValueCache<ImmutableArray<Entity>>(p, "entities", 60 * 10));
+                new KeyValueCache<ImmutableArray<Entity>>(p, "entities", 60 ));
             
             services.AddSingleton<KeyValueCache<LoadedQuery>>(p =>
-                new KeyValueCache<LoadedQuery>(p, "query",60));
+                new KeyValueCache<LoadedQuery>(p, "query",60 ));
             
             services.AddSingleton<PageTemplate>(p =>
             {

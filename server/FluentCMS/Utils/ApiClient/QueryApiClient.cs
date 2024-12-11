@@ -12,13 +12,14 @@ namespace FluentCMS.Utils.ApiClient;
 
 public class QueryApiClient(HttpClient client)
 {
-    private readonly GraphQLHttpClient _graph = new ($"{client.BaseAddress!.AbsoluteUri}graphql", new SystemTextJsonSerializer());
+    private readonly GraphQLHttpClient _graph = new ($"{client.BaseAddress!.AbsoluteUri}graphql", new SystemTextJsonSerializer(),client);
 
-    public  Task<Result<JsonElement>> SendSingleGraphQuery(string entity, string[]fields, CancellationToken ct = default)
+    public  Task<Result<JsonElement>> SendSingleGraphQuery(string entity, string[]fields, bool withName = false, CancellationToken ct = default)
     {
+        var operationName = withName ? entity : "";
         return SendGraphQuery(
            $$"""
-           query {
+           query {{operationName}}{
                {{entity}}{
                {{string.Join("\n",fields)}}
              }

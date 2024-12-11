@@ -1,5 +1,6 @@
 using FluentCMS.Test.Util;
 using FluentCMS.Utils.ApiClient;
+using FluentCMS.Utils.QueryBuilder;
 
 namespace FluentCMS.Blog.DistributeTest;
 
@@ -8,8 +9,8 @@ public class DistributeTest
     private const string Post = "distribut_test_post";
     private const string Title = "title";
     
-    private const string Addr1 = "http://localhost:5133";
-    private const string Addr2 = "http://localhost:5134";
+    private const string Addr1 = "http://localhost:5134";
+    private const string Addr2 = "http://localhost:5135";
 
     private readonly SchemaApiClient _leaderSchema;
     private readonly EntityApiClient _leaderEntity;
@@ -52,10 +53,30 @@ public class DistributeTest
         var schema = (await _leaderSchema.EnsureSimpleEntity(entityName, Title)).AssertSuccess();
         await _leaderEntity.AddSimpleData(entityName, Title,"title1");
         
-        var res = (await _followerQuery.SendSingleGraphQuery(entityName, ["id",Title])).AssertSuccess();
-
+        Thread.Sleep(TimeSpan.FromSeconds(6));
+        (await _followerQuery.SendSingleGraphQuery(entityName, ["id",Title])).AssertSuccess();
         (await _leaderSchema.DeleteSchema(schema.Id)).AssertSuccess();
-        
+        Thread.Sleep(TimeSpan.FromSeconds(6)); 
         (await _followerQuery.SendSingleGraphQuery(entityName, [Title])).AssertFail();
+    }
+
+    [Fact]
+    public async Task QueryChange()
+    {
+        await _leaderAccount.EnsureLogin();
+
+        var entityName = EntityName();
+        (await _leaderSchema.EnsureSimpleEntity(entityName, Title)).AssertSuccess();
+        await _leaderEntity.AddSimpleData(entityName, Title, "title1");
+        
+        (await _leaderQuery.SendSingleGraphQuery(entityName, ["id"], true)).AssertSuccess();
+        Thread.Sleep(TimeSpan.FromSeconds(6));
+        var result = (await _followerQuery.GetList(entityName, new Span(), new Pagination())).AssertSuccess();
+        Assert.Equal(4,result.First().Count);
+        
+        (await _leaderQuery.SendSingleGraphQuery(entityName, ["id", Title],true)).AssertSuccess();
+        Thread.Sleep(TimeSpan.FromSeconds(6));
+        result =(await _followerQuery.GetList(entityName, new Span(), new Pagination())).AssertSuccess();
+        Assert.Equal(5, result.First().Count);
     }
 }

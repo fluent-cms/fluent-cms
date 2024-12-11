@@ -8,7 +8,8 @@ public sealed class HybridCacheProvider(HybridCache hybridCache):ICacheProvider
     {
         var options = new HybridCacheEntryOptions
         {
-            LocalCacheExpiration = TimeSpan.FromSeconds(ttlSec),
+            LocalCacheExpiration = TimeSpan.FromSeconds(ttlSec /10),
+            Expiration = TimeSpan.FromSeconds(ttlSec),
         };
         return hybridCache.GetOrCreateAsync(key,factory,options,null,ct);
     }
