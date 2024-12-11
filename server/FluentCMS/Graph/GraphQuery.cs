@@ -2,14 +2,14 @@ using FluentCMS.Cms.Services;
 using FluentCMS.Utils.QueryBuilder;
 using GraphQL.Types;
 
-namespace FluentCMS.Utils.Graph;
+namespace FluentCMS.Graph;
 
 public record GraphInfo(Entity Entity, ObjectGraphType SingleType, ListGraphType ListType);
 public sealed class GraphQuery : ObjectGraphType
 {
     public GraphQuery(IEntitySchemaService entitySchemaService, IQueryService queryService)
     {
-        var entities = entitySchemaService.GetOrCreate().GetAwaiter().GetResult();
+        var entities = entitySchemaService.AllEntities().GetAwaiter().GetResult();
         var dict = new Dictionary<string, GraphInfo>();
         
         foreach (var entity in entities)

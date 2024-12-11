@@ -1,7 +1,7 @@
 using FluentCMS.Utils.QueryBuilder;
 using GraphQLParser.AST;
 
-namespace FluentCMS.Utils.Graph;
+namespace FluentCMS.Graph;
 
 public record GraphQlArgumentDataProvider(GraphQLArgument Argument) : IDataProvider
 {

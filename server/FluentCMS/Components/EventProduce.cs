@@ -1,13 +1,13 @@
 using FluentCMS.Utils.EventStreaming;
 using FluentCMS.Utils.HookFactory;
 
-namespace FluentCMS.Modules;
+namespace FluentCMS.Components;
 
-public class EventProduceModule(ILogger<EventProduceModule> logger)
+public class EventProduce(ILogger<EventProduce> logger)
 {
     public static IServiceCollection AddKafkaMessageProducer(IServiceCollection services, string brokerList)
     {
-        services.AddSingleton<EventProduceModule>();
+        services.AddSingleton<EventProduce>();
 
         services.AddSingleton<IProducer>(p =>
             new KafkaProducer(brokerList, p.GetRequiredService<ILogger<KafkaProducer>>()));

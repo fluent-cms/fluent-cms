@@ -1,5 +1,5 @@
 using FluentCMS.Cms.Models;
-using FluentCMS.Services;
+using FluentCMS.Exceptions;
 using FluentCMS.Utils.DictionaryExt;
 using FluentCMS.Utils.PageRender;
 using FluentCMS.Utils.QueryBuilder;

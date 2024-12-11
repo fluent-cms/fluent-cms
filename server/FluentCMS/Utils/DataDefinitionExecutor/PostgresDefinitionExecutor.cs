@@ -2,7 +2,7 @@ using Npgsql;
 
 namespace FluentCMS.Utils.DataDefinitionExecutor;
 
-public class PostgresDefinitionExecutor(string connectionString, ILogger<PostgresDefinitionExecutor> logger):IDefinitionExecutor
+public class PostgresDefinitionExecutor(NpgsqlDataSource dataSource, ILogger<PostgresDefinitionExecutor> logger):IDefinitionExecutor
 {
     public bool TryParseDataType(string s, string type, out DatabaseTypeValue? result)
     {
@@ -88,8 +88,7 @@ public class PostgresDefinitionExecutor(string connectionString, ILogger<Postgre
     private async Task<T> ExecuteQuery<T>(string sql, Func<NpgsqlCommand, Task<T>> executeFunc, params (string, object)[] parameters)
     {
         logger.LogInformation(sql);
-        await using var connection = new NpgsqlConnection(connectionString);
-        await connection.OpenAsync();
+        await using var connection = await dataSource.OpenConnectionAsync();
         await using var command = new NpgsqlCommand(sql, connection);
 
         foreach (var (paramName, paramValue) in parameters)

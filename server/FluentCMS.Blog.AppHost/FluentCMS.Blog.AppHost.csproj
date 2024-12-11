@@ -13,10 +13,13 @@
 
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.AppHost" Version="9.0.0" />
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="9.0.0" />
     <PackageReference Include="Aspire.Hosting.Redis" Version="9.0.0" />
+    <PackageReference Include="Aspire.Hosting.SqlServer" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\FluentCMS.Blog.Share\FluentCMS.Blog.Share.csproj" IsAspireProjectResource="false"/>
     <ProjectReference Include="..\FluentCMS.Blog\FluentCMS.Blog.csproj" />
   </ItemGroup>
 

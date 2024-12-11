@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
 using FluentCMS.Cms.Models;
-using FluentCMS.Services;
+using FluentCMS.Exceptions;
 using FluentCMS.Utils.Cache;
 using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.QueryBuilder;
@@ -16,7 +16,7 @@ public sealed class EntitySchemaService(
     KeyValueCache<ImmutableArray<Entity>> entityCache
 ) : IEntitySchemaService
 {
-    public ValueTask<ImmutableArray<Entity>> GetOrCreate(CancellationToken ct = default)
+    public ValueTask<ImmutableArray<Entity>> AllEntities(CancellationToken ct = default)
     {
         return entityCache.GetOrSet("", async token =>
         {

@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
 using System.Text.Json;
-using FluentCMS.Services;
+using FluentCMS.Exceptions;
 using FluentCMS.Utils.DictionaryExt;
 using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.KateQueryExecutor;

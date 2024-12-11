@@ -4,7 +4,7 @@ using FluentResults;
 using GraphQL.Validation;
 using Microsoft.Extensions.Primitives;
 
-namespace FluentCMS.Utils.Graph;
+namespace FluentCMS.Graph;
 
 //convert graphQL type to common c# types
 public static class Converter

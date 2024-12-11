@@ -4,30 +4,35 @@ using System.Text.Json.Serialization;
 using FluentCMS.Auth.Services;
 using FluentCMS.Cms.Models;
 using FluentCMS.Cms.Services;
-using FluentCMS.Services;
+using FluentCMS.Exceptions;
 using FluentCMS.Utils.Cache;
 using FluentCMS.Utils.DataDefinitionExecutor;
-using FluentCMS.Utils.Graph;
+using FluentCMS.Graph;
 using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.LocalFileStore;
 using FluentCMS.Utils.PageRender;
 using FluentCMS.Utils.QueryBuilder;
+using FluentResults;
 using GraphQL;
 using Microsoft.AspNetCore.Rewrite;
-using Schema = FluentCMS.Utils.Graph.Schema;
+using Npgsql;
+using Schema = FluentCMS.Graph.Schema;
 
-namespace FluentCMS.Modules;
+using static FluentCMS.Exceptions.InvalidParamExceptionFactory;
+
+namespace FluentCMS.Components;
 
 public enum DatabaseProvider
 {
     Sqlite,
     Postgres,
     SqlServer,
+    AspirePostgres,
 }
 
-public sealed class CmsModule(
-    ILogger<CmsModule> logger, 
+public sealed class Cms(
+    ILogger<Cms> logger, 
     DatabaseProvider databaseProvider, 
     string connectionString,
     string graphPath 
@@ -38,8 +43,8 @@ public sealed class CmsModule(
 
     public static IServiceCollection AddCms(IServiceCollection services ,DatabaseProvider databaseProvider, string connectionString, string graphPath)
     {
-        services.AddSingleton<CmsModule>(p => new CmsModule(
-                p.GetRequiredService<ILogger<CmsModule>>(),
+        services.AddSingleton<Cms>(p => new Cms(
+                p.GetRequiredService<ILogger<Cms>>(),
                 databaseProvider,
                 connectionString,
                 graphPath
@@ -47,7 +52,7 @@ public sealed class CmsModule(
         );
 
         AddRouters();
-        InjectDbServices();
+        Ok(InjectDbServices());
         InjectServices();
         AddGraphql();
         return services;
@@ -121,37 +126,62 @@ public sealed class CmsModule(
             services.AddScoped<IProfileService, DummyProfileService>();
         }
 
-        void InjectDbServices()
+        Result InjectDbServices()
         {
-            switch (databaseProvider)
+            return databaseProvider switch
             {
-                case DatabaseProvider.Sqlite:
-                    services.AddSingleton<IKateProvider>(p =>
-                        new SqliteKateProvider(connectionString, p.GetRequiredService<ILogger<SqliteKateProvider>>()));
-                    services.AddSingleton<IDefinitionExecutor>(p =>
-                        new SqliteDefinitionExecutor(connectionString,
-                            p.GetRequiredService<ILogger<SqliteDefinitionExecutor>>()));
+                DatabaseProvider.Sqlite => InjectSqliteDbServices(),
+                DatabaseProvider.Postgres => InjectPostgresDbServices(),
+                DatabaseProvider.SqlServer => InjectSqlServerDbServices(),
+                DatabaseProvider.AspirePostgres => InjectAspirePostgresDbServices(),
+                _ => Result.Fail("unsupported database provider")
+            };
+        }
 
-                    break;
-                case DatabaseProvider.Postgres:
-                    services.AddSingleton<IKateProvider>(p =>
-                        new PostgresKateProvider(connectionString,
-                            p.GetRequiredService<ILogger<PostgresKateProvider>>()));
-                    services.AddSingleton<IDefinitionExecutor>(p =>
-                        new PostgresDefinitionExecutor(connectionString,
-                            p.GetRequiredService<ILogger<PostgresDefinitionExecutor>>()));
-                    break;
-                case DatabaseProvider.SqlServer:
-                    services.AddSingleton<IKateProvider>(p =>
-                        new SqlServerKateProvider(connectionString,
-                            p.GetRequiredService<ILogger<SqlServerKateProvider>>()));
-                    services.AddSingleton<IDefinitionExecutor>(p =>
-                        new SqlServerDefinitionExecutor(connectionString,
-                            p.GetRequiredService<ILogger<SqlServerDefinitionExecutor>>()));
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(databaseProvider), databaseProvider, null);
-            }
+        Result InjectSqliteDbServices()
+        {
+            services.AddSingleton<IKateProvider>(p =>
+                new SqliteKateProvider(connectionString, p.GetRequiredService<ILogger<SqliteKateProvider>>()));
+            services.AddSingleton<IDefinitionExecutor>(p =>
+                new SqliteDefinitionExecutor(connectionString,
+                    p.GetRequiredService<ILogger<SqliteDefinitionExecutor>>()));
+            return Result.Ok();
+        }
+
+        Result InjectSqlServerDbServices()
+        {
+            services.AddSingleton<IKateProvider>(p =>
+                new SqlServerKateProvider(connectionString,
+                    p.GetRequiredService<ILogger<SqlServerKateProvider>>()));
+            services.AddSingleton<IDefinitionExecutor>(p =>
+                new SqlServerDefinitionExecutor(connectionString,
+                    p.GetRequiredService<ILogger<SqlServerDefinitionExecutor>>()));
+            return Result.Ok();
+        }
+
+        Result InjectAspirePostgresDbServices()
+        {
+            services.AddSingleton<IKateProvider, PostgresKateProvider>();
+            services.AddSingleton<IDefinitionExecutor, PostgresDefinitionExecutor>();
+            return Result.Ok();
+        }
+
+        Result InjectPostgresDbServices()
+        {
+            var dataSource = new NpgsqlDataSourceBuilder(connectionString).Build();
+            services.AddSingleton<IKateProvider>(p =>
+                {
+                    var logger = p.GetRequiredService<ILogger<PostgresKateProvider>>();
+                    return new PostgresKateProvider(dataSource, logger);
+                }
+            );
+            services.AddSingleton<IDefinitionExecutor>(p =>
+                {
+                    var logger = p.GetRequiredService<ILogger<PostgresDefinitionExecutor>>();
+                    return new PostgresDefinitionExecutor(dataSource, logger);
+                }
+            );
+            return Result.Ok();
         }
     }
 

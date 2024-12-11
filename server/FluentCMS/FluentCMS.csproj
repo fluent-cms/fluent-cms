@@ -22,6 +22,8 @@
         
         <PackageReference Include="GraphQL" Version="8.2.1" />
         <PackageReference Include="GraphQL-Parser" Version="9.5.0" />
+        <PackageReference Include="GraphQL.Client" Version="6.1.0" />
+        <PackageReference Include="GraphQL.Client.Serializer.SystemTextJson" Version="6.1.0" />
         <PackageReference Include="GraphQL.Server.Transports.AspNetCore" Version="8.2.0" />
         <PackageReference Include="GraphQL.Server.Ui.GraphiQL" Version="8.2.0" />
         <PackageReference Include="GraphQL.SystemTextJson" Version="8.2.1" />

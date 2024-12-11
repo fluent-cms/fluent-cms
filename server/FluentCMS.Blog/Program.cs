@@ -1,5 +1,5 @@
 using FluentCMS.Auth.models;
-using FluentCMS.Services;
+using FluentCMS.Exceptions;
 using FluentCMS.WebAppExt;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -11,21 +11,22 @@ var builder = WebApplication.CreateBuilder(args);
 AddCorsPolicy();
 AddHybridCache();
 builder.AddServiceDefaults();
-var provider = builder.Configuration.GetValue<string>("DatabaseProvider")
+var provider = builder.Configuration.GetValue<string>(CmsConstants.DatabaseProvider)
                ?? throw new Exception("DatabaseProvider not found");
     
 //both key Sqlite and ConnectionString_Sqlite work
 var conn = Environment.GetEnvironmentVariable(provider) ??
-           builder.Configuration.GetConnectionString(provider) ?? throw new Exception("ConnectionString not found");
+           builder.Configuration.GetConnectionString(provider) ?? ""; 
 
 _ = provider switch
 {
-    "Sqlite" => builder.Services.AddDbContext<CmsDbContext>(options => options.UseSqlite(conn))
+    CmsConstants.Sqlite => builder.Services.AddDbContext<CmsDbContext>(options => options.UseSqlite(conn))
         .AddSqliteCms(conn),
-    "Postgres" => builder.Services.AddDbContext<CmsDbContext>(options => options.UseNpgsql(conn))
+    CmsConstants.Postgres => builder.Services.AddDbContext<CmsDbContext>(options => options.UseNpgsql(conn))
         .AddPostgresCms(conn),
-    "SqlServer" => builder.Services.AddDbContext<CmsDbContext>(options => options.UseSqlServer(conn))
+    CmsConstants.SqlServer => builder.Services.AddDbContext<CmsDbContext>(options => options.UseSqlServer(conn))
         .AddSqlServerCms(conn),
+    CmsConstants.AspirePostgres => AddAspirePostgresCms(),
     _ => throw new Exception("Database provider not found")
 };
 
@@ -36,16 +37,24 @@ app.MapDefaultEndpoints();
 app.UseCors(cors);
 
 await EnsureDbCreatedAsync();
-await app.UseCmsAsync();
 InvalidParamExceptionFactory.Ok(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [RoleConstants.Sa]));
 InvalidParamExceptionFactory.Ok(await app.EnsureCmsUser("admin@cms.com", "Admin1!", [RoleConstants.Admin]));
+await app.UseCmsAsync();
 
 app.Run();
 return;
 
+IServiceCollection AddAspirePostgresCms()
+{
+    builder.AddNpgsqlDataSource(connectionName:CmsConstants.AspirePostgres);
+    builder.AddNpgsqlDbContext<CmsDbContext>(connectionName:CmsConstants.AspirePostgres);
+    builder.Services.AddAspirePostgresCms();
+    return builder.Services;
+}
+
 void AddHybridCache()
 {
-    builder.AddRedisDistributedCache(connectionName: "redis");
+    builder.AddRedisDistributedCache(connectionName: CmsConstants.AspireRedis);
     builder.Services.AddHybridCache();
 }
 
@@ -75,4 +84,15 @@ internal class CmsDbContext : IdentityDbContext<IdentityUser>
 {
     public CmsDbContext(){}
     public CmsDbContext(DbContextOptions<CmsDbContext> options):base(options){}
+}
+
+public static class CmsConstants
+{
+    public const string DatabaseProvider = "DatabaseProvider";
+    public const string AspirePostgres = "AspirePostgres";
+    public const string AspireRedis = "AspireRedis";
+    public const string Sqlite = "Sqlite";
+    public const string SqlServer = "SqlServer";
+    public const string Postgres = "Postgres";
+    
 }

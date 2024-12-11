@@ -3,7 +3,7 @@ using System.Security.Claims;
 using FluentCMS.Auth.models;
 using FluentCMS.Cms.Services;
 using FluentCMS.Cms.Models;
-using FluentCMS.Services;
+using FluentCMS.Exceptions;
 using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.IdentityExt;
 using FluentCMS.Utils.QueryBuilder;

@@ -1,9 +1,8 @@
-
 using FluentResults;
 
-namespace FluentCMS.Blog.Tests;
+namespace FluentCMS.Test.Util;
 
-public static class ResultUtilExt
+public static class ResultExt
 {
     public static T AssertSuccess<T>(this Result<T> result)
     {

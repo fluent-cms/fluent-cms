@@ -36,5 +36,6 @@
     
     <ItemGroup>
       <ProjectReference Include="..\FluentCMS.Blog\FluentCMS.Blog.csproj" />
+      <ProjectReference Include="..\FluentCMS.Test.Util\FluentCMS.Test.Util.csproj" />
     </ItemGroup>
 </Project>

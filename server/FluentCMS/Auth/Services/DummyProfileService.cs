@@ -1,5 +1,5 @@
 using FluentCMS.Auth.models;
-using FluentCMS.Services;
+using FluentCMS.Exceptions;
 
 namespace FluentCMS.Auth.Services;
 

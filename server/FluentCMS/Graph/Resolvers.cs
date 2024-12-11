@@ -4,7 +4,7 @@ using GraphQL;
 using GraphQL.Resolvers;
 using GraphQLParser.AST;
 
-namespace FluentCMS.Utils.Graph;
+namespace FluentCMS.Graph;
 
 public record GraphQlRequestDto(Query Query, GraphQLField[] Fields, StrArgs Args);
 

@@ -3,7 +3,7 @@ using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.QueryBuilder;
 using GraphQL.Types;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
-namespace FluentCMS.Utils.Graph;
+namespace FluentCMS.Graph;
 
 public static class FieldTypes
 {

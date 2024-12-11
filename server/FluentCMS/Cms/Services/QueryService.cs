@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
-using FluentCMS.Services;
-using FluentCMS.Utils.Graph;
+using FluentCMS.Exceptions;
+using FluentCMS.Graph;
 using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.QueryBuilder;
 using FluentCMS.Utils.HookFactory;

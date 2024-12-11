@@ -3,11 +3,39 @@ using FluentCMS.Utils.HttpClientExt;
 using FluentCMS.Utils.JsonElementExt;
 using FluentCMS.Utils.QueryBuilder;
 using FluentResults;
+using GraphQL;
+using GraphQL.Client.Http;
+
+using GraphQL.Client.Serializer.SystemTextJson;
 
 namespace FluentCMS.Utils.ApiClient;
 
 public class QueryApiClient(HttpClient client)
 {
+    private readonly GraphQLHttpClient _graph = new ($"{client.BaseAddress!.AbsoluteUri}graphql", new SystemTextJsonSerializer());
+
+    public  Task<Result<JsonElement>> SendSingleGraphQuery(string entity, string[]fields, CancellationToken ct = default)
+    {
+        return SendGraphQuery(
+           $$"""
+           query {
+               {{entity}}{
+               {{string.Join("\n",fields)}}
+             }
+           }
+           """, 
+           ct);
+    }
+
+    private async Task<Result<JsonElement>> SendGraphQuery(string query, CancellationToken ct = default)
+    {
+        var response = await _graph.SendQueryAsync<JsonElement>(new GraphQLRequest(query), ct);
+        if (response.Errors?.Length > 0)
+        {
+            return Result.Fail(string.Join(",",response.Errors.Select(x=>x.Message)));
+        }
+        return response.Data;
+    }
     public async Task<Result<Record[]>> GetList(string queryName, Span span, Pagination pagination)
     {
         var url =

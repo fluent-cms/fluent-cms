@@ -1,3 +1,4 @@
+using FluentCMS.Test.Util;
 using FluentCMS.Utils.ApiClient;
 
 namespace FluentCMS.Blog.Tests;

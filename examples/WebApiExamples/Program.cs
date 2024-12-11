@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 using FluentCMS.Auth.models;
-using FluentCMS.Services;
+using FluentCMS.Exceptions;
 using FluentCMS.WebAppExt;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

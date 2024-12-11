@@ -8,8 +8,12 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="Aspire.Microsoft.Data.SqlClient" Version="9.0.0" />
+      <PackageReference Include="Aspire.Npgsql" Version="9.0.0" />
+      <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.0" />
       <PackageReference Include="Aspire.StackExchange.Redis.DistributedCaching" Version="9.0.0" />
       <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.0" />
+      <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
       <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
@@ -24,129 +28,7 @@
       <InternalsVisibleTo Include="FluentCMS.Blog.Tests" />
     </ItemGroup>
     <ItemGroup>
-      <_ContentIncludedByDefault Remove="Views\Home\Index.cshtml" />
-      <_ContentIncludedByDefault Remove="Views\Home\Privacy.cshtml" />
-      <_ContentIncludedByDefault Remove="Views\Shared\Error.cshtml" />
-      <_ContentIncludedByDefault Remove="Views\Shared\_Layout.cshtml" />
-      <_ContentIncludedByDefault Remove="Views\Shared\_ValidationScriptsPartial.cshtml" />
-      <_ContentIncludedByDefault Remove="Views\_ViewImports.cshtml" />
-      <_ContentIncludedByDefault Remove="Views\_ViewStart.cshtml" />
-      <_ContentIncludedByDefault Remove="wwwroot\css\site.css" />
-      <_ContentIncludedByDefault Remove="wwwroot\favicon.ico" />
-      <_ContentIncludedByDefault Remove="wwwroot\js\site.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css.map" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap-grid.min.css" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap-grid.min.css.map" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap-grid.rtl.css" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap-grid.rtl.css.map" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap-grid.rtl.min.css" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap-grid.rtl.min.css.map" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.css" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.css.map" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.min.css" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.min.css.map" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.rtl.css" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.rtl.css.map" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.rtl.min.css" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.rtl.min.css.map" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.css" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.css.map" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.min.css" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.min.css.map" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.rtl.css" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.rtl.css.map" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.rtl.min.css" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.rtl.min.css.map" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap.css" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap.css.map" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap.min.css" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap.min.css.map" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap.rtl.css" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap.rtl.css.map" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap.rtl.min.css" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\css\bootstrap.rtl.min.css.map" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\js\bootstrap.bundle.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\js\bootstrap.bundle.js.map" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\js\bootstrap.bundle.min.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\js\bootstrap.bundle.min.js.map" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\js\bootstrap.esm.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\js\bootstrap.esm.js.map" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\js\bootstrap.esm.min.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\js\bootstrap.esm.min.js.map" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\js\bootstrap.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\js\bootstrap.js.map" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\js\bootstrap.min.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\dist\js\bootstrap.min.js.map" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\LICENSE" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\jquery-validation-unobtrusive\dist\jquery.validate.unobtrusive.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\jquery-validation-unobtrusive\dist\jquery.validate.unobtrusive.min.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\jquery-validation-unobtrusive\LICENSE.txt" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\jquery-validation\dist\additional-methods.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\jquery-validation\dist\additional-methods.min.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\jquery-validation\dist\jquery.validate.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\jquery-validation\dist\jquery.validate.min.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\jquery-validation\LICENSE.md" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\jquery\dist\jquery.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\jquery\dist\jquery.min.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\jquery\dist\jquery.min.map" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\jquery\dist\jquery.slim.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\jquery\dist\jquery.slim.min.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\jquery\dist\jquery.slim.min.map" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\jquery\LICENSE.txt" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\07dd8898.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\08f96258.jpeg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\090b6226.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\0df62858.jpeg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\10973c50.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\191901cd.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\23bc40ce.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\26c072ab.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\31ca761d.jpeg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\32e6f675.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\3e906b67.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\4ac23cda.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\516d1a7a.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\540da177.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\594cd67f.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\5b625147.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\5e3a51a9.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\64ae4a71.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\69a50050.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\718217ef.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\71b11c2d.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\7aabe47d.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\8c64aa79.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\8eb664be.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\95574a0a.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\9964db62.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\99aa0dc9.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\9fdd7e59.jpeg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\a487fc8c.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\abdbf302.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\b002e51c.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\b2eecb29.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\b44dcb4c.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\bba4926f.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\bf0d22c1.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\c318fbf1.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\c3996a51.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\c6065846.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\c90696be.webp" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\ca1ef9bb.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\cb026a67.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\cd0e11ed.jpeg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\db679505.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\ff70c04c.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-11\1526663a.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-11\3599327b.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-11\42b80584.jpg" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2024-11\f5955a33.jpg" />
-    </ItemGroup>
-
-    <ItemGroup>
       <Folder Include="wwwroot\" />
-      <Folder Include="wwwroot\files\" />
     </ItemGroup>
 
 </Project>

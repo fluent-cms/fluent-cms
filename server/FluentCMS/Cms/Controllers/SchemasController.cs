@@ -1,6 +1,6 @@
 using FluentCMS.Cms.Models;
 using FluentCMS.Cms.Services;
-using FluentCMS.Services;
+using FluentCMS.Exceptions;
 using FluentCMS.Utils.QueryBuilder;
 using Microsoft.AspNetCore.Mvc;
 

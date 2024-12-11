@@ -1,4 +1,4 @@
-namespace FluentCMS.Utils.Graph;
+namespace FluentCMS.Graph;
 
 public class Schema: GraphQL.Types.Schema
 {

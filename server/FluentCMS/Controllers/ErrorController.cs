@@ -17,7 +17,7 @@ public class ErrorController:ControllerBase
         }
 
         var ex = HttpContext.Features.Get<IExceptionHandlerFeature>()?.Error!;
-        return ex is Services.InvalidParamException ? 
+        return ex is Exceptions.InvalidParamException ? 
             Problem(title: ex.Message, detail:ex.StackTrace, statusCode:400)
             : Problem( detail: ex.StackTrace, title: ex.Message);
     }
@@ -26,7 +26,7 @@ public class ErrorController:ControllerBase
     [ApiExplorerSettings(IgnoreApi = true)]
     public IActionResult HandleError() {
         var ex = HttpContext.Features.Get<IExceptionHandlerFeature>()?.Error!;
-        return ex is Services.InvalidParamException ? 
+        return ex is Exceptions.InvalidParamException ? 
             Problem(title: ex.Message, statusCode:400)
             : Problem();
     }

@@ -1,17 +1,17 @@
-using FluentCMS.Services;
+using FluentCMS.Exceptions;
 using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.Nosql;
 using FluentCMS.Utils.QueryBuilder;
 
-namespace FluentCMS.Modules;
+namespace FluentCMS.Components;
 
-public class MongoViewModule(ILogger<MongoViewModule> logger)
+public class MongoQuery(ILogger<MongoQuery> logger)
 {
     
     public static IServiceCollection AddMongoView(IServiceCollection services, MongoConfig config)
     {
         services.AddSingleton<INosqlDao>(p => new MongoDao(config, p.GetRequiredService<ILogger<MongoDao>>()));
-        services.AddSingleton<MongoViewModule>();
+        services.AddSingleton<MongoQuery>();
         return services;
     }
 

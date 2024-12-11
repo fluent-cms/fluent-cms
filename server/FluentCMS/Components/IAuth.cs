@@ -1,8 +1,8 @@
 using FluentResults;
 
-namespace FluentCMS.Modules;
+namespace FluentCMS.Components;
 
-public interface IAuthModule
+public interface IAuth
 {
     WebApplication UseCmsAuth(WebApplication app);
     Task<Result> EnsureCmsUser(WebApplication app, string email, string password, string[] role);

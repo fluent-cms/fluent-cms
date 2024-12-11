@@ -1,10 +1,10 @@
 using System.Collections.Immutable;
 using System.Text.Json;
 using FluentCMS.Cms.Models;
-using FluentCMS.Modules;
-using FluentCMS.Services;
+using FluentCMS.Components;
+using FluentCMS.Exceptions;
 using FluentCMS.Utils.Cache;
-using FluentCMS.Utils.Graph;
+using FluentCMS.Graph;
 using FluentCMS.Utils.QueryBuilder;
 using FluentCMS.Utils.ResultExt;
 using FluentResults;
@@ -19,7 +19,7 @@ public sealed class QuerySchemaService(
     ISchemaService schemaSvc,
     IEntitySchemaService entitySchemaSvc,
     KeyValueCache<LoadedQuery> queryCache,
-    CmsModule cmsModule
+    Components.Cms cms
 ) : IQuerySchemaService
 {
     public async Task<LoadedQuery> ByGraphQlRequest(GraphQlRequestDto dto)
@@ -43,7 +43,7 @@ public sealed class QuerySchemaService(
             var query = dto.Query with
             {
                 IdeUrl =
-                $"{cmsModule.GraphPath}?query={Uri.EscapeDataString(dto.Query.Source)}&operationName={dto.Query.Name}"
+                $"{cms.GraphPath}?query={Uri.EscapeDataString(dto.Query.Source)}&operationName={dto.Query.Name}"
             };
             await VerifyQuery(query, ct);
             var schema = new Schema(query.Name, SchemaType.Query, new Settings(Query: query));
@@ -54,7 +54,7 @@ public sealed class QuerySchemaService(
 
     public async Task<LoadedQuery> ByNameAndCache(string name, CancellationToken ct = default)
     {
-        StrNotEmpty(name).ValOrThrow("query name should not be empty");
+        if (string.IsNullOrWhiteSpace(name)) throw new InvalidParamException("query name should not be empty");
         var query = await queryCache.GetOrSet(name, async (token) =>
         {
             var schema = NotNull(await schemaSvc.GetByNameDefault(name, SchemaType.Query, token))
@@ -69,7 +69,7 @@ public sealed class QuerySchemaService(
 
     public string CreateQueryUrl()
     {
-        return NotNull(cmsModule).ValOrThrow("query module is not enabled").GraphPath;
+        return NotNull(cms).ValOrThrow("query module is not enabled").GraphPath;
     }
     
     public async Task Delete(Schema schema, CancellationToken ct)

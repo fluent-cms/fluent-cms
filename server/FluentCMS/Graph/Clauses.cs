@@ -1,7 +1,7 @@
 using FluentCMS.Utils.QueryBuilder;
 using GraphQL.Types;
 
-namespace FluentCMS.Utils.Graph;
+namespace FluentCMS.Graph;
 
 public sealed class Clause : InputObjectGraphType
 {

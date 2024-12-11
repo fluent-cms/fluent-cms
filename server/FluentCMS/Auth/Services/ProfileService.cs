@@ -1,7 +1,7 @@
 using System.Collections.Immutable;
 using System.Security.Claims;
 using FluentCMS.Auth.models;
-using FluentCMS.Services;
+using FluentCMS.Exceptions;
 using Microsoft.AspNetCore.Identity;
 
 namespace FluentCMS.Auth.Services;
