@@ -4,12 +4,16 @@ namespace FluentCMS.Utils.Cache;
 
 public sealed class HybridCacheProvider(HybridCache hybridCache):ICacheProvider
 {
-    public ValueTask<T> GetOrCreate<T>(string key,int ttlSec, Func<CancellationToken, ValueTask<T>> factory,  CancellationToken ct = default)
+    public ValueTask<T> GetOrCreate<T>(
+        string key, 
+        TimeSpan expiration, 
+        TimeSpan localExpiration, 
+        Func<CancellationToken, ValueTask<T>> factory,  CancellationToken ct = default)
     {
         var options = new HybridCacheEntryOptions
         {
-            LocalCacheExpiration = TimeSpan.FromSeconds(ttlSec /10),
-            Expiration = TimeSpan.FromSeconds(ttlSec),
+            LocalCacheExpiration = localExpiration,
+            Expiration = expiration,
         };
         return hybridCache.GetOrCreateAsync(key,factory,options,null,ct);
     }

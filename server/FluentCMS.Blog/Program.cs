@@ -55,6 +55,7 @@ IServiceCollection AddAspirePostgresCms()
 
 void AddHybridCache()
 {
+    if (builder.Configuration.GetConnectionString(CmsConstants.AspireRedis) is null) return;
     builder.AddRedisDistributedCache(connectionName: CmsConstants.AspireRedis);
     builder.Services.AddHybridCache();
 }

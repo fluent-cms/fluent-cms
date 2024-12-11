@@ -43,7 +43,7 @@ public class SchemaPermissionService<TUser>(
 
     public async Task Delete(int schemaId)
     {
-        var find = NotNull(await schemaService.ById(schemaId)).ValOrThrow($"can not find schema by id ${schemaId}");
+        var find = NotNull(await schemaService.ById(schemaId)).ValOrThrow($"can not find schema by id [{schemaId}]");
         await EnsureWritePermissionAsync(find);
     }
 
