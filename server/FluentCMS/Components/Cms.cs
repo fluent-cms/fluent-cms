@@ -201,7 +201,7 @@ public sealed class Cms(
 
         void UseSchemaBuilder()
         {
-            app.UseStaticFiles();
+            app.MapStaticAssets();
         }
 
         void UserRedirects()

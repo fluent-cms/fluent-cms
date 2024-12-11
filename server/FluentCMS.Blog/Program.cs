@@ -1,4 +1,5 @@
 using FluentCMS.Auth.models;
+using FluentCMS.Blog.Share;
 using FluentCMS.Exceptions;
 using FluentCMS.WebAppExt;
 using Microsoft.AspNetCore.Identity;
@@ -84,15 +85,4 @@ internal class CmsDbContext : IdentityDbContext<IdentityUser>
 {
     public CmsDbContext(){}
     public CmsDbContext(DbContextOptions<CmsDbContext> options):base(options){}
-}
-
-public static class CmsConstants
-{
-    public const string DatabaseProvider = "DatabaseProvider";
-    public const string AspirePostgres = "AspirePostgres";
-    public const string AspireRedis = "AspireRedis";
-    public const string Sqlite = "Sqlite";
-    public const string SqlServer = "SqlServer";
-    public const string Postgres = "Postgres";
-    
 }
