@@ -1,7 +1,14 @@
 # FluentCMS - a headless CMS with GraphQL and an drag-and-drop page designer.  
 
-Welcome to [Fluent CMS](https://github.com/fluent-cms/fluent-cms)! [![GitHub stars](https://img.shields.io/github/stars/fluent-cms/fluent-cms.svg?style=social&label=Star)](https://github.com/fluent-cms/fluent-cms/stargazers)    
-If you'd like to contribute to the project, please check out our [CONTRIBUTING guide](https://github.com/fluent-cms/fluent-cms/blob/main/CONTRIBUTING.md).Don’t forget to give us a star  ⭐ if you find Fluent CMS helpful!    
+# FluentCMS - A Headless CMS with GraphQL and Drag-and-Drop Page Designer
+
+Welcome to [FluentCMS](https://github.com/fluent-cms/fluent-cms)! 🚀  
+[![GitHub stars](https://img.shields.io/github/stars/fluent-cms/fluent-cms.svg?style=social&label=Star)](https://github.com/fluent-cms/fluent-cms/stargazers)
+
+FluentCMS makes content management seamless with its powerful GraphQL API and intuitive drag-and-drop page design features.
+
+If you'd like to contribute, please check out our [CONTRIBUTING guide](https://github.com/fluent-cms/fluent-cms/blob/main/CONTRIBUTING.md).  
+Enjoying FluentCMS? Don’t forget to give us a ⭐ and help us grow!  
 ---
 ## What is Fluent CMS?
 
@@ -148,8 +155,8 @@ The **List Page** displays entities in a tabular format, enabling sorting, searc
 [Example Course Detail Page](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course/22)  
 The **Detail Page** provides an interface for viewing and managing detailed attributes. Related data such as teachers and materials can be selected or modified.
 
---- 
 </details>
+
 ---
 ## **GraphQL Query**
 
@@ -738,6 +745,7 @@ To bind a `Data List` to a component, follow these steps:
 |               | - **None**: Displays all available content at once without requiring additional user actions.                                                                          |
 
 </details>
+
 ---
 ## Online Course System Frontend
 <details> 
@@ -966,6 +974,7 @@ Once your web server is running, you can access the **Admin Panel** at `/admin` 
 You can find an example project [here](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).
 
 </details>
+
 ---
 ## Adding Business Logic
 

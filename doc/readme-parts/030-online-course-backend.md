@@ -119,5 +119,4 @@ The **List Page** displays entities in a tabular format, enabling sorting, searc
 [Example Course Detail Page](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course/22)  
 The **Detail Page** provides an interface for viewing and managing detailed attributes. Related data such as teachers and materials can be selected or modified.
 
---- 
 </details>
