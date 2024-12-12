@@ -1,5 +1,3 @@
-# FluentCMS - a headless CMS with GraphQL and an drag-and-drop page designer.  
-
 # FluentCMS - A Headless CMS with GraphQL and Drag-and-Drop Page Designer
 
 Welcome to [FluentCMS](https://github.com/fluent-cms/fluent-cms)! 🚀  
@@ -8,7 +6,11 @@ Welcome to [FluentCMS](https://github.com/fluent-cms/fluent-cms)! 🚀
 FluentCMS makes content management seamless with its powerful GraphQL API and intuitive drag-and-drop page design features.
 
 If you'd like to contribute, please check out our [CONTRIBUTING guide](https://github.com/fluent-cms/fluent-cms/blob/main/CONTRIBUTING.md).  
-Enjoying FluentCMS? Don’t forget to give us a ⭐ and help us grow!  
+Enjoying FluentCMS? Don’t forget to give us a ⭐ and help us grow!     
+
+
+
+
 ---
 ## What is Fluent CMS?
 
@@ -860,10 +862,14 @@ Starting with ASP.NET 9.0, the framework provides `HybridCache`, which combines 
 ## Aspire Integration
 <details> 
 <summary> 
-A scalable deployment of Fluent CMS involves multiple web application nodes, a Redis server for distributed caching, and a database server, all behind a load balancer.
+Fluent CMS leverages Aspire to simplify deployment.
 </summary>
 
+
 ### Architecture Overview
+
+A scalable deployment of Fluent CMS involves multiple web application nodes, a Redis server for distributed caching, and a database server, all behind a load balancer.
+
 
 ```
                  +------------------+
