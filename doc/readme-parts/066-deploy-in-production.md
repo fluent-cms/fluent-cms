@@ -3,10 +3,14 @@
 ## Aspire Integration
 <details> 
 <summary> 
-A scalable deployment of Fluent CMS involves multiple web application nodes, a Redis server for distributed caching, and a database server, all behind a load balancer.
+Fluent CMS leverages Aspire to simplify deployment.
 </summary>
 
+
 ### Architecture Overview
+
+A scalable deployment of Fluent CMS involves multiple web application nodes, a Redis server for distributed caching, and a database server, all behind a load balancer.
+
 
 ```
                  +------------------+
