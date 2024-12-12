@@ -1,22 +1,18 @@
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 
 namespace FluentCMS.Utils.DataDefinitionExecutor;
 
 public class SqlServerDefinitionExecutor(string connectionString, ILogger<SqlServerDefinitionExecutor> logger ) : IDefinitionExecutor
 {
-    public bool TryParseDataType(string s, string type, out object value)
+    public bool TryParseDataType(string s, string type, out DatabaseTypeValue? result)
     {
-        value = s;
-        var ret = true;
-        switch (type)
+        result = type switch
         {
-            case DataType.Int:
-                ret = int.TryParse(s, out var resultInt);
-                value = resultInt;
-                break;
-        }
-
-        return ret;
+            DataType.Datetime or DataType.String or DataType.Text or DataType.Na => new DatabaseTypeValue(s),
+            DataType.Int when int.TryParse(s, out var resultInt) => new DatabaseTypeValue(I: resultInt),
+            _ => null
+        };
+        return result != null;
     }
 
     public async Task CreateTable(string tableName, ColumnDefinition[] columnDefinitions, CancellationToken cancellationToken)
@@ -95,7 +91,7 @@ public class SqlServerDefinitionExecutor(string connectionString, ILogger<SqlSer
             DataType.Int => "INT",
             DataType.Text => "TEXT",
             DataType.Datetime => "DATETIME",
-            DataType.String => "VARCHAR(255)",
+            DataType.String => "NVARCHAR(255)",
             _ => throw new NotSupportedException($"Type {dataType} is not supported")
         };
     }
@@ -129,4 +125,3 @@ public class SqlServerDefinitionExecutor(string connectionString, ILogger<SqlSer
         return await executeFunc(command);
     }
 }
-

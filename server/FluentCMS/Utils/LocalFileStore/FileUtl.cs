@@ -1,5 +1,5 @@
 using FluentResults;
-using SkiaSharp; // Ensure SkiaSharp NuGet package is installed
+using SkiaSharp; 
 
 namespace FluentCMS.Utils.LocalFileStore;
 
@@ -53,22 +53,21 @@ public class LocalFileStore(string pathPrefix, int maxImageWith, int quality)
 
     private void CompressImage(SKBitmap originalBitmap, Stream outStream)
     {
-
         var scaleFactor = (float)maxImageWith / originalBitmap.Width;
         var newHeight = (int)(originalBitmap.Height * scaleFactor);
 
-        var resizedImage = originalBitmap.Resize(new SKImageInfo(maxImageWith, newHeight), SKFilterQuality.Medium);
+        var resizedImage = originalBitmap.Resize(new SKImageInfo(maxImageWith, newHeight), SKSamplingOptions.Default);
         resizedImage?.Encode(outStream, SKEncodedImageFormat.Jpeg, quality);
     }
 
-    string GetFileName(string fileName)
+    private string GetFileName(string fileName)
     {
         var ext = Path.GetExtension(fileName);
-        var randomString = Guid.NewGuid().ToString("N").Substring(0, 8);
+        var randomString = Guid.NewGuid().ToString("N")[..8];
         return randomString + ext;
     }
 
-    string GetDirectoryName()
+    private string GetDirectoryName()
     {
         return DateTime.Now.ToString("yyyy-MM");
     }

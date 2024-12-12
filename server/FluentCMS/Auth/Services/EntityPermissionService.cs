@@ -1,7 +1,7 @@
 using System.Collections.Immutable;
 using FluentCMS.Auth.models;
 using FluentCMS.Cms.Services;
-using FluentCMS.Services;
+using FluentCMS.Exceptions;
 using FluentCMS.Utils.IdentityExt;
 using FluentCMS.Utils.QueryBuilder;
 
@@ -41,7 +41,7 @@ public class EntityPermissionService(
         [
             ..filters,
             new ValidFilter(new AttributeVector("","",[],createBy),"and", 
-                [new ValidConstraint(Matches.EqualsTo, [userId])])
+                [new ValidConstraint(Matches.EqualsTo, [new ValidValue(userId)])])
         ];
     }
 

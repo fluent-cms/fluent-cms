@@ -3,7 +3,7 @@ using System.Security.Claims;
 using FluentCMS.Auth.models;
 using FluentCMS.Cms.Services;
 using FluentCMS.Cms.Models;
-using FluentCMS.Services;
+using FluentCMS.Exceptions;
 using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.IdentityExt;
 using FluentCMS.Utils.QueryBuilder;
@@ -43,7 +43,7 @@ public class SchemaPermissionService<TUser>(
 
     public async Task Delete(int schemaId)
     {
-        var find = NotNull(await schemaService.ById(schemaId)).ValOrThrow($"can not find schema by id ${schemaId}");
+        var find = NotNull(await schemaService.ById(schemaId)).ValOrThrow($"can not find schema by id [{schemaId}]");
         await EnsureWritePermissionAsync(find);
     }
 

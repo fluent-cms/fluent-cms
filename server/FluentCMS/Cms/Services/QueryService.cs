@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
-using FluentCMS.Services;
-using FluentCMS.Utils.Graph;
+using FluentCMS.Exceptions;
+using FluentCMS.Graph;
 using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.QueryBuilder;
 using FluentCMS.Utils.HookFactory;
@@ -167,7 +167,7 @@ public sealed class QueryService(
                         token);
                 }
 
-                foreach (var item in items.Where(x => x[cross.CrossEntity.PrimaryKey].Equals(id)))
+                foreach (var item in items.Where(x => x[cross.CrossEntity.PrimaryKey].Equals(id.Value)))
                 {
                     item[attr.Field] = targetRecords;
                 }

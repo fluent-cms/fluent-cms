@@ -17,9 +17,9 @@ builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 
 var mongoConfig = builder.Configuration.GetRequiredSection("MongoConfig").Get<MongoConfig>()!;
-builder.AddSqliteCms("Data Source=cms.db");
-builder.AddKafkaMessageProducer("localhost:9092");
-builder.AddMongoView(mongoConfig);
+builder.Services.AddSqliteCms("Data Source=cms.db");
+builder.Services.AddKafkaMessageProducer("localhost:9092");
+builder.Services.AddMongoView(mongoConfig);
 
 var app = builder.Build();
 await app.UseCmsAsync();
@@ -107,7 +107,7 @@ void RegisterHooks()
         {
             if (param.RecordId == "1000")
             {
-                throw new FluentCMS.Services.InvalidParamException("1000");
+                throw new FluentCMS.Exceptions.InvalidParamException("1000");
             }
             return param;
         });
@@ -121,7 +121,7 @@ void RegisterHooks()
     var attr = new LoadedAttribute(TestEntity.EntityName, TestEntity.FieldName);
     var vector = new AttributeVector(TestEntity.FieldName, "", [], attr);
     registry.EntityPreGetList.Register(TestEntity.EntityName,
-        param => param with { RefSorts = [..param.RefSorts, new ValidSort(vector, SortOrder.Asc)] });
+        param => param with { RefSorts = [..param.RefSorts, new ValidSort(vector,TestEntity.FieldName, SortOrder.Asc)] });
 
     registry.EntityPostGetList.Register(TestEntity.EntityName, (param) =>
     {

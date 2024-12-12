@@ -8,7 +8,7 @@
         
         
         <link rel="shortcut icon" href="img/favicon.ico">
-        <title>FluentCMS - a headless CMS with GraphQL API support and an drag-and-drop page designer.</title>
+        <title>FluentCMS - A headless CMS with GraphQL API and drag-and-drop page designer.</title>
         <link href="css/bootstrap.min.css" rel="stylesheet">
         <link href="css/fontawesome.min.css" rel="stylesheet">
         <link href="css/brands.min.css" rel="stylesheet">
@@ -24,7 +24,7 @@
     <body class="homepage">
         <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
             <div class="container">
-                <a class="navbar-brand" href=".">FluentCMS - a headless CMS with GraphQL API support and an drag-and-drop page designer.</a>
+                <a class="navbar-brand" href=".">FluentCMS - A headless CMS with GraphQL API and drag-and-drop page designer.</a>
 
                 <!-- Expanded navigation -->
                 <div id="navbar-collapse" class="navbar-collapse collapse">
@@ -83,6 +83,16 @@
               </ul>
             </li>
             
+            <li class="nav-item" data-bs-level="2"><a href="#optimizing-caching" class="nav-link">Optimizing Caching</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="2"><a href="#aspire-integration" class="nav-link">Aspire Integration</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
             <li class="nav-item" data-bs-level="2"><a href="#integrating-it-into-your-project" class="nav-link">Integrating it into Your Project</a>
               <ul class="nav flex-column">
               </ul>
@@ -107,9 +117,8 @@
 </div></div>
                     <div class="col-md-9" role="main">
 
-<p><a href="https://github.com/fluent-cms/fluent-cms/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/fluent-cms/fluent-cms.svg?style=social&amp;label=Star" /></a><br />
-Welcome to <a href="https://github.com/fluent-cms/fluent-cms">Fluent CMS</a>! 
-If you'd like to contribute to the project, please check out our <a href="https://github.com/fluent-cms/fluent-cms/blob/main/CONTRIBUTING.md">CONTRIBUTING guide</a>.Don’t forget to give us a star  ⭐ if you find Fluent CMS helpful!  </p>
+<p>Welcome to <a href="https://github.com/fluent-cms/fluent-cms">Fluent CMS</a>! <a href="https://github.com/fluent-cms/fluent-cms/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/fluent-cms/fluent-cms.svg?style=social&amp;label=Star" /></a>  <br />
+If you'd like to contribute to the project, please check out our <a href="https://github.com/fluent-cms/fluent-cms/blob/main/CONTRIBUTING.md">CONTRIBUTING guide</a>.Don’t forget to give us a star  ⭐ if you find Fluent CMS helpful!    </p>
 <hr />
 <h2 id="what-is-fluent-cms">What is Fluent CMS?</h2>
 <p><strong>Fluent CMS</strong> is an open-source Content Management System designed to simplify and accelerate web development workflows. While it's particularly suited for CMS projects, it is also highly beneficial for general web applications, reducing the need for repetitive REST/GraphQL API development.</p>
@@ -413,6 +422,7 @@ The <strong>List Page</strong> displays entities in a tabular format, enabling s
 <h4 id="2-detail-page">2. <strong>Detail Page</strong></h4>
 <p><a href="https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course/22">Example Course Detail Page</a><br />
 The <strong>Detail Page</strong> provides an interface for viewing and managing detailed attributes. Related data such as teachers and materials can be selected or modified.</p>
+<hr />
 <hr />
 <h2 id="graphql-query"><strong>GraphQL Query</strong></h2>
 <p>FluentCMS simplifies frontend development by offering robust GraphQL support.</p>
@@ -929,6 +939,7 @@ The URL <code>/</code> will be resolved to <code>/pages/home</code> unless expli
 </tr>
 </tbody>
 </table>
+<hr />
 <h2 id="online-course-system-frontend">Online Course System Frontend</h2>
 <p>Having established our understanding of Fluent CMS essentials like Entity, Query, and Page, we're ready to build a frontend for an online course website.</p>
 <hr />
@@ -978,9 +989,115 @@ Course Details &lt;-------&gt; Teacher Details
 </ul>
 <p><img alt="Teacher Page Designer" src="https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-teacher.png" /></p>
 <p>When rendering the page, the <code>PageService</code> automatically passes the <code>teacher_id</code> (e.g., <code>{teacher_id: 3}</code>) to the query.</p>
+<hr />
+<h2 id="optimizing-caching">Optimizing Caching</h2>
+<p>To enhance performance, Fluent CMS implements caching strategies. </p>
+<h3 id="cache-types">Cache Types</h3>
+<ol>
+<li>
+<p><strong>Entity Definition Cache</strong><br />
+   Fluent CMS requires caching of all entity definitions to dynamically generate GraphQL types.</p>
+</li>
+<li>
+<p><strong>Query Definition Cache</strong><br />
+   Each query may depend on multiple related entities. Fluent CMS caches these definitions to compose efficient SQL queries.</p>
+</li>
+</ol>
+<hr />
+<h3 id="imemorycache-in-fluent-cms">IMemoryCache in Fluent CMS</h3>
+<p>By default, Fluent CMS utilizes ASP.NET's <code>IMemoryCache</code> for caching.</p>
+<ul>
+<li>
+<p><strong>Advantages</strong>:</p>
+<ul>
+<li>Simple to debug and deploy.</li>
+<li>Suitable for single-node web applications.</li>
+</ul>
+</li>
+<li>
+<p><strong>Disadvantages</strong>:</p>
+<ul>
+<li>Not scalable for distributed environments. In multi-node deployments, cache invalidation on one node (e.g., Node A) does not propagate to other nodes (e.g., Node B).</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h3 id="hybridcache-for-scalable-caching">HybridCache for Scalable Caching</h3>
+<p>Starting with ASP.NET 9.0, the framework provides <code>HybridCache</code>, which combines a primary memory cache with a secondary external cache (e.g., Redis).</p>
+<ul>
+<li>
+<p><strong>Key Features</strong>:</p>
+<ul>
+<li><strong>Scalability</strong>: Combines the performance of local memory caching with the distributed consistency of external caching.</li>
+<li><strong>Stampede Resolution</strong>: The <code>HybridCache</code> resolves cache stampede issues, as confirmed by its developers.</li>
+</ul>
+</li>
+<li>
+<p><strong>Limitations</strong>:<br />
+  The current implementation lacks "Backend-Assisted Local Cache Invalidation," which means cache invalidation on one node does not immediately propagate to others.</p>
+</li>
+<li>
+<p><strong>Fluent CMS Strategy</strong>:<br />
+  To address this, Fluent CMS sets local cache expiration (20 seconds) to one-third of the distributed cache expiration (60 seconds). This ensures memory caches across nodes achieve consistency within 20 seconds, significantly improving over a standard memory cache's 60-second delay.</p>
+</li>
+</ul>
+<hr />
+<h2 id="aspire-integration">Aspire Integration</h2>
+<p>A scalable deployment of Fluent CMS involves multiple web application nodes, a Redis server for distributed caching, and a database server, all behind a load balancer.</p>
+<h3 id="architecture-overview">Architecture Overview</h3>
+<pre><code>                 +------------------+
+                 |  Load Balancer   |
+                 +------------------+
+                          |
+        +-----------------+-----------------+
+        |                                   |
++------------------+              +------------------+
+|    Web App 1     |              |    Web App 2     |
+|   +-----------+  |              |   +-----------+  |
+|   | Local Cache| |              |   | Local Cache| |
++------------------+              +------------------+
+        |                                   |
+        |                                   |
+        +-----------------+-----------------+
+                 |                       |
+       +------------------+    +------------------+
+       | Database Server  |    |   Redis Server   |
+       +------------------+    +------------------+
+</code></pre>
+<hr />
+<h3 id="local-emulation-with-aspire-and-service-discovery">Local Emulation with Aspire and Service Discovery</h3>
+<p><a href="https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS.Blog">Example Web project on GitHub</a><br />
+<a href="https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS.Blog.AppHost">Example Aspire project on GitHub</a>  </p>
+<p>To emulate the production environment locally, Fluent CMS leverages Aspire. Here's an example setup:</p>
+<pre><code class="language-csharp">var builder = DistributedApplication.CreateBuilder(args);
+
+// Adding Redis and PostgreSQL services
+var redis = builder.AddRedis(name: CmsConstants.Redis);
+var db = builder.AddPostgres(CmsConstants.Postgres);
+
+// Configuring the web project with replicas and references
+builder.AddProject&lt;Projects.FluentCMS_Blog&gt;(name: &quot;web&quot;)
+    .WithEnvironment(CmsConstants.DatabaseProvider, CmsConstants.Postgres)
+    .WithReference(redis)
+    .WithReference(db)
+    .WithReplicas(2);
+
+builder.Build().Run();
+</code></pre>
+<h3 id="benefits">Benefits:</h3>
+<ol>
+<li><strong>Simplified Configuration</strong>:<br />
+   No need to manually specify endpoints for the database or Redis servers. Configuration values can be retrieved using:
+   <code>csharp
+   builder.Configuration.GetValue&lt;string&gt;();
+   builder.Configuration.GetConnectionString();</code></li>
+<li><strong>Realistic Testing</strong>:<br />
+   The local environment mirrors the production architecture, ensuring seamless transitions during deployment.</li>
+</ol>
+<p>By adopting these caching and deployment strategies, Fluent CMS ensures improved performance, scalability, and ease of configuration.</p>
+<hr />
 <h2 id="integrating-it-into-your-project">Integrating it into Your Project</h2>
 <p>Follow these steps to integrate Fluent CMS into your project using a NuGet package.</p>
-<hr />
 <ol>
 <li>
 <p><strong>Create a New ASP.NET Core Web Application</strong>.</p>
@@ -1019,7 +1136,6 @@ Course Details &lt;-------&gt; Teacher Details
 <hr />
 <h2 id="adding-business-logic">Adding Business Logic</h2>
 <p>Learn how to customize your application by adding validation logic, hook functions, and producing events to Kafka.</p>
-<hr />
 <h3 id="adding-validation-logic-with-simple-c-expressions">Adding Validation Logic with Simple C# Expressions</h3>
 <h4 id="simple-c-validation">Simple C# Validation</h4>
 <p>You can define simple C# expressions in the <code>Validation Rule</code> of attributes using <a href="https://github.com/dynamicexpresso/DynamicExpresso">Dynamic Expresso</a>. For example, a rule like <code>name != null</code> ensures the <code>name</code> attribute is not null.</p>
@@ -1071,6 +1187,7 @@ await app.UseCmsAsync(false);
 app.RegisterMessageProducerHook();
 </code></pre>
 <p>With this setup, events are produced to Kafka, allowing consumers to process business logic asynchronously.</p>
+<hr />
 <h2 id="development-guide">Development Guide</h2>
 <p>The backend is written in ASP.NET Core, the Admin Panel uses React, and the Schema Builder is developed with jQuery.</p>
 <h3 id="system-overviews">System Overviews</h3>
@@ -1204,5 +1321,5 @@ app.RegisterMessageProducerHook();
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2024-11-29 14:29:33.583913+00:00
+Build Date UTC : 2024-12-12 01:20:48.267800+00:00
 -->

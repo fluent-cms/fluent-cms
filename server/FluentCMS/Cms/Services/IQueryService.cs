@@ -1,4 +1,4 @@
-using FluentCMS.Utils.Graph;
+using FluentCMS.Graph;
 using FluentCMS.Utils.QueryBuilder;
 using GraphQL.Validation;
 

@@ -6,7 +6,7 @@ using FluentResults;
 namespace FluentCMS.Utils.QueryBuilder;
 
 public sealed record Constraint(string Match, ImmutableArray<string> Value);
-public sealed record ValidConstraint(string Match, ImmutableArray<object> Values);
+public sealed record ValidConstraint(string Match, ImmutableArray<ValidValue> Values);
 
 public static class ConstraintsHelper
 {
@@ -58,14 +58,14 @@ public static class ConstraintsHelper
     }
 
     
-    private static Result<object[]> ReplaceVariables(IEnumerable<object> fromValues, Attribute attribute,
+    private static Result<ValidValue[]> ReplaceVariables(IEnumerable<ValidValue> fromValues, Attribute attribute,
         StrArgs? args, IAttributeValueResolver resolver)
     {
-        var list = new List<object>();
+        var list = new List<ValidValue>();
 
         foreach (var fromValue in fromValues)
         {
-            if (fromValue is string s && s.StartsWith(QueryConstants.VariablePrefix))
+            if (fromValue.Value is string s && s.StartsWith(QueryConstants.VariablePrefix))
             {
                 if (args is null)
                 {
@@ -76,7 +76,7 @@ public static class ConstraintsHelper
                 {
                     if (se is not null && resolver.ResolveVal(attribute, se, out var obj))
                     {
-                        list.Add(obj!);
+                        list.Add(obj);
                     }
                     else
                     {
@@ -93,22 +93,22 @@ public static class ConstraintsHelper
         return list.ToArray();
     }
 
-    private static Result<object[]> ResolveValues(IEnumerable<string> fromValues, Attribute attribute, IAttributeValueResolver resolver)
+    private static Result<ValidValue[]> ResolveValues(IEnumerable<string> fromValues, Attribute attribute, IAttributeValueResolver resolver)
     {
-        var list = new List<object>();
+        var list = new List<ValidValue>();
 
         foreach (var fromValue in fromValues)
         {
             if (fromValue.StartsWith(QueryConstants.VariablePrefix))
             {
-                list.Add(fromValue);
+                list.Add(new ValidValue(fromValue));
                 continue;
             }
             if (!resolver.ResolveVal(attribute, fromValue, out var dbTypeValue))
             {
                 return Result.Fail("can not cast value " + fromValue + " to " + attribute.DataType);
             }
-            list.Add(dbTypeValue!);
+            list.Add(dbTypeValue);
         }
         return list.ToArray();
     }

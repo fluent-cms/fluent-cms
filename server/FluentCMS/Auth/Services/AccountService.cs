@@ -1,6 +1,6 @@
 using System.Security.Claims;
 using FluentCMS.Auth.models;
-using FluentCMS.Services;
+using FluentCMS.Exceptions;
 using FluentResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;

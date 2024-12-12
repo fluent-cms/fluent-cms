@@ -23,7 +23,5 @@ public static class ResultExt
         (var ok, _,  err) = res;
         return ok;
     }
-    
 
-    
 }

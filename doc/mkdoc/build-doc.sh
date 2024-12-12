@@ -5,3 +5,7 @@ for file in $(ls ../readme-parts/*.md | sort); do
 done
 
 mkdocs build
+rm site/sitemap.xml
+rm site/sitemap.xml.gz
+rm -rf ../../server/fluentcms.blog/wwwroot/doc
+cp -r site ../../server/fluentcms.blog/wwwroot/doc

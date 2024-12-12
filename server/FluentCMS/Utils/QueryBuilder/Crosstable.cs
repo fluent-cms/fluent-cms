@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.KateQueryExt;
 
@@ -70,8 +69,6 @@ public static class CrosstableHelper
             SourceAttribute: sourceAttribute,
             TargetAttribute: targetAttribute
         );
-
-
     }
 
     public static string GetCrosstableTableName(string sourceName, string targetName)
@@ -82,18 +79,17 @@ public static class CrosstableHelper
         return $"{sorted[0]}_{sorted[1]}";
     }
 
-    public static SqlKata.Query Delete(this Crosstable c, object id, Record[] targetItems)
+    public static SqlKata.Query Delete(this Crosstable c, ValidValue id, Record[] targetItems)
     {
         var vals = targetItems.Select(x => x[c.TargetEntity.PrimaryKey]);
-        return new SqlKata.Query(c.CrossEntity.TableName).Where(c.SourceAttribute.Field, id)
+        return new SqlKata.Query(c.CrossEntity.TableName).Where(c.SourceAttribute.Field, id.Value)
             .WhereIn(c.TargetAttribute.Field, vals).AsUpdate([c.CrossEntity.DeletedAttribute.Field], [true]);
     }
 
-    public static SqlKata.Query Insert(this Crosstable c, object id, Record[] targetItems)
+    public static SqlKata.Query Insert(this Crosstable c, ValidValue id, Record[] targetItems)
     {
         string[] cols = [c.SourceAttribute.Field, c.TargetAttribute.Field];
-        var vals = targetItems.Select(x => { return new[] { id, x[c.TargetEntity.PrimaryKey] }; });
-
+        var vals = targetItems.Select(x => { return new[] { id.Value, x[c.TargetEntity.PrimaryKey] }; });
 
         return new SqlKata.Query(c.CrossEntity.TableName).AsInsert(cols, vals);
     }
@@ -104,7 +100,7 @@ public static class CrosstableHelper
         IEnumerable<ValidFilter> filters,
         IEnumerable<ValidSort> sorts,
         ValidPagination pagination,
-        IEnumerable<object> sourceIds)
+        IEnumerable<ValidValue> sourceIds)
     {
         var baseQuery = c.TargetEntity.Basic().Select(selectAttributes.Select(x => x.AddTableModifier()));
         c.ApplyNotRelatedFilter(baseQuery, sourceIds);
@@ -122,7 +118,7 @@ public static class CrosstableHelper
         ValidSort[] sorts,
         ValidSpan? span,
         ValidPagination? pagination,
-        IEnumerable<object> sourceIds)
+        IEnumerable<ValidValue> sourceIds)
     {
         List<LoadedAttribute> attrs = [..selectAttributes, c.SourceAttribute];
         var query = c.TargetEntity.Basic().Select(attrs.Select(x => x.AddTableModifier()));
@@ -140,7 +136,7 @@ public static class CrosstableHelper
     public static SqlKata.Query GetNotRelatedItemsCount(
         this Crosstable c,
         IEnumerable<ValidFilter> filters,
-        IEnumerable<object> sourceIds)
+        IEnumerable<ValidValue> sourceIds)
     {
         var query = c.TargetEntity.Basic();
         c.ApplyNotRelatedFilter(query, sourceIds);
@@ -151,7 +147,7 @@ public static class CrosstableHelper
     public static SqlKata.Query GetRelatedItemsCount(
         this Crosstable c,
         IEnumerable<ValidFilter> filters,
-        IEnumerable<object> sourceIds)
+        IEnumerable<ValidValue> sourceIds)
     {
         var query = c.TargetEntity.Basic();
         c.ApplyRelatedFilter(query, sourceIds);
@@ -162,24 +158,24 @@ public static class CrosstableHelper
     private static void ApplyRelatedFilter(
         this Crosstable c,
         SqlKata.Query baseQuery,
-        IEnumerable<object> sourceIds)
+        IEnumerable<ValidValue> sourceIds)
     {
 
         var (a, b) = (c.TargetEntity.PrimaryKeyAttribute.AddTableModifier(), c.TargetAttribute.AddTableModifier());
         baseQuery.Join(c.CrossEntity.TableName, a, b)
-            .WhereIn(c.SourceAttribute.AddTableModifier(), sourceIds)
+            .WhereIn(c.SourceAttribute.AddTableModifier(), sourceIds.GetValues())
             .Where(c.CrossEntity.DeletedAttribute.AddTableModifier(), false);
     }
 
     private static void ApplyNotRelatedFilter(
         this Crosstable c,
         SqlKata.Query baseQuery,
-        IEnumerable<object> sourceIds)
+        IEnumerable<ValidValue> sourceIds)
     {
         var (a, b) = (c.TargetEntity.PrimaryKeyAttribute.AddTableModifier(), c.TargetAttribute.AddTableModifier());
         baseQuery.LeftJoin(c.CrossEntity.TableName,
             j => j.On(a, b)
-                .WhereIn(c.SourceAttribute.AddTableModifier(), sourceIds)
+                .WhereIn(c.SourceAttribute.AddTableModifier(), sourceIds.GetValues())
                 .Where(c.CrossEntity.DeletedAttribute.AddTableModifier(), false)
         ).WhereNull(c.SourceAttribute.AddTableModifier());
     }

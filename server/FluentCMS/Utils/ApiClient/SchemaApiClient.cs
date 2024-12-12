@@ -44,12 +44,10 @@ public class SchemaApiClient (HttpClient client)
         return await client.GetObject<Entity>($"/api/schemas/entity/{entityName}");
     }
     
-    public async Task<Result> EnsureSimpleEntity(string entity, string field)
-    {
-        return await EnsureSimpleEntity(entity, field, "", "");
-    }
+    public Task<Result<Schema>> EnsureSimpleEntity(string entity, string field) =>
+        EnsureSimpleEntity(entity, field, "", "");
 
-    public async Task<Result> EnsureSimpleEntity(string entityName, string field, string lookup, string crosstable)
+    public async Task<Result<Schema>> EnsureSimpleEntity(string entityName, string field, string lookup, string crosstable)
     {
         var attr = new List<Attribute>([
             new Attribute
@@ -99,8 +97,7 @@ public class SchemaApiClient (HttpClient client)
 
         var url =
             $"/api/schemas/entity/add_or_update";
-        var res = await client.PostObject(url, entity);
-        return await res.ToResult();
+        return await client.PostObject<Schema>(url, entity);
     }
 
 

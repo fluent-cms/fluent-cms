@@ -188,12 +188,12 @@ public static class FilterHelper
         var constraints = new List<ValidConstraint>();
         foreach (var (match, values) in strArgs.Where(x => x.Key != "operator"))
         {
-            var list = new List<object>();
-            foreach (var stringValue in values)
+            var list = new List<ValidValue>();
+            foreach (var s in values)
             {
-                if (stringValue is not null && valueResolver.ResolveVal(vector.Attribute, stringValue, out var obj) && obj is not null)
+                if (s is not null && valueResolver.ResolveVal(vector.Attribute, s, out var v))
                 {
-                    list.Add(obj);
+                    list.Add(v);
                 }
                 else
                 {

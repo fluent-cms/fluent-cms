@@ -1,8 +1,10 @@
 using FluentCMS.Cms.Models;
 using FluentCMS.Cms.Services;
+using FluentCMS.Test.Util;
 using FluentCMS.Utils.ApiClient;
 using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Utils.ResultExt;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.Blog.Tests;
@@ -15,7 +17,6 @@ public class SchemaApiTest
     private const string TableName = "schema_api_test";
     private const string TitleAttribute = "title";
 
-
     public SchemaApiTest()
     {
         WebAppClient<Program> webAppClient = new();
@@ -26,8 +27,7 @@ public class SchemaApiTest
     [Fact]
     public async Task AnonymousGetAllSchema()
     {
-        var schema = TestSchema();
-        (await _schemaApiClient.GetAll("")).AssertFail();
+        Assert.True((await _schemaApiClient.GetAll("")).IsFailed);
     }
 
 
@@ -35,7 +35,7 @@ public class SchemaApiTest
     public async Task AnonymousSaveSchemaFail()
     {
         var schema = TestSchema();
-        (await _schemaApiClient.SaveEntityDefine(schema)).AssertFail();
+        Assert.True((await _schemaApiClient.SaveEntityDefine(schema)).IsFailed);
     }
 
 
@@ -76,7 +76,7 @@ public class SchemaApiTest
         await _accountApiClient.EnsureLogin();
         schema = (await _schemaApiClient.SaveEntityDefine(schema)).AssertSuccess();
         (await _schemaApiClient.DeleteSchema(schema.Id)).AssertSuccess();
-        (await _schemaApiClient.GetLoadedEntity(schema.Name)).AssertFail();
+        Assert.True((await _schemaApiClient.GetLoadedEntity(schema.Name)).IsFailed);
    }
 
     [Fact]

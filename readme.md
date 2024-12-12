@@ -1,7 +1,7 @@
-# FluentCMS - a headless CMS with GraphQL API support and an drag-and-drop page designer.
-[![GitHub stars](https://img.shields.io/github/stars/fluent-cms/fluent-cms.svg?style=social&label=Star)](https://github.com/fluent-cms/fluent-cms/stargazers)  
-Welcome to [Fluent CMS](https://github.com/fluent-cms/fluent-cms)! 
-If you'd like to contribute to the project, please check out our [CONTRIBUTING guide](https://github.com/fluent-cms/fluent-cms/blob/main/CONTRIBUTING.md).Don’t forget to give us a star  ⭐ if you find Fluent CMS helpful!  
+# FluentCMS - a headless CMS with GraphQL and an drag-and-drop page designer.  
+
+Welcome to [Fluent CMS](https://github.com/fluent-cms/fluent-cms)! [![GitHub stars](https://img.shields.io/github/stars/fluent-cms/fluent-cms.svg?style=social&label=Star)](https://github.com/fluent-cms/fluent-cms/stargazers)    
+If you'd like to contribute to the project, please check out our [CONTRIBUTING guide](https://github.com/fluent-cms/fluent-cms/blob/main/CONTRIBUTING.md).Don’t forget to give us a star  ⭐ if you find Fluent CMS helpful!    
 ---
 ## What is Fluent CMS?
 
@@ -12,7 +12,6 @@ If you'd like to contribute to the project, please check out our [CONTRIBUTING g
 - **Powerful GraphQL Queries:** Access multiple related entities in a single query, enhancing client-side performance, security, and flexibility.
 
 - **Drag-and-Drop Page Designer:** Build dynamic pages effortlessly using the integrated page designer powered by [Grapes.js](https://grapesjs.com/) and [Handlebars](https://handlebarsjs.com/). Easily bind data sources for an interactive and streamlined design experience.
-
 
 ---
 ## Online Course System Demo
@@ -151,7 +150,7 @@ The **Detail Page** provides an interface for viewing and managing detailed attr
 
 --- 
 </details>
-
+---
 ## **GraphQL Query**
 
 <details>
@@ -612,10 +611,9 @@ Subfields also support cursor-based pagination. For instance, querying [https://
 To fetch the next two skills, use the cursor:  
 [https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/part/skills?limit=2&last=eyJpZCI6Miwic291cmNlSWQiOjN9](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/part/skills?limit=2&last=eyJpZCI6Miwic291cmNlSWQiOjN9)
 
----
-
 </details>
 
+---
 ## Drag and Drop Page Designer
 <details> 
 <summary> 
@@ -740,7 +738,7 @@ To bind a `Data List` to a component, follow these steps:
 |               | - **None**: Displays all available content at once without requiring additional user actions.                                                                          |
 
 </details>
-
+---
 ## Online Course System Frontend
 <details> 
 <summary> 
@@ -804,6 +802,120 @@ Course Details <-------> Teacher Details
 When rendering the page, the `PageService` automatically passes the `teacher_id` (e.g., `{teacher_id: 3}`) to the query.
 </details>  
 
+---
+## Optimizing Caching
+<details>
+<summary>
+To enhance performance, Fluent CMS implements caching strategies. 
+</summary>
+
+### Cache Types
+
+1. **Entity Definition Cache**  
+   Fluent CMS requires caching of all entity definitions to dynamically generate GraphQL types.
+
+2. **Query Definition Cache**  
+   Each query may depend on multiple related entities. Fluent CMS caches these definitions to compose efficient SQL queries.
+
+---
+
+### IMemoryCache in Fluent CMS
+
+By default, Fluent CMS utilizes ASP.NET's `IMemoryCache` for caching.
+
+- **Advantages**:
+    - Simple to debug and deploy.
+    - Suitable for single-node web applications.
+
+- **Disadvantages**:
+    - Not scalable for distributed environments. In multi-node deployments, cache invalidation on one node (e.g., Node A) does not propagate to other nodes (e.g., Node B).
+
+---
+
+### HybridCache for Scalable Caching
+
+Starting with ASP.NET 9.0, the framework provides `HybridCache`, which combines a primary memory cache with a secondary external cache (e.g., Redis).
+
+- **Key Features**:
+    - **Scalability**: Combines the performance of local memory caching with the distributed consistency of external caching.
+    - **Stampede Resolution**: The `HybridCache` resolves cache stampede issues, as confirmed by its developers.
+
+- **Limitations**:  
+  The current implementation lacks "Backend-Assisted Local Cache Invalidation," which means cache invalidation on one node does not immediately propagate to others.
+
+- **Fluent CMS Strategy**:  
+  To address this, Fluent CMS sets local cache expiration (20 seconds) to one-third of the distributed cache expiration (60 seconds). This ensures memory caches across nodes achieve consistency within 20 seconds, significantly improving over a standard memory cache's 60-second delay.
+
+</details>
+
+---
+## Aspire Integration
+<details> 
+<summary> 
+A scalable deployment of Fluent CMS involves multiple web application nodes, a Redis server for distributed caching, and a database server, all behind a load balancer.
+</summary>
+
+### Architecture Overview
+
+```
+                 +------------------+
+                 |  Load Balancer   |
+                 +------------------+
+                          |
+        +-----------------+-----------------+
+        |                                   |
++------------------+              +------------------+
+|    Web App 1     |              |    Web App 2     |
+|   +-----------+  |              |   +-----------+  |
+|   | Local Cache| |              |   | Local Cache| |
++------------------+              +------------------+
+        |                                   |
+        |                                   |
+        +-----------------+-----------------+
+                 |                       |
+       +------------------+    +------------------+
+       | Database Server  |    |   Redis Server   |
+       +------------------+    +------------------+
+```
+
+---
+
+### Local Emulation with Aspire and Service Discovery
+
+[Example Web project on GitHub](https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS.Blog)  
+[Example Aspire project on GitHub](https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS.Blog.AppHost)  
+
+To emulate the production environment locally, Fluent CMS leverages Aspire. Here's an example setup:
+
+```csharp
+var builder = DistributedApplication.CreateBuilder(args);
+
+// Adding Redis and PostgreSQL services
+var redis = builder.AddRedis(name: CmsConstants.Redis);
+var db = builder.AddPostgres(CmsConstants.Postgres);
+
+// Configuring the web project with replicas and references
+builder.AddProject<Projects.FluentCMS_Blog>(name: "web")
+    .WithEnvironment(CmsConstants.DatabaseProvider, CmsConstants.Postgres)
+    .WithReference(redis)
+    .WithReference(db)
+    .WithReplicas(2);
+
+builder.Build().Run();
+```
+
+### Benefits:
+1. **Simplified Configuration**:  
+   No need to manually specify endpoints for the database or Redis servers. Configuration values can be retrieved using:
+   ```csharp
+   builder.Configuration.GetValue<string>();
+   builder.Configuration.GetConnectionString();
+   ```
+2. **Realistic Testing**:  
+   The local environment mirrors the production architecture, ensuring seamless transitions during deployment.
+
+By adopting these caching and deployment strategies, Fluent CMS ensures improved performance, scalability, and ease of configuration.
+</details>
 
 ---
 ## Integrating it into Your Project
@@ -812,8 +924,6 @@ When rendering the page, the `PageService` automatically passes the `teacher_id`
 <summary>
 Follow these steps to integrate Fluent CMS into your project using a NuGet package.
 </summary>
-
----
 
 1. **Create a New ASP.NET Core Web Application**.
 
@@ -855,18 +965,14 @@ Once your web server is running, you can access the **Admin Panel** at `/admin` 
 
 You can find an example project [here](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).
 
----
-
 </details>
-
+---
 ## Adding Business Logic
 
 <details>
 <summary>
 Learn how to customize your application by adding validation logic, hook functions, and producing events to Kafka.
 </summary>
-
----
 
 ### Adding Validation Logic with Simple C# Expressions
 
@@ -934,6 +1040,7 @@ With this setup, events are produced to Kafka, allowing consumers to process bus
 
 </details>
 
+---
 ## Development Guide
 <details>
 <summary>
@@ -968,10 +1075,10 @@ The backend is written in ASP.NET Core, the Admin Panel uses React, and the Sche
 
 ![Schema Builder Sequence](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/schema-builder-sequence.png)
 
----
 </details>
 
 
+---
 ## Testing Strategy
 <details>
 <summary>

@@ -92,8 +92,8 @@ public static class KateQueryExt
                 foreach (var c in filter.Constraints)
                 {
                     var ret = filter.MatchType == MatchTypes.MatchAny
-                        ? q.ApplyOrConstraint(filedName, c.Match, c.Values)
-                        : q.ApplyAndConstraint(filedName, c.Match, c.Values);
+                        ? q.ApplyOrConstraint(filedName, c.Match, c.Values.GetValues())
+                        : q.ApplyAndConstraint(filedName, c.Match, c.Values.GetValues());
                     if (ret.IsFailed)
                     {
                         result = Result.Fail(ret.Errors);
@@ -108,7 +108,7 @@ public static class KateQueryExt
         return result;
     }
 
-    private static Result<SqlKata.Query> ApplyAndConstraint(this SqlKata.Query query, string field, string match, ImmutableArray<object> values)
+    private static Result<SqlKata.Query> ApplyAndConstraint(this SqlKata.Query query, string field, string match, object[] values)
     {
         return match switch
         {
@@ -135,7 +135,7 @@ public static class KateQueryExt
         };
     }
 
-    private static Result<SqlKata.Query> ApplyOrConstraint(this SqlKata.Query query, string field, string match, ImmutableArray<object> values)
+    private static Result<SqlKata.Query> ApplyOrConstraint(this SqlKata.Query query, string field, string match, object[] values)
     {
         return match switch
         {
@@ -196,7 +196,7 @@ public static class KateQueryExt
 
         void ApplyEq(SqlKata.Query q, ValidSort sort)
         {
-            q.Where(sort.Vector.Attribute.AddTableModifier(sort.Vector.TableAlias),  cursor.Edge(sort.Vector.FullPath));
+            q.Where(sort.Vector.Attribute.AddTableModifier(sort.Vector.TableAlias),  cursor.Edge(sort.Vector.FullPath).Value);
         }
 
         void ApplyCompare(SqlKata.Query q, ValidSort sort)
@@ -204,7 +204,7 @@ public static class KateQueryExt
             q.Where(
                 sort.Vector.Attribute.AddTableModifier(sort.Vector.TableAlias), 
                 cursor.Span.GetCompareOperator(sort.Order), 
-                cursor.Edge(sort.Vector.FullPath));
+                cursor.Edge(sort.Vector.FullPath).Value);
         }
         
     }

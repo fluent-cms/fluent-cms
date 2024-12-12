@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net9.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
@@ -10,90 +10,51 @@
         <OutputType>Library</OutputType>
         <AssemblyName>FluentCms</AssemblyName>
         <PackageReadmeFile>readme.md</PackageReadmeFile>
-        <TargetFramework>net8.0</TargetFramework>
+        <LangVersion>13</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Confluent.Kafka" Version="2.5.2" />
-        <PackageReference Include="DynamicExpresso.Core" Version="2.16.1" />
-        <PackageReference Include="FluentMigrator.Runner.Postgres" Version="5.2.0" />
-        <PackageReference Include="FluentMigrator.Runner.Sqlite" Version="5.2.0" />
+        <PackageReference Include="Confluent.Kafka" Version="2.6.1" />
+        <PackageReference Include="DynamicExpresso.Core" Version="2.17.2" />
+        <PackageReference Include="FluentMigrator.Runner.Postgres" Version="6.2.0" />
+        <PackageReference Include="FluentMigrator.Runner.Sqlite" Version="6.2.0" />
         <PackageReference Include="FluentResults" Version="3.16.0" />
         
         <PackageReference Include="GraphQL" Version="8.2.1" />
         <PackageReference Include="GraphQL-Parser" Version="9.5.0" />
-        <PackageReference Include="GraphQL.Server.Transports.AspNetCore" Version="8.1.0" />
-        <PackageReference Include="GraphQL.Server.Ui.GraphiQL" Version="8.1.0" />
+        <PackageReference Include="GraphQL.Client" Version="6.1.0" />
+        <PackageReference Include="GraphQL.Client.Serializer.SystemTextJson" Version="6.1.0" />
+        <PackageReference Include="GraphQL.Server.Transports.AspNetCore" Version="8.2.0" />
+        <PackageReference Include="GraphQL.Server.Ui.GraphiQL" Version="8.2.0" />
         <PackageReference Include="GraphQL.SystemTextJson" Version="8.2.1" />
         
         <PackageReference Include="Handlebars.Net" Version="2.1.6" />
-        <PackageReference Include="HtmlAgilityPack" Version="1.11.65" />
-        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.8" />
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.6" />
-        <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="8.0.6" />
+        <PackageReference Include="HtmlAgilityPack" Version="1.11.71" />
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.0" />
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
+        <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="9.0.0" />
         
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.6" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.7" />
-        <PackageReference Include="MongoDB.Driver" Version="2.28.0" />
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
-        <PackageReference Include="SkiaSharp" Version="2.88.8" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" Version="9.0.0-preview.7.24406.2" />
+        <PackageReference Include="MongoDB.Driver" Version="3.1.0" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.2" />
+        <PackageReference Include="SkiaSharp" Version="3.116.1" />
         <PackageReference Include="SqlKata" Version="2.4.0" />
         <PackageReference Include="SqlKata.Execution" Version="2.4.0" />
-        <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
-        <PackageReference Include="System.Runtime.Caching" Version="8.0.1" />
+        <PackageReference Include="System.Data.SqlClient" Version="4.9.0" />
+        <PackageReference Include="System.Runtime.Caching" Version="9.0.0" />
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="../../readme.md" Pack="true" PackagePath="\" />
+        <None Include="../../doc/mkdoc/docs/index.md" Pack="true" PackagePath="\readme.md" />
     </ItemGroup>
 
-    <ItemGroup>
-      <_ContentIncludedByDefault Remove="wwwroot\static-assets\js\pagination.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\static-assets\templates\template.html" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\css\grapes-demo.css" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\css\grapes.min.css" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\css\grapesjs-preset-webpage.min.css" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\css\styles.css" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\edit.html" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\grapes-components\blocks\card-a.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\grapes-components\blocks\content-b.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\grapes-components\blocks\ecommerce-a.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\grapes-components\blocks\header-b.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\grapes-components\blocks\hero-b.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\grapes-components\blocks\list-a.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\grapes-components\custom-blocks.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\grapes-components\custom-types.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\grapes-components\grapes.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\hybirds-components\nav-bar.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\img\fluent-cms.png" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\edit.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\entity.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\list.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\menu.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\page.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\query.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\js\repo.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\attribute.json" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\constraint.json" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\entity.json" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\filter.json" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\filters.json" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\menu.json" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\query.json" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\sort.json" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\json\sorts.json" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\list.html" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\page.html" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\toast\jquery.toast.min.css" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\toast\jquery.toast.min.js" />
-    </ItemGroup>
-
-    
     <PropertyGroup>
         <PackageReadmeFile>readme.md</PackageReadmeFile>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net9.0</TargetFramework>
         <PackageId>FluentCMS</PackageId>
-        <Version>0.2.8.1</Version>
+        <Version>0.3.0.2</Version>
         <Authors>Jason C</Authors>
         <Company>fluent-cms</Company>
         <Description>A headless CMS with GraphQL API and drag-and-drop page designer.</Description>
@@ -106,6 +67,4 @@
         <AssemblyTitle>$(PackageId)</AssemblyTitle>
         <AssemblyInformationalVersion>$(Version)</AssemblyInformationalVersion>
     </PropertyGroup>
-   
-
 </Project>

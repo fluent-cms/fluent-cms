@@ -51,13 +51,13 @@ public static class MongoExt
         
         FilterDefinition<BsonDocument> GetEq(ValidSort sort)
         {
-            var (f, v) = (sort.Vector.FullPath, span.Edge(sort.Vector.FullPath));
+            var (f, v) = (sort.Vector.FullPath, span.Edge(sort.Vector.FullPath).Value);
             return builder.Eq(f, v);
         }
   
         FilterDefinition<BsonDocument> GetCompare(ValidSort sort)
         {
-            var (f, v) = (sort.Vector.FullPath, span.Edge(sort.Vector.FullPath));
+            var (f, v) = (sort.Vector.FullPath, span.Edge(sort.Vector.FullPath).Value);
             return span.Span.GetCompareOperator(sort.Order) == ">" ? builder.Gt(f, v) : builder.Lt(f, v);
         } 
     }
@@ -83,7 +83,7 @@ public static class MongoExt
         List<FilterDefinition<BsonDocument>> definitions = new();
         foreach (var filterConstraint in filter.Constraints)
         {
-            var resConstraint = GetConstraintDefinition(filter.Vector.FullPath, filterConstraint.Match, filterConstraint.Values);
+            var resConstraint = GetConstraintDefinition(filter.Vector.FullPath, filterConstraint.Match, [..filterConstraint.Values.GetValues()]);
             if (resConstraint.IsFailed)
             {
                 return Result.Fail(resConstraint.Errors);

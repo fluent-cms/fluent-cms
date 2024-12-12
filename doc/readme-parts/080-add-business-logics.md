@@ -1,13 +1,11 @@
 
-
+---
 ## Adding Business Logic
 
 <details>
 <summary>
 Learn how to customize your application by adding validation logic, hook functions, and producing events to Kafka.
 </summary>
-
----
 
 ### Adding Validation Logic with Simple C# Expressions
 

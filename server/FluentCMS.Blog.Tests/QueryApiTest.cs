@@ -1,7 +1,9 @@
 using FluentCMS.Cms.Models;
 using FluentCMS.Cms.Services;
+using FluentCMS.Test.Util;
 using FluentCMS.Utils.ApiClient;
 using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Utils.ResultExt;
 
 namespace FluentCMS.Blog.Tests;
 
@@ -28,7 +30,7 @@ public class QueryApiTest
     }
 
     [Fact]
-    public async void TestRelatedData()
+    public async Task TestRelatedData()
     {
         var postId =await PrepareOneRelatedData();
         var query = GetPostQuery();
@@ -42,7 +44,7 @@ public class QueryApiTest
 
 
     [Fact]
-    public async void List()
+    public async Task List()
     {
         await PrepareSimpleData();
         var query = GetPostQuery();
@@ -54,7 +56,7 @@ public class QueryApiTest
     }
 
     [Fact]
-    public async void Many()
+    public async Task Many()
     {
         await PrepareSimpleData();
         var query = GetPostQuery();

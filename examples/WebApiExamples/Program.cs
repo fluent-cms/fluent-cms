@@ -1,7 +1,6 @@
 using System.Text.RegularExpressions;
 using FluentCMS.Auth.models;
-using FluentCMS.Auth.Services;
-using FluentCMS.Services;
+using FluentCMS.Exceptions;
 using FluentCMS.WebAppExt;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -12,11 +11,11 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var connectionString = "Data Source=cms.db";
-builder.AddSqliteCms(connectionString);
+builder.Services.AddSqliteCms(connectionString);
 
 //add fluent cms' permission control service 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
-builder.AddCmsAuth<IdentityUser, IdentityRole, AppDbContext>();
+builder.Services.AddCmsAuth<IdentityUser, IdentityRole, AppDbContext>();
 
 var app = builder.Build();
 

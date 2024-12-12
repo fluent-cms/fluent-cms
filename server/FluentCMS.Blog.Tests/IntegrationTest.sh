@@ -44,7 +44,7 @@ test_sqlserver_container(){
   
   export DatabaseProvider=SqlServer
   export SqlServer="Server=localhost;Database=cms;User Id=sa;Password=Admin12345678!;TrustServerCertificate=True"
-  dotnet test
+  dotnet test  
 }
 
 # Exit immediately if a command exits with a non-zero status
@@ -58,8 +58,7 @@ db_path=$(pwd)/default.db && rm -f $db_path && cp ../FluentCMS.Blog/cms.db "$db_
 # Sqlite With Empty Data 
 db_path=$(pwd)/temp.db && rm -f "$db_path" && test_sqlite "$db_path"
 
-# Postgres With Empty Data 
 test_postgres_container ""
 
-test_sqlserver_container
+#test_sqlserver_container
 

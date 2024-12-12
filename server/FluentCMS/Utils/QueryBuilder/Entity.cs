@@ -66,7 +66,7 @@ public static class EntityHelper
     {
         var query = e.Basic().Select(attributes.Select(x => x.AddTableModifier()));
         query.ApplyJoin([..filters.Select(x=>x.Vector),..sorts.Select(x=>x.Vector)]);
-        var result = query.ApplyFilters(filters); //filters.Apply(this, query);
+        var result = query.ApplyFilters(filters); 
         if (result.IsFailed)
         {
             return Result.Fail(result.Errors);
@@ -75,9 +75,9 @@ public static class EntityHelper
         return query;
     }
 
-    public static SqlKata.Query ByIdQuery(this LoadedEntity e,object id, IEnumerable<LoadedAttribute> attributes, IEnumerable<ValidFilter> filters)
+    public static SqlKata.Query ByIdQuery(this LoadedEntity e,ValidValue id, IEnumerable<LoadedAttribute> attributes, IEnumerable<ValidFilter> filters)
     {
-        var query = e.Basic().Where(e.PrimaryKey, id)
+        var query = e.Basic().Where(e.PrimaryKey, id.Value)
             .Select(attributes.Select(x => x.AddTableModifier()));
         query.ApplyFilters(filters);
         return query;
@@ -87,6 +87,7 @@ public static class EntityHelper
         ValidPagination pagination, ValidSpan? cursor, IEnumerable<LoadedAttribute> attributes)
     {
         var query = e.Basic().Select(attributes.Select(x => x.AddTableModifier()));
+        
         query.ApplyJoin([..filters.Select(x=>x.Vector),..sorts.Select(x=>x.Vector)]);
         query.ApplyCursor(cursor, sorts);
         query.ApplyPagination(pagination);
@@ -104,11 +105,11 @@ public static class EntityHelper
     }
 
 
-    public static SqlKata.Query ManyQuery(this LoadedEntity e,IEnumerable<object> ids, IEnumerable<LoadedAttribute> attributes)
+    public static SqlKata.Query ManyQuery(this LoadedEntity e,IEnumerable<ValidValue> ids, IEnumerable<LoadedAttribute> attrs)
     {
         return e.Basic()
-            .Select(attributes.Select(x=>x.AddTableModifier()))
-            .WhereIn(e.PrimaryKey, ids);
+            .Select(attrs.Select(x=>x.AddTableModifier()))
+            .WhereIn(e.PrimaryKey, ids.GetValues());
     }
 
     public static SqlKata.Query Insert(this LoadedEntity e, Record item)
@@ -285,7 +286,7 @@ public static class EntityHelper
             }
             return element.Value.ValueKind switch
             {
-                JsonValueKind.String when resolver.ResolveVal(attribute, element.Value.GetString()!,out var caseVal) => caseVal!, 
+                JsonValueKind.String when resolver.ResolveVal(attribute, element.Value.GetString()!,out var caseVal) => caseVal.Value, 
                 JsonValueKind.Number when element.Value.TryGetInt32(out var intValue) => intValue,
                 JsonValueKind.Number when element.Value.TryGetInt64(out var longValue) => longValue,
                 JsonValueKind.Number when element.Value.TryGetDouble(out var doubleValue) => doubleValue,
