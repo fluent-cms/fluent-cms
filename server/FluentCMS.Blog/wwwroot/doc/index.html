@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="None">
+        
+        
+        <link rel="shortcut icon" href="img/favicon.ico">
+        <title>FluentCMS - A headless CMS with GraphQL API and drag-and-drop page designer.</title>
+        <link href="css/bootstrap.min.css" rel="stylesheet">
+        <link href="css/fontawesome.min.css" rel="stylesheet">
+        <link href="css/brands.min.css" rel="stylesheet">
+        <link href="css/solid.min.css" rel="stylesheet">
+        <link href="css/v4-font-face.min.css" rel="stylesheet">
+        <link href="css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body class="homepage">
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href=".">FluentCMS - A headless CMS with GraphQL API and drag-and-drop page designer.</a>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="2"><a href="#what-is-fluent-cms" class="nav-link">What is Fluent CMS?</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="2"><a href="#online-course-system-demo" class="nav-link">Online Course System Demo</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="2"><a href="#online-course-system-backend" class="nav-link">Online Course System Backend</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="2"><a href="#graphql-query" class="nav-link">GraphQL Query</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="2"><a href="#drag-and-drop-page-designer" class="nav-link">Drag and Drop Page Designer</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="2"><a href="#online-course-system-frontend" class="nav-link">Online Course System Frontend</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="2"><a href="#optimizing-caching" class="nav-link">Optimizing Caching</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="2"><a href="#aspire-integration" class="nav-link">Aspire Integration</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="2"><a href="#integrating-it-into-your-project" class="nav-link">Integrating it into Your Project</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="2"><a href="#adding-business-logic" class="nav-link">Adding Business Logic</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="2"><a href="#development-guide" class="nav-link">Development Guide</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="2"><a href="#testing-strategy" class="nav-link">Testing Strategy</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<p>Welcome to <a href="https://github.com/fluent-cms/fluent-cms">Fluent CMS</a>! <a href="https://github.com/fluent-cms/fluent-cms/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/fluent-cms/fluent-cms.svg?style=social&amp;label=Star" /></a>  <br />
+If you'd like to contribute to the project, please check out our <a href="https://github.com/fluent-cms/fluent-cms/blob/main/CONTRIBUTING.md">CONTRIBUTING guide</a>.Don’t forget to give us a star  ⭐ if you find Fluent CMS helpful!    </p>
+<hr />
+<h2 id="what-is-fluent-cms">What is Fluent CMS?</h2>
+<p><strong>Fluent CMS</strong> is an open-source Content Management System designed to simplify and accelerate web development workflows. While it's particularly suited for CMS projects, it is also highly beneficial for general web applications, reducing the need for repetitive REST/GraphQL API development.</p>
+<ul>
+<li>
+<p><strong>Effortless CRUD Operations:</strong> Fluent CMS includes built-in RESTful APIs for Create, Read, Update, and Delete (CRUD) operations, complemented by a React-based admin panel for efficient data management.</p>
+</li>
+<li>
+<p><strong>Powerful GraphQL Queries:</strong> Access multiple related entities in a single query, enhancing client-side performance, security, and flexibility.</p>
+</li>
+<li>
+<p><strong>Drag-and-Drop Page Designer:</strong> Build dynamic pages effortlessly using the integrated page designer powered by <a href="https://grapesjs.com/">Grapes.js</a> and <a href="https://handlebarsjs.com/">Handlebars</a>. Easily bind data sources for an interactive and streamlined design experience.</p>
+</li>
+</ul>
+<hr />
+<h2 id="online-course-system-demo">Online Course System Demo</h2>
+<h3 id="source-code">Source Code</h3>
+<p><a href="https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples">Example Blog Project on GitHub</a></p>
+<h3 id="live-demo">Live Demo</h3>
+<ul>
+<li><strong>Public Site:</strong> <a href="https://fluent-cms-admin.azurewebsites.net/">fluent-cms-admin.azurewebsites.net</a></li>
+<li><strong>Admin Panel:</strong> <a href="https://fluent-cms-admin.azurewebsites.net/admin">fluent-cms-admin.azurewebsites.net/admin</a></li>
+<li><strong>Email:</strong> <code>admin@cms.com</code></li>
+<li><strong>Password:</strong> <code>Admin1!</code></li>
+</ul>
+<h3 id="additional-resources">Additional Resources</h3>
+<ul>
+<li><strong>GraphQL Playground:</strong> <a href="https://fluent-cms-admin.azurewebsites.net/graph">fluent-cms-admin.azurewebsites.net/graph</a></li>
+<li><strong>Documentation:</strong> <a href="https://fluent-cms-admin.azurewebsites.net/doc/index.html">fluent-cms-admin.azurewebsites.net/doc/index.html</a>  </li>
+</ul>
+<hr />
+<h2 id="online-course-system-backend">Online Course System Backend</h2>
+<p>This section provides detailed guidance on developing a foundational online course system, encompassing key entities: <code>teacher</code>, <code>course</code>, <code>skill</code>, and <code>material</code>.</p>
+<h3 id="database-schema">Database Schema</h3>
+<h4 id="1-teachers-table">1. <strong>Teachers Table</strong></h4>
+<p>The <code>Teachers</code> table maintains information about instructors, including their personal and professional details.</p>
+<table>
+<thead>
+<tr>
+<th><strong>Field</strong></th>
+<th><strong>Header</strong></th>
+<th><strong>Data Type</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>ID</td>
+<td>Int</td>
+</tr>
+<tr>
+<td><code>firstname</code></td>
+<td>First Name</td>
+<td>String</td>
+</tr>
+<tr>
+<td><code>lastname</code></td>
+<td>Last Name</td>
+<td>String</td>
+</tr>
+<tr>
+<td><code>email</code></td>
+<td>Email</td>
+<td>String</td>
+</tr>
+<tr>
+<td><code>phone_number</code></td>
+<td>Phone Number</td>
+<td>String</td>
+</tr>
+<tr>
+<td><code>image</code></td>
+<td>Image</td>
+<td>String</td>
+</tr>
+<tr>
+<td><code>bio</code></td>
+<td>Bio</td>
+<td>Text</td>
+</tr>
+</tbody>
+</table>
+<h4 id="2-courses-table">2. <strong>Courses Table</strong></h4>
+<p>The <code>Courses</code> table captures the details of educational offerings, including their scope, duration, and prerequisites.</p>
+<table>
+<thead>
+<tr>
+<th><strong>Field</strong></th>
+<th><strong>Header</strong></th>
+<th><strong>Data Type</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>ID</td>
+<td>Int</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>Course Name</td>
+<td>String</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>String</td>
+</tr>
+<tr>
+<td><code>level</code></td>
+<td>Level</td>
+<td>String</td>
+</tr>
+<tr>
+<td><code>summary</code></td>
+<td>Summary</td>
+<td>String</td>
+</tr>
+<tr>
+<td><code>image</code></td>
+<td>Image</td>
+<td>String</td>
+</tr>
+<tr>
+<td><code>desc</code></td>
+<td>Description</td>
+<td>Text</td>
+</tr>
+<tr>
+<td><code>duration</code></td>
+<td>Duration</td>
+<td>String</td>
+</tr>
+<tr>
+<td><code>start_date</code></td>
+<td>Start Date</td>
+<td>Datetime</td>
+</tr>
+</tbody>
+</table>
+<h4 id="3-skills-table">3. <strong>Skills Table</strong></h4>
+<p>The <code>Skills</code> table records competencies attributed to teachers.</p>
+<table>
+<thead>
+<tr>
+<th><strong>Field</strong></th>
+<th><strong>Header</strong></th>
+<th><strong>Data Type</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>ID</td>
+<td>Int</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>Skill Name</td>
+<td>String</td>
+</tr>
+<tr>
+<td><code>years</code></td>
+<td>Years of Experience</td>
+<td>Int</td>
+</tr>
+<tr>
+<td><code>created_by</code></td>
+<td>Created By</td>
+<td>String</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td>Created At</td>
+<td>Datetime</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td>Updated At</td>
+<td>Datetime</td>
+</tr>
+</tbody>
+</table>
+<h4 id="4-materials-table">4. <strong>Materials Table</strong></h4>
+<p>The <code>Materials</code> table inventories resources linked to courses.</p>
+<table>
+<thead>
+<tr>
+<th><strong>Field</strong></th>
+<th><strong>Header</strong></th>
+<th><strong>Data Type</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>ID</td>
+<td>Int</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>Name</td>
+<td>String</td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td>Type</td>
+<td>String</td>
+</tr>
+<tr>
+<td><code>image</code></td>
+<td>Image</td>
+<td>String</td>
+</tr>
+<tr>
+<td><code>link</code></td>
+<td>Link</td>
+<td>String</td>
+</tr>
+<tr>
+<td><code>file</code></td>
+<td>File</td>
+<td>String</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="relationships">Relationships</h3>
+<ul>
+<li><strong>Teachers to Courses</strong>: One-to-Many (Each teacher can teach multiple courses; each course is assigned to one teacher).</li>
+<li><strong>Teachers to Skills</strong>: Many-to-Many (Multiple teachers can share skills, and one teacher may have multiple skills).</li>
+<li><strong>Courses to Materials</strong>: Many-to-Many (A course may include multiple materials, and the same material can be used in different courses).</li>
+</ul>
+<hr />
+<h3 id="schema-creation-via-fluent-cms-schema-builder">Schema Creation via Fluent CMS Schema Builder</h3>
+<h4 id="accessing-schema-builder">Accessing Schema Builder</h4>
+<p>After launching the web application, locate the <strong>Schema Builder</strong> menu on the homepage to start defining your schema.</p>
+<h4 id="adding-entities">Adding Entities</h4>
+<p><a href="https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/schema-ui/list.html?schema=entity">Example Configuration</a><br />
+1. Navigate to the <strong>Entities</strong> section of the Schema Builder.
+2. Create entities such as "Teacher" and "Course."
+3. For the <code>Course</code> entity, add attributes such as <code>name</code>, <code>status</code>, <code>level</code>, and <code>description</code>.</p>
+<hr />
+<h3 id="defining-relationships">Defining Relationships</h3>
+<p><a href="https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/schema-ui/edit.html?schema=entity&amp;id=27">Example Configuration</a>  </p>
+<h4 id="1-course-and-teacher-many-to-one-relationship">1. <strong>Course and Teacher (Many-to-One Relationship)</strong></h4>
+<p>To establish a many-to-one relationship between the <code>Course</code> and <code>Teacher</code> entities, you can include a <code>Lookup</code> attribute in the <code>Course</code> entity. This allows selecting a single <code>Teacher</code> record when adding or updating a <code>Course</code>.</p>
+<table>
+<thead>
+<tr>
+<th><strong>Attribute</strong></th>
+<th><strong>Value</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Field</strong></td>
+<td><code>teacher</code></td>
+</tr>
+<tr>
+<td><strong>Type</strong></td>
+<td>Lookup</td>
+</tr>
+<tr>
+<td><strong>Options</strong></td>
+<td>Teacher</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Description:</strong> When a course is created or modified, a teacher record can be looked up and linked to the course.</p>
+<h4 id="2-course-and-materials-many-to-many-relationship">2. <strong>Course and Materials (Many-to-Many Relationship)</strong></h4>
+<p>To establish a many-to-many relationship between the <code>Course</code> and <code>Material</code> entities, use a <code>Crosstable</code> attribute in the <code>Course</code> entity. This enables associating multiple materials with a single course.</p>
+<table>
+<thead>
+<tr>
+<th><strong>Attribute</strong></th>
+<th><strong>Value</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Field</strong></td>
+<td><code>materials</code></td>
+</tr>
+<tr>
+<td><strong>Type</strong></td>
+<td>Crosstable</td>
+</tr>
+<tr>
+<td><strong>Options</strong></td>
+<td>Material</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Description:</strong> When managing a course, you can select multiple material records from the <code>Material</code> table to associate with the course.</p>
+<hr />
+<h3 id="admin-panel-data-management-features">Admin Panel: Data Management Features</h3>
+<h4 id="1-list-page">1. <strong>List Page</strong></h4>
+<p><a href="https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&amp;limit=20">Example Course List Page</a><br />
+The <strong>List Page</strong> displays entities in a tabular format, enabling sorting, searching, and pagination. Users can efficiently browse or locate specific records.</p>
+<h4 id="2-detail-page">2. <strong>Detail Page</strong></h4>
+<p><a href="https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course/22">Example Course Detail Page</a><br />
+The <strong>Detail Page</strong> provides an interface for viewing and managing detailed attributes. Related data such as teachers and materials can be selected or modified.</p>
+<hr />
+<hr />
+<h2 id="graphql-query"><strong>GraphQL Query</strong></h2>
+<p>FluentCMS simplifies frontend development by offering robust GraphQL support.</p>
+<h3 id="getting-started">Getting Started</h3>
+<h4 id="accessing-the-graphql-ide">Accessing the GraphQL IDE</h4>
+<p>To get started, launch the web application and navigate to <code>/graph</code>. You can also try our <a href="https://fluent-cms-admin.azurewebsites.net/graph">online demo</a>.</p>
+<hr />
+<h4 id="singular-vs-list-response">Singular vs. List Response</h4>
+<p>For each entity in FluentCMS, two GraphQL fields are automatically generated:<br />
+- <code>&lt;entityName&gt;</code>: Returns a record.
+- <code>&lt;entityNameList&gt;</code>: Returns a list of records.  </p>
+<p>**Single Course **</p>
+<pre><code class="language-graphql">{
+  course {
+    id
+    name
+  }
+}
+</code></pre>
+<p><a href="https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20course%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A">Try it here</a></p>
+<p>**List of Courses **</p>
+<pre><code class="language-graphql">{
+  courseList {
+    id
+    name
+  }
+}
+</code></pre>
+<p><a href="https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A">Try it here</a></p>
+<hr />
+<h4 id="field-selection">Field Selection</h4>
+<p>You can query specific fields for both the current entity and its related entities.
+<strong>Example Query:</strong></p>
+<pre><code class="language-graphql">{
+  courseList{
+    id
+    name
+    teacher{
+      id
+      firstname
+      lastname
+      skills{
+        id
+        name
+      }
+    }
+    materials{
+      id,
+      name
+    }
+  }
+}
+</code></pre>
+<p><a href="https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%20%20teacher%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20firstname%0A%20%20%20%20%20%20lastname%0A%20%20%20%20%20%20skills%7B%0A%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20name%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%20%20materials%7B%0A%20%20%20%20%20%20id%2C%0A%20%20%20%20%20%20name%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D%0A">Try it here</a></p>
+<hr />
+<h4 id="filtering-with-value-match-in-fluentcms">Filtering with <code>Value Match</code> in FluentCMS</h4>
+<p>FluentCMS provides flexible filtering capabilities using the <code>idSet</code> field (or any other field), enabling precise data queries by matching either a single value or a list of values.</p>
+<p><strong>Filter by a Single Value Example:</strong></p>
+<pre><code class="language-graphql">{
+  courseList(idSet: 5) {
+    id
+    name
+  }
+}
+</code></pre>
+<p><a href="https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(idSet%3A5)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A">Try it here</a></p>
+<p><strong>Filter by Multiple Values Example:</strong></p>
+<pre><code class="language-graphql">{
+  courseList(idSet: [5, 7]) {
+    id
+    name
+  }
+}
+</code></pre>
+<p><a href="https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(idSet%3A%5B5%2C7%5D)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A">Try it here</a></p>
+<hr />
+<h4 id="advanced-filtering-with-operator-match-in-fluentcms">Advanced Filtering with <code>Operator Match</code> in FluentCMS</h4>
+<p>FluentCMS supports advanced filtering options with <code>Operator Match</code>, allowing users to combine various conditions for precise queries.</p>
+<h5 id="matchall-example"><code>matchAll</code> Example:</h5>
+<p>Filters where all specified conditions must be true.<br />
+In this example: <code>id &gt; 5 and id &lt; 15</code>.</p>
+<pre><code class="language-graphql">{
+  courseList(id: {matchType: matchAll, gt: 5, lt: 15}) {
+    id
+    name
+  }
+}
+</code></pre>
+<p><a href="https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(id%3A%7BmatchType%3AmatchAll%2Cgt%3A5%2Clt%3A15%7D)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A">Try it here</a></p>
+<h5 id="matchany-example"><code>matchAny</code> Example:</h5>
+<p>Filters where at least one of the conditions must be true.<br />
+In this example: <code>name starts with "A"</code> or <code>name starts with "I"</code>.</p>
+<pre><code class="language-graphql">{
+  courseList(name: [{matchType: matchAny}, {startsWith: &quot;A&quot;}, {startsWith: &quot;I&quot;}]) {
+    id
+    name
+  }
+}
+</code></pre>
+<p><a href="https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(name%3A%5B%7BmatchType%3AmatchAny%7D%2C%20%7BstartsWith%3A%22A%22%7D%2C%7BstartsWith%3A%22I%22%7D%5D)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A">Try it here</a></p>
+<hr />
+<h4 id="filter-expressions-in-fluentcms"><code>Filter Expressions</code> in FluentCMS</h4>
+<p>Filter Expressions allow precise filtering by specifying a field, including nested fields using JSON path syntax. This enables filtering on subfields for complex data structures.</p>
+<p><strong><em>Example: Filter by Teacher's Last Name</em></strong>
+This query returns courses taught by a teacher whose last name is "Circuit."</p>
+<pre><code class="language-graphql">{
+  courseList(filterExpr: {field: &quot;teacher.lastname&quot;, clause: {equals: &quot;Circuit&quot;}}) {
+    id
+    name
+    teacher {
+      id
+      lastname
+    }
+  }
+}
+</code></pre>
+<p><a href="https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(filterExpr%3A%20%7Bfield%3A%20%22teacher.lastname%22%2C%20clause%3A%20%7Bequals%3A%20%22Circuit%22%7D%7D)%20%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%20%20teacher%20%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20lastname%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D">Try it here</a></p>
+<hr />
+<h4 id="sorting">Sorting</h4>
+<p>Sorting by a single field</p>
+<pre><code class="language-graphql">{
+  courseList(sort:nameDesc){
+    id,
+    name
+  }
+}
+</code></pre>
+<p><a href="https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(sort%3AnameDesc)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A">Try it here</a></p>
+<p>Sorting by multiple fields</p>
+<pre><code class="language-graphql">{
+  courseList(sort:[level,id]){
+    id,
+    level
+    name
+  }
+}
+</code></pre>
+<p><a href="https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(sort%3A%5Blevel%2Cid%5D)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20level%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A">Try it here</a></p>
+<hr />
+<h4 id="sort-expressions-in-fluentcms">Sort Expressions in FluentCMS</h4>
+<p>Sort Expressions allow sorting by nested fields using JSON path syntax. </p>
+<p><strong><em>Example: Sort by Teacher's Last Name</em></strong></p>
+<pre><code class="language-graphql">{
+  courseList(sortExpr:{field:&quot;teacher.lastname&quot;, order:Desc}) {
+    id
+    name
+    teacher {
+      id
+      lastname
+    }
+  }
+}
+</code></pre>
+<p><a href="https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(sortExpr%3A%7Bfield%3A%22teacher.lastname%22%2C%20order%3ADesc%7D)%20%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%20%20teacher%20%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20lastname%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D">Try it here</a></p>
+<hr />
+<h4 id="pagination">Pagination</h4>
+<p>Pagination on root field</p>
+<pre><code class="language-graphql">{
+  courseList(offset:2, limit:3){
+    id,
+    name
+  }
+}
+</code></pre>
+<p><a href="https://fluent-cms-admin.azurewebsites.net/graph?query=%20%20%7B%0A%20%20%20%20courseList(offset%3A2%2C%20limit%3A3)%7B%0A%20%20%20%20%20%20id%2C%0A%20%20%20%20%20%20name%0A%20%20%20%20%7D%0A%20%20%7D%0A">Try it here</a> <br />
+Pagination on sub field</p>
+<pre><code class="language-graphql">{
+  courseList{
+    id,
+    name
+    materials(limit:2){
+      id,
+      name
+    }
+  }
+}
+</code></pre>
+<p><a href="https://fluent-cms-admin.azurewebsites.net/graph?query=%20%20%7B%0A%20%20%20%20courseList%7B%0A%20%20%20%20%20%20id%2C%0A%20%20%20%20%20%20name%0A%20%20%20%20%20%20materials(limit%3A2)%7B%0A%20%20%20%20%20%20%20%20id%2C%0A%20%20%20%20%20%20%20%20name%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%7D%0A">Try it here</a></p>
+<hr />
+<h4 id="variable">Variable</h4>
+<p>Variables are used to make queries more dynamic, reusable, and secure.</p>
+<h5 id="variable-in-value-filter">Variable in <code>Value filter</code></h5>
+<pre><code>query ($id: Int!) {
+  teacher(idSet: [$id]) {
+    id
+    firstname
+    lastname
+  }
+}
+</code></pre>
+<p><a href="https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24id%3A%20Int!)%20%7B%0A%20%20teacher(idSet%3A%20%5B%24id%5D)%20%7B%0A%20%20%20%20id%0A%20%20%20%20firstname%0A%20%20%20%20lastname%0A%20%20%7D%0A%7D&amp;variables=%7B%0A%20%20%22id%22%3A3%0A%7D">Try it here</a></p>
+<h5 id="variable-in-operator-match-filter">Variable in <code>Operator Match</code> filter</h5>
+<pre><code>query ($id: Int!) {
+  teacherList(id:{equals:$id}){
+    id
+    firstname
+    lastname
+  }
+}
+</code></pre>
+<p><a href="https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24id%3A%20Int!)%20%7B%0A%20%20teacherList(id%3A%7Bequals%3A%24id%7D)%7B%0A%20%20%20%20id%0A%20%20%20%20firstname%0A%20%20%20%20lastname%0A%20%20%7D%0A%7D&amp;variables=%7B%0A%20%20%22id%22%3A%203%0A%7D">Try it here</a></p>
+<h5 id="variable-in-filter-expression">Variable in <code>Filter Expression</code></h5>
+<pre><code>query ($years: String) {
+  teacherList(filterExpr:{field:&quot;skills.years&quot;,clause:{gt:$years}}){
+    id
+    firstname
+    lastname
+    skills{
+      id
+      name
+      years
+    }
+  }
+}
+</code></pre>
+<p><a href="https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24years%3A%20String)%20%7B%0A%20%20teacherList(filterExpr%3A%7Bfield%3A%22skills.years%22%2Cclause%3A%7Bgt%3A%24years%7D%7D)%7B%0A%20%20%20%20id%0A%20%20%20%20firstname%0A%20%20%20%20lastname%0A%20%20%20%20skills%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20name%0A%20%20%20%20%20%20years%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D&amp;variables=%7B%0A%20%20%22years%22%3A%20%229%22%0A%7D">Try it here</a></p>
+<h5 id="variable-in-sort">Variable in Sort</h5>
+<pre><code>query ($sort_field:TeacherSortEnum) {
+  teacherList(sort:[$sort_field]) {
+    id
+    firstname
+    lastname
+  }
+}
+</code></pre>
+<p><a href="https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24sort_field%3ATeacherSortEnum)%20%7B%0A%20%20teacherList(sort%3A%5B%24sort_field%5D)%20%7B%0A%20%20%20%20id%0A%20%20%20%20firstname%0A%20%20%20%20lastname%0A%20%20%7D%0A%7D&amp;variables=%7B%22sort_field%22%3A%20%22idDesc%22%7D">Try it here</a></p>
+<h5 id="variable-in-sort-expression">Variable in Sort Expression</h5>
+<pre><code>query ($sort_order:  SortOrderEnum) {
+  courseList(sortExpr:{field:&quot;teacher.id&quot;, order:$sort_order}){
+    id,
+    name,
+    teacher{
+      id,
+      firstname
+    }
+  }
+}
+</code></pre>
+<p><a href="https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24sort_order%3A%20%20SortOrderEnum)%20%7B%0A%20%20courseList(sortExpr%3A%7Bfield%3A%22teacher.id%22%2C%20order%3A%24sort_order%7D)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%2C%0A%20%20%20%20teacher%7B%0A%20%20%20%20%20%20id%2C%0A%20%20%20%20%20%20firstname%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D&amp;variables=%7B%0A%20%20%22sort_order%22%3A%20%22Asc%22%0A%7D">Try it here</a></p>
+<h5 id="variable-in-pagination">Variable in Pagination</h5>
+<pre><code>query ($offset:Int) {
+  teacherList(limit:2, offset:$offset) {
+    id
+    firstname
+    lastname
+  }
+}
+</code></pre>
+<p><a href="https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24offset%3AInt)%20%7B%0A%20%20teacherList(limit%3A2%2C%20offset%3A%24offset)%20%7B%0A%20%20%20%20id%0A%20%20%20%20firstname%0A%20%20%20%20lastname%0A%20%20%7D%0A%7D&amp;variables=%7B%0A%09%22offset%22%3A%202%0A%7D">Try it here</a></p>
+<hr />
+<h4 id="required-vs-optional">Required vs Optional</h4>
+<p>If you want a variable to be mandatory, you can add a  <code>!</code> to the end of the type</p>
+<pre><code>query ($id: Int!) {
+  teacherList(id:{equals:$id}){
+    id
+    firstname
+    lastname
+  }
+}
+</code></pre>
+<p><a href="https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24id%3A%20Int!)%20%7B%0A%20%20teacherList(id%3A%7Bequals%3A%24id%7D)%7B%0A%20%20%20%20id%0A%20%20%20%20firstname%0A%20%20%20%20lastname%0A%20%20%7D%0A%7D">Try it here</a></p>
+<p>Explore the power of FluentCMS GraphQL and streamline your development workflow!</p>
+<hr />
+<hr />
+<h3 id="saved-query">Saved Query</h3>
+<p><strong>Realtime queries</strong> may expose excessive technical details, potentially leading to security vulnerabilities.</p>
+<p><strong>Saved Queries</strong> address this issue by abstracting the GraphQL query details. They allow clients to provide only variables, enhancing security while retaining full functionality.</p>
+<hr />
+<h4 id="transitioning-from-real-time-queries-to-saved-queries">Transitioning from <strong>Real-Time Queries</strong> to <strong>Saved Queries</strong></h4>
+<h5 id="using-operationname-as-the-saved-query-identifier">Using <code>OperationName</code> as the Saved Query Identifier</h5>
+<p>In FluentCMS, the <strong>Operation Name</strong> in a GraphQL query serves as a unique identifier for saved queries. For instance, executing the following query automatically saves it as <code>TeacherQuery</code>:</p>
+<pre><code class="language-graphql">query TeacherQuery($id: Int) {
+  teacherList(idSet: [$id]) {
+    id
+    firstname
+    lastname
+    skills {
+      id
+      name
+    }
+  }
+}
+</code></pre>
+<p><a href="https://fluent-cms-admin.azurewebsites.net/graph?query=query%20TeacherQuery(%24id%3A%20Int)%20%7B%0A%20%20teacherList(idSet%3A%5B%24id%5D)%7B%0A%20%20%20%20id%0A%20%20%20%20firstname%0A%20%20%20%20lastname%0A%20%20%20%20skills%7B%0A%20%20%20%20%20%20id%2C%0A%20%20%20%20%20%20name%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D&amp;operationName=TeacherQuery">Try it here</a></p>
+<hr />
+<h5 id="saved-query-endpoints">Saved Query Endpoints</h5>
+<p>FluentCMS generates two API endpoints for each saved query:</p>
+<ol>
+<li>
+<p><strong>List Records:</strong><br />
+<a href="https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery">https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery</a></p>
+</li>
+<li>
+<p><strong>Single Record:</strong><br />
+<a href="https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/one">https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/one/</a></p>
+</li>
+</ol>
+<hr />
+<h5 id="using-rest-api-query-strings-as-variables">Using REST API Query Strings as Variables</h5>
+<p>The Saved Query API allows passing variables via query strings:</p>
+<ul>
+<li>
+<p><strong>Single Value:</strong><br />
+<a href="https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/?id=3">https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/?id=3</a></p>
+</li>
+<li>
+<p><strong>Array of Values:</strong><br />
+<a href="https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?id=3&amp;id=4">https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?id=3&amp;id=4</a><br />
+  This passes <code>[3, 4]</code> to the <code>idSet</code> argument.</p>
+</li>
+</ul>
+<hr />
+<h4 id="additional-features-of-saved-query">Additional Features of <code>Saved Query</code></h4>
+<p>Beyond performance and security improvements, <code>Saved Query</code> introduces enhanced functionalities to simplify development workflows.</p>
+<hr />
+<h5 id="pagination-by-offset">Pagination by <code>offset</code></h5>
+<p>Built-in variables <code>offset</code> and <code>limit</code> enable efficient pagination. For example:<br />
+<a href="https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=2&amp;offset=2">https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=2&amp;offset=2</a></p>
+<hr />
+<h5 id="offset-pagination-for-subfields"><code>offset</code> Pagination for Subfields</h5>
+<p>To display a limited number of subfield items (e.g., the first two skills of a teacher), use the JSON path variable, such as <code>skills.limit</code>:<br />
+<a href="https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?skills.limit=2">https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?skills.limit=2</a></p>
+<hr />
+<h5 id="pagination-by-cursor">Pagination by <code>cursor</code></h5>
+<p>For large datasets, <code>offset</code> pagination can strain the database. For example, querying with <code>offset=1000&amp;limit=10</code> forces the database to retrieve 1010 records and discard the first 1000.</p>
+<p>To address this, <code>Saved Query</code> supports <strong>cursor-based pagination</strong>, which reduces database overhead.<br />
+Example response for <a href="https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=3">https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=3</a>:</p>
+<pre><code class="language-json">[
+  {
+    &quot;hasPreviousPage&quot;: false,
+    &quot;cursor&quot;: &quot;eyJpZCI6M30&quot;
+  },
+  {
+  },
+  {
+    &quot;hasNextPage&quot;: true,
+    &quot;cursor&quot;: &quot;eyJpZCI6NX0&quot;
+  }
+]
+</code></pre>
+<ul>
+<li>
+<p>If <code>hasNextPage</code> of the last record is <code>true</code>, use the cursor to retrieve the next page:<br />
+<a href="https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=3&amp;last=eyJpZCI6NX0">https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=3&amp;last=eyJpZCI6NX0</a></p>
+</li>
+<li>
+<p>Similarly, if <code>hasPreviousPage</code> of the first record is <code>true</code>, use the cursor to retrieve the previous page:<br />
+<a href="https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=3&amp;first=eyJpZCI6Nn0">https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=3&amp;first=eyJpZCI6Nn0</a></p>
+</li>
+</ul>
+<hr />
+<h5 id="cursor-based-pagination-for-subfields">Cursor-Based Pagination for Subfields</h5>
+<p>Subfields also support cursor-based pagination. For instance, querying <a href="https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?skills.limit=2">https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?skills.limit=2</a> returns a response like this:</p>
+<pre><code class="language-json">[
+  {
+    &quot;id&quot;: 3,
+    &quot;firstname&quot;: &quot;Jane&quot;,
+    &quot;lastname&quot;: &quot;Debuggins&quot;,
+    &quot;hasPreviousPage&quot;: false,
+    &quot;skills&quot;: [
+      {
+        &quot;hasPreviousPage&quot;: false,
+        &quot;cursor&quot;: &quot;eyJpZCI6MSwic291cmNlSWQiOjN9&quot;
+      },
+      {
+        &quot;hasNextPage&quot;: true,
+        &quot;cursor&quot;: &quot;eyJpZCI6Miwic291cmNlSWQiOjN9&quot;
+      }
+    ],
+    &quot;cursor&quot;: &quot;eyJpZCI6M30&quot;
+  }
+]
+</code></pre>
+<p>To fetch the next two skills, use the cursor:<br />
+<a href="https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/part/skills?limit=2&amp;last=eyJpZCI6Miwic291cmNlSWQiOjN9">https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/part/skills?limit=2&amp;last=eyJpZCI6Miwic291cmNlSWQiOjN9</a></p>
+<hr />
+<h2 id="drag-and-drop-page-designer">Drag and Drop Page Designer</h2>
+<p>The page designer utilizes the open-source GrapesJS and Handlebars, enabling seamless binding of <code>GrapesJS Components</code> with <code>FluentCMS Queries</code> for dynamic content rendering. </p>
+<hr />
+<h3 id="page-types-landing-page-detail-page-and-home-page">Page Types: Landing Page, Detail Page, and Home Page</h3>
+<h4 id="landing-page"><strong>Landing Page</strong></h4>
+<p>A landing page is typically the first page a visitor sees.<br />
+- <strong>URL format</strong>: <code>/page/&lt;pagename&gt;</code><br />
+- <strong>Structure</strong>: Comprised of multiple sections, each section retrieves data via a <code>query</code>.  </p>
+<p><strong>Example</strong>:  <br />
+<a href="https://fluent-cms-admin.azurewebsites.net/">Landing Page</a>  <br />
+This page fetches data from:<br />
+- <a href="https://fluent-cms-admin.azurewebsites.net/api/queries/course/?status=featured">https://fluent-cms-admin.azurewebsites.net/api/queries/course/?status=featured</a><br />
+- <a href="https://fluent-cms-admin.azurewebsites.net/api/queries/course/?level=Advanced">https://fluent-cms-admin.azurewebsites.net/api/queries/course/?level=Advanced</a>  </p>
+<hr />
+<h4 id="detail-page"><strong>Detail Page</strong></h4>
+<p>A detail page provides specific information about an item.<br />
+- <strong>URL format</strong>: <code>/page/&lt;pagename&gt;/&lt;router parameter&gt;</code><br />
+- <strong>Data Retrieval</strong>: FluentCMS fetches data by passing the router parameter to a <code>query</code>.  </p>
+<p><strong>Example</strong>:<br />
+<a href="https://fluent-cms-admin.azurewebsites.net/pages/course/22">Course Detail Page</a><br />
+This page fetches data from:<br />
+<a href="https://fluent-cms-admin.azurewebsites.net/api/queries/course/one?course_id=22">https://fluent-cms-admin.azurewebsites.net/api/queries/course/one?course_id=22</a></p>
+<hr />
+<h4 id="home-page"><strong>Home Page</strong></h4>
+<p>The homepage is a special type of landing page named <code>home</code>.<br />
+- <strong>URL format</strong>: <code>/pages/home</code> <br />
+- <strong>Special Behavior</strong>: If no other route matches the path <code>/</code>, FluentCMS renders <code>/pages/home</code> by default.  </p>
+<p><strong>Example</strong>:  <br />
+The URL <code>/</code> will be resolved to <code>/pages/home</code> unless explicitly overridden.  </p>
+<hr />
+<h3 id="introduction-to-grapesjs-panels">Introduction to GrapesJS Panels</h3>
+<p>Understanding the panels in GrapesJS is crucial for leveraging FluentCMS's customization capabilities in the Page Designer UI. This section explains the purpose of each panel and highlights how FluentCMS enhances specific areas to streamline content management and page design. </p>
+<p><img alt="GrapesJS Toolbox" src="https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/grapes-toolbox.png" /></p>
+<ol>
+<li>
+<p><strong>Style Manager</strong>:</p>
+<ul>
+<li>Used to customize CSS properties of elements selected on the canvas.</li>
+<li><em>FluentCMS Integration</em>: This panel is left unchanged by FluentCMS, as it already provides powerful styling options.</li>
+</ul>
+</li>
+<li>
+<p><strong>Traits Panel</strong>:</p>
+<ul>
+<li>Allows modification of attributes for selected elements.</li>
+<li><em>FluentCMS Integration</em>: Custom traits are added to this panel, enabling users to bind data to components dynamically.</li>
+</ul>
+</li>
+<li>
+<p><strong>Layers Panel</strong>:</p>
+<ul>
+<li>Displays a hierarchical view of elements on the page, resembling a DOM tree.</li>
+<li><em>FluentCMS Integration</em>: While FluentCMS does not alter this panel, it’s helpful for locating and managing FluentCMS blocks within complex page designs.</li>
+</ul>
+</li>
+<li>
+<p><strong>Blocks Panel</strong>:</p>
+<ul>
+<li>Contains pre-made components that can be dragged and dropped onto the page.</li>
+<li><em>FluentCMS Integration</em>: FluentCMS enhances this panel by adding custom-designed blocks tailored for its CMS functionality.</li>
+</ul>
+</li>
+</ol>
+<p>By familiarizing users with these panels and their integration points, this chapter ensures a smoother workflow and better utilization of FluentCMS's advanced page-building tools.</p>
+<hr />
+<h3 id="data-binding-singleton-or-list">Data Binding: Singleton or List</h3>
+<p>FluentCMS leverages <a href="https://github.com/Handlebars-Net/Handlebars.Net">Handlebars expressions</a> for dynamic data binding in pages and components.</p>
+<hr />
+<h4 id="singleton"><strong>Singleton</strong></h4>
+<p>Singleton fields are enclosed within <code>{{ }}</code> to dynamically bind individual values.</p>
+<ul>
+<li><strong>Example Page Settings:</strong> <a href="https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/schema-ui/page.html?schema=page&amp;id=33">Page Schema Settings</a></li>
+<li><strong>Example Query:</strong> <a href="https://fluent-cms-admin.azurewebsites.net/api/queries/course/?course_id=22">Retrieve Course Data</a></li>
+<li><strong>Example Rendered Page:</strong> <a href="https://fluent-cms-admin.azurewebsites.net/pages/course/22">Rendered Course Page</a></li>
+</ul>
+<hr />
+<h4 id="list"><strong>List</strong></h4>
+<p><code>Handlebars</code> supports iterating over arrays using the <code>{{#each}}</code> block for repeating data structures.</p>
+<pre><code class="language-handlebars">{{#each course}}
+    &lt;li&gt;{{title}}&lt;/li&gt;
+{{/each}}
+</code></pre>
+<p>In FluentCMS, you won’t explicitly see the <code>{{#each}}</code> statement in the Page Designer. If a block's data source is set to <code>data-list</code>, FluentCMS automatically generates the loop.</p>
+<ul>
+<li><strong>Example Page Settings:</strong> <a href="https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/schema-ui/page.html?schema=page&amp;id=32">Page Schema Settings</a></li>
+<li><strong>Example Rendered Page:</strong> <a href="https://fluent-cms-admin.azurewebsites.net/">Rendered List Page</a></li>
+<li><strong>Example Queries:</strong></li>
+<li><a href="https://fluent-cms-admin.azurewebsites.net/api/queries/course/?status=featured">Featured Courses</a></li>
+<li><a href="https://fluent-cms-admin.azurewebsites.net/api/queries/course/?level=Advanced">Advanced Level Courses</a></li>
+</ul>
+<hr />
+<h4 id="steps-to-bind-a-data-source"><strong>Steps to Bind a Data Source</strong></h4>
+<p>To bind a <code>Data List</code> to a component, follow these steps:</p>
+<ol>
+<li>Drag a block from the <strong>Data List</strong> category in the Page Designer.</li>
+<li>Open the <strong>Layers Panel</strong> and select the <code>Data List</code> component.</li>
+<li>In the <strong>Traits Panel</strong>, configure the following fields:</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th><strong>Field</strong></th>
+<th><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Query</strong></td>
+<td>The query to retrieve data.</td>
+</tr>
+<tr>
+<td><strong>Qs</strong></td>
+<td>Query string parameters to pass (e.g., <code>?status=featured</code>, <code>?level=Advanced</code>).</td>
+</tr>
+<tr>
+<td><strong>Offset</strong></td>
+<td>Number of records to skip.</td>
+</tr>
+<tr>
+<td><strong>Limit</strong></td>
+<td>Number of records to retrieve.</td>
+</tr>
+<tr>
+<td><strong>Pagination</strong></td>
+<td>Options for displaying content:</td>
+</tr>
+<tr>
+<td></td>
+<td>- <strong>Button</strong>: Divides content into multiple pages with navigation buttons (e.g., "Next," "Previous," or numbered buttons).</td>
+</tr>
+<tr>
+<td></td>
+<td>- <strong>Infinite Scroll</strong>: Automatically loads more content as users scroll. Ideal for a single component at the bottom of the page.</td>
+</tr>
+<tr>
+<td></td>
+<td>- <strong>None</strong>: Displays all available content at once without requiring additional user actions.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="online-course-system-frontend">Online Course System Frontend</h2>
+<p>Having established our understanding of Fluent CMS essentials like Entity, Query, and Page, we're ready to build a frontend for an online course website.</p>
+<hr />
+<h3 id="key-pages">Key Pages</h3>
+<ul>
+<li><strong>Home Page (<code>home</code>)</strong>: The main entry point, featuring sections like <em>Featured Courses</em> and <em>Advanced Courses</em>. Each course links to its respective <strong>Course Details</strong> page.</li>
+<li><strong>Course Details (<code>course/{course_id}</code>)</strong>: Offers detailed information about a specific course and includes links to the <strong>Teacher Details</strong> page.</li>
+<li><strong>Teacher Details (<code>teacher/{teacher_id}</code>)</strong>: Highlights the instructor’s profile and includes a section displaying their latest courses, which link back to the <strong>Course Details</strong> page.</li>
+</ul>
+<pre><code class="language-plaintext">             Home Page
+                 |
+                 |
+       +-------------------+
+       |                   |
+       v                   v
+ Latest Courses       Course Details 
+       |                   |        
+       |                   |       
+       v                   v            
+Course Details &lt;-------&gt; Teacher Details 
+</code></pre>
+<hr />
+<h3 id="designing-the-home-page">Designing the Home Page</h3>
+<ol>
+<li><strong>Drag and Drop Components</strong>: Use the Fluent CMS page designer to drag a <code>Content-B</code> component.</li>
+<li><strong>Set Data Source</strong>: Assign the component's data source to the <code>course</code> query.</li>
+<li><strong>Link Course Items</strong>: Configure the link for each course to <code>/pages/course/{{id}}</code>. The Handlebars expression <code>{{id}}</code> is dynamically replaced with the actual course ID during rendering.</li>
+</ol>
+<p><img alt="Link Example" src="https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-link.png" /></p>
+<hr />
+<h3 id="creating-the-course-details-page">Creating the Course Details Page</h3>
+<ol>
+<li><strong>Page Setup</strong>: Name the page <code>course/{course_id}</code> to capture the <code>course_id</code> parameter from the URL (e.g., <code>/pages/course/20</code>).</li>
+<li><strong>Query Configuration</strong>: The variable <code>{course_id:20}</code> is passed to the <code>course</code> query, generating a <code>WHERE id IN (20)</code> clause to fetch the relevant course data.</li>
+<li><strong>Linking to Teacher Details</strong>: Configure the link for each teacher item on this page to <code>/pages/teacher/{{teacher.id}}</code>. Handlebars dynamically replaces <code>{{teacher.id}}</code> with the teacher’s ID. For example, if a teacher object has an ID of 3, the link renders as <code>/pages/teacher/3</code>.</li>
+</ol>
+<hr />
+<h3 id="creating-the-teacher-details-page">Creating the Teacher Details Page</h3>
+<ol>
+<li><strong>Page Setup</strong>: Define the page as <code>teacher/{teacher_id}</code> to capture the <code>teacher_id</code> parameter from the URL.</li>
+<li><strong>Set Data Source</strong>: Assign the <code>teacher</code> query as the page’s data source.</li>
+</ol>
+<h4 id="adding-a-teachers-courses-section">Adding a Teacher’s Courses Section</h4>
+<ul>
+<li>Drag a <code>ECommerce A</code> component onto the page.</li>
+<li>Set its data source to the <code>course</code> query, filtered by the teacher’s ID (<code>WHERE teacher IN (3)</code>).</li>
+</ul>
+<p><img alt="Teacher Page Designer" src="https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-teacher.png" /></p>
+<p>When rendering the page, the <code>PageService</code> automatically passes the <code>teacher_id</code> (e.g., <code>{teacher_id: 3}</code>) to the query.</p>
+<hr />
+<h2 id="optimizing-caching">Optimizing Caching</h2>
+<p>To enhance performance, Fluent CMS implements caching strategies. </p>
+<h3 id="cache-types">Cache Types</h3>
+<ol>
+<li>
+<p><strong>Entity Definition Cache</strong><br />
+   Fluent CMS requires caching of all entity definitions to dynamically generate GraphQL types.</p>
+</li>
+<li>
+<p><strong>Query Definition Cache</strong><br />
+   Each query may depend on multiple related entities. Fluent CMS caches these definitions to compose efficient SQL queries.</p>
+</li>
+</ol>
+<hr />
+<h3 id="imemorycache-in-fluent-cms">IMemoryCache in Fluent CMS</h3>
+<p>By default, Fluent CMS utilizes ASP.NET's <code>IMemoryCache</code> for caching.</p>
+<ul>
+<li>
+<p><strong>Advantages</strong>:</p>
+<ul>
+<li>Simple to debug and deploy.</li>
+<li>Suitable for single-node web applications.</li>
+</ul>
+</li>
+<li>
+<p><strong>Disadvantages</strong>:</p>
+<ul>
+<li>Not scalable for distributed environments. In multi-node deployments, cache invalidation on one node (e.g., Node A) does not propagate to other nodes (e.g., Node B).</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h3 id="hybridcache-for-scalable-caching">HybridCache for Scalable Caching</h3>
+<p>Starting with ASP.NET 9.0, the framework provides <code>HybridCache</code>, which combines a primary memory cache with a secondary external cache (e.g., Redis).</p>
+<ul>
+<li>
+<p><strong>Key Features</strong>:</p>
+<ul>
+<li><strong>Scalability</strong>: Combines the performance of local memory caching with the distributed consistency of external caching.</li>
+<li><strong>Stampede Resolution</strong>: The <code>HybridCache</code> resolves cache stampede issues, as confirmed by its developers.</li>
+</ul>
+</li>
+<li>
+<p><strong>Limitations</strong>:<br />
+  The current implementation lacks "Backend-Assisted Local Cache Invalidation," which means cache invalidation on one node does not immediately propagate to others.</p>
+</li>
+<li>
+<p><strong>Fluent CMS Strategy</strong>:<br />
+  To address this, Fluent CMS sets local cache expiration (20 seconds) to one-third of the distributed cache expiration (60 seconds). This ensures memory caches across nodes achieve consistency within 20 seconds, significantly improving over a standard memory cache's 60-second delay.</p>
+</li>
+</ul>
+<hr />
+<h2 id="aspire-integration">Aspire Integration</h2>
+<p>A scalable deployment of Fluent CMS involves multiple web application nodes, a Redis server for distributed caching, and a database server, all behind a load balancer.</p>
+<h3 id="architecture-overview">Architecture Overview</h3>
+<pre><code>                 +------------------+
+                 |  Load Balancer   |
+                 +------------------+
+                          |
+        +-----------------+-----------------+
+        |                                   |
++------------------+              +------------------+
+|    Web App 1     |              |    Web App 2     |
+|   +-----------+  |              |   +-----------+  |
+|   | Local Cache| |              |   | Local Cache| |
++------------------+              +------------------+
+        |                                   |
+        |                                   |
+        +-----------------+-----------------+
+                 |                       |
+       +------------------+    +------------------+
+       | Database Server  |    |   Redis Server   |
+       +------------------+    +------------------+
+</code></pre>
+<hr />
+<h3 id="local-emulation-with-aspire-and-service-discovery">Local Emulation with Aspire and Service Discovery</h3>
+<p><a href="https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS.Blog">Example Web project on GitHub</a><br />
+<a href="https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS.Blog.AppHost">Example Aspire project on GitHub</a>  </p>
+<p>To emulate the production environment locally, Fluent CMS leverages Aspire. Here's an example setup:</p>
+<pre><code class="language-csharp">var builder = DistributedApplication.CreateBuilder(args);
+
+// Adding Redis and PostgreSQL services
+var redis = builder.AddRedis(name: CmsConstants.Redis);
+var db = builder.AddPostgres(CmsConstants.Postgres);
+
+// Configuring the web project with replicas and references
+builder.AddProject&lt;Projects.FluentCMS_Blog&gt;(name: &quot;web&quot;)
+    .WithEnvironment(CmsConstants.DatabaseProvider, CmsConstants.Postgres)
+    .WithReference(redis)
+    .WithReference(db)
+    .WithReplicas(2);
+
+builder.Build().Run();
+</code></pre>
+<h3 id="benefits">Benefits:</h3>
+<ol>
+<li><strong>Simplified Configuration</strong>:<br />
+   No need to manually specify endpoints for the database or Redis servers. Configuration values can be retrieved using:
+   <code>csharp
+   builder.Configuration.GetValue&lt;string&gt;();
+   builder.Configuration.GetConnectionString();</code></li>
+<li><strong>Realistic Testing</strong>:<br />
+   The local environment mirrors the production architecture, ensuring seamless transitions during deployment.</li>
+</ol>
+<p>By adopting these caching and deployment strategies, Fluent CMS ensures improved performance, scalability, and ease of configuration.</p>
+<hr />
+<h2 id="integrating-it-into-your-project">Integrating it into Your Project</h2>
+<p>Follow these steps to integrate Fluent CMS into your project using a NuGet package.</p>
+<ol>
+<li>
+<p><strong>Create a New ASP.NET Core Web Application</strong>.</p>
+</li>
+<li>
+<p><strong>Add the FluentCMS NuGet Package</strong>:
+   To add Fluent CMS, run the following command:<br />
+<code>dotnet add package FluentCMS</code></p>
+</li>
+<li>
+<p><strong>Modify <code>Program.cs</code></strong>:
+   Add the following line before <code>builder.Build()</code> to configure the database connection (use your actual connection string):<br />
+<code>builder.AddSqliteCms("Data Source=cms.db");
+   var app = builder.Build();</code></p>
+</li>
+</ol>
+<p>Currently, Fluent CMS supports <code>AddSqliteCms</code>, <code>AddSqlServerCms</code>, and <code>AddPostgresCms</code>.</p>
+<ol>
+<li>
+<p><strong>Initialize Fluent CMS</strong>:
+   Add this line after <code>builder.Build()</code> to initialize the CMS:<br />
+<code>await app.UseCmsAsync();</code><br />
+   This will bootstrap the router and initialize the Fluent CMS schema table.</p>
+</li>
+<li>
+<p><strong>Optional: Set Up User Authorization</strong>:
+   If you wish to manage user authorization, you can add the following code. If you're handling authorization yourself or don’t need it, you can skip this step.<br />
+<code>builder.Services.AddDbContext&lt;AppDbContext&gt;(options =&gt; options.UseSqlite(connectionString));
+   builder.AddCmsAuth&lt;IdentityUser, IdentityRole, AppDbContext&gt;();</code></p>
+</li>
+</ol>
+<p>If you'd like to create a default user, add this after <code>app.Build()</code>:
+   <code>InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]));</code></p>
+<p>Once your web server is running, you can access the <strong>Admin Panel</strong> at <code>/admin</code> and the <strong>Schema Builder</strong> at <code>/schema</code>.</p>
+<p>You can find an example project <a href="https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples">here</a>.</p>
+<hr />
+<h2 id="adding-business-logic">Adding Business Logic</h2>
+<p>Learn how to customize your application by adding validation logic, hook functions, and producing events to Kafka.</p>
+<h3 id="adding-validation-logic-with-simple-c-expressions">Adding Validation Logic with Simple C# Expressions</h3>
+<h4 id="simple-c-validation">Simple C# Validation</h4>
+<p>You can define simple C# expressions in the <code>Validation Rule</code> of attributes using <a href="https://github.com/dynamicexpresso/DynamicExpresso">Dynamic Expresso</a>. For example, a rule like <code>name != null</code> ensures the <code>name</code> attribute is not null.</p>
+<p>Additionally, you can specify a <code>Validation Error Message</code> to provide users with feedback when validation fails.</p>
+<h4 id="using-regular-expressions">Using Regular Expressions</h4>
+<p><code>Dynamic Expresso</code> supports regular expressions, allowing you to write rules like <code>Regex.IsMatch(email, "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$")</code>.</p>
+<blockquote>
+<p>Note: Since <code>Dynamic Expresso</code> doesn't support <a href="https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/tokens/verbatim">verbatim strings</a>, you must escape backslashes (<code>\</code>).</p>
+</blockquote>
+<hr />
+<h3 id="extending-functionality-with-hook-functions">Extending Functionality with Hook Functions</h3>
+<p>To implement custom business logic, such as verifying that a <code>teacher</code> entity has valid email and phone details, you can register hook functions to run before adding or updating records:</p>
+<pre><code class="language-csharp">var registry = app.GetHookRegistry();
+
+// Hook function for pre-add validation
+registry.EntityPreAdd.Register(&quot;teacher&quot;, args =&gt;
+{
+    VerifyTeacher(args.RefRecord);
+    return args;
+});
+
+// Hook function for pre-update validation
+registry.EntityPreUpdate.Register(&quot;teacher&quot;, args =&gt;
+{
+    VerifyTeacher(args.RefRecord);
+    return args;
+});
+</code></pre>
+<hr />
+<h3 id="producing-events-to-an-event-broker-eg-kafka">Producing Events to an Event Broker (e.g., Kafka)</h3>
+<p>To enable asynchronous business logic through an event broker like Kafka, you can produce events using hook functions. This feature requires just a few additional setup steps:</p>
+<ol>
+<li>
+<p>Add the Kafka producer configuration:
+   <code>csharp
+   builder.AddKafkaMessageProducer("localhost:9092");</code></p>
+</li>
+<li>
+<p>Register the message producer hook:
+   <code>csharp
+   app.RegisterMessageProducerHook();</code></p>
+</li>
+</ol>
+<p>Here’s a complete example:</p>
+<pre><code class="language-csharp">builder.AddSqliteCms(&quot;Data Source=cmsapp.db&quot;).PrintVersion();
+builder.AddKafkaMessageProducer(&quot;localhost:9092&quot;);
+var app = builder.Build();
+await app.UseCmsAsync(false);
+app.RegisterMessageProducerHook();
+</code></pre>
+<p>With this setup, events are produced to Kafka, allowing consumers to process business logic asynchronously.</p>
+<hr />
+<h2 id="development-guide">Development Guide</h2>
+<p>The backend is written in ASP.NET Core, the Admin Panel uses React, and the Schema Builder is developed with jQuery.</p>
+<h3 id="system-overviews">System Overviews</h3>
+<p><img alt="System Overview" src="https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/overview.png" /> <br />
+- <a href="https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS"><strong>Backend Server</strong></a><br />
+- <a href="https://github.com/fluent-cms/fluent-cms/tree/main/admin-panel"><strong>Admin Panel UI</strong></a><br />
+- <a href="https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS/wwwroot/schema-ui"><strong>Schema Builder</strong></a>  </p>
+<h3 id="backend-server">Backend Server</h3>
+<ul>
+<li><strong>Tools</strong>:  <ul>
+<li><strong>ASP.NET Core</strong>  </li>
+<li><strong>SqlKata</strong>: <a href="https://sqlkata.com/">SqlKata</a>  </li>
+</ul>
+</li>
+</ul>
+<p><img alt="API Controller Service" src="https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/api-controller-service.png" /></p>
+<h3 id="admin-panel-ui">Admin Panel UI</h3>
+<ul>
+<li><strong>Tools</strong>:<ul>
+<li><strong>React</strong></li>
+<li><strong>PrimeReact</strong>: <a href="https://primereact.org/">PrimeReact UI Library</a></li>
+<li><strong>SWR</strong>: <a href="https://swr.vercel.app/">Data Fetching/State Management</a></li>
+</ul>
+</li>
+</ul>
+<p><img alt="Admin Panel Sequence" src="https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/admin-panel-sequence.png" /></p>
+<h3 id="schema-builder-ui">Schema Builder UI</h3>
+<ul>
+<li><strong>Tools</strong>:<ul>
+<li><strong>jsoneditor</strong>: <a href="https://github.com/json-editor/json-editor">JSON Editor</a></li>
+</ul>
+</li>
+</ul>
+<p><img alt="Schema Builder Sequence" src="https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/schema-builder-sequence.png" /></p>
+<hr />
+<h2 id="testing-strategy">Testing Strategy</h2>
+<p>This chapter describes Fluent CMS's automated testing strategy</p>
+<p>Fluent CMS favors integration testing over unit testing because integration tests can catch more real-world issues. For example, when inserting a record into the database, multiple modules are involved:
+- <code>EntitiesController</code>
+- <code>EntitiesService</code>
+- <code>Entity</code> (in the query builder)
+- Query executors (e.g., <code>SqlLite</code>, <code>Postgres</code>, <code>SqlServer</code>)</p>
+<p>Writing unit tests for each individual function and mocking its upstream and downstream services can be tedious. Instead, Fluent CMS focuses on checking the input and output of RESTful API endpoints in its integration tests.</p>
+<p>However, certain cases, such as the Hook Registry or application bootstrap, are simpler to cover with unit tests.</p>
+<h3 id="unit-testing-fluent-cmsserverfluentcmstest">Unit Testing <code>/fluent-cms/server/FluentCMS.Test</code></h3>
+<p>This project focuses on testing specific modules, such as:
+- Hook Registry
+- Application Bootstrap</p>
+<h3 id="integration-testing-for-fluentcmsblog-fluent-cmsserverfluentcmsblogtests">Integration Testing for FluentCMS.Blog <code>/fluent-cms/server/FluentCMS.Blog.Tests</code></h3>
+<p>This project focuses on verifying the functionalities of the FluentCMS.Blog example project.</p>
+<h3 id="new-feature-testing-fluent-cmsserverfluentcmsapptests">New Feature Testing <code>/fluent-cms/server/FluentCMS.App.Tests</code></h3>
+<p>This project is dedicated to testing experimental functionalities, like MongoDB and Kafka plugins.</p></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = ".",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="js/base.js"></script>
+        <script src="search/main.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>
+
+<!--
+MkDocs version : 1.6.1
+Build Date UTC : 2024-12-12 01:20:48.267800+00:00
+-->
