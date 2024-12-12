@@ -16,7 +16,7 @@ public sealed class KeyValueCache<T>
     {
         _prefix = prefix;
         _expiration = TimeSpan.FromSeconds(Math.Min(1, ttlSeconds));
-        _localCacheExpiration = TimeSpan.FromSeconds(Math.Min(1, ttlSeconds / 10));
+        _localCacheExpiration = TimeSpan.FromSeconds(Math.Min(1, ttlSeconds / 3));
 
         if (provider.GetService<HybridCache>() is { } hybridCache)
         {

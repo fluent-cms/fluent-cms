@@ -28,7 +28,6 @@ public enum DatabaseProvider
     Sqlite,
     Postgres,
     SqlServer,
-    AspirePostgres,
 }
 
 public sealed class Cms(
@@ -137,7 +136,6 @@ public sealed class Cms(
                 DatabaseProvider.Sqlite => InjectSqliteDbServices(),
                 DatabaseProvider.Postgres => InjectPostgresDbServices(),
                 DatabaseProvider.SqlServer => InjectSqlServerDbServices(),
-                DatabaseProvider.AspirePostgres => InjectAspirePostgresDbServices(),
                 _ => Result.Fail("unsupported database provider")
             };
         }
@@ -160,13 +158,6 @@ public sealed class Cms(
             services.AddSingleton<IDefinitionExecutor>(p =>
                 new SqlServerDefinitionExecutor(connectionString,
                     p.GetRequiredService<ILogger<SqlServerDefinitionExecutor>>()));
-            return Result.Ok();
-        }
-
-        Result InjectAspirePostgresDbServices()
-        {
-            services.AddSingleton<IKateProvider, PostgresKateProvider>();
-            services.AddSingleton<IDefinitionExecutor, PostgresDefinitionExecutor>();
             return Result.Ok();
         }
 

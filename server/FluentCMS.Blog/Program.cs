@@ -17,7 +17,8 @@ var provider = builder.Configuration.GetValue<string>(CmsConstants.DatabaseProvi
     
 //both key Sqlite and ConnectionString_Sqlite work
 var conn = Environment.GetEnvironmentVariable(provider) ??
-           builder.Configuration.GetConnectionString(provider) ?? ""; 
+           builder.Configuration.GetConnectionString(provider) ?? 
+           throw new Exception("Connection string not found"); 
 
 _ = provider switch
 {
@@ -27,7 +28,6 @@ _ = provider switch
         .AddPostgresCms(conn),
     CmsConstants.SqlServer => builder.Services.AddDbContext<CmsDbContext>(options => options.UseSqlServer(conn))
         .AddSqlServerCms(conn),
-    CmsConstants.AspirePostgres => AddAspirePostgresCms(),
     _ => throw new Exception("Database provider not found")
 };
 
@@ -45,18 +45,10 @@ await app.UseCmsAsync();
 app.Run();
 return;
 
-IServiceCollection AddAspirePostgresCms()
-{
-    builder.AddNpgsqlDataSource(connectionName:CmsConstants.AspirePostgres);
-    builder.AddNpgsqlDbContext<CmsDbContext>(connectionName:CmsConstants.AspirePostgres);
-    builder.Services.AddAspirePostgresCms();
-    return builder.Services;
-}
-
 void AddHybridCache()
 {
-    if (builder.Configuration.GetConnectionString(CmsConstants.AspireRedis) is null) return;
-    builder.AddRedisDistributedCache(connectionName: CmsConstants.AspireRedis);
+    if (builder.Configuration.GetConnectionString(CmsConstants.Redis) is null) return;
+    builder.AddRedisDistributedCache(connectionName: CmsConstants.Redis);
     builder.Services.AddHybridCache();
 }
 

@@ -47,14 +47,14 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="../../readme.md" Pack="true" PackagePath="\" />
+        <None Include="../../doc/mkdoc/docs/index.md" Pack="true" PackagePath="\readme.md" />
     </ItemGroup>
 
     <PropertyGroup>
         <PackageReadmeFile>readme.md</PackageReadmeFile>
         <TargetFramework>net9.0</TargetFramework>
         <PackageId>FluentCMS</PackageId>
-        <Version>0.2.8.1</Version>
+        <Version>0.3.0.2</Version>
         <Authors>Jason C</Authors>
         <Company>fluent-cms</Company>
         <Description>A headless CMS with GraphQL API and drag-and-drop page designer.</Description>
@@ -67,6 +67,4 @@
         <AssemblyTitle>$(PackageId)</AssemblyTitle>
         <AssemblyInformationalVersion>$(Version)</AssemblyInformationalVersion>
     </PropertyGroup>
-   
-
 </Project>

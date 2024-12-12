@@ -33,11 +33,6 @@ public static class AppExt
         return Components.Cms.AddCms(services, DatabaseProvider.Postgres, connectionString,graphQlPath);
     }
 
-    public static IServiceCollection AddAspirePostgresCms(this  IServiceCollection services, string graphQlPath= "/graph")
-    {
-        return Components.Cms.AddCms(services, DatabaseProvider.AspirePostgres, "",graphQlPath);
-    }
-    
     public static IServiceCollection AddSqliteCms(this  IServiceCollection services, string connectionString, string graphQlPath= "/graph")
     {
         return Components.Cms.AddCms(services, DatabaseProvider.Sqlite, connectionString,graphQlPath);

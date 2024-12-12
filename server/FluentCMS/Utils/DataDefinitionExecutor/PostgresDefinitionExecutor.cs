@@ -88,8 +88,7 @@ public class PostgresDefinitionExecutor(NpgsqlDataSource dataSource, ILogger<Pos
     private async Task<T> ExecuteQuery<T>(string sql, Func<NpgsqlCommand, Task<T>> executeFunc, params (string, object)[] parameters)
     {
         logger.LogInformation(sql);
-        await using var connection = await dataSource.OpenConnectionAsync();
-        await using var command = new NpgsqlCommand(sql, connection);
+        await using var command = dataSource.CreateCommand(sql);
 
         foreach (var (paramName, paramValue) in parameters)
         {
