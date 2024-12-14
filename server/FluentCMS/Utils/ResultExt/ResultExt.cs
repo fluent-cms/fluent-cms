@@ -18,10 +18,4 @@ public static class ResultExt
         (var ok, _, val,  err) = res;
         return ok;
     }
-    public static bool Try(this Result res, out List<IError>? err)
-    {
-        (var ok, _,  err) = res;
-        return ok;
-    }
-
 }

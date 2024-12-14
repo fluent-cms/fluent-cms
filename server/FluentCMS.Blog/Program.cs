@@ -1,24 +1,19 @@
 using FluentCMS.Auth.models;
 using FluentCMS.Blog.Share;
 using FluentCMS.Exceptions;
+using FluentCMS.Options;
 using FluentCMS.WebAppExt;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-const string cors = "CorsOrigins";
-
 var builder = WebApplication.CreateBuilder(args);
-AddCorsPolicy();
-AddHybridCache();
-builder.AddServiceDefaults();
+
 var provider = builder.Configuration.GetValue<string>(CmsConstants.DatabaseProvider)
                ?? throw new Exception("DatabaseProvider not found");
     
-//both key Sqlite and ConnectionString_Sqlite work
-var conn = Environment.GetEnvironmentVariable(provider) ??
-           builder.Configuration.GetConnectionString(provider) ?? 
-           throw new Exception("Connection string not found"); 
+var conn = builder.Configuration.GetConnectionString(provider) ?? 
+           throw new Exception($"Connection string {provider} not found"); 
 
 _ = provider switch
 {
@@ -32,39 +27,40 @@ _ = provider switch
 };
 
 builder.Services.AddCmsAuth<IdentityUser,IdentityRole,CmsDbContext>();
+AddHybridCache();
+AddOutputCachePolicy();
+builder.AddServiceDefaults();
 
 var app = builder.Build();
-app.MapDefaultEndpoints();
-app.UseCors(cors);
 
 await EnsureDbCreatedAsync();
-InvalidParamExceptionFactory.Ok(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [RoleConstants.Sa]));
-InvalidParamExceptionFactory.Ok(await app.EnsureCmsUser("admin@cms.com", "Admin1!", [RoleConstants.Admin]));
 await app.UseCmsAsync();
 
+(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [RoleConstants.Sa])).Ok();
+(await app.EnsureCmsUser("admin@cms.com", "Admin1!", [RoleConstants.Admin])).Ok();
+
+app.MapDefaultEndpoints();
+app.UseOutputCache();
 app.Run();
 return;
+
+void AddOutputCachePolicy()
+{
+    builder.Services.AddOutputCache(cacheOption =>
+    {
+        cacheOption.AddBasePolicy(policyBuilder => policyBuilder.Expire(TimeSpan.FromMinutes(1)));
+        cacheOption.AddPolicy(CmsOptions.DefaultPageCachePolicyName,
+            b => b.Expire(TimeSpan.FromMinutes(2)));
+        cacheOption.AddPolicy(CmsOptions.DefaultQueryCachePolicyName,
+            b => b.Expire(TimeSpan.FromSeconds(1)));
+    });
+}
 
 void AddHybridCache()
 {
     if (builder.Configuration.GetConnectionString(CmsConstants.Redis) is null) return;
     builder.AddRedisDistributedCache(connectionName: CmsConstants.Redis);
     builder.Services.AddHybridCache();
-}
-
-void AddCorsPolicy()
-{
-    var origins = builder.Configuration.GetValue<string>(cors);
-    if (string.IsNullOrWhiteSpace(origins)) return;
-    builder.Services.AddCors(options =>
-    {
-        options.AddPolicy(cors, policy =>
-        {
-            policy.WithOrigins(origins.Split(","))
-                .AllowAnyHeader()
-                .AllowCredentials();
-        });
-    });
 }
 
 async Task EnsureDbCreatedAsync()

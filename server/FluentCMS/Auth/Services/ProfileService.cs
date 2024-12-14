@@ -5,7 +5,6 @@ using FluentCMS.Exceptions;
 using Microsoft.AspNetCore.Identity;
 
 namespace FluentCMS.Auth.Services;
-using static InvalidParamExceptionFactory;
 
 public sealed record ProfileDto(string OldPassword, string Password);
 
@@ -42,16 +41,15 @@ where TUser :IdentityUser, new()
     {
         var user = await MustGetCurrentUser();
         var result =await userManager.ChangePasswordAsync(user, dto.OldPassword, dto.Password);
-        True(result.Succeeded).ThrowNotTrue(IdentityErrMsg(result));
+        if (!result.Succeeded) throw new ServiceException(IdentityErrMsg(result));
     }
 
     private async Task<TUser> MustGetCurrentUser()
     {
         var claims = contextAccessor.HttpContext?.User;
-        True(claims?.Identity?.IsAuthenticated == true)
-            .ThrowNotTrue("Not logged in");
-        var user =await userManager.GetUserAsync(claims!);
-        return NotNull(user).ValOrThrow("Not logged in");
+        if (claims?.Identity?.IsAuthenticated != true) throw new ServiceException("Not logged in");
+        var user =await userManager.GetUserAsync(claims);
+        return user?? throw new ServiceException("Not logged in");
     }
     private static string IdentityErrMsg(IdentityResult result) =>  string.Join("\r\n", result.Errors.Select(e => e.Description));
 

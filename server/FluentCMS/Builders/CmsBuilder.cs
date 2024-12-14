@@ -1,13 +1,14 @@
 using System.Collections.Immutable;
 using System.Reflection;
-using System.Text.Json.Serialization;
+using FluentCMS.Auth.Handlers;
 using FluentCMS.Auth.Services;
-using FluentCMS.Cms.Models;
+using FluentCMS.Cms.Handlers;
 using FluentCMS.Cms.Services;
 using FluentCMS.Exceptions;
 using FluentCMS.Utils.Cache;
 using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Graph;
+using FluentCMS.Options;
 using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.LocalFileStore;
@@ -15,13 +16,12 @@ using FluentCMS.Utils.PageRender;
 using FluentCMS.Utils.QueryBuilder;
 using FluentResults;
 using GraphQL;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Rewrite;
 using Npgsql;
 using Schema = FluentCMS.Graph.Schema;
 
-using static FluentCMS.Exceptions.InvalidParamExceptionFactory;
-
-namespace FluentCMS.Components;
+namespace FluentCMS.Builders;
 
 public enum DatabaseProvider
 {
@@ -30,28 +30,35 @@ public enum DatabaseProvider
     SqlServer,
 }
 
-public sealed class Cms(
-    ILogger<Cms> logger, 
-    DatabaseProvider databaseProvider, 
+public record Problem(string Title, string? Detail =default);
+
+public sealed class CmsBuilder(
+    ILogger<CmsBuilder> logger,
+    DatabaseProvider databaseProvider,
     string connectionString,
-    string graphPath 
+    CmsOptions cmsOptions
 )
 {
     private const string FluentCmsContentRoot = "/_content/FluentCMS";
-    public string GraphPath => graphPath;
+    public CmsOptions Options => cmsOptions;
 
-    public static IServiceCollection AddCms(IServiceCollection services ,DatabaseProvider databaseProvider, string connectionString, string graphPath)
+    public static IServiceCollection AddCms(
+        IServiceCollection services,
+        DatabaseProvider databaseProvider,
+        string connectionString,
+        Action<CmsOptions>? optionsAction = default)
     {
-        services.AddSingleton<Cms>(p => new Cms(
-                p.GetRequiredService<ILogger<Cms>>(),
-                databaseProvider,
-                connectionString,
-                graphPath
-            )
-        );
+        var cmsOptions = new CmsOptions();
+        optionsAction?.Invoke(cmsOptions);
 
-        AddRouters();
-        Ok(InjectDbServices());
+        services.AddSingleton<CmsBuilder>(p => new CmsBuilder(
+            p.GetRequiredService<ILogger<CmsBuilder>>(),
+            databaseProvider,
+            connectionString,
+            cmsOptions
+        ));
+
+        InjectDbServices().Ok();
         InjectServices();
         AddGraphql();
         return services;
@@ -69,27 +76,19 @@ public sealed class Cms(
             services.AddScoped<SortOrderEnum>();
             services.AddScoped<FilterExpr>();
             services.AddScoped<SortExpr>();
-        
+
             services.AddGraphQL(b =>
             {
                 b.AddSystemTextJson();
                 b.AddUnhandledExceptionHandler(ex =>
                 {
-                    if (ex.Exception is InvalidParamException)
+                    if (ex.Exception is ServiceException)
                     {
                         ex.ErrorMessage = ex.Exception.Message;
                     }
+
                     Console.WriteLine(ex.Exception);
                 });
-            });
-        }
-        
-        void AddRouters()
-        {
-            services.AddRouting(options => { options.LowercaseUrls = true; });
-            services.AddControllers().AddJsonOptions(options =>
-            {
-                options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
             });
         }
 
@@ -98,34 +97,36 @@ public sealed class Cms(
             services.AddMemoryCache();
             services.AddSingleton<KeyValueCache<ImmutableArray<Entity>>>(p =>
                 new KeyValueCache<ImmutableArray<Entity>>(p,
-                    p.GetRequiredService<ILogger<KeyValueCache<ImmutableArray<Entity>>>>() , 
-                    "entities", 60 ));
-            
+                    p.GetRequiredService<ILogger<KeyValueCache<ImmutableArray<Entity>>>>(),
+                    "entities", cmsOptions.EntitySchemaExpiration));
+
             services.AddSingleton<KeyValueCache<LoadedQuery>>(p =>
                 new KeyValueCache<LoadedQuery>(p,
-                    p.GetRequiredService<ILogger<KeyValueCache<LoadedQuery>>>() , 
-                    "query",60 ));
-            
+                    p.GetRequiredService<ILogger<KeyValueCache<LoadedQuery>>>(),
+                    "query", cmsOptions.QuerySchemaExpiration));
+
             services.AddSingleton<PageTemplate>(p =>
             {
                 var provider = p.GetRequiredService<IWebHostEnvironment>().WebRootFileProvider;
                 var fileInfo = provider.GetFileInfo($"{FluentCmsContentRoot}/static-assets/templates/template.html");
-                return new PageTemplate(fileInfo.PhysicalPath??"");
+                return new PageTemplate(fileInfo.PhysicalPath ?? "");
             });
             services.AddSingleton<LocalFileStore>(_ => new LocalFileStore(
-                           Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/files"), 1200, 70) ); 
+                Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/files"), cmsOptions.ImageCompression.MaxWidth,
+                cmsOptions.ImageCompression.Quality)
+            );
             services.AddSingleton<KateQueryExecutor>(p =>
-                new KateQueryExecutor(p.GetRequiredService<IKateProvider>(), 30));
+                new KateQueryExecutor(p.GetRequiredService<IKateProvider>(), cmsOptions.DatabaseQueryTimeout));
             services.AddSingleton<HookRegistry>();
-            
+
             services.AddScoped<ISchemaService, SchemaService>();
             services.AddScoped<IEntitySchemaService, EntitySchemaService>();
             services.AddScoped<IQuerySchemaService, QuerySchemaService>();
-            
+
             services.AddScoped<IEntityService, EntityService>();
             services.AddScoped<IQueryService, QueryService>();
             services.AddScoped<IPageService, PageService>();
-            
+
             services.AddScoped<IProfileService, DummyProfileService>();
         }
 
@@ -164,18 +165,18 @@ public sealed class Cms(
         Result InjectPostgresDbServices()
         {
             var dataSource = new NpgsqlDataSourceBuilder(connectionString).Build();
-            services.AddSingleton<IKateProvider>(p =>
-                {
-                    var logger = p.GetRequiredService<ILogger<PostgresKateProvider>>();
-                    return new PostgresKateProvider(dataSource, logger);
-                }
-            );
-            services.AddSingleton<IDefinitionExecutor>(p =>
-                {
-                    var logger = p.GetRequiredService<ILogger<PostgresDefinitionExecutor>>();
-                    return new PostgresDefinitionExecutor(dataSource, logger);
-                }
-            );
+            services.AddSingleton<IKateProvider>((p
+            ) =>
+            {
+                var logger = p.GetRequiredService<ILogger<PostgresKateProvider>>();
+                return new PostgresKateProvider(dataSource, logger);
+            });
+            services.AddSingleton<IDefinitionExecutor>((p
+            ) =>
+            {
+                var logger = p.GetRequiredService<ILogger<PostgresDefinitionExecutor>>();
+                return new PostgresDefinitionExecutor(dataSource, logger);
+            });
             return Result.Ok();
         }
     }
@@ -184,20 +185,17 @@ public sealed class Cms(
     {
         PrintVersion();
         await InitSchema();
-        
+
         UseApiRouters();
         UseGraphql();
-        UseAdminPanel();
-        UseSchemaBuilder();
-        UseFallbackHomePage();
-        UserRedirects();
-        
-        return;
+        UseExceptionHandler();
 
-        void UseSchemaBuilder()
-        {
-            app.MapStaticAssets();
-        }
+        if (!cmsOptions.EnableClient) return;
+        UseAdminPanel();
+        UserRedirects();
+        app.MapStaticAssets();
+
+        return;
 
         void UserRedirects()
         {
@@ -209,61 +207,39 @@ public sealed class Cms(
 
         void UseGraphql()
         {
-            logger.LogInformation("Running graphql, path = ${graphPath}", graphPath);
-
             app.UseGraphQL<Schema>();
-            app.UseGraphQLGraphiQL(graphPath);
+            app.UseGraphQLGraphiQL(cmsOptions.GraphQlPath);
         }
-        
+
         void UseApiRouters()
         {
-            app.UseExceptionHandler(app.Environment.IsDevelopment() ? "/error-development" : "/error");
-            app.MapControllers();
+            var apiGroup = app.MapGroup(cmsOptions.RouteOptions.ApiBaseUrl);
+            apiGroup.MapGroup("/entities").MapEntityHandlers();
+            apiGroup.MapGroup("/schemas").MapSchemaHandlers();
+            apiGroup.MapGroup("/files").MapFileHandlers();
+            apiGroup.MapGroup("/queries").MapQueryHandlers().CacheOutput(cmsOptions.QueryCachePolicy);
+            
+            // if auth component is not use, the handler will use dummy profile service
+            apiGroup.MapGroup("/profile").MapProfileHandlers();
+            app.MapGroup(cmsOptions.RouteOptions.PageBaseUrl).MapPages().CacheOutput(cmsOptions.PageCachePolicy);
+            if (cmsOptions.MapCmsHomePage) app.MapHomePage().CacheOutput(cmsOptions.PageCachePolicy);
         }
-        
+
         void UseAdminPanel()
         {
             const string adminPanel = "/admin";
-            app.MapWhen(context => context.Request.Path.StartsWithSegments($"{FluentCmsContentRoot}{adminPanel}"), subApp =>
-            {
-                subApp.UseRouting();
-                subApp.UseEndpoints(endpoints =>
+            app.MapWhen(context => context.Request.Path.StartsWithSegments($"{FluentCmsContentRoot}{adminPanel}"),
+                subApp =>
                 {
-                    endpoints.MapFallbackToFile($"{FluentCmsContentRoot}{adminPanel}", $"{FluentCmsContentRoot}{adminPanel}/index.html");
-                    endpoints.MapFallbackToFile($"{FluentCmsContentRoot}{adminPanel}/{{*path:nonfile}}", $"{FluentCmsContentRoot}{adminPanel}/index.html");
-                });
-            });
-        }
-        
-        void UseFallbackHomePage()
-        {
-            app.Use(async (context, next) =>
-            {
-                await next();
-                if (context.Response.StatusCode == 404)
-                {
-                    if (context.Request.Path == "/")
+                    subApp.UseRouting();
+                    subApp.UseEndpoints(endpoints =>
                     {
-                        using var scope = app.Services.CreateScope();
-                        var pageService = scope.ServiceProvider.GetRequiredService<IPageService>();
-                        var html = $"""
-                                    <a href="/admin">Log in to Admin</a><br/>
-                                    <a href="/schema">Go to Schema Builder</a>
-                                    """;
-                        try
-                        {
-                            html = await pageService.Get(PageConstants.HomePage, new StrArgs());
-                        }
-                        catch (Exception e)
-                        {
-                            logger.LogError(e.Message);
-                        }
-
-                        context.Response.StatusCode = StatusCodes.Status200OK;
-                        await context.Response.WriteAsync(html);
-                    }
-                }
-            });
+                        endpoints.MapFallbackToFile($"{FluentCmsContentRoot}{adminPanel}",
+                            $"{FluentCmsContentRoot}{adminPanel}/index.html");
+                        endpoints.MapFallbackToFile($"{FluentCmsContentRoot}{adminPanel}/{{*path:nonfile}}",
+                            $"{FluentCmsContentRoot}{adminPanel}/index.html");
+                    });
+                });
         }
 
         async Task InitSchema()
@@ -275,26 +251,46 @@ public sealed class Cms(
             await schemaService.EnsureTopMenuBar(default);
         }
 
-       
+        void UseExceptionHandler()
+        {
+            app.UseExceptionHandler(errorApp =>
+            {
+                errorApp.Run(async context =>
+                {
+
+                    var ex = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+                    if (ex is ServiceException)
+                    {
+                        context.Response.StatusCode = 400;
+                        var problem = app.Environment.IsDevelopment()
+                            ? new Problem(ex.Message, ex.StackTrace)
+                            : new Problem(ex.Message);
+                        await context.Response.WriteAsJsonAsync(problem);
+                    }
+                });
+            });
+        }
     }
 
     private void PrintVersion()
     {
         var assembly = Assembly.GetExecutingAssembly();
         var title = assembly.GetCustomAttribute<AssemblyTitleAttribute>()?.Title;
-        var informationalVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        var informationalVersion =
+            assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
         var parts = connectionString.Split(";")
             .Where(x => !x.StartsWith("Password"))
             .ToArray();
-        
+
         logger.LogInformation($"""
-                               ***  ******************************************************
-                               ***  ******************************************************
+                               *********************************************************
+                               *********************************************************
                                {title}, Version {informationalVersion?.Split("+").First()}
                                Database : {databaseProvider} - {string.Join(";", parts)}
-                               ***  ******************************************************
-                               ***  ******************************************************
+                               EntitySchemaExpiration: {cmsOptions.EntitySchemaExpiration}
+                               QuerySchemaExpiration: {cmsOptions.QuerySchemaExpiration}
+                               *********************************************************
+                               *********************************************************
                                """);
     }
-    
 }

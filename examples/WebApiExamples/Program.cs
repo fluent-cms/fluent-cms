@@ -22,8 +22,8 @@ var app = builder.Build();
 //use fluent cms' CRUD 
 await app.UseCmsAsync();
 
-InvalidParamExceptionFactory.Ok(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [RoleConstants.Sa]));
-InvalidParamExceptionFactory.Ok(await app.EnsureCmsUser("admin@cms.com", "Admin1!", [RoleConstants.Admin]));
+(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [RoleConstants.Sa])).Ok();
+(await app.EnsureCmsUser("admin@cms.com", "Admin1!", [RoleConstants.Admin])).Ok();
 
 var registry = app.GetHookRegistry();
 registry.EntityPreAdd.Register("teacher", addArgs =>
@@ -55,11 +55,11 @@ void  VerifyTeacher(IDictionary<string,object> teacher)
     var (email, phoneNumber) = ((string)teacher["email"], (string)teacher["phone_number"]);
     if (!IsValidEmail())
     {
-        throw new InvalidParamException($"email `{email}` is invalid");
+        throw new ServiceException($"email `{email}` is invalid");
     }
     if (!IsValidPhoneNumber())
     {
-        throw new InvalidParamException($"phone number `{phoneNumber}` is invalid");
+        throw new ServiceException($"phone number `{phoneNumber}` is invalid");
     }
 
     return;

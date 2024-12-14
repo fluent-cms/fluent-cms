@@ -22,12 +22,12 @@ export const ecommerceA =
     <h1 class="sm:text-3xl text-2xl font-medium title-font mb-2 text-gray-900">Category Name</h1>
     <div class="flex flex-wrap -m-4" data-gjs-type="data-list" data-source="data-list">
       <div class="lg:w-1/4 md:w-1/2 p-4 w-full">
-        <a  style="display: inline-block" href="/pages/pageName/{{slug}}">
+        <a  style="display: inline-block" href="/pageName/{{slug}}">
           <img alt="ecommerce" class="object-cover object-center w-full h-full block" src="/files{{image}}">
         </a>
         <div class="mt-4">
           <h3 class="text-gray-500 text-xs tracking-widest title-font mb-1">{{category}}</h3>
-          <h2 class="text-gray-900 title-font text-lg font-medium"><a href="/pages/pageName/{{slug}}">{{title}}</h2>
+          <h2 class="text-gray-900 title-font text-lg font-medium"><a href="/pageName/{{slug}}">{{title}}</h2>
           <p class="mt-1">{{price}}</p>
         </div>
       </div>

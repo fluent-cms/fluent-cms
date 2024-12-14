@@ -1,8 +1,6 @@
-using System.Collections.Immutable;
 using System.Text.Json;
 using FluentCMS.Cms.Models;
 using FluentCMS.Exceptions;
-using FluentCMS.Utils.Cache;
 using FluentResults;
 using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.HookFactory;
@@ -10,7 +8,6 @@ using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.QueryBuilder;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 namespace FluentCMS.Cms.Services;
-using static InvalidParamExceptionFactory;
 
 public sealed  class SchemaService(
     IDefinitionExecutor ddlExecutor,
@@ -39,7 +36,7 @@ public sealed  class SchemaService(
         }
 
         var items = await queryExecutor.Many(query, cancellationToken);
-        return items.Select(x => Ok(ParseSchema(x))).ToArray();
+        return items.Select(x => ParseSchema(x).Ok()).ToArray();
     }
 
     public async Task<Schema?> ByIdWithAction(int id, CancellationToken token = default)
@@ -80,7 +77,7 @@ public sealed  class SchemaService(
 
     public async Task<Schema> SaveWithAction(Schema dto, CancellationToken token = default)
     {
-        Ok(await NameNotTakenByOther(dto, token));
+        (await NameNotTakenByOther(dto, token)).Ok();
         var res = await hook.SchemaPreSave.Trigger(provider, new SchemaPreSaveArgs(dto));
         return await SaveSchema(res.RefSchema, token);
     }
@@ -161,8 +158,8 @@ public sealed  class SchemaService(
 
     public async Task EnsureEntityInTopMenuBar(Entity entity, CancellationToken token)
     {
-        var menuBarSchema = NotNull(await GetByNameDefault(SchemaName.TopMenuBar, SchemaType.Menu, token))
-            .ValOrThrow("not find top menu bar");
+        var menuBarSchema = await GetByNameDefault(SchemaName.TopMenuBar, SchemaType.Menu, token) ??
+            throw new ServiceException("not find top menu bar");
         var menuBar = menuBarSchema.Settings.Menu;
         if (menuBar is not null)
         {

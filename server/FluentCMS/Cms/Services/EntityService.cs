@@ -7,7 +7,6 @@ using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.QueryBuilder;
 
 namespace FluentCMS.Cms.Services;
-using static InvalidParamExceptionFactory;
 
 public sealed class EntityService(
     IServiceProvider provider,
@@ -21,8 +20,8 @@ public sealed class EntityService(
     {
         var ctx = await GetIdCtx(entityName, id, token);
         var query = ctx.Entity.ByIdQuery(ctx.Id, ctx.Entity.Attributes.GetLocalAttrs(attributes), []);
-        return NotNull(await queryExecutor.One(query, token))
-            .ValOrThrow($"not find record by [{id}]");
+        return await queryExecutor.One(query, token) ??
+            throw new ServiceException($"not find record by [{id}]");
     }
 
     public async Task<Record> One(string entityName, string id, CancellationToken token)
@@ -36,8 +35,8 @@ public sealed class EntityService(
         }
 
         var query = ctx.Entity.ByIdQuery(ctx.Id, ctx.Entity.Attributes.GetLocalAttrs(InListOrDetail.InDetail), []);
-        var record = NotNull(await queryExecutor.One(query, token))
-            .ValOrThrow($"not find record by [{id}]");
+        var record = await queryExecutor.One(query, token)??
+            throw new ServiceException($"not find record by [{id}]");
 
         foreach (var attribute in ctx.Entity.Attributes.GetAttrByType(DisplayType.Lookup, InListOrDetail.InDetail))
         {
@@ -50,11 +49,11 @@ public sealed class EntityService(
 
     public async Task<ListResult?> List(string name, Pagination pagination, StrArgs args, CancellationToken token)
     {
-        var entity = Ok(await entitySchemaSvc.GetLoadedEntity(name, token));
+        var entity = (await entitySchemaSvc.GetLoadedEntity(name, token)).Ok();
         var groupQs = args.GroupByFirstIdentifier();
 
-        var filters = Ok(await FilterHelper.Parse(entity, groupQs, entitySchemaSvc, entitySchemaSvc));
-        var sorts = Ok(await SortHelper.Parse(entity, groupQs, entitySchemaSvc));
+        var filters = (await FilterHelper.Parse(entity, groupQs, entitySchemaSvc, entitySchemaSvc)).Ok();
+        var sorts = (await SortHelper.Parse(entity, groupQs, entitySchemaSvc)).Ok();
         return await List(entity, [..filters], [..sorts], pagination, token);
     }
     public async Task<Record> Insert(string name, JsonElement ele, CancellationToken token)
@@ -77,7 +76,7 @@ public sealed class EntityService(
     {
         var ctx = await GetCrosstableCtx(name, id, attr, token);
         var items = elements.Select(ele =>
-            Ok(ctx.Crosstable.TargetEntity.Parse(ele, entitySchemaSvc))).ToArray();
+            ctx.Crosstable.TargetEntity.Parse(ele, entitySchemaSvc).Ok()).ToArray();
 
         var res = await hookRegistry.CrosstablePreDel.Trigger(provider,
             new CrosstablePreDelArgs(name, id, ctx.Attribute, items));
@@ -95,7 +94,7 @@ public sealed class EntityService(
         var ctx = await GetCrosstableCtx(name, id, attr, token);
 
         var items = elements
-            .Select(ele => Ok(ctx.Crosstable.TargetEntity.Parse(ele, entitySchemaSvc))).ToArray();
+            .Select(ele => ctx.Crosstable.TargetEntity.Parse(ele, entitySchemaSvc).Ok()).ToArray();
         var res = await hookRegistry.CrosstablePreAdd.Trigger(provider,
             new CrosstablePreAddArgs(name, id, ctx.Attribute, items));
         var query = ctx.Crosstable.Insert(ctx.Id, res.RefItems);
@@ -116,8 +115,8 @@ public sealed class EntityService(
         var selectAttributes = target.Attributes.GetLocalAttrs(InListOrDetail.InList);
 
         var dictionary = args.GroupByFirstIdentifier();
-        var filter = Ok(await FilterHelper.Parse(target, dictionary, entitySchemaSvc, entitySchemaSvc));
-        var sorts = Ok(await SortHelper.Parse(target, dictionary, entitySchemaSvc));
+        var filter = (await FilterHelper.Parse(target, dictionary, entitySchemaSvc, entitySchemaSvc)).Ok();
+        var sorts = (await SortHelper.Parse(target, dictionary, entitySchemaSvc)).Ok();
         var validPagination = PaginationHelper.ToValid(pagination,target.DefaultPageSize);
 
         var pagedListQuery = exclude
@@ -172,8 +171,8 @@ public sealed class EntityService(
             return;
         }
 
-        var lookupEntity = NotNull(attr.Lookup)
-            .ValOrThrow($"not find lookup entity from {attr.AddTableModifier()}");
+        var lookupEntity = attr.Lookup ??
+            throw new ServiceException($"not find lookup entity from {attr.AddTableModifier()}");
 
         var query = lookupEntity.ManyQuery(ids,
             [attr.Lookup!.PrimaryKeyAttribute, attr.Lookup!.LoadedTitleAttribute]);
@@ -194,17 +193,17 @@ public sealed class EntityService(
         var (entity, record) = ctx;
         if (!record.TryGetValue(entity.PrimaryKey, out var id))
         {
-            throw new InvalidParamException("Can not find id ");
+            throw new ServiceException("Can not find id ");
         }
 
-        Ok(entity.ValidateLocalAttributes(record));
-        Ok(entity.ValidateTitleAttributes(record));
+        entity.ValidateLocalAttributes(record).Ok();
+        entity.ValidateTitleAttributes(record).Ok();
 
 
         var res = await hookRegistry.EntityPreUpdate.Trigger(provider,
             new EntityPreUpdateArgs(entity.Name, id.ToString()!, record));
 
-        var query = Ok(entity.UpdateQuery(res.RefRecord));
+        var query = entity.UpdateQuery(res.RefRecord).Ok();
         await queryExecutor.Exec(query, token);
         await hookRegistry.EntityPostUpdate.Trigger(provider,
             new EntityPostUpdateArgs(entity.Name, id.ToString()!, record));
@@ -214,8 +213,8 @@ public sealed class EntityService(
     private async Task<Record> Insert(RecordContext ctx, CancellationToken token)
     {
         var (entity, record) = ctx;
-        Ok(entity.ValidateLocalAttributes(ctx.Record));
-        Ok(ctx.Entity.ValidateTitleAttributes(ctx.Record));
+        entity.ValidateLocalAttributes(ctx.Record).Ok();
+        ctx.Entity.ValidateTitleAttributes(ctx.Record).Ok();
 
         var res = await hookRegistry.EntityPreAdd.Trigger(provider,
             new EntityPreAddArgs(entity.Name, record));
@@ -235,7 +234,7 @@ public sealed class EntityService(
         var (entity, record) = ctx;
         if (!record.TryGetValue(entity.PrimaryKey, out var id))
         {
-            throw new InvalidParamException("Can not find id ");
+            throw new ServiceException("Can not find id ");
         }
 
         var res = await hookRegistry.EntityPreDel.Trigger(provider,
@@ -243,7 +242,7 @@ public sealed class EntityService(
         record = res.RefRecord;
 
 
-        var query = Ok(entity.DeleteQuery(record));
+        var query = entity.DeleteQuery(record).Ok();
         await queryExecutor.Exec(query, token);
         (_, _, record) = await hookRegistry.EntityPostDel.Trigger(provider,
             new EntityPostDelArgs(entity.Name, id.ToString()!, record));
@@ -254,10 +253,10 @@ public sealed class EntityService(
 
     private async Task<IdContext> GetIdCtx(string entityName, string id, CancellationToken token)
     {
-        var entity = Ok(await entitySchemaSvc.GetLoadedEntity(entityName, token));
+        var entity = (await entitySchemaSvc.GetLoadedEntity(entityName, token)).Ok();
         if (!entitySchemaSvc.ResolveVal(entity.PrimaryKeyAttribute, id, out var idValue))
         {
-            throw new InvalidParamException($"Failed to cast {id} to {entity.PrimaryKeyAttribute.DataType}");
+            throw new ServiceException($"Failed to cast {id} to {entity.PrimaryKeyAttribute.DataType}");
         }
 
         return new IdContext(entity, idValue);
@@ -268,14 +267,14 @@ public sealed class EntityService(
     private async Task<CrosstableContext> GetCrosstableCtx(string entityName, string strId, string attributeName,
         CancellationToken token)
     {
-        var entity = Ok(await entitySchemaSvc.GetLoadedEntity(entityName, token));
-        var attribute = NotNull(entity.Attributes.FindOneAttr(attributeName))
-            .ValOrThrow($"not find {attributeName} in {entityName}");
+        var entity = (await entitySchemaSvc.GetLoadedEntity(entityName, token)).Ok();
+        var attribute = entity.Attributes.FindOneAttr(attributeName) ??
+            throw new ServiceException($"not find {attributeName} in {entityName}");
 
-        var crossTable = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable of {attributeName}");
+        var crossTable = attribute.Crosstable ?? throw new ServiceException($"not find crosstable of {attributeName}");
         if (!entitySchemaSvc.ResolveVal(crossTable.SourceAttribute, strId, out var id))
         {
-            throw new InvalidParamException($"Failed to cast {strId} to {crossTable.SourceAttribute.DataType}");
+            throw new ServiceException($"Failed to cast {strId} to {crossTable.SourceAttribute.DataType}");
         }
 
         return new CrosstableContext(attribute, crossTable, id);
@@ -285,8 +284,8 @@ public sealed class EntityService(
 
     private async Task<RecordContext> GetRecordCtx(string name, JsonElement ele, CancellationToken token)
     {
-        var entity = Ok(await entitySchemaSvc.GetLoadedEntity(name, token));
-        var record = Ok(entity.Parse(ele, entitySchemaSvc));
+        var entity = (await entitySchemaSvc.GetLoadedEntity(name, token)).Ok();
+        var record = (entity.Parse(ele, entitySchemaSvc)).Ok();
         return new RecordContext(entity, record);
     }
 }

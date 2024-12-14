@@ -5,7 +5,7 @@ namespace FluentCMS.Utils.LocalFileStore;
 
 public class LocalFileStore(string pathPrefix, int maxImageWith, int quality)
 {
-    public async Task<Result<string[]>> Save(IFormFile[] files)
+    public async Task<Result<string[]>> Save(IEnumerable<IFormFile> files)
     {
         var dir = GetDirectoryName();
         Directory.CreateDirectory(Path.Combine(pathPrefix, dir));

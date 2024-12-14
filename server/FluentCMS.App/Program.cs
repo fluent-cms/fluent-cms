@@ -107,7 +107,7 @@ void RegisterHooks()
         {
             if (param.RecordId == "1000")
             {
-                throw new FluentCMS.Exceptions.InvalidParamException("1000");
+                throw new FluentCMS.Exceptions.ServiceException("1000");
             }
             return param;
         });

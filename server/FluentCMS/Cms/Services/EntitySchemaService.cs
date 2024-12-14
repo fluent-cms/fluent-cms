@@ -8,7 +8,6 @@ using FluentResults;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.Cms.Services;
-using static InvalidParamExceptionFactory;
 
 public sealed class EntitySchemaService(
     ISchemaService schemaSvc,
@@ -122,10 +121,10 @@ public sealed class EntitySchemaService(
 
     public async Task<Schema> SaveTableDefine(Schema dto, CancellationToken ct = default)
     {
-        Ok(await schemaSvc.NameNotTakenByOther(dto, ct));
-        var entity = NotNull(dto.Settings.Entity).ValOrThrow("invalid payload").WithDefaultAttr();
+        (await schemaSvc.NameNotTakenByOther(dto, ct)).Ok();
+        var entity = (dto.Settings.Entity?? throw new ServiceException("invalid payload")).WithDefaultAttr();
         var cols = await executor.GetColumnDefinitions(entity.TableName, ct);
-        Ok(EnsureTableNotExist());
+        EnsureTableNotExist().Ok();
         await VerifyEntity(entity, ct);
         await SaveSchema(); //need  to save first because it will call trigger
         await CreateCrosstables();
@@ -298,7 +297,7 @@ public sealed class EntitySchemaService(
             throw new Exception($"Crosstable Option was not set for attribute `{entity.Name}.{attr.Field}`");
         }
 
-        var targetEntity = Ok(await GetLoadedEntity(crosstableName, ct));
+        var targetEntity = (await GetLoadedEntity(crosstableName, ct)).Ok();
         var crossTable = CrosstableHelper.Crosstable(entity, targetEntity, attr);
         var columns =
             await executor.GetColumnDefinitions(crossTable.CrossEntity.TableName, ct);
@@ -311,20 +310,18 @@ public sealed class EntitySchemaService(
 
     private async Task CheckLookup(Attribute attr, CancellationToken ct)
     {
-        True(attr.DataType == DataType.Int).ThrowNotTrue("lookup datatype should be int");
+        if (attr.DataType != DataType.Int) throw new ServiceException("lookup datatype should be int");
         if (!attr.GetLookupTarget(out var lookupName))
-        {
-            throw new InvalidParamException($"Lookup Option was not set for attribute `{attr.Field}`");
-        }
+            throw new ServiceException($"Lookup Option was not set for attribute `{attr.Field}`");
 
-        NotNull(await GetEntity(lookupName, ct))
-            .ValOrThrow($"not find entity by name {lookupName}");
+        _ = await GetEntity(lookupName, ct) ??
+            throw new ServiceException($"not find entity by name {lookupName}");
     }
 
     private async Task VerifyEntity(Entity entity, CancellationToken ct)
     {
-        NotNull(entity.Attributes.FindOneAttr(entity.TitleAttribute))
-            .ValOrThrow($"`{entity.TitleAttribute}` was not in attributes list");
+        _ = entity.Attributes.FindOneAttr(entity.TitleAttribute) ??
+            throw new ServiceException($"`{entity.TitleAttribute}` was not in attributes list");
         foreach (var attribute in entity.Attributes.GetAttrByType(DisplayType.Lookup))
         {
             await CheckLookup(attribute, ct);

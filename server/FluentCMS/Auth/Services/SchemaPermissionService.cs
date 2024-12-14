@@ -12,7 +12,6 @@ using Microsoft.AspNetCore.Identity;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.Auth.Services;
-using static InvalidParamExceptionFactory;
 
 public class SchemaPermissionService<TUser>(
     IHttpContextAccessor contextAccessor,
@@ -27,7 +26,7 @@ public class SchemaPermissionService<TUser>(
         if (!contextAccessor.HttpContext.HasRole(RoleConstants.Sa) &&
             !contextAccessor.HttpContext.HasRole(RoleConstants.Admin))
         {
-            throw new InvalidParamException($"Fail to get schema list, you don't have [Sa] or [Admin] role.");
+            throw new ServiceException($"Fail to get schema list, you don't have [Sa] or [Admin] role.");
         }
         return [];
     }
@@ -37,13 +36,14 @@ public class SchemaPermissionService<TUser>(
         if (!contextAccessor.HttpContext.HasRole(RoleConstants.Sa) &&
             !contextAccessor.HttpContext.HasRole(RoleConstants.Admin))
         {
-            throw new InvalidParamException($"You don't have permission to access {schema.Type}:{schema.Name}");
+            throw new ServiceException($"You don't have permission to access {schema.Type}:{schema.Name}");
         }
     }
 
     public async Task Delete(int schemaId)
     {
-        var find = NotNull(await schemaService.ById(schemaId)).ValOrThrow($"can not find schema by id [{schemaId}]");
+        var find = await schemaService.ById(schemaId) ??
+                   throw new ServiceException($"can not find schema by id [{schemaId}]");
         await EnsureWritePermissionAsync(find);
     }
 
@@ -51,7 +51,7 @@ public class SchemaPermissionService<TUser>(
     {
         if (!contextAccessor.HttpContext.GetUserId(out var userId))
         {
-            throw new InvalidParamException($"You are not logged in, can not save schema {schema.Type} [{schema.Name}]");
+            throw new ServiceException($"You are not logged in, can not save schema {schema.Type} [{schema.Name}]");
         }
         await EnsureWritePermissionAsync(schema);
         
@@ -61,7 +61,7 @@ public class SchemaPermissionService<TUser>(
         if (schema.Type != SchemaType.Entity) return schema;
         
         await EnsureCurrentUserHaveEntityAccess(schema);
-        schema = Ok(EnsureSchemaHaveCreatedByField(schema));
+        schema = EnsureSchemaHaveCreatedByField(schema).Ok();
         return schema;
     }
 
@@ -69,7 +69,7 @@ public class SchemaPermissionService<TUser>(
     {
         if (contextAccessor.HttpContext?.User.Identity?.IsAuthenticated == false)
         {
-            throw new InvalidParamException($"You are not logged in, can not save {schema.Type} [{schema.Name}]");
+            throw new ServiceException($"You are not logged in, can not save {schema.Type} [{schema.Name}]");
         }
         var hasPermission = schema.Type switch
         {
@@ -84,7 +84,7 @@ public class SchemaPermissionService<TUser>(
 
         if (!hasPermission)
         {
-            throw new InvalidParamException($"You don't have permission to save {schema.Type} [{schema.Name}]");
+            throw new ServiceException($"You don't have permission to save {schema.Type} [{schema.Name}]");
         }
     }
 
@@ -128,10 +128,10 @@ public class SchemaPermissionService<TUser>(
     {
         if (!contextAccessor.HttpContext.GetUserId(out var userId))
         {
-            throw new InvalidParamException("Can not verify schema is created by you, you are not logged in.");
+            throw new ServiceException("Can not verify schema is created by you, you are not logged in.");
         }
-        var find = NotNull(await schemaService.ById(schema.Id))
-            .ValOrThrow($"Can not verify schema is created by you, can not find schema by id [{schema.Id}]");
+        var find = await schemaService.ById(schema.Id)
+            ?? throw new ServiceException($"Can not verify schema is created by you, can not find schema by id [{schema.Id}]");
         return find.CreatedBy == userId;
     }
 }

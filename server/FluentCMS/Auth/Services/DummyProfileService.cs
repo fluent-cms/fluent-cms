@@ -22,6 +22,6 @@ public class DummyProfileService: IProfileService
     
     public Task ChangePassword(ProfileDto dto)
     {
-        throw new InvalidParamException("Not implemented yet");
+        throw new ServiceException("Not implemented yet");
     } 
 }
