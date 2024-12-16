@@ -1,9 +1,10 @@
 using System.Collections.Immutable;
 using FluentCMS.Auth.models;
 using FluentCMS.Cms.Services;
-using FluentCMS.Exceptions;
+using FluentCMS.Types;
 using FluentCMS.Utils.IdentityExt;
 using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Utils.ResultExt;
 
 namespace FluentCMS.Auth.Services;
 
@@ -17,7 +18,7 @@ public class EntityPermissionService(
     {
         if (!contextAccessor.HttpContext.GetUserId(out var userId))
         {
-            throw new ServiceException($"You don't have permission to read [{entityName}], not logged in");
+            throw new ResultException($"You don't have permission to read [{entityName}], not logged in");
         }
         if (contextAccessor.HttpContext.HasRole(RoleConstants.Sa))
         {
@@ -33,7 +34,7 @@ public class EntityPermissionService(
         if (!(contextAccessor.HttpContext.HasClaims(AccessScope.RestrictedAccess, entityName)
               || contextAccessor.HttpContext.HasClaims(AccessScope.RestrictedRead, entityName)))
         {
-            throw new ServiceException($"You don't have permission to read [{entityName}]");
+            throw new ResultException($"You don't have permission to read [{entityName}]");
         }
 
         var createBy = new LoadedAttribute(TableName: entity.TableName, Constants.CreatedBy);
@@ -49,7 +50,7 @@ public class EntityPermissionService(
     {
         if (!contextAccessor.HttpContext.GetUserId(out var userId))
         {
-            throw new ServiceException("You don't have permission to read [" + entityName + "]");
+            throw new ResultException("You don't have permission to read [" + entityName + "]");
         }
         
         if (contextAccessor.HttpContext.HasRole(RoleConstants.Sa) ||
@@ -69,11 +70,11 @@ public class EntityPermissionService(
             {
                 return;
             }
-            throw new ServiceException(
+            throw new ResultException(
                 $"You can only access record created by you, entityName={entityName}, record id={recordId}");
         }
 
-        throw new ServiceException($"You don't have permission to save [{entityName}]");
+        throw new ResultException($"You don't have permission to save [{entityName}]");
     }
 
     public void Create(string entityName)
@@ -81,7 +82,7 @@ public class EntityPermissionService(
         if (!(contextAccessor.HttpContext.HasRole(RoleConstants.Sa) || contextAccessor.HttpContext.HasClaims(AccessScope.FullAccess, entityName) ||
             contextAccessor.HttpContext.HasClaims(AccessScope.RestrictedAccess, entityName)))
         {
-            throw new ServiceException($"You don't have permission to save [{entityName}]");
+            throw new ResultException($"You don't have permission to save [{entityName}]");
         }
     }
 
@@ -89,7 +90,7 @@ public class EntityPermissionService(
     {
         if (!contextAccessor.HttpContext.GetUserId(out var userId))
         {
-            throw new ServiceException("You don't have permission to read [" + entityName + "]");
+            throw new ResultException("You don't have permission to read [" + entityName + "]");
         }
 
         if (contextAccessor.HttpContext.HasRole(RoleConstants.Sa) ||
@@ -107,11 +108,11 @@ public class EntityPermissionService(
             {
                 return;
             }
-            throw new ServiceException(
+            throw new ResultException(
                     $"You can only access record created by you, entityName={entityName}, record id={recordId}");
         }
 
-        throw new ServiceException($"You don't have permission to save [{entityName}]");
+        throw new ResultException($"You don't have permission to save [{entityName}]");
     }
 
 
@@ -119,7 +120,7 @@ public class EntityPermissionService(
     {
         if (!contextAccessor.HttpContext.GetUserId(out var userId))
         {
-            throw new ServiceException("Can not assign created by, user not logged in");
+            throw new ResultException("Can not assign created by, user not logged in");
         }
 
         record[Constants.CreatedBy] = userId;

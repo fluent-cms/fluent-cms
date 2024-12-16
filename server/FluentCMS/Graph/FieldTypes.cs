@@ -38,13 +38,13 @@ public static class FieldTypes
                 Resolver = Resolvers.ValueResolver,
                 ResolvedType = attribute.Type switch
                 {
-                    DisplayType.Crosstable when attribute.GetCrosstableTarget(out var target) => dict[target].ListType,
+                    DisplayType.Junction when attribute.GetJunctionTarget(out var target) => dict[target].ListType,
                     DisplayType.Lookup when attribute.GetLookupTarget(out var target) => dict[target].SingleType,
                     _ => null
                 },
                 Arguments = attribute.Type switch
                 {
-                    DisplayType.Crosstable when attribute.GetCrosstableTarget(out var target) => CrosstableARgs(target),
+                    DisplayType.Junction when attribute.GetJunctionTarget(out var target) => JunctionArgs(target),
                     _ => null
                 }
             };
@@ -57,7 +57,7 @@ public static class FieldTypes
 
         return;
 
-        QueryArguments CrosstableARgs(string target)
+        QueryArguments JunctionArgs(string target)
         {
             var find = dict[target].Entity;
             return new QueryArguments([

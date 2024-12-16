@@ -1,6 +1,5 @@
 using FluentCMS.Cms.Models;
 using FluentCMS.Cms.Services;
-using FluentCMS.Test.Util;
 using FluentCMS.Utils.ApiClient;
 using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.QueryBuilder;
@@ -19,6 +18,8 @@ public class SchemaApiTest
 
     public SchemaApiTest()
     {
+        Util.SetTestConnectionString();
+
         WebAppClient<Program> webAppClient = new();
         _schemaApiClient = new SchemaApiClient(webAppClient.GetHttpClient());
         _accountApiClient = new AccountApiClient(webAppClient.GetHttpClient());
@@ -43,29 +44,30 @@ public class SchemaApiTest
     public async Task SaveSchema()
     {
         var schema = TestSchema();
-        await _accountApiClient.EnsureLogin();
-        (await _schemaApiClient.SaveEntityDefine(schema)).AssertSuccess();
-        (await _schemaApiClient.GetLoadedEntity(schema.Name)).AssertSuccess();
+        
+        (await _accountApiClient.EnsureLogin()).Ok();
+        (await _schemaApiClient.SaveEntityDefine(schema)).Ok();
+        (await _schemaApiClient.GetLoadedEntity(schema.Name)).Ok();
     }
 
     [Fact]
     public async Task SaveSchemaTwice()
     {
         var schema = TestSchema();
-        await _accountApiClient.EnsureLogin();
-        var res = (await _schemaApiClient.SaveEntityDefine(schema)).AssertSuccess();
-        (await _schemaApiClient. SaveEntityDefine(res)).AssertSuccess();
+        (await _accountApiClient.EnsureLogin()).Ok();
+        var res = (await _schemaApiClient.SaveEntityDefine(schema)).Ok();
+        (await _schemaApiClient. SaveEntityDefine(res)).Ok();
     }
     
     [Fact]
     public async Task SaveSchema_Update()
     {
         var schema = TestSchema();
-        await _accountApiClient.EnsureLogin();
-        schema = (await _schemaApiClient.SaveEntityDefine(schema)).AssertSuccess();
+        (await _accountApiClient.EnsureLogin()).Ok();
+        schema = (await _schemaApiClient.SaveEntityDefine(schema)).Ok();
         schema = schema with { Settings = new Settings(Entity: schema.Settings.Entity! with { DefaultPageSize = 10 }) };
-        (await _schemaApiClient.SaveEntityDefine(schema)).AssertSuccess();
-        var entity = (await _schemaApiClient.GetLoadedEntity(schema.Name)).AssertSuccess();
+        (await _schemaApiClient.SaveEntityDefine(schema)).Ok();
+        var entity = (await _schemaApiClient.GetLoadedEntity(schema.Name)).Ok();
         Assert.Equal(10,entity.DefaultPageSize);
     }
 
@@ -73,29 +75,29 @@ public class SchemaApiTest
     public async Task Delete_Success()
     {
         var schema = TestSchema();
-        await _accountApiClient.EnsureLogin();
-        schema = (await _schemaApiClient.SaveEntityDefine(schema)).AssertSuccess();
-        (await _schemaApiClient.DeleteSchema(schema.Id)).AssertSuccess();
+        (await _accountApiClient.EnsureLogin()).Ok();
+        schema = (await _schemaApiClient.SaveEntityDefine(schema)).Ok();
+        (await _schemaApiClient.DeleteSchema(schema.Id)).Ok();
         Assert.True((await _schemaApiClient.GetLoadedEntity(schema.Name)).IsFailed);
    }
 
     [Fact]
     public async Task GetAll_NUllType()
     {
-        await _accountApiClient.EnsureLogin();
-        var items = (await _schemaApiClient.GetAll("")).AssertSuccess();
+        (await _accountApiClient.EnsureLogin()).Ok();
+        var items = (await _schemaApiClient.GetAll("")).Ok();
         var len = items.Length;
         var schema = TestSchema();
         await _schemaApiClient.SaveEntityDefine(schema);
-        items = (await _schemaApiClient.GetAll("")).AssertSuccess();
+        items = (await _schemaApiClient.GetAll("")).Ok();
         Assert.Equal(len + 1, items.Length );
     }
 
     [Fact]
     public async Task GetAll_EntityType()
     {
-        await _accountApiClient.EnsureLogin();
-        var items = (await _schemaApiClient.GetAll(SchemaType.Menu)).AssertSuccess();
+        (await _accountApiClient.EnsureLogin()).Ok();
+        var items = (await _schemaApiClient.GetAll(SchemaType.Menu)).Ok();
         Assert.Single(items);
     }
 

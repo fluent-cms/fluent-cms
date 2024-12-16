@@ -16,30 +16,38 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
         where TContext : IdentityDbContext<TUser>
     {
         services.AddSingleton<IAuthBuilder, AuthBuilder<TUser>>();
+        
+        services.AddHttpContextAccessor();
         services.AddIdentityApiEndpoints<TUser>()
             .AddRoles<TRole>()
             .AddEntityFrameworkStores<TContext>();
+        
         services.AddScoped<IAccountService, AccountService<TUser, TRole, TContext>>();
         services.AddScoped<ISchemaPermissionService, SchemaPermissionService<TUser>>();
         services.AddScoped<IEntityPermissionService, EntityPermissionService>();
         services.AddScoped<IProfileService, ProfileService<TUser>>();
-        services.AddHttpContextAccessor();
+        
         return services;
     }
 
     public WebApplication UseCmsAuth(WebApplication app)
     {
-        logger.LogInformation(
-            """
-            *********************************************************
-            Using CMS Auth API endpoints
-            *********************************************************
-            """);
+        Print();
         MapEndpoints();
         RegisterHooks();
 
         return app;
-        
+
+        void Print()
+        {
+            logger.LogInformation(
+             """
+             *********************************************************
+             Using CMS Auth API endpoints
+             *********************************************************
+             """);
+             
+        }
         
         void MapEndpoints()
         {
@@ -95,16 +103,16 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
                 IEntityPermissionService service, EntityPreGetListArgs args
             ) => args with { RefFilters = service.List(args.Name, args.Entity, args.RefFilters) });
 
-            registry.CrosstablePreAdd.RegisterDynamic("*", async (
-                IEntityPermissionService service, CrosstablePreAddArgs args
+            registry.JunctionPreAdd.RegisterDynamic("*", async (
+                IEntityPermissionService service, JunctionPreAddArgs args
             ) =>
             {
                 await service.Change(args.Name, args.RecordId);
                 return args;
             });
 
-            registry.CrosstablePreDel.RegisterDynamic("*", async (
-                IEntityPermissionService service, CrosstablePreDelArgs args
+            registry.JunctionPreDel.RegisterDynamic("*", async (
+                IEntityPermissionService service, JunctionPreDelArgs args
             ) =>
             {
                 await service.Change(args.Name, args.RecordId);

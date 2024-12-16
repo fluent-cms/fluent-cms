@@ -1,6 +1,5 @@
 using FluentCMS.Cms.Models;
 using FluentCMS.Cms.Services;
-using FluentCMS.Test.Util;
 using FluentCMS.Utils.ApiClient;
 using FluentCMS.Utils.QueryBuilder;
 using FluentCMS.Utils.ResultExt;
@@ -22,6 +21,8 @@ public class QueryApiTest
 
     public QueryApiTest()
     {
+        Util.SetTestConnectionString();
+
         WebAppClient<Program> webAppClient = new();
         _entityApiClient = new EntityApiClient(webAppClient.GetHttpClient());
         _schemaApiClient = new SchemaApiClient(webAppClient.GetHttpClient());
@@ -34,8 +35,8 @@ public class QueryApiTest
     {
         var postId =await PrepareOneRelatedData();
         var query = GetPostQuery();
-        (await _schemaApiClient.SaveSchema(query)).AssertSuccess();
-        var res = (await _queryApiClient.GetOne(query.Name, postId)).AssertSuccess();
+        (await _schemaApiClient.SaveSchema(query)).Ok();
+        var res = (await _queryApiClient.GetOne(query.Name, postId)).Ok();
         var author = res[Author] as Dictionary<string, object>;
         Assert.True(author?.ContainsKey(Author) == true);
         var tags = res[Tag] as object[];
@@ -48,11 +49,11 @@ public class QueryApiTest
     {
         await PrepareSimpleData();
         var query = GetPostQuery();
-        (await _schemaApiClient.SaveSchema(query)).AssertSuccess();
-        var items = (await _queryApiClient.GetList(query.Name, new Span(), new Pagination())).AssertSuccess();
+        (await _schemaApiClient.SaveSchema(query)).Ok();
+        var items = (await _queryApiClient.GetList(query.Name, new Span(), new Pagination())).Ok();
         if (!SpanHelper.HasNext(items)) return;
         var res = await _queryApiClient.GetList(query.Name, new Span(Last: SpanHelper.LastCursor(items)), new Pagination());
-        res.AssertSuccess();
+        res.Ok();
     }
 
     [Fact]
@@ -60,39 +61,39 @@ public class QueryApiTest
     {
         await PrepareSimpleData();
         var query = GetPostQuery();
-        (await _schemaApiClient.SaveSchema(query)).AssertSuccess();
+        (await _schemaApiClient.SaveSchema(query)).Ok();
         var ids = Enumerable.Range(1, 5).ToArray().Select(x => x as object).ToArray();
-        var res = (await _queryApiClient.GetMany(query.Name,"id", ids)).AssertSuccess();
+        var res = (await _queryApiClient.GetMany(query.Name,"id", ids)).Ok();
         Assert.Equal(ids.Length, res.Length);
     }
 
     async Task PrepareSimpleData()
     {
-        await _accountApiClient.EnsureLogin();
+        (await _accountApiClient.EnsureLogin()).Ok();
         await _schemaApiClient.EnsureSimpleEntity(Author, Author );
         await _schemaApiClient.EnsureSimpleEntity(Tag, Tag );
         await _schemaApiClient.EnsureSimpleEntity(Post, Post, Author, Tag);
 
         for (var i = 0; i < QueryPageSize * 2 + 1; i++)
         {
-            (await _entityApiClient.AddSimpleData(Post, Post, $"{Post} {i}" )).AssertSuccess();
+            (await _entityApiClient.Insert(Post, Post, $"{Post} {i}" )).Ok();
         }
     }
 
     async Task<int> PrepareOneRelatedData()
     {
-        await _accountApiClient.EnsureLogin();
+        (await _accountApiClient.EnsureLogin()).Ok();
         await _schemaApiClient.EnsureSimpleEntity(Author, Author );
         await _schemaApiClient.EnsureSimpleEntity(Tag, Tag );
         await _schemaApiClient.EnsureSimpleEntity(Post, Post, Author, Tag);
-        var authorId = (await _entityApiClient.AddSimpleData(Author, Author, Author)).AssertSuccess()["id"].GetInt32();
-        var postId = (await _entityApiClient.AddDataWithLookup(Post, Post, $"post ", Author, authorId))
-            .AssertSuccess()["id"].GetInt32();
+        var authorId = (await _entityApiClient.Insert(Author, Author, Author)).Ok()["id"].GetInt32();
+        var postId = (await _entityApiClient.InsertWithLookup(Post, Post, $"post ", Author, authorId))
+            .Ok()["id"].GetInt32();
 
         for (var i = 0; i < QueryPageSize * 2 + 1; i++)
         {
-            var tag = (await _entityApiClient.AddSimpleData(Tag, Tag, $"{Tag} {i}")).AssertSuccess();
-            (await _entityApiClient.AddCrosstableData(Post, Tag, postId, tag["id"].GetInt32())).AssertSuccess();
+            var tag = (await _entityApiClient.Insert(Tag, Tag, $"{Tag} {i}")).Ok();
+            (await _entityApiClient.AddJunctionData(Post, Tag, postId, tag["id"].GetInt32())).Ok();
         }
 
         return postId;

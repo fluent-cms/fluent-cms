@@ -108,11 +108,11 @@ public static class SpanHelper
                 }
             }
 
-            foreach (var attribute in attrs.GetAttrByType(DisplayType.Crosstable))
+            foreach (var attribute in attrs.GetAttrByType(DisplayType.Junction))
             {
                 if (!item.TryGetValue(attribute.Field, out var value) || value is not Record[] records ||
                     records.Length <= 0) continue;
-                var nextSourceId = records.First()[attribute.Crosstable!.SourceAttribute.Field];
+                var nextSourceId = records.First()[attribute.Junction!.SourceAttribute.Field];
                 SetSpan(true, attribute.Selection, records, attribute.Sorts, nextSourceId);
             }
         }

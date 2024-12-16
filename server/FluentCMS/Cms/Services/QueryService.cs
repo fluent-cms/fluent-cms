@@ -1,9 +1,11 @@
 using System.Collections.Immutable;
-using FluentCMS.Exceptions;
+using FluentCMS.Types;
 using FluentCMS.Graph;
 using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.QueryBuilder;
 using FluentCMS.Utils.HookFactory;
+using FluentCMS.Utils.ResultExt;
+using FluentResults;
 
 namespace FluentCMS.Cms.Services;
 
@@ -32,12 +34,12 @@ public sealed class QueryService(
     {
         if (span.IsEmpty())
         {
-            throw new ServiceException("cursor is empty, can not partially execute query");
+            throw new ResultException("cursor is empty, can not partially execute query");
         }
 
         var query = await schemaSvc.ByNameAndCache(name, token);
-        var attribute = query.Selection.RecursiveFind(attr)?? throw new ServiceException("not find attribute");
-        var cross = attribute.Crosstable ?? throw new ServiceException($"not find crosstable of {attribute.Field})");
+        var attribute = query.Selection.RecursiveFind(attr)?? throw new ResultException("can not find attribute");
+        var cross = attribute.Junction ?? throw new ResultException($"can not find Junction of {attribute.Field})");
 
         var flyPagination = new Pagination(null, limit.ToString());
         var pagination = PaginationHelper.ToValid(flyPagination, attribute.Pagination,
@@ -115,15 +117,15 @@ public sealed class QueryService(
             await AttachLookup(attribute, strArgs, items, token);
         }
 
-        foreach (var attribute in attrs.GetAttrByType<GraphAttribute>(DisplayType.Crosstable))
+        foreach (var attribute in attrs.GetAttrByType<GraphAttribute>(DisplayType.Junction))
         {
-            await AttachCrosstable(attribute, strArgs, items, token);
+            await AttachJunction(attribute, strArgs, items, token);
         }
     }
 
-    private async Task AttachCrosstable(GraphAttribute attr, StrArgs args, Record[] items, CancellationToken token)
+    private async Task AttachJunction(GraphAttribute attr, StrArgs args, Record[] items, CancellationToken token)
     {
-        var cross = attr.Crosstable ?? throw new ServiceException($"not find crosstable of {attr.AddTableModifier()}");
+        var cross = attr.Junction ?? throw new ResultException($"not find junction of {attr.AddTableModifier()}");
         var target = cross.TargetEntity;
         //no need to attach, ignore
         var ids = cross.SourceEntity.PrimaryKeyAttribute.GetUniq(items);
@@ -165,7 +167,7 @@ public sealed class QueryService(
                         token);
                 }
 
-                foreach (var item in items.Where(x => x[cross.CrossEntity.PrimaryKey].Equals(id.Value)))
+                foreach (var item in items.Where(x => x[cross.JunctionEntity.PrimaryKey].Equals(id.Value)))
                 {
                     item[attr.Field] = targetRecords;
                 }
@@ -175,7 +177,7 @@ public sealed class QueryService(
 
     private async Task AttachLookup(GraphAttribute attr, StrArgs strArgs, Record[] items, CancellationToken token)
     {
-        var lookupEntity = attr.Lookup??throw new ServiceException($"can not find lookup entity of{attr.Field}");
+        var lookupEntity = attr.Lookup??throw new ResultException($"can not find lookup entity of{attr.Field}");
 
         var selection = attr.Selection.GetLocalAttrs();
         if (selection.FindOneAttr(lookupEntity.PrimaryKey) == null)
@@ -210,7 +212,7 @@ public sealed class QueryService(
         string name, Pagination? pagination,  bool haveCursor, StrArgs args, CancellationToken token =default)
     {
         var query = await schemaSvc.ByNameAndCache(name, token);
-        query.VerifyVariable(args).Ok();
+        Result.Ok();
         return await GetQueryContext(query, pagination,haveCursor,args);
     }
 

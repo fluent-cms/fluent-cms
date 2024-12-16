@@ -1,7 +1,8 @@
 using System.Collections.Immutable;
 using System.Security.Claims;
 using FluentCMS.Auth.models;
-using FluentCMS.Exceptions;
+using FluentCMS.Types;
+using FluentCMS.Utils.ResultExt;
 using Microsoft.AspNetCore.Identity;
 
 namespace FluentCMS.Auth.Services;
@@ -41,16 +42,17 @@ where TUser :IdentityUser, new()
     {
         var user = await MustGetCurrentUser();
         var result =await userManager.ChangePasswordAsync(user, dto.OldPassword, dto.Password);
-        if (!result.Succeeded) throw new ServiceException(IdentityErrMsg(result));
+        if (!result.Succeeded) throw new ResultException(IdentityErrMsg(result));
     }
 
     private async Task<TUser> MustGetCurrentUser()
     {
         var claims = contextAccessor.HttpContext?.User;
-        if (claims?.Identity?.IsAuthenticated != true) throw new ServiceException("Not logged in");
+        if (claims?.Identity?.IsAuthenticated != true) throw new ResultException("Not logged in");
         var user =await userManager.GetUserAsync(claims);
-        return user?? throw new ServiceException("Not logged in");
+        return user?? throw new ResultException("Not logged in");
     }
-    private static string IdentityErrMsg(IdentityResult result) =>  string.Join("\r\n", result.Errors.Select(e => e.Description));
+    private static string IdentityErrMsg(IdentityResult result
+    ) =>  string.Join("\r\n", result.Errors.Select(e => e.Description));
 
 }

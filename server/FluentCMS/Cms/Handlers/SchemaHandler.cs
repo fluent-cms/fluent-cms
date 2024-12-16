@@ -1,7 +1,8 @@
 using FluentCMS.Cms.Models;
 using FluentCMS.Cms.Services;
-using FluentCMS.Exceptions;
+using FluentCMS.Types;
 using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Utils.ResultExt;
 
 namespace FluentCMS.Cms.Handlers;
 
@@ -23,12 +24,12 @@ public static class SchemaHandler
 
         app.MapGet("/{id}", async (
             ISchemaService svc, int id, CancellationToken ct
-        ) => await svc.ByIdWithAction(id, ct) ?? throw new ServiceException($"Cannot find schema {id}"));
+        ) => await svc.ByIdWithAction(id, ct) ?? throw new ResultException($"Cannot find schema {id}"));
 
         app.MapGet("/name/{name}", async (
                 ISchemaService svc, string name, string type, CancellationToken ct
             ) => await svc.GetByNameDefault(name, type, ct) ??
-                 throw new ServiceException($"Cannot find schema {name} of type {type}"));
+                 throw new ResultException($"Cannot find schema {name} of type {type}"));
 
         app.MapDelete("/{id}", async (
             ISchemaService schemaSvc,

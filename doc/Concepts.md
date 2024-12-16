@@ -10,7 +10,7 @@ Entities have attributes that define their properties or characteristics. These 
 
 1. **Normal Attributes**: Simple fields that directly store data, similar to columns in a database table.
 2. **Lookup Attributes**: Represent many-to-one relationships, where an entity references a single instance of another entity.
-3. **Crosstable Attributes**: Represent many-to-many relationships, where an entity references multiple instances of another entity.
+3. **Junction Attributes**: Represent many-to-many relationships, where an entity references multiple instances of another entity.
 
 ### Entities and Database Tables
 - Direct Mapping: Often, each entity maps directly to a single database table. For example, a User entity might correspond directly to a Users table in the database.
@@ -75,7 +75,7 @@ In Fluent CMS, attributes define the properties and characteristics of entities.
       - `"dropdown"`: Options input as comma-separated values.
       - `"lookup"`: References another table, detailed in lookup attributes.
       - `"multiselect"`: Allows selection of multiple options.
-      - `"crosstable"`: Detailed in crosstable attributes.
+      - `"junction"`: Detailed in Junction attributes.
 
 8. **Options**
    - **Type**: `string`
@@ -83,7 +83,7 @@ In Fluent CMS, attributes define the properties and characteristics of entities.
    - **Example**:
       - For `"dropdown"` and `"multiselect"`: Comma-separated values.
       - For `"lookup"`: Name of the lookup entity.
-      - For `"crosstable"`: Name of the crosstable entity.
+      - For `"junction"`: Name of the junction entity.
 ## Lookup Attributes in Fluent CMS: Many-to-One Relationship
 ### Concept
 In a many-to-one relationship, each record in a table can be associated with one record in another table. This relationship is commonly used to organize data into categories or classifications. For example, a blog post may belong to a single category, but a category can have many blog posts.
@@ -104,14 +104,14 @@ Let's take the example of blog posts and categories:
 
 ### User Interface (UI)
 When creating or editing a post, the `category_id` field should be rendered as a dropdown menu. This dropdown should list all available categories, allowing the user to select one.  
-## Crosstable Attributes in Fluent CMS: Many-to-Many Relationship
+## Junction Attributes in Fluent CMS: Many-to-Many Relationship
 
 ### Concept
 In a many-to-many relationship, each record in one table can be associated with multiple records in another table, 
 and vice versa. For example, a blog post can have multiple authors, and each author can write multiple posts.
 
 ### Database Schema
-To manage a many-to-many relationship, a join table (crosstable) is used to link the two entities.
+To manage a many-to-many relationship, a join table (Junction) is used to link the two entities.
 
 1. **Posts Table**:
    - `id` (Primary Key)

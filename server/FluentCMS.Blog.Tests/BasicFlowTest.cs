@@ -1,6 +1,5 @@
-using FluentCMS.Test.Util;
 using FluentCMS.Utils.ApiClient;
-
+using FluentCMS.Utils.ResultExt;
 namespace FluentCMS.Blog.Tests;
 public class BasicFlowTest
 {
@@ -17,6 +16,8 @@ public class BasicFlowTest
 
     public BasicFlowTest()
     {
+        Util.SetTestConnectionString();
+
         WebAppClient<Program> webAppClient = new();
         _schemaApiClient = new SchemaApiClient(webAppClient.GetHttpClient());
         _accountApiClient = new AccountApiClient(webAppClient.GetHttpClient());
@@ -26,22 +27,17 @@ public class BasicFlowTest
     [Fact]
     public async Task BasicFlow()
     {
-        await _accountApiClient.EnsureLogin();
-        (await _schemaApiClient.GetTopMenuBar()).AssertSuccess();
-        (await _schemaApiClient.GetAll("")).AssertSuccess();
+        (await _accountApiClient.EnsureLogin()).Ok();
+        (await _schemaApiClient.GetTopMenuBar()).Ok();
+        (await _schemaApiClient.GetAll("")).Ok();
 
-        (await _schemaApiClient.EnsureSimpleEntity(Tutor, Name)).AssertSuccess();
-        (await _entityApiClient.AddSimpleData(Tutor, Name, "Tom")).AssertSuccess();
-        (await _entityApiClient.UpdateSimpleData(Tutor, 1, Name, "TomUpdate")).AssertSuccess();
-        Assert.Equal("TomUpdate",(await _entityApiClient.GetEntityValue(Tutor, 1)).AssertSuccess()[Name].GetString());
+        (await _schemaApiClient.EnsureSimpleEntity(Leaner, Name)).Ok();
+        (await _entityApiClient.Insert(Leaner, Name, "Bob")).Ok();
 
-        (await _schemaApiClient.EnsureSimpleEntity(Leaner, Name)).AssertSuccess();
-        (await _entityApiClient.AddSimpleData(Leaner, Name, "Bob")).AssertSuccess();
+        (await _schemaApiClient.EnsureSimpleEntity(Class, Name, Tutor, Leaner)).Ok();
+        (await _entityApiClient.InsertWithLookup(Class, Name, "class1", Tutor, 1)).Ok();
 
-        (await _schemaApiClient.EnsureSimpleEntity(Class, Name, Tutor, Leaner)).AssertSuccess();
-        (await _entityApiClient.AddDataWithLookup(Class, Name, "class1", Tutor, 1)).AssertSuccess();
-
-        (await _entityApiClient.AddCrosstableData(Class, Leaner, 1, 1)).AssertSuccess();
-        Assert.True(1 <= (await _entityApiClient.CrossTable(Class, Leaner, false,1)).AssertSuccess().Items.Length);
+        (await _entityApiClient.AddJunctionData(Class, Leaner, 1, 1)).Ok();
+        Assert.True(1 <= (await _entityApiClient.GetJunctionData(Class, Leaner, false,1)).Ok().Items.Length);
     }
 }

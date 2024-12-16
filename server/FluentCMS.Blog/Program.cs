@@ -1,7 +1,6 @@
 using FluentCMS.Auth.models;
 using FluentCMS.Blog.Share;
-using FluentCMS.Exceptions;
-using FluentCMS.Options;
+using FluentCMS.Utils.ResultExt;
 using FluentCMS.WebAppExt;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -9,9 +8,8 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var provider = builder.Configuration.GetValue<string>(CmsConstants.DatabaseProvider)
-               ?? throw new Exception("DatabaseProvider not found");
-    
+var provider = builder.Configuration.GetValue<string>(CmsConstants.DatabaseProvider) ??
+               throw new Exception("DatabaseProvider not found");
 var conn = builder.Configuration.GetConnectionString(provider) ?? 
            throw new Exception($"Connection string {provider} not found"); 
 
@@ -49,10 +47,12 @@ void AddOutputCachePolicy()
     builder.Services.AddOutputCache(cacheOption =>
     {
         cacheOption.AddBasePolicy(policyBuilder => policyBuilder.Expire(TimeSpan.FromMinutes(1)));
+        /*
         cacheOption.AddPolicy(CmsOptions.DefaultPageCachePolicyName,
             b => b.Expire(TimeSpan.FromMinutes(2)));
         cacheOption.AddPolicy(CmsOptions.DefaultQueryCachePolicyName,
             b => b.Expire(TimeSpan.FromSeconds(1)));
+            */
     });
 }
 

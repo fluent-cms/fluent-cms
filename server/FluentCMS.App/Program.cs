@@ -2,6 +2,7 @@ using FluentCMS.App;
 using FluentCMS.Cms.Services;
 using FluentCMS.Utils.Nosql;
 using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Utils.ResultExt;
 using FluentCMS.WebAppExt;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
@@ -107,7 +108,7 @@ void RegisterHooks()
         {
             if (param.RecordId == "1000")
             {
-                throw new FluentCMS.Exceptions.ServiceException("1000");
+                throw new ResultException("1000");
             }
             return param;
         });

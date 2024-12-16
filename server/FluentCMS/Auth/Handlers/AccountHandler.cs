@@ -12,7 +12,7 @@ public static class AccountHandlers
 
         app.MapGet("/users/{id}", async (
             IAccountService svc, string id, CancellationToken ct
-        ) => await svc.GetOneUser(id, ct));
+        ) => await svc.GetOne(id, ct));
 
         app.MapDelete("/users/{id}", async (IAccountService svc, string id) => await svc.DeleteUser(id));
 

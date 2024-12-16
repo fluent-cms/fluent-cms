@@ -4,16 +4,16 @@ using FluentCMS.Auth.Handlers;
 using FluentCMS.Auth.Services;
 using FluentCMS.Cms.Handlers;
 using FluentCMS.Cms.Services;
-using FluentCMS.Exceptions;
 using FluentCMS.Utils.Cache;
 using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Graph;
-using FluentCMS.Options;
+using FluentCMS.Types;
 using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.LocalFileStore;
 using FluentCMS.Utils.PageRender;
 using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Utils.ResultExt;
 using FluentResults;
 using GraphQL;
 using Microsoft.AspNetCore.Diagnostics;
@@ -30,7 +30,7 @@ public enum DatabaseProvider
     SqlServer,
 }
 
-public record Problem(string Title, string? Detail =default);
+public record Problem(string Title, string? Detail =null);
 
 public sealed class CmsBuilder(
     ILogger<CmsBuilder> logger,
@@ -46,7 +46,7 @@ public sealed class CmsBuilder(
         IServiceCollection services,
         DatabaseProvider databaseProvider,
         string connectionString,
-        Action<CmsOptions>? optionsAction = default)
+        Action<CmsOptions>? optionsAction = null)
     {
         var cmsOptions = new CmsOptions();
         optionsAction?.Invoke(cmsOptions);
@@ -82,7 +82,7 @@ public sealed class CmsBuilder(
                 b.AddSystemTextJson();
                 b.AddUnhandledExceptionHandler(ex =>
                 {
-                    if (ex.Exception is ServiceException)
+                    if (ex.Exception is ResultException)
                     {
                         ex.ErrorMessage = ex.Exception.Message;
                     }
@@ -247,8 +247,8 @@ public sealed class CmsBuilder(
             using var serviceScope = app.Services.CreateScope();
 
             var schemaService = serviceScope.ServiceProvider.GetRequiredService<ISchemaService>();
-            await schemaService.EnsureSchemaTable(default);
-            await schemaService.EnsureTopMenuBar(default);
+            await schemaService.EnsureSchemaTable();
+            await schemaService.EnsureTopMenuBar();
         }
 
         void UseExceptionHandler()
@@ -259,7 +259,7 @@ public sealed class CmsBuilder(
                 {
 
                     var ex = context.Features.Get<IExceptionHandlerFeature>()?.Error;
-                    if (ex is ServiceException)
+                    if (ex is ResultException)
                     {
                         context.Response.StatusCode = 400;
                         var problem = app.Environment.IsDevelopment()
@@ -278,19 +278,21 @@ public sealed class CmsBuilder(
         var title = assembly.GetCustomAttribute<AssemblyTitleAttribute>()?.Title;
         var informationalVersion =
             assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-        var parts = connectionString.Split(";")
-            .Where(x => !x.StartsWith("Password"))
-            .ToArray();
+        var parts = connectionString.Split(";").Where(x => !x.StartsWith("Password"));
 
-        logger.LogInformation($"""
-                               *********************************************************
-                               *********************************************************
-                               {title}, Version {informationalVersion?.Split("+").First()}
-                               Database : {databaseProvider} - {string.Join(";", parts)}
-                               EntitySchemaExpiration: {cmsOptions.EntitySchemaExpiration}
-                               QuerySchemaExpiration: {cmsOptions.QuerySchemaExpiration}
-                               *********************************************************
-                               *********************************************************
-                               """);
+        logger.LogInformation(
+            $"""
+            *********************************************************
+            {title}, Version {informationalVersion?.Split("+").First()}
+            Database : {databaseProvider} - {string.Join(";", parts)}
+            Client App is Enabled :{cmsOptions.EnableClient}
+            Use CMS' home page: {cmsOptions.MapCmsHomePage}
+            GraphQL Client Path: {cmsOptions.GraphQlPath}
+            RouterOption: API Base URL={cmsOptions.RouteOptions.ApiBaseUrl} Page Base URL={cmsOptions.RouteOptions.PageBaseUrl}
+            Image Compression: MaxWidth={cmsOptions.ImageCompression.MaxWidth}, Quality={cmsOptions.ImageCompression.Quality}
+            Schema Cache Settings: Entity Schema Expiration={cmsOptions.EntitySchemaExpiration}, Query Schema Expiration = {cmsOptions.QuerySchemaExpiration}
+            Output Cache Settings: Page CachePolicy={cmsOptions.PageCachePolicy}, Query Cache Policy={cmsOptions.QueryCachePolicy}
+            *********************************************************
+            """);
     }
 }

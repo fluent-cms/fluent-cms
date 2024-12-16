@@ -1,4 +1,4 @@
-namespace FluentCMS.Options;
+namespace FluentCMS.Types;
 
 public class ImageCompressionOptions
 {
@@ -17,7 +17,7 @@ public sealed class CmsOptions
     public const string DefaultPageCachePolicyName = "CmsPageCachePolicy";
     public const string DefaultQueryCachePolicyName = "CmsQueryCachePolicy";
     
-    public bool EnableClient = true;
+    public bool EnableClient { get; set; } = true;
     public bool MapCmsHomePage { get; set; } = true;
     public string GraphQlPath { get; set; } = "/graphql";
     public TimeSpan EntitySchemaExpiration { get; set; } = TimeSpan.FromMinutes(1);

@@ -2,8 +2,10 @@ using System.Collections.Immutable;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using DynamicExpresso;
+using FluentCMS.Types;
 using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.KateQueryExt;
+using FluentCMS.Utils.ResultExt;
 using FluentResults;
 
 namespace FluentCMS.Utils.QueryBuilder;
@@ -165,8 +167,9 @@ public static class EntityHelper
             list.Add(new Attribute
            ( 
                 Field : DefaultFields.Id, Header : "id",
-                IsDefault : true,
-                DataType : DataType.Int, Type : DisplayType.Number
+                IsDefault : true, InDetail:true, InList:true,
+                DataType : DataType.Int, 
+                Type : DisplayType.Number
             ));
         }
 
@@ -177,7 +180,7 @@ public static class EntityHelper
             list.Add(new Attribute
             (
                 Field : DefaultFields.CreatedAt, Header : "Created At", 
-                InList : true, InDetail : true, IsDefault : true,
+                InList : true, InDetail : false, IsDefault : true,
                 DataType : DataType.Datetime
             ));
         }
@@ -187,7 +190,7 @@ public static class EntityHelper
             list.Add(new Attribute
             (
                 Field : DefaultFields.UpdatedAt, Header : "Updated At", 
-                InList : true, InDetail : true, IsDefault : true,
+                InList : true, InDetail : false, IsDefault : true,
                 DataType : DataType.Datetime
             ));
         }
@@ -211,11 +214,9 @@ public static class EntityHelper
         var errs = new List<IError>();
         foreach (var localAttribute in e.Attributes.GetLocalAttrs().Where(x=>!string.IsNullOrWhiteSpace(x.Validation)))
         {
-            var res = Validate(localAttribute);
-            
-            if (res.IsFailed)
+            if (!Validate(localAttribute).Try(out var err))
             {
-                errs.AddRange(res.Errors);
+                errs.AddRange(err??[]);
             }
         }
         return errs.Count == 0 ? Result.Ok():Result.Fail(errs);
@@ -295,7 +296,7 @@ public static class EntityHelper
                 JsonValueKind.False => Result.Ok<object>(false),
                 JsonValueKind.Null => Result.Ok<object>(null!),
                 JsonValueKind.Undefined => Result.Ok<object>(null!),
-                _ => Result.Fail<object>($"value kind {element.Value.ValueKind} is not supported")
+                _ => Result.Fail<object>($"Fail to convert [{attribute.Field}], input valueKind is [{element.Value.ValueKind}]")
             };
         }
     }

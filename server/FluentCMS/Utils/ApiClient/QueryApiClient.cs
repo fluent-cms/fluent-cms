@@ -41,12 +41,12 @@ public class QueryApiClient(HttpClient client)
     {
         var url =
             $"/api/queries/{queryName}?first={span.First}&last={span.Last}&offset={pagination.Offset}&limit={pagination.Limit}";
-        return await client.GetObject<Record[]>(url);
+        return await client.GetResult<Record[]>(url);
     }
     public async Task<Result<Record>> GetOne(string queryName, object id)
     {
         var url = $"/api/queries/{queryName}/one?id=" + id;
-        var (_,_, element,errors) = await client.GetObject<JsonElement>(url);
+        var (_,_, element,errors) = await client.GetResult<JsonElement>(url);
         if (errors is not null)
         {
             return Result.Fail(errors);
@@ -57,6 +57,6 @@ public class QueryApiClient(HttpClient client)
     {
         var param = string.Join("&", ids.Select(x=>$"{primaryKey}={x}"));
         var url = $"/api/queries/{queryName}/?" + param;
-        return await client.GetObject<Record[]>(url);
+        return await client.GetResult<Record[]>(url);
     }
 }

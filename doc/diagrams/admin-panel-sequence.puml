@@ -10,7 +10,7 @@ Component(app, "Main", "", "")
 Component(dataListPage, "DataListPage", "", "")
 Component(dataItemPage, "DataItemPage", "", "")
 Component(lookupContainer, "LookupContainer", "", "")
-Component(crosstable, "CrossTable", "", "")
+Component(junction, "Junction", "", "")
 Boundary_End()
 
 Container_Boundary(apiServer,"API Server")
@@ -42,10 +42,10 @@ loop entity's lookup Attributes
     Rel(entityController, lookupContainer,"items of lookupEntity","")
     Rel(lookupContainer, lookupContainer, "render","")
 end
-loop entity's Crosstable Attributes
-    Rel(dataItemPage, crosstable,"render","")
-    Rel(crosstable, entityController,"/api/entities/[entity]/[id][attributeName]","")
+loop entity's Junction Attributes
+    Rel(dataItemPage, junction,"render","")
+    Rel(junction, entityController,"/api/entities/[entity]/[id][attributeName]","")
     Rel(entityController, lookupContainer,"items of lookupEntity","")
-    Rel(crosstable, crosstable, "render","")
+    Rel(junction, junction, "render","")
 end
 @enduml

@@ -14,7 +14,7 @@ public interface IEntityService
     Task<Record> One(string entityName, string strId, CancellationToken token);
     Task<Record> OneByAttributes(string entityName, string strId, string[]attributes, CancellationToken token =default);
     
-    Task<ListResult> CrosstableList(string name, string id, string attr, bool exclude, StrArgs args, Pagination pagination, CancellationToken token);
-    Task<int> CrosstableAdd(string name, string id, string attr, JsonElement[] elements, CancellationToken token);
-    Task<int> CrosstableDelete(string name, string id, string attr, JsonElement[] elements, CancellationToken token);
+    Task<ListResult> JunctionList(string name, string id, string attr, bool exclude, StrArgs args, Pagination pagination, CancellationToken token);
+    Task<int> JunctionAdd(string name, string id, string attr, JsonElement[] elements, CancellationToken token);
+    Task<int> JunctionDelete(string name, string id, string attr, JsonElement[] elements, CancellationToken token);
 }

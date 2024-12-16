@@ -1,5 +1,5 @@
 using FluentCMS.Cms.Models;
-using FluentCMS.Exceptions;
+using FluentCMS.Types;
 using FluentCMS.Utils.DictionaryExt;
 using FluentCMS.Utils.PageRender;
 using FluentCMS.Utils.QueryBuilder;
@@ -8,7 +8,6 @@ using FluentResults;
 using HandlebarsDotNet;
 using HtmlAgilityPack;
 using Microsoft.AspNetCore.WebUtilities;
-using ResultExt = FluentCMS.Exceptions.ResultExt;
 
 namespace FluentCMS.Cms.Services;
 
@@ -26,7 +25,7 @@ public sealed class PageService(ILogger<PageService> logger,ISchemaService schem
         var data = string.IsNullOrWhiteSpace(ctx.Page.Query)
             ? new Dictionary<string, object>()
             : await querySvc.OneWithAction(ctx.Page.Query, strArgs, token)
-              ?? throw new ServiceException($"not find data by of {param}");
+              ?? throw new ResultException($"not find data by of {param}");
         
         return await RenderPage(ctx, data, strArgs, token);
     }
@@ -41,7 +40,7 @@ public sealed class PageService(ILogger<PageService> logger,ISchemaService schem
         var msg = string.Join(",", error!.Select(x => x.Message));
         if (name != "home")
         {
-            throw new ServiceException(msg);
+            throw new ResultException(msg);
         }
 
         logger.LogError("Fail to load page [{page}], err: {err}", name, msg);
@@ -53,7 +52,7 @@ public sealed class PageService(ILogger<PageService> logger,ISchemaService schem
 
     public async Task<string> GetPart(string partStr, CancellationToken token)
     {
-        var part = PagePartHelper.Parse(partStr) ?? throw new ServiceException("Invalid Partial Part");
+        var part = PagePartHelper.Parse(partStr) ?? throw new ResultException("Invalid Partial Part");
         var ctx = (await GetContext(part.Page, false, token)).Ok().ToPartialContext(part.NodeId);
 
         var cursor = new Span(part.First, part.Last);

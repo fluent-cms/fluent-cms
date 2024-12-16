@@ -1,10 +1,12 @@
 using System.Collections.Immutable;
 using System.Text.Json;
-using FluentCMS.Exceptions;
+using FluentCMS.Types;
 using FluentCMS.Utils.DictionaryExt;
 using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Utils.ResultExt;
+using FluentResults;
 
 namespace FluentCMS.Cms.Services;
 
@@ -21,7 +23,7 @@ public sealed class EntityService(
         var ctx = await GetIdCtx(entityName, id, token);
         var query = ctx.Entity.ByIdQuery(ctx.Id, ctx.Entity.Attributes.GetLocalAttrs(attributes), []);
         return await queryExecutor.One(query, token) ??
-            throw new ServiceException($"not find record by [{id}]");
+            throw new ResultException($"not find record by [{id}]");
     }
 
     public async Task<Record> One(string entityName, string id, CancellationToken token)
@@ -36,7 +38,7 @@ public sealed class EntityService(
 
         var query = ctx.Entity.ByIdQuery(ctx.Id, ctx.Entity.Attributes.GetLocalAttrs(InListOrDetail.InDetail), []);
         var record = await queryExecutor.One(query, token)??
-            throw new ServiceException($"not find record by [{id}]");
+            throw new ResultException($"not find record by [{id}]");
 
         foreach (var attribute in ctx.Entity.Attributes.GetAttrByType(DisplayType.Lookup, InListOrDetail.InDetail))
         {
@@ -71,46 +73,46 @@ public sealed class EntityService(
         return await Delete(await GetRecordCtx(name, ele, token), token);
     }
 
-    public async Task<int> CrosstableDelete(string name, string id, string attr, JsonElement[] elements,
+    public async Task<int> JunctionDelete(string name, string id, string attr, JsonElement[] elements,
         CancellationToken token)
     {
-        var ctx = await GetCrosstableCtx(name, id, attr, token);
+        var ctx = await GetJunctionCtx(name, id, attr, token);
         var items = elements.Select(ele =>
-            ctx.Crosstable.TargetEntity.Parse(ele, entitySchemaSvc).Ok()).ToArray();
+            ctx.Junction.TargetEntity.Parse(ele, entitySchemaSvc).Ok()).ToArray();
 
-        var res = await hookRegistry.CrosstablePreDel.Trigger(provider,
-            new CrosstablePreDelArgs(name, id, ctx.Attribute, items));
+        var res = await hookRegistry.JunctionPreDel.Trigger(provider,
+            new JunctionPreDelArgs(name, id, ctx.Attribute, items));
 
-        var query = ctx.Crosstable.Delete(ctx.Id, res.RefItems);
+        var query = ctx.Junction.Delete(ctx.Id, res.RefItems);
         var ret = await queryExecutor.Exec(query, token);
-        await hookRegistry.CrosstablePostDel.Trigger(provider,
-            new CrosstablePostDelArgs(name, id, ctx.Attribute, items));
+        await hookRegistry.JunctionPostDel.Trigger(provider,
+            new JunctionPostDelArgs(name, id, ctx.Attribute, items));
         return ret;
     }
 
-    public async Task<int> CrosstableAdd(string name, string id, string attr, JsonElement[] elements,
+    public async Task<int> JunctionAdd(string name, string id, string attr, JsonElement[] elements,
         CancellationToken token)
     {
-        var ctx = await GetCrosstableCtx(name, id, attr, token);
+        var ctx = await GetJunctionCtx(name, id, attr, token);
 
         var items = elements
-            .Select(ele => ctx.Crosstable.TargetEntity.Parse(ele, entitySchemaSvc).Ok()).ToArray();
-        var res = await hookRegistry.CrosstablePreAdd.Trigger(provider,
-            new CrosstablePreAddArgs(name, id, ctx.Attribute, items));
-        var query = ctx.Crosstable.Insert(ctx.Id, res.RefItems);
+            .Select(ele => ctx.Junction.TargetEntity.Parse(ele, entitySchemaSvc).Ok()).ToArray();
+        var res = await hookRegistry.JunctionPreAdd.Trigger(provider,
+            new JunctionPreAddArgs(name, id, ctx.Attribute, items));
+        var query = ctx.Junction.Insert(ctx.Id, res.RefItems);
 
         var ret = await queryExecutor.Exec(query, token);
-        await hookRegistry.CrosstablePostAdd.Trigger(provider,
-            new CrosstablePostAddArgs(name, id, ctx.Attribute, items));
+        await hookRegistry.JunctionPostAdd.Trigger(provider,
+            new JunctionPostAddArgs(name, id, ctx.Attribute, items));
         return ret;
     }
 
 
-    public async Task<ListResult> CrosstableList(string name, string id, string attr, bool exclude,
+    public async Task<ListResult> JunctionList(string name, string id, string attr, bool exclude,
         StrArgs args, Pagination pagination, CancellationToken token)
     {
-        var ctx = await GetCrosstableCtx(name, id, attr, token);
-        var target = ctx.Crosstable.TargetEntity;
+        var ctx = await GetJunctionCtx(name, id, attr, token);
+        var target = ctx.Junction.TargetEntity;
 
         var selectAttributes = target.Attributes.GetLocalAttrs(InListOrDetail.InList);
 
@@ -120,12 +122,12 @@ public sealed class EntityService(
         var validPagination = PaginationHelper.ToValid(pagination,target.DefaultPageSize);
 
         var pagedListQuery = exclude
-            ? ctx.Crosstable.GetNotRelatedItems(selectAttributes, filter, sorts, validPagination, [ctx.Id])
-            : ctx.Crosstable.GetRelatedItems(selectAttributes, filter, [..sorts], null, validPagination, [ctx.Id]);
+            ? ctx.Junction.GetNotRelatedItems(selectAttributes, filter, sorts, validPagination, [ctx.Id])
+            : ctx.Junction.GetRelatedItems(selectAttributes, filter, [..sorts], null, validPagination, [ctx.Id]);
 
         var countQuery = exclude
-            ? ctx.Crosstable.GetNotRelatedItemsCount(filter, [ctx.Id])
-            : ctx.Crosstable.GetRelatedItemsCount(filter, [ctx.Id]);
+            ? ctx.Junction.GetNotRelatedItemsCount(filter, [ctx.Id])
+            : ctx.Junction.GetRelatedItemsCount(filter, [ctx.Id]);
 
         return new ListResult(await queryExecutor.Many(pagedListQuery, token),
             await queryExecutor.Count(countQuery, token));
@@ -172,7 +174,7 @@ public sealed class EntityService(
         }
 
         var lookupEntity = attr.Lookup ??
-            throw new ServiceException($"not find lookup entity from {attr.AddTableModifier()}");
+            throw new ResultException($"not find lookup entity from {attr.AddTableModifier()}");
 
         var query = lookupEntity.ManyQuery(ids,
             [attr.Lookup!.PrimaryKeyAttribute, attr.Lookup!.LoadedTitleAttribute]);
@@ -193,11 +195,11 @@ public sealed class EntityService(
         var (entity, record) = ctx;
         if (!record.TryGetValue(entity.PrimaryKey, out var id))
         {
-            throw new ServiceException("Can not find id ");
+            throw new ResultException("Can not find id ");
         }
 
-        entity.ValidateLocalAttributes(record).Ok();
-        entity.ValidateTitleAttributes(record).Ok();
+        Result.Ok();
+        Result.Ok();
 
 
         var res = await hookRegistry.EntityPreUpdate.Trigger(provider,
@@ -213,8 +215,8 @@ public sealed class EntityService(
     private async Task<Record> Insert(RecordContext ctx, CancellationToken token)
     {
         var (entity, record) = ctx;
-        entity.ValidateLocalAttributes(ctx.Record).Ok();
-        ctx.Entity.ValidateTitleAttributes(ctx.Record).Ok();
+        Result.Ok();
+        Result.Ok();
 
         var res = await hookRegistry.EntityPreAdd.Trigger(provider,
             new EntityPreAddArgs(entity.Name, record));
@@ -234,7 +236,7 @@ public sealed class EntityService(
         var (entity, record) = ctx;
         if (!record.TryGetValue(entity.PrimaryKey, out var id))
         {
-            throw new ServiceException("Can not find id ");
+            throw new ResultException("Can not find id ");
         }
 
         var res = await hookRegistry.EntityPreDel.Trigger(provider,
@@ -256,28 +258,28 @@ public sealed class EntityService(
         var entity = (await entitySchemaSvc.GetLoadedEntity(entityName, token)).Ok();
         if (!entitySchemaSvc.ResolveVal(entity.PrimaryKeyAttribute, id, out var idValue))
         {
-            throw new ServiceException($"Failed to cast {id} to {entity.PrimaryKeyAttribute.DataType}");
+            throw new ResultException($"Failed to cast {id} to {entity.PrimaryKeyAttribute.DataType}");
         }
 
         return new IdContext(entity, idValue);
     }
 
-    record CrosstableContext(LoadedAttribute Attribute, Crosstable Crosstable, ValidValue Id);
+    record JunctionContext(LoadedAttribute Attribute, Junction Junction, ValidValue Id);
 
-    private async Task<CrosstableContext> GetCrosstableCtx(string entityName, string strId, string attributeName,
+    private async Task<JunctionContext> GetJunctionCtx(string entityName, string strId, string attributeName,
         CancellationToken token)
     {
         var entity = (await entitySchemaSvc.GetLoadedEntity(entityName, token)).Ok();
         var attribute = entity.Attributes.FindOneAttr(attributeName) ??
-            throw new ServiceException($"not find {attributeName} in {entityName}");
+            throw new ResultException($"not find {attributeName} in {entityName}");
 
-        var crossTable = attribute.Crosstable ?? throw new ServiceException($"not find crosstable of {attributeName}");
-        if (!entitySchemaSvc.ResolveVal(crossTable.SourceAttribute, strId, out var id))
+        var junction = attribute.Junction ?? throw new ResultException($"not find Junction of {attributeName}");
+        if (!entitySchemaSvc.ResolveVal(junction.SourceAttribute, strId, out var id))
         {
-            throw new ServiceException($"Failed to cast {strId} to {crossTable.SourceAttribute.DataType}");
+            throw new ResultException($"Failed to cast {strId} to {junction.SourceAttribute.DataType}");
         }
 
-        return new CrosstableContext(attribute, crossTable, id);
+        return new JunctionContext(attribute, junction, id);
     }
 
     record RecordContext(LoadedEntity Entity, Record Record);
@@ -285,7 +287,7 @@ public sealed class EntityService(
     private async Task<RecordContext> GetRecordCtx(string name, JsonElement ele, CancellationToken token)
     {
         var entity = (await entitySchemaSvc.GetLoadedEntity(name, token)).Ok();
-        var record = (entity.Parse(ele, entitySchemaSvc)).Ok();
+        var record = entity.Parse(ele, entitySchemaSvc).Ok();
         return new RecordContext(entity, record);
     }
 }

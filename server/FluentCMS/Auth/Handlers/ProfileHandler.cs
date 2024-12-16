@@ -1,6 +1,5 @@
 using FluentCMS.Auth.Services;
-using FluentCMS.Exceptions;
-using Microsoft.AspNetCore.Identity;
+using FluentCMS.Utils.ResultExt;
 
 namespace FluentCMS.Auth.Handlers;
 
@@ -14,6 +13,6 @@ public static class ProfileHandler
 
         app.MapGet("/info", (
             IProfileService svc
-        ) => svc.GetInfo() ?? throw new ServiceException("Unauthorized"));
+        ) => svc.GetInfo() ?? throw new ResultException("Unauthorized"));
     }
 }

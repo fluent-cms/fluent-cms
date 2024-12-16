@@ -3,8 +3,8 @@ using FluentCMS.Utils.KateQueryExt;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
-public record Crosstable(
-    LoadedEntity CrossEntity,
+public record Junction(
+    LoadedEntity JunctionEntity,
     LoadedEntity TargetEntity,
     LoadedEntity SourceEntity,
     
@@ -12,9 +12,9 @@ public record Crosstable(
     LoadedAttribute TargetAttribute
 );
 
-public static class CrosstableHelper
+public static class JunctionHelper
 {
-    public static ColumnDefinition[] GetColumnDefinitions(this Crosstable c)
+    public static ColumnDefinition[] GetColumnDefinitions(this Junction c)
     {
         return
         [
@@ -27,16 +27,16 @@ public static class CrosstableHelper
         ];
     }
 
-    public static Crosstable Crosstable(LoadedEntity sourceEntity, LoadedEntity targetEntity,
+    public static Junction Junction(LoadedEntity sourceEntity, LoadedEntity targetEntity,
         LoadedAttribute crossAttribute)
     {
-        var tableName = GetCrosstableTableName(sourceEntity.Name, targetEntity.Name);
+        var tableName = GetJunctionTableName(sourceEntity.Name, targetEntity.Name);
         var id = new LoadedAttribute(tableName, DefaultFields.Id);
         var deleted = new LoadedAttribute(tableName, DefaultFields.Deleted);
         sourceEntity = sourceEntity with
         {
             Attributes =
-            [..sourceEntity.Attributes.Select(x => x.Field == crossAttribute.Field ? x with { Crosstable = null } : x)]
+            [..sourceEntity.Attributes.Select(x => x.Field == crossAttribute.Field ? x with { Junction = null } : x)]
         };
 
         var sourceAttribute = new LoadedAttribute
@@ -62,8 +62,8 @@ public static class CrosstableHelper
             Name: tableName,
             TableName: tableName
         );
-        return new Crosstable(
-            CrossEntity: crossEntity,
+        return new Junction(
+            JunctionEntity: crossEntity,
             TargetEntity: targetEntity,
             SourceEntity: sourceEntity,
             SourceAttribute: sourceAttribute,
@@ -71,7 +71,7 @@ public static class CrosstableHelper
         );
     }
 
-    public static string GetCrosstableTableName(string sourceName, string targetName)
+    public static string GetJunctionTableName(string sourceName, string targetName)
     {
         string[] arr = [sourceName, targetName];
         var sorted = arr.OrderBy(x => x).ToArray();
@@ -79,23 +79,23 @@ public static class CrosstableHelper
         return $"{sorted[0]}_{sorted[1]}";
     }
 
-    public static SqlKata.Query Delete(this Crosstable c, ValidValue id, Record[] targetItems)
+    public static SqlKata.Query Delete(this Junction c, ValidValue id, Record[] targetItems)
     {
         var vals = targetItems.Select(x => x[c.TargetEntity.PrimaryKey]);
-        return new SqlKata.Query(c.CrossEntity.TableName).Where(c.SourceAttribute.Field, id.Value)
-            .WhereIn(c.TargetAttribute.Field, vals).AsUpdate([c.CrossEntity.DeletedAttribute.Field], [true]);
+        return new SqlKata.Query(c.JunctionEntity.TableName).Where(c.SourceAttribute.Field, id.Value)
+            .WhereIn(c.TargetAttribute.Field, vals).AsUpdate([c.JunctionEntity.DeletedAttribute.Field], [true]);
     }
 
-    public static SqlKata.Query Insert(this Crosstable c, ValidValue id, Record[] targetItems)
+    public static SqlKata.Query Insert(this Junction c, ValidValue id, Record[] targetItems)
     {
         string[] cols = [c.SourceAttribute.Field, c.TargetAttribute.Field];
         var vals = targetItems.Select(x => { return new[] { id.Value, x[c.TargetEntity.PrimaryKey] }; });
 
-        return new SqlKata.Query(c.CrossEntity.TableName).AsInsert(cols, vals);
+        return new SqlKata.Query(c.JunctionEntity.TableName).AsInsert(cols, vals);
     }
 
     public static SqlKata.Query GetNotRelatedItems(
-        this Crosstable c,
+        this Junction c,
         IEnumerable<LoadedAttribute> selectAttributes,
         IEnumerable<ValidFilter> filters,
         IEnumerable<ValidSort> sorts,
@@ -112,7 +112,7 @@ public static class CrosstableHelper
 
 
     public static SqlKata.Query GetRelatedItems(
-        this Crosstable c,
+        this Junction c,
         IEnumerable<LoadedAttribute> selectAttributes,
         IEnumerable<ValidFilter> filters,
         ValidSort[] sorts,
@@ -134,7 +134,7 @@ public static class CrosstableHelper
     }
 
     public static SqlKata.Query GetNotRelatedItemsCount(
-        this Crosstable c,
+        this Junction c,
         IEnumerable<ValidFilter> filters,
         IEnumerable<ValidValue> sourceIds)
     {
@@ -145,7 +145,7 @@ public static class CrosstableHelper
     }
 
     public static SqlKata.Query GetRelatedItemsCount(
-        this Crosstable c,
+        this Junction c,
         IEnumerable<ValidFilter> filters,
         IEnumerable<ValidValue> sourceIds)
     {
@@ -156,27 +156,27 @@ public static class CrosstableHelper
     }
 
     private static void ApplyRelatedFilter(
-        this Crosstable c,
+        this Junction c,
         SqlKata.Query baseQuery,
         IEnumerable<ValidValue> sourceIds)
     {
 
         var (a, b) = (c.TargetEntity.PrimaryKeyAttribute.AddTableModifier(), c.TargetAttribute.AddTableModifier());
-        baseQuery.Join(c.CrossEntity.TableName, a, b)
+        baseQuery.Join(c.JunctionEntity.TableName, a, b)
             .WhereIn(c.SourceAttribute.AddTableModifier(), sourceIds.GetValues())
-            .Where(c.CrossEntity.DeletedAttribute.AddTableModifier(), false);
+            .Where(c.JunctionEntity.DeletedAttribute.AddTableModifier(), false);
     }
 
     private static void ApplyNotRelatedFilter(
-        this Crosstable c,
+        this Junction c,
         SqlKata.Query baseQuery,
         IEnumerable<ValidValue> sourceIds)
     {
         var (a, b) = (c.TargetEntity.PrimaryKeyAttribute.AddTableModifier(), c.TargetAttribute.AddTableModifier());
-        baseQuery.LeftJoin(c.CrossEntity.TableName,
+        baseQuery.LeftJoin(c.JunctionEntity.TableName,
             j => j.On(a, b)
                 .WhereIn(c.SourceAttribute.AddTableModifier(), sourceIds.GetValues())
-                .Where(c.CrossEntity.DeletedAttribute.AddTableModifier(), false)
+                .Where(c.JunctionEntity.DeletedAttribute.AddTableModifier(), false)
         ).WhereNull(c.SourceAttribute.AddTableModifier());
     }
 }

@@ -5,7 +5,7 @@ namespace FluentCMS.Auth.Services;
 
 public interface IAccountService
 {
-    Task<UserDto> GetOneUser(string id,CancellationToken cancellationToken);
+    Task<UserDto> GetOne(string id,CancellationToken cancellationToken);
     Task<UserDto[]> GetUsers(CancellationToken cancellationToken);
     Task<string[]> GetRoles(CancellationToken cancellationToken);
     Task<Result> EnsureUser(string email, string password, string[] roles);

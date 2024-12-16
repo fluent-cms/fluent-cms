@@ -1,5 +1,6 @@
 using FluentCMS.Auth.models;
-using FluentCMS.Exceptions;
+using FluentCMS.Types;
+using FluentCMS.Utils.ResultExt;
 
 namespace FluentCMS.Auth.Services;
 
@@ -22,6 +23,6 @@ public class DummyProfileService: IProfileService
     
     public Task ChangePassword(ProfileDto dto)
     {
-        throw new ServiceException("Not implemented yet");
+        throw new ResultException("Not implemented yet");
     } 
 }

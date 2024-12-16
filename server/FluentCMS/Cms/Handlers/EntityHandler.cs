@@ -53,7 +53,7 @@ public static class EntityHandler
             string attributeName,
             [FromBody] JsonElement[] items,
             CancellationToken ct
-        ) => await entityService.CrosstableDelete(entityName, id, attributeName, items, ct));
+        ) => await entityService.JunctionDelete(entityName, id, attributeName, items, ct));
 
         app.MapPost("/{name}/{id}/{attr}/save", async (
             IEntityService entityService,
@@ -62,7 +62,7 @@ public static class EntityHandler
             string attr,
             JsonElement[] elements,
             CancellationToken ct
-        ) => await entityService.CrosstableAdd(name, id, attr, elements, ct));
+        ) => await entityService.JunctionAdd(name, id, attr, elements, ct));
 
         app.MapGet("/{name}/{id}/{attr}", async (
             IEntityService entityService,
@@ -74,7 +74,7 @@ public static class EntityHandler
             [FromQuery] string? limit,
             bool exclude,
             CancellationToken ct
-        ) => await entityService.CrosstableList(
+        ) => await entityService.JunctionList(
             name, id, attr, exclude,
             context.Args(),
             new Pagination(offset, limit),

@@ -117,8 +117,11 @@
 </div></div>
                     <div class="col-md-9" role="main">
 
-<p>Welcome to <a href="https://github.com/fluent-cms/fluent-cms">Fluent CMS</a>! <a href="https://github.com/fluent-cms/fluent-cms/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/fluent-cms/fluent-cms.svg?style=social&amp;label=Star" /></a>  <br />
-If you'd like to contribute to the project, please check out our <a href="https://github.com/fluent-cms/fluent-cms/blob/main/CONTRIBUTING.md">CONTRIBUTING guide</a>.Don’t forget to give us a star  ⭐ if you find Fluent CMS helpful!    </p>
+<p>Welcome to <a href="https://github.com/fluent-cms/fluent-cms">FluentCMS</a>! 🚀<br />
+<a href="https://github.com/fluent-cms/fluent-cms/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/fluent-cms/fluent-cms.svg?style=social&amp;label=Star" /></a></p>
+<p>FluentCMS makes content management seamless with its powerful GraphQL API and intuitive drag-and-drop page design features.</p>
+<p>If you'd like to contribute, please check out our <a href="https://github.com/fluent-cms/fluent-cms/blob/main/CONTRIBUTING.md">CONTRIBUTING guide</a>.<br />
+Enjoying FluentCMS? Don’t forget to give us a ⭐ and help us grow!     </p>
 <hr />
 <h2 id="what-is-fluent-cms">What is Fluent CMS?</h2>
 <p><strong>Fluent CMS</strong> is an open-source Content Management System designed to simplify and accelerate web development workflows. While it's particularly suited for CMS projects, it is also highly beneficial for general web applications, reducing the need for repetitive REST/GraphQL API development.</p>
@@ -422,7 +425,6 @@ The <strong>List Page</strong> displays entities in a tabular format, enabling s
 <h4 id="2-detail-page">2. <strong>Detail Page</strong></h4>
 <p><a href="https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course/22">Example Course Detail Page</a><br />
 The <strong>Detail Page</strong> provides an interface for viewing and managing detailed attributes. Related data such as teachers and materials can be selected or modified.</p>
-<hr />
 <hr />
 <h2 id="graphql-query"><strong>GraphQL Query</strong></h2>
 <p>FluentCMS simplifies frontend development by offering robust GraphQL support.</p>
@@ -991,60 +993,79 @@ Course Details &lt;-------&gt; Teacher Details
 <p>When rendering the page, the <code>PageService</code> automatically passes the <code>teacher_id</code> (e.g., <code>{teacher_id: 3}</code>) to the query.</p>
 <hr />
 <h2 id="optimizing-caching">Optimizing Caching</h2>
-<p>To enhance performance, Fluent CMS implements caching strategies. </p>
-<h3 id="cache-types">Cache Types</h3>
+<p>Fluent CMS employs advanced caching strategies to boost performance.  </p>
+<p>For detailed information on ASP.NET Core caching, visit the official documentation: <a href="https://learn.microsoft.com/en-us/aspnet/core/performance/caching/overview?view=aspnetcore-9.0">ASP.NET Core Caching Overview</a>.</p>
+<h3 id="cache-schema">Cache Schema</h3>
+<p>Fluent CMS automatically invalidates schema caches whenever schema changes are made. The schema cache consists of two types:</p>
 <ol>
 <li>
-<p><strong>Entity Definition Cache</strong><br />
-   Fluent CMS requires caching of all entity definitions to dynamically generate GraphQL types.</p>
+<p><strong>Entity Schema Cache</strong><br />
+   Caches all entity definitions required to dynamically generate GraphQL types.</p>
 </li>
 <li>
-<p><strong>Query Definition Cache</strong><br />
-   Each query may depend on multiple related entities. Fluent CMS caches these definitions to compose efficient SQL queries.</p>
+<p><strong>Query Schema Cache</strong><br />
+   Caches query definitions, including dependencies on multiple related entities, to compose efficient SQL queries.</p>
 </li>
 </ol>
-<hr />
-<h3 id="imemorycache-in-fluent-cms">IMemoryCache in Fluent CMS</h3>
-<p>By default, Fluent CMS utilizes ASP.NET's <code>IMemoryCache</code> for caching.</p>
+<p>By default, schema caching is implemented using <code>IMemoryCache</code>. However, you can override this by providing a <code>HybridCache</code>. Below is a comparison of the two options:</p>
+<h4 id="imemorycache"><strong>IMemoryCache</strong></h4>
 <ul>
-<li>
-<p><strong>Advantages</strong>:</p>
-<ul>
+<li><strong>Advantages</strong>:<ul>
 <li>Simple to debug and deploy.</li>
-<li>Suitable for single-node web applications.</li>
+<li>Ideal for single-node web applications.</li>
 </ul>
 </li>
-<li>
-<p><strong>Disadvantages</strong>:</p>
+<li><strong>Disadvantages</strong>:<ul>
+<li>Not suitable for distributed environments. Cache invalidation on one node (e.g., Node A) does not propagate to other nodes (e.g., Node B).</li>
+</ul>
+</li>
+</ul>
+<h4 id="hybridcache"><strong>HybridCache</strong></h4>
 <ul>
-<li>Not scalable for distributed environments. In multi-node deployments, cache invalidation on one node (e.g., Node A) does not propagate to other nodes (e.g., Node B).</li>
+<li><strong>Key Features</strong>:<ul>
+<li><strong>Scalability</strong>: Combines the speed of local memory caching with the consistency of distributed caching.</li>
+<li><strong>Stampede Resolution</strong>: Effectively handles cache stampede scenarios, as verified by its developers.</li>
 </ul>
 </li>
+<li><strong>Limitations</strong>:<br />
+  The current implementation lacks "Backend-Assisted Local Cache Invalidation," meaning invalidation on one node does not instantly propagate to others.</li>
+<li><strong>Fluent CMS Strategy</strong>:<br />
+  Fluent CMS mitigates this limitation by setting the local cache expiration to 20 seconds (one-third of the distributed cache expiration, which is set to 60 seconds). This ensures cache consistency across nodes within 20 seconds, significantly improving upon the typical 60-second delay in memory caching.</li>
 </ul>
-<hr />
-<h3 id="hybridcache-for-scalable-caching">HybridCache for Scalable Caching</h3>
-<p>Starting with ASP.NET 9.0, the framework provides <code>HybridCache</code>, which combines a primary memory cache with a secondary external cache (e.g., Redis).</p>
-<ul>
+<p>To implement a <code>HybridCache</code>, use the following code:</p>
+<pre><code class="language-csharp">builder.AddRedisDistributedCache(connectionName: CmsConstants.Redis);
+builder.Services.AddHybridCache();
+</code></pre>
+<h3 id="cache-data">Cache Data</h3>
+<p>Fluent CMS does not automatically invalidate data caches. Instead, it leverages ASP.NET Core's output caching for a straightforward implementation. Data caching consists of two types:</p>
+<ol>
 <li>
-<p><strong>Key Features</strong>:</p>
-<ul>
-<li><strong>Scalability</strong>: Combines the performance of local memory caching with the distributed consistency of external caching.</li>
-<li><strong>Stampede Resolution</strong>: The <code>HybridCache</code> resolves cache stampede issues, as confirmed by its developers.</li>
-</ul>
+<p><strong>Query Data Cache</strong><br />
+   Caches the results of queries for faster access.</p>
 </li>
 <li>
-<p><strong>Limitations</strong>:<br />
-  The current implementation lacks "Backend-Assisted Local Cache Invalidation," which means cache invalidation on one node does not immediately propagate to others.</p>
+<p><strong>Page Cache</strong><br />
+   Caches the output of rendered pages for quick delivery.</p>
 </li>
-<li>
-<p><strong>Fluent CMS Strategy</strong>:<br />
-  To address this, Fluent CMS sets local cache expiration (20 seconds) to one-third of the distributed cache expiration (60 seconds). This ensures memory caches across nodes achieve consistency within 20 seconds, significantly improving over a standard memory cache's 60-second delay.</p>
-</li>
-</ul>
+</ol>
+<p>By default, output caching is disabled in Fluent CMS. To enable it, configure and inject the output cache as shown below:</p>
+<pre><code class="language-csharp">builder.Services.AddOutputCache(cacheOption =&gt;
+{
+    cacheOption.AddBasePolicy(policyBuilder =&gt; policyBuilder.Expire(TimeSpan.FromMinutes(1)));
+    cacheOption.AddPolicy(CmsOptions.DefaultPageCachePolicyName,
+        b =&gt; b.Expire(TimeSpan.FromMinutes(2)));
+    cacheOption.AddPolicy(CmsOptions.DefaultQueryCachePolicyName,
+        b =&gt; b.Expire(TimeSpan.FromSeconds(1)));
+});
+
+// After builder.Build();
+app.UseOutputCache();
+</code></pre>
 <hr />
 <h2 id="aspire-integration">Aspire Integration</h2>
-<p>A scalable deployment of Fluent CMS involves multiple web application nodes, a Redis server for distributed caching, and a database server, all behind a load balancer.</p>
+<p>Fluent CMS leverages Aspire to simplify deployment.</p>
 <h3 id="architecture-overview">Architecture Overview</h3>
+<p>A scalable deployment of Fluent CMS involves multiple web application nodes, a Redis server for distributed caching, and a database server, all behind a load balancer.</p>
 <pre><code>                 +------------------+
                  |  Load Balancer   |
                  +------------------+
@@ -1321,5 +1342,5 @@ app.RegisterMessageProducerHook();
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2024-12-12 01:20:48.267800+00:00
+Build Date UTC : 2024-12-15 01:01:53.883375+00:00
 -->

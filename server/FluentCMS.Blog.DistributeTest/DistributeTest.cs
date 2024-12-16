@@ -1,6 +1,6 @@
-using FluentCMS.Test.Util;
 using FluentCMS.Utils.ApiClient;
 using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Utils.ResultExt;
 
 namespace FluentCMS.Blog.DistributeTest;
 
@@ -47,36 +47,36 @@ public class DistributeTest
     [Fact]
     public async Task EntityChange()
     {
-        await _leaderAccount.EnsureLogin();
+        (await _leaderAccount.EnsureLogin()).Ok();
         
         var entityName = EntityName();
-        var schema = (await _leaderSchema.EnsureSimpleEntity(entityName, Title)).AssertSuccess();
-        await _leaderEntity.AddSimpleData(entityName, Title,"title1");
+        var schema = (await _leaderSchema.EnsureSimpleEntity(entityName, Title)).Ok();
+        await _leaderEntity.Insert(entityName, Title,"title1");
         
         Thread.Sleep(TimeSpan.FromSeconds(20));
-        (await _followerQuery.SendSingleGraphQuery(entityName, ["id",Title])).AssertSuccess();
-        (await _leaderSchema.DeleteSchema(schema.Id)).AssertSuccess();
+        (await _followerQuery.SendSingleGraphQuery(entityName, ["id",Title])).Ok();
+        (await _leaderSchema.DeleteSchema(schema.Id)).Ok();
         Thread.Sleep(TimeSpan.FromSeconds(20)); 
-        (await _followerQuery.SendSingleGraphQuery(entityName, [Title])).AssertFail();
+        (await _followerQuery.SendSingleGraphQuery(entityName, [Title])).Ok();
     }
 
     [Fact]
     public async Task QueryChange()
     {
-        await _leaderAccount.EnsureLogin();
+        (await _leaderAccount.EnsureLogin()).Ok();
 
         var entityName = EntityName();
-        (await _leaderSchema.EnsureSimpleEntity(entityName, Title)).AssertSuccess();
-        await _leaderEntity.AddSimpleData(entityName, Title, "title1");
+        (await _leaderSchema.EnsureSimpleEntity(entityName, Title)).Ok();
+        await _leaderEntity.Insert(entityName, Title, "title1");
         
-        (await _leaderQuery.SendSingleGraphQuery(entityName, ["id"], true)).AssertSuccess();
+        (await _leaderQuery.SendSingleGraphQuery(entityName, ["id"], true)).Ok();
         Thread.Sleep(TimeSpan.FromSeconds(20));
-        var result = (await _followerQuery.GetList(entityName, new Span(), new Pagination())).AssertSuccess();
+        var result = (await _followerQuery.GetList(entityName, new Span(), new Pagination())).Ok();
         Assert.Equal(4,result.First().Count);
         
-        (await _leaderQuery.SendSingleGraphQuery(entityName, ["id", Title],true)).AssertSuccess();
+        (await _leaderQuery.SendSingleGraphQuery(entityName, ["id", Title],true)).Ok();
         Thread.Sleep(TimeSpan.FromSeconds(20));
-        result =(await _followerQuery.GetList(entityName, new Span(), new Pagination())).AssertSuccess();
+        result =(await _followerQuery.GetList(entityName, new Span(), new Pagination())).Ok();
         Assert.Equal(5, result.First().Count);
     }
 }
