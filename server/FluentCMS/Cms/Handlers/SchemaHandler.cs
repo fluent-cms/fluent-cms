@@ -53,9 +53,9 @@ public static class SchemaHandler
             IEntitySchemaService svc, Schema dto, CancellationToken ct
         ) => await svc.SaveTableDefine(dto, ct));
 
-        app.MapGet("/entity/{name}/define", async (
-            IEntitySchemaService svc, string name, CancellationToken ct
-        ) => await svc.GetTableDefine(name, ct));
+        app.MapGet("/entity/{table}/define", async (
+            IEntitySchemaService svc, string table, CancellationToken ct
+        ) => await svc.GetTableDefine(table, ct));
 
         app.MapGet("/entity/{name}", async (
             IEntitySchemaService service, string name, CancellationToken ct
@@ -67,8 +67,8 @@ public static class SchemaHandler
             CancellationToken ct
         ) => await svc.AddOrUpdateByName(entity, ct));
 
-        app.MapGet("/query/create", (
+        app.MapGet("/graphql", (
             IQuerySchemaService service
-        ) => Results.Redirect(service.CreateQueryUrl()));
+        ) => Results.Redirect(service.GraphQlClientUrl()));
     }
 }

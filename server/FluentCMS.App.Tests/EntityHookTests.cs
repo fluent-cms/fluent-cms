@@ -51,7 +51,7 @@ public class EntityHookTests
 
         //query many
         await _client.PostResult<TestEntity>($"/api/entities/{TestEntity.EntityName}/insert", content);
-        var listResult = await _client.GetFromJsonAsync<ListResult>($"/api/entities/{TestEntity.EntityName}");
+        var listResult = await _client.GetFromJsonAsync<ListResponse>($"/api/entities/{TestEntity.EntityName}");
         Assert.NotNull(listResult);
 
         var last = listResult.Items.Last();

@@ -19,7 +19,7 @@ public sealed class CmsOptions
     
     public bool EnableClient { get; set; } = true;
     public bool MapCmsHomePage { get; set; } = true;
-    public string GraphQlPath { get; set; } = "/graphql";
+    public string GraphQlPath { get; set; } = "/graph";
     public TimeSpan EntitySchemaExpiration { get; set; } = TimeSpan.FromMinutes(1);
     public TimeSpan QuerySchemaExpiration { get; set; } = TimeSpan.FromMinutes(1);
 

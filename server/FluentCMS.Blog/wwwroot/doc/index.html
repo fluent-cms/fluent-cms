@@ -393,7 +393,7 @@ Enjoying FluentCMS? Don’t forget to give us a ⭐ and help us grow!     </p>
 </table>
 <p><strong>Description:</strong> When a course is created or modified, a teacher record can be looked up and linked to the course.</p>
 <h4 id="2-course-and-materials-many-to-many-relationship">2. <strong>Course and Materials (Many-to-Many Relationship)</strong></h4>
-<p>To establish a many-to-many relationship between the <code>Course</code> and <code>Material</code> entities, use a <code>Crosstable</code> attribute in the <code>Course</code> entity. This enables associating multiple materials with a single course.</p>
+<p>To establish a many-to-many relationship between the <code>Course</code> and <code>Material</code> entities, use a <code>Junction</code> attribute in the <code>Course</code> entity. This enables associating multiple materials with a single course.</p>
 <table>
 <thead>
 <tr>
@@ -408,7 +408,7 @@ Enjoying FluentCMS? Don’t forget to give us a ⭐ and help us grow!     </p>
 </tr>
 <tr>
 <td><strong>Type</strong></td>
-<td>Crosstable</td>
+<td>Junction</td>
 </tr>
 <tr>
 <td><strong>Options</strong></td>
@@ -1342,5 +1342,5 @@ app.RegisterMessageProducerHook();
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2024-12-15 01:01:53.883375+00:00
+Build Date UTC : 2024-12-17 12:17:42.737481+00:00
 -->

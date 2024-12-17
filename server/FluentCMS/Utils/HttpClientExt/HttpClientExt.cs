@@ -6,19 +6,16 @@ namespace FluentCMS.Utils.HttpClientExt;
 
 public static class HttpClientExt
 {
-    public static async Task<Result> GetResult(
-        this HttpResponseMessage msg
-    ) => msg.IsSuccessStatusCode
-        ? Result.Ok()
-        : Result.Fail(
-            $"fail to get {msg.RequestMessage?.RequestUri}, message= {await msg.Content.ReadAsStringAsync()}");
-
     public static async Task<Result<T>> GetResult<T>(this HttpClient client, string uri)
     {
         var res = await client.GetAsync(uri);
         return await res.ParseResult<T>();
     }
-
+    public static async Task<Result> GetResult(this HttpClient client, string uri)
+    {
+        var res = await client.GetAsync(uri);
+        return await res.ParseResult();
+    }
     public static async Task<Result<T>> PostResult<T>(this HttpClient client, string url, object payload)
     {
         var res = await client.PostAsync(url, Content(payload));
@@ -37,7 +34,13 @@ public static class HttpClientExt
         client.DefaultRequestHeaders.Add("Cookie", response.Headers.GetValues("Set-Cookie"));
         return await response.ParseResult();
     }
-
+    
+    public static async Task<Result> DeleteResult(this HttpClient client, string uri)
+    {
+        var res = await client.DeleteAsync(uri);
+        return await res.ParseResult();
+    }
+    
     private static async Task<Result> ParseResult(this HttpResponseMessage msg)
     {
         var str = await msg.Content.ReadAsStringAsync();

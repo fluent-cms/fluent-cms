@@ -126,7 +126,7 @@ void RegisterHooks()
 
     registry.EntityPostGetList.Register(TestEntity.EntityName, (param) =>
     {
-        foreach (var item in param.RefListResult.Items)
+        foreach (var item in param.RefListResponse.Items)
         {
             item[TestEntity.FieldName] +=  " AfterQueryMany";
         }

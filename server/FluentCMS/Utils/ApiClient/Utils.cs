@@ -1,6 +1,6 @@
 namespace FluentCMS.Utils.ApiClient;
 
-internal static class EndpointExt
+internal static class Utils
 {
     public static string ToEntityApi(this string s) => $"/api/entities{s}";
     public static string ToSchemaApi(this string s) => $"/api/schemas{s}";

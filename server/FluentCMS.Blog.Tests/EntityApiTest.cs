@@ -1,4 +1,5 @@
 using FluentCMS.Utils.ApiClient;
+using FluentCMS.Utils.JsonElementExt;
 using FluentCMS.Utils.ResultExt;
 using IdGen;
 
@@ -7,9 +8,9 @@ namespace FluentCMS.Blog.Tests;
 public class EntityApiTest
 {
     private const string Name = "name";
-    private static string PostEntityName() => "post" + new IdGenerator(0).CreateId();
-    private static string AuthorEntityName() => "author" + new IdGenerator(0).CreateId();
-    private static string TagEntityName() => "tag" + new IdGenerator(0).CreateId();
+    private static string PostEntityName() => "entity_api_test_post" + new IdGenerator(0).CreateId();
+    private static string AuthorEntityName() => "entity_api_test_author" + new IdGenerator(0).CreateId();
+    private static string TagEntityName() => "entity_api_test_tag" + new IdGenerator(0).CreateId();
 
     private readonly AccountApiClient _accountApiClient;
     private readonly EntityApiClient _entityApiClient;
@@ -50,14 +51,14 @@ public class EntityApiTest
         var entityName = PostEntityName();
         (await _schemaApiClient.EnsureSimpleEntity(entityName, Name)).Ok();
         var item = (await _entityApiClient.Insert(entityName, Name, "post1")).Ok();
-        Assert.True(item.TryGetValue("id", out var element));
-        Assert.Equal(1, element.GetInt32());
+        Assert.True(item.ToDictionary().TryGetValue("id", out var element));
+        Assert.Equal(1, element);
 
         (await _entityApiClient.Update(entityName, 1, Name, "post2")).Ok();
 
         item = (await _entityApiClient.One(entityName, 1)).Ok();
-        Assert.True(item.TryGetValue(Name, out element));
-        Assert.Equal("post2", element.GetString());
+        Assert.True(item.ToDictionary().TryGetValue(Name, out element));
+        Assert.Equal("post2", element);
     }
 
     [Fact]
@@ -103,13 +104,30 @@ public class EntityApiTest
         (await _schemaApiClient.EnsureSimpleEntity(postEntityName, Name, authorEntityName, "")).Ok();
         var author = (await _entityApiClient.Insert(authorEntityName, Name, "author1")).Ok();
         (await _entityApiClient.InsertWithLookup(postEntityName, Name, "post1",
-            authorEntityName, author["id"].GetInt32())).Ok();
+            authorEntityName, author.ToDictionary()["id"])).Ok();
     }
 
     [Fact]
-    public async Task InsertWithJunction()
+    public async Task InsertDeleteListJunction()
     {
         (await _accountApiClient.EnsureLogin()).Ok();
-        
+        var (postEntityName, tagEntityName) = (PostEntityName(), TagEntityName());
+        (await _schemaApiClient.EnsureSimpleEntity(tagEntityName, Name)).Ok();
+        (await _entityApiClient.Insert(tagEntityName, Name, "tag1")).Ok();
+
+        (await _schemaApiClient.EnsureSimpleEntity(postEntityName, Name, "", tagEntityName)).Ok();
+
+        (await _entityApiClient.JunctionAdd(postEntityName, tagEntityName, 1, 1)).Ok();
+        var res = (await _entityApiClient.JunctionList(postEntityName, tagEntityName, 1, true)).Ok();
+        Assert.Empty(res.Items);
+        res = (await _entityApiClient.JunctionList(postEntityName, tagEntityName, 1, false)).Ok();
+        Assert.Single(res.Items);
+
+        (await _entityApiClient.JunctionDelete(postEntityName, tagEntityName, 1, 1)).Ok();
+        res = (await _entityApiClient.JunctionList(postEntityName, tagEntityName, 1, true)).Ok();
+        Assert.Single(res.Items);
+        res = (await _entityApiClient.JunctionList(postEntityName, tagEntityName, 1, false)).Ok();
+        Assert.Empty(res.Items);
     }
+
 }

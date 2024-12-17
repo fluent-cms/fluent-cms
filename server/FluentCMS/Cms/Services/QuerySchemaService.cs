@@ -66,7 +66,7 @@ public sealed class QuerySchemaService(
         return query ?? throw new ResultException($"can not find query [{name}]");
     }
 
-    public string CreateQueryUrl()
+    public string GraphQlClientUrl()
     {
         return cms.Options.GraphQlPath;
     }

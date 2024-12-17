@@ -109,9 +109,9 @@ public sealed class EntitySchemaService(
         return entity;
     }
 
-    public async Task<Entity?> GetTableDefine(string name, CancellationToken token)
+    public async Task<Entity?> GetTableDefine(string table, CancellationToken token)
     {
-        var cols = await executor.GetColumnDefinitions(name, token);
+        var cols = await executor.GetColumnDefinitions(table, token);
         return new Entity
         (
             Attributes: [..cols.Select(AttributeHelper.ToAttribute)]

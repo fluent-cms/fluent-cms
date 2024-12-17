@@ -1,4 +1,5 @@
 using FluentCMS.Utils.ApiClient;
+using FluentCMS.Utils.JsonElementExt;
 using FluentCMS.Utils.QueryBuilder;
 using FluentCMS.Utils.ResultExt;
 
@@ -54,10 +55,10 @@ public class DistributeTest
         await _leaderEntity.Insert(entityName, Title,"title1");
         
         Thread.Sleep(TimeSpan.FromSeconds(20));
-        (await _followerQuery.SendSingleGraphQuery(entityName, ["id",Title])).Ok();
-        (await _leaderSchema.DeleteSchema(schema.Id)).Ok();
+        (await _followerQuery.SingleGraphQl(entityName, ["id",Title])).Ok();
+        (await _leaderSchema.Delete(schema.Id)).Ok();
         Thread.Sleep(TimeSpan.FromSeconds(20)); 
-        (await _followerQuery.SendSingleGraphQuery(entityName, [Title])).Ok();
+        (await _followerQuery.SingleGraphQl(entityName, [Title])).Ok();
     }
 
     [Fact]
@@ -69,14 +70,14 @@ public class DistributeTest
         (await _leaderSchema.EnsureSimpleEntity(entityName, Title)).Ok();
         await _leaderEntity.Insert(entityName, Title, "title1");
         
-        (await _leaderQuery.SendSingleGraphQuery(entityName, ["id"], true)).Ok();
+        (await _leaderQuery.SingleGraphQl(entityName, ["id"], true)).Ok();
         Thread.Sleep(TimeSpan.FromSeconds(20));
-        var result = (await _followerQuery.GetList(entityName, new Span(), new Pagination())).Ok();
-        Assert.Equal(4,result.First().Count);
+        var result = (await _followerQuery.List(entityName)).Ok();
+        Assert.Equal(4,result.First().ToDictionary().Count);
         
-        (await _leaderQuery.SendSingleGraphQuery(entityName, ["id", Title],true)).Ok();
+        (await _leaderQuery.SingleGraphQl(entityName, ["id", Title],true)).Ok();
         Thread.Sleep(TimeSpan.FromSeconds(20));
-        result =(await _followerQuery.GetList(entityName, new Span(), new Pagination())).Ok();
-        Assert.Equal(5, result.First().Count);
+        result =(await _followerQuery.List(entityName)).Ok();
+        Assert.Equal(5, result.First().ToDictionary().Count);
     }
 }

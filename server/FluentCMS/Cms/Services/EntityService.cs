@@ -49,7 +49,7 @@ public sealed class EntityService(
         return record;
     }
 
-    public async Task<ListResult?> List(string name, Pagination pagination, StrArgs args, CancellationToken token)
+    public async Task<ListResponse?> List(string name, Pagination pagination, StrArgs args, CancellationToken token)
     {
         var entity = (await entitySchemaSvc.GetLoadedEntity(name, token)).Ok();
         var groupQs = args.GroupByFirstIdentifier();
@@ -108,7 +108,7 @@ public sealed class EntityService(
     }
 
 
-    public async Task<ListResult> JunctionList(string name, string id, string attr, bool exclude,
+    public async Task<ListResponse> JunctionList(string name, string id, string attr, bool exclude,
         StrArgs args, Pagination pagination, CancellationToken token)
     {
         var ctx = await GetJunctionCtx(name, id, attr, token);
@@ -129,11 +129,11 @@ public sealed class EntityService(
             ? ctx.Junction.GetNotRelatedItemsCount(filter, [ctx.Id])
             : ctx.Junction.GetRelatedItemsCount(filter, [ctx.Id]);
 
-        return new ListResult(await queryExecutor.Many(pagedListQuery, token),
+        return new ListResponse(await queryExecutor.Many(pagedListQuery, token),
             await queryExecutor.Count(countQuery, token));
     }
 
-    private async Task<ListResult?> List(LoadedEntity entity, ImmutableArray<ValidFilter> filters,
+    private async Task<ListResponse?> List(LoadedEntity entity, ImmutableArray<ValidFilter> filters,
         ValidSort[] sorts, Pagination pagination, CancellationToken token)
     {
         var validPagination = PaginationHelper.ToValid(pagination, entity.DefaultPageSize);
@@ -145,7 +145,7 @@ public sealed class EntityService(
 
         var records = await queryExecutor.Many(query, token);
 
-        var ret = new ListResult(records, records.Length);
+        var ret = new ListResponse(records, records.Length);
         if (records.Length > 0)
         {
             foreach (var attribute in entity.Attributes.GetAttrByType(DisplayType.Lookup, InListOrDetail.InList))
@@ -161,7 +161,7 @@ public sealed class EntityService(
 
         var postRes =
             await hookRegistry.EntityPostGetList.Trigger(provider, new EntityPostGetListArgs(entity.Name, ret));
-        return postRes.RefListResult;
+        return postRes.RefListResponse;
     }
 
 

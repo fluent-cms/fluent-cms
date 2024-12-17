@@ -4,134 +4,135 @@ using FluentCMS.Utils.ApiClient;
 using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.QueryBuilder;
 using FluentCMS.Utils.ResultExt;
+using IdGen;
+
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.Blog.Tests;
 
 public class SchemaApiTest
 {
-    private readonly SchemaApiClient _schemaApiClient;
-    private readonly AccountApiClient _accountApiClient;
-    
-    private const string TableName = "schema_api_test";
-    private const string TitleAttribute = "title";
+    private readonly SchemaApiClient _schema;
+    private readonly AccountApiClient _account;
+
+    private static string PostEntity() => "schema_api_test_post" + new IdGenerator(0).CreateId();
+    private const string Name = "name";
 
     public SchemaApiTest()
     {
         Util.SetTestConnectionString();
 
         WebAppClient<Program> webAppClient = new();
-        _schemaApiClient = new SchemaApiClient(webAppClient.GetHttpClient());
-        _accountApiClient = new AccountApiClient(webAppClient.GetHttpClient());
+        _schema = new SchemaApiClient(webAppClient.GetHttpClient());
+        _account = new AccountApiClient(webAppClient.GetHttpClient());
     }
 
     [Fact]
-    public async Task AnonymousGetAllSchema()
+    public async Task AnonymousGetAll() => Assert.True((await _schema.All("")).IsFailed);
+
+    [Fact]
+    public async Task AnonymousSave() => Assert.True((await _schema.SaveEntityDefine(TestSchema())).IsFailed);
+
+    [Fact]
+    public async Task GetAll_NUllType()
     {
-        Assert.True((await _schemaApiClient.GetAll("")).IsFailed);
+        (await _account.EnsureLogin()).Ok();
+        var items = (await _schema.All("")).Ok();
+        var len = items.Length;
+        var schema = TestSchema();
+        await _schema.SaveEntityDefine(schema);
+        items = (await _schema.All("")).Ok();
+        Assert.Equal(len + 1, items.Length);
     }
 
+    [Fact]
+    public async Task GetAll_EntityType()
+    {
+        (await _account.EnsureLogin()).Ok();
+        var items = (await _schema.All(SchemaType.Menu)).Ok();
+        Assert.Single(items);
+    }
 
     [Fact]
-    public async Task AnonymousSaveSchemaFail()
+    public async Task GetTopMenuBar() => Assert.NotNull((await _schema.GetTopMenuBar()).Ok().Settings.Menu);
+
+    [Fact]
+    public async Task SaveSchemaAndOneAndGetLoaded()
     {
         var schema = TestSchema();
-        Assert.True((await _schemaApiClient.SaveEntityDefine(schema)).IsFailed);
-    }
-
-
-    [Fact]
-    public async Task SaveSchema()
-    {
-        var schema = TestSchema();
-        
-        (await _accountApiClient.EnsureLogin()).Ok();
-        (await _schemaApiClient.SaveEntityDefine(schema)).Ok();
-        (await _schemaApiClient.GetLoadedEntity(schema.Name)).Ok();
+        (await _account.EnsureLogin()).Ok();
+        schema = (await _schema.SaveEntityDefine(schema)).Ok();
+        (await _schema.GetLoadedEntity(schema.Name)).Ok();
+        (await _schema.One(schema.Id)).Ok();
     }
 
     [Fact]
     public async Task SaveSchemaTwice()
     {
         var schema = TestSchema();
-        (await _accountApiClient.EnsureLogin()).Ok();
-        var res = (await _schemaApiClient.SaveEntityDefine(schema)).Ok();
-        (await _schemaApiClient. SaveEntityDefine(res)).Ok();
+        (await _account.EnsureLogin()).Ok();
+        var res = (await _schema.SaveEntityDefine(schema)).Ok();
+        (await _schema.SaveEntityDefine(res)).Ok();
     }
-    
+
     [Fact]
     public async Task SaveSchema_Update()
     {
         var schema = TestSchema();
-        (await _accountApiClient.EnsureLogin()).Ok();
-        schema = (await _schemaApiClient.SaveEntityDefine(schema)).Ok();
+        (await _account.EnsureLogin()).Ok();
+        schema = (await _schema.SaveEntityDefine(schema)).Ok();
         schema = schema with { Settings = new Settings(Entity: schema.Settings.Entity! with { DefaultPageSize = 10 }) };
-        (await _schemaApiClient.SaveEntityDefine(schema)).Ok();
-        var entity = (await _schemaApiClient.GetLoadedEntity(schema.Name)).Ok();
-        Assert.Equal(10,entity.DefaultPageSize);
+        (await _schema.SaveEntityDefine(schema)).Ok();
+        var entity = (await _schema.GetLoadedEntity(schema.Name)).Ok();
+        Assert.Equal(10, entity.DefaultPageSize);
     }
 
     [Fact]
     public async Task Delete_Success()
     {
         var schema = TestSchema();
-        (await _accountApiClient.EnsureLogin()).Ok();
-        schema = (await _schemaApiClient.SaveEntityDefine(schema)).Ok();
-        (await _schemaApiClient.DeleteSchema(schema.Id)).Ok();
-        Assert.True((await _schemaApiClient.GetLoadedEntity(schema.Name)).IsFailed);
-   }
+        (await _account.EnsureLogin()).Ok();
+        schema = (await _schema.SaveEntityDefine(schema)).Ok();
+        (await _schema.Delete(schema.Id)).Ok();
+        Assert.True((await _schema.GetLoadedEntity(schema.Name)).IsFailed);
+    }
 
     [Fact]
-    public async Task GetAll_NUllType()
+    public async Task GetTableDefinitions_Success()
     {
-        (await _accountApiClient.EnsureLogin()).Ok();
-        var items = (await _schemaApiClient.GetAll("")).Ok();
-        var len = items.Length;
         var schema = TestSchema();
-        await _schemaApiClient.SaveEntityDefine(schema);
-        items = (await _schemaApiClient.GetAll("")).Ok();
-        Assert.Equal(len + 1, items.Length );
+        (await _schema.GetTableDefine(schema.Name)).Ok();
     }
 
     [Fact]
-    public async Task GetAll_EntityType()
+    public async Task GetGraphQlClientUrlOk()
     {
-        (await _accountApiClient.EnsureLogin()).Ok();
-        var items = (await _schemaApiClient.GetAll(SchemaType.Menu)).Ok();
-        Assert.Single(items);
-    }
-
-
-    private static Entity RandomTestEntity()
-    {
-        var name = Guid.NewGuid().ToString("N");
-        return new Entity(
-            Name: $"{TableName}{name}",
-            PrimaryKey: "id",
-            TableName: $"{TableName}_{name}",
-            TitleAttribute: TitleAttribute,
-            Attributes:
-            [
-                new Attribute
-                (
-                    Field: TitleAttribute,
-                    DataType: DataType.String
-                )
-            ]
-        );
+        (await _schema.GraphQlClientUrl()).Ok();
     }
 
     private static Schema TestSchema()
     {
-        var entity = RandomTestEntity();
+        var name = PostEntity();
         return new Schema
         (
-            Id:0,
-            Name : entity.Name,
-            Type : SchemaType.Entity,
-            Settings : new Settings
+            Id: 0,
+            Name: name,
+            Type: SchemaType.Entity,
+            Settings: new Settings
             {
-                Entity = entity
+                Entity = new Entity(Name: name,
+                    PrimaryKey: "id",
+                    TableName: name,
+                    TitleAttribute: Name,
+                    Attributes:
+                    [
+                        new Attribute
+                        (
+                            Field: Name,
+                            DataType: DataType.String
+                        )
+                    ]
+                )
             }
         );
     }

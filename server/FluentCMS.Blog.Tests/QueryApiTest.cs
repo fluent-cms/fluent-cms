@@ -1,22 +1,23 @@
-using FluentCMS.Cms.Models;
-using FluentCMS.Cms.Services;
 using FluentCMS.Utils.ApiClient;
+using FluentCMS.Utils.JsonElementExt;
 using FluentCMS.Utils.QueryBuilder;
 using FluentCMS.Utils.ResultExt;
+using IdGen;
+using Microsoft.Extensions.Primitives;
 
 namespace FluentCMS.Blog.Tests;
 
 public class QueryApiTest
 {
-    private const string Post = "query_api_test_post";
-    private const string Author = "query_api_test_author";
-    private const string Tag = "query_api_test_tag";
+    private const string Name = "name";
+    private readonly string _post = "post" + new IdGenerator(0).CreateId();
+    private readonly string _tag = "tag" + new IdGenerator(0).CreateId();
     private const int QueryPageSize = 4;
 
-    private readonly EntityApiClient _entityApiClient;
+    private readonly EntityApiClient _entity;
     private readonly SchemaApiClient _schemaApiClient;
-    private readonly AccountApiClient _accountApiClient;
-    private readonly QueryApiClient _queryApiClient;
+    private readonly AccountApiClient _account;
+    private readonly QueryApiClient _query;
 
 
     public QueryApiTest()
@@ -24,109 +25,104 @@ public class QueryApiTest
         Util.SetTestConnectionString();
 
         WebAppClient<Program> webAppClient = new();
-        _entityApiClient = new EntityApiClient(webAppClient.GetHttpClient());
+        _entity = new EntityApiClient(webAppClient.GetHttpClient());
         _schemaApiClient = new SchemaApiClient(webAppClient.GetHttpClient());
-        _accountApiClient = new AccountApiClient(webAppClient.GetHttpClient());
-        _queryApiClient = new QueryApiClient(webAppClient.GetHttpClient());
+        _account = new AccountApiClient(webAppClient.GetHttpClient());
+        _query = new QueryApiClient(webAppClient.GetHttpClient());
     }
-
-    [Fact]
-    public async Task TestRelatedData()
-    {
-        var postId =await PrepareOneRelatedData();
-        var query = GetPostQuery();
-        (await _schemaApiClient.SaveSchema(query)).Ok();
-        var res = (await _queryApiClient.GetOne(query.Name, postId)).Ok();
-        var author = res[Author] as Dictionary<string, object>;
-        Assert.True(author?.ContainsKey(Author) == true);
-        var tags = res[Tag] as object[];
-        Assert.True(tags?.Length > 0);
-    }
-
 
     [Fact]
     public async Task List()
     {
-        await PrepareSimpleData();
-        var query = GetPostQuery();
-        (await _schemaApiClient.SaveSchema(query)).Ok();
-        var items = (await _queryApiClient.GetList(query.Name, new Span(), new Pagination())).Ok();
-        if (!SpanHelper.HasNext(items)) return;
-        var res = await _queryApiClient.GetList(query.Name, new Span(Last: SpanHelper.LastCursor(items)), new Pagination());
-        res.Ok();
+        var limit = 4;
+        (await _account.EnsureLogin()).Ok();
+        await AddTags(limit + 1);
+        (await _query.ListGraphQl(_tag, ["id", Name])).Ok();
+        
+        var items = (await _query.List(query:_tag.QueryName(), limit:limit)).Ok();
+        Assert.Equal(limit, items.Length);
+        
+        if (!SpanHelper.HasNext(items.Last().ToDictionary())) return;
+        items  = (await _query.List(query:_tag.QueryName(),last: SpanHelper.LastCursor(items.Last().ToDictionary()),limit:limit)).Ok();
+        Assert.Single(items);
     }
-
+    
     [Fact]
     public async Task Many()
     {
-        await PrepareSimpleData();
-        var query = GetPostQuery();
-        (await _schemaApiClient.SaveSchema(query)).Ok();
-        var ids = Enumerable.Range(1, 5).ToArray().Select(x => x as object).ToArray();
-        var res = (await _queryApiClient.GetMany(query.Name,"id", ids)).Ok();
-        Assert.Equal(ids.Length, res.Length);
+        (await _account.EnsureLogin()).Ok();
+        await AddTags(2);
+        (await _query.ListGraphQl(_tag, ["id", Name])).Ok();
+        var item = (await _query.Many(_tag.QueryName(), [1,2])).Ok();
+        Assert.Equal(2, item.Length);
     }
 
-    async Task PrepareSimpleData()
+    [Fact]
+    public async Task One()
     {
-        (await _accountApiClient.EnsureLogin()).Ok();
-        await _schemaApiClient.EnsureSimpleEntity(Author, Author );
-        await _schemaApiClient.EnsureSimpleEntity(Tag, Tag );
-        await _schemaApiClient.EnsureSimpleEntity(Post, Post, Author, Tag);
-
-        for (var i = 0; i < QueryPageSize * 2 + 1; i++)
-        {
-            (await _entityApiClient.Insert(Post, Post, $"{Post} {i}" )).Ok();
-        }
+        (await _account.EnsureLogin()).Ok();
+        await AddTags(1);
+        (await _query.ListGraphQl(_tag, ["id", Name])).Ok();
+        var item = (await _query.One(_tag.QueryName(), 1)).Ok();
+        Assert.Equal(1, item.ToDictionary()["id"]);
     }
 
-    async Task<int> PrepareOneRelatedData()
+    [Fact]
+    public async Task Part()
     {
-        (await _accountApiClient.EnsureLogin()).Ok();
-        await _schemaApiClient.EnsureSimpleEntity(Author, Author );
-        await _schemaApiClient.EnsureSimpleEntity(Tag, Tag );
-        await _schemaApiClient.EnsureSimpleEntity(Post, Post, Author, Tag);
-        var authorId = (await _entityApiClient.Insert(Author, Author, Author)).Ok()["id"].GetInt32();
-        var postId = (await _entityApiClient.InsertWithLookup(Post, Post, $"post ", Author, authorId))
-            .Ok()["id"].GetInt32();
-
-        for (var i = 0; i < QueryPageSize * 2 + 1; i++)
-        {
-            var tag = (await _entityApiClient.Insert(Tag, Tag, $"{Tag} {i}")).Ok();
-            (await _entityApiClient.AddJunctionData(Post, Tag, postId, tag["id"].GetInt32())).Ok();
-        }
-
-        return postId;
-    }
-
-    static Schema GetPostQuery()
-    {
-        var suffix = Guid.NewGuid().ToString("N");
-        var query = new Query(
-            Name: Post + suffix,
-            EntityName: Post,
-            Source: $$"""
-                          { 
-                            id, {{Post}},
-                            {{Author}}{id, {{Author}} },
-                            {{Tag}}{id, {{Tag}}}
-                          }
-                          """,
-            Sorts: [new Sort("id", SortOrder.Desc)],
-            Filters: [
-                new Filter("id", "and", [new Constraint(Matches.In,["$id"] )])
-            ],
-            ReqVariables:[]
-        );
+        (await _account.EnsureLogin()).Ok();
+        await AddTags(6);
+        await AddPosts(1);
+        await AddPostTagJunction(1, 6);
+        (await _query.ListGraphQlJunction(_post, ["id", Name],_tag,["id",Name])).Ok();
         
-        return new Schema
-        (
-            Name: query.Name,
-            Type: SchemaType.Query,
-            Settings: new Settings
+        var posts = (await _query.ListArgs(_post.QueryName(), new Dictionary<string, StringValues>
+        {
+            [$"{_tag}.limit"] = "4",
+        })).Ok();
+
+        var post = posts[0].ToDictionary();
+        if (post.TryGetValue(_tag, out var v) 
+            && v is object[] arr 
+            && arr.Last() is Dictionary<string,object> lastTag)
+        {
+            
+            var cursor = SpanHelper.LastCursor(lastTag);
+            var tags = (await _query.Part(query: _post.QueryName(),attr:_tag, last: cursor,limit:10)).Ok();
+            Assert.Equal(2,tags.Length);
+        }
+        else
+        {
+            Assert.Fail("didn't find tag");
+        }
+    }
+
+    private async Task AddTags(int count)
+    {
+        (await _schemaApiClient.EnsureSimpleEntity(_tag, Name)).Ok();
+        for (var i = 0; i < count; i++)
+        {
+            (await _entity.Insert(_tag,Name,$"tag{i}")).Ok();
+        }
+    }
+
+    private async Task AddPosts(int count)
+    {
+        (await _schemaApiClient.EnsureSimpleEntity(_post, Name,"",_tag)).Ok();
+        for (var i = 0; i < count; i++)
+        {
+            (await _entity.Insert(_post,Name,$"post{i}")).Ok();
+        }
+    }
+
+    private async Task AddPostTagJunction(int postCount, int tagCount)
+    {
+        for (var i = 0; i < postCount; i++)
+        {
+            for (var j = 0; j < tagCount; j++)
             {
-                Query = query
+                (await _entity.JunctionAdd(_post, _tag, i + 1, j + 1)).Ok();
             }
-        );
+        }
     }
 } 
