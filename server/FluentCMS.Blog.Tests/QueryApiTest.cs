@@ -12,7 +12,6 @@ public class QueryApiTest
     private const string Name = "name";
     private readonly string _post = "post" + new IdGenerator(0).CreateId();
     private readonly string _tag = "tag" + new IdGenerator(0).CreateId();
-    private const int QueryPageSize = 4;
 
     private readonly EntityApiClient _entity;
     private readonly SchemaApiClient _schemaApiClient;
@@ -39,11 +38,11 @@ public class QueryApiTest
         await AddTags(limit + 1);
         (await _query.ListGraphQl(_tag, ["id", Name])).Ok();
         
-        var items = (await _query.List(query:_tag.QueryName(), limit:limit)).Ok();
+        var items = (await _query.List(query:_tag, limit:limit)).Ok();
         Assert.Equal(limit, items.Length);
         
         if (!SpanHelper.HasNext(items.Last().ToDictionary())) return;
-        items  = (await _query.List(query:_tag.QueryName(),last: SpanHelper.LastCursor(items.Last().ToDictionary()),limit:limit)).Ok();
+        items  = (await _query.List(query:_tag,last: SpanHelper.LastCursor(items.Last().ToDictionary()),limit:limit)).Ok();
         Assert.Single(items);
     }
     
@@ -53,7 +52,7 @@ public class QueryApiTest
         (await _account.EnsureLogin()).Ok();
         await AddTags(2);
         (await _query.ListGraphQl(_tag, ["id", Name])).Ok();
-        var item = (await _query.Many(_tag.QueryName(), [1,2])).Ok();
+        var item = (await _query.Many(_tag, [1,2])).Ok();
         Assert.Equal(2, item.Length);
     }
 
@@ -63,7 +62,7 @@ public class QueryApiTest
         (await _account.EnsureLogin()).Ok();
         await AddTags(1);
         (await _query.ListGraphQl(_tag, ["id", Name])).Ok();
-        var item = (await _query.One(_tag.QueryName(), 1)).Ok();
+        var item = (await _query.Single(_tag, 1)).Ok();
         Assert.Equal(1, item.ToDictionary()["id"]);
     }
 
@@ -76,7 +75,7 @@ public class QueryApiTest
         await AddPostTagJunction(1, 6);
         (await _query.ListGraphQlJunction(_post, ["id", Name],_tag,["id",Name])).Ok();
         
-        var posts = (await _query.ListArgs(_post.QueryName(), new Dictionary<string, StringValues>
+        var posts = (await _query.ListArgs(_post, new Dictionary<string, StringValues>
         {
             [$"{_tag}.limit"] = "4",
         })).Ok();
@@ -88,7 +87,7 @@ public class QueryApiTest
         {
             
             var cursor = SpanHelper.LastCursor(lastTag);
-            var tags = (await _query.Part(query: _post.QueryName(),attr:_tag, last: cursor,limit:10)).Ok();
+            var tags = (await _query.Part(query: _post,attr:_tag, last: cursor,limit:10)).Ok();
             Assert.Equal(2,tags.Length);
         }
         else
@@ -97,6 +96,26 @@ public class QueryApiTest
         }
     }
 
+    [Fact]
+    public async Task SingleAndListGraphQlOk()
+    {
+        (await _account.EnsureLogin()).Ok();
+        await AddTags(6);
+        var res = (await _query.ListGraphQl(_tag, ["id", Name])).Ok();
+        Assert.Equal(6, res.Length);
+        var ele = (await _query.SingleGraphQl(_tag, ["id", Name])).Ok();
+        Assert.Equal(2,ele.ToDictionary().Count);
+    }
+
+    [Fact]
+    public async Task ListGraphQlByIdsOk()
+    {
+        (await _account.EnsureLogin()).Ok();
+        await AddTags(6);
+        var res = (await _query.ListGraphQlByIds(_tag, [1,2])).Ok();
+        Assert.Equal(2, res.Length);
+    }
+    
     private async Task AddTags(int count)
     {
         (await _schemaApiClient.EnsureSimpleEntity(_tag, Name)).Ok();

@@ -1,5 +1,6 @@
 using FluentCMS.Auth.models;
 using FluentCMS.Blog.Share;
+using FluentCMS.Types;
 using FluentCMS.Utils.ResultExt;
 using FluentCMS.WebAppExt;
 using Microsoft.AspNetCore.Identity;
@@ -47,12 +48,10 @@ void AddOutputCachePolicy()
     builder.Services.AddOutputCache(cacheOption =>
     {
         cacheOption.AddBasePolicy(policyBuilder => policyBuilder.Expire(TimeSpan.FromMinutes(1)));
-        /*
         cacheOption.AddPolicy(CmsOptions.DefaultPageCachePolicyName,
-            b => b.Expire(TimeSpan.FromMinutes(2)));
+            b => b.Expire(TimeSpan.FromMinutes(1)));
         cacheOption.AddPolicy(CmsOptions.DefaultQueryCachePolicyName,
             b => b.Expire(TimeSpan.FromSeconds(1)));
-            */
     });
 }
 

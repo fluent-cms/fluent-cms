@@ -1,6 +1,5 @@
 using FluentCMS.Utils.ApiClient;
 using FluentCMS.Utils.JsonElementExt;
-using FluentCMS.Utils.QueryBuilder;
 using FluentCMS.Utils.ResultExt;
 
 namespace FluentCMS.Blog.DistributeTest;
@@ -70,12 +69,12 @@ public class DistributeTest
         (await _leaderSchema.EnsureSimpleEntity(entityName, Title)).Ok();
         await _leaderEntity.Insert(entityName, Title, "title1");
         
-        (await _leaderQuery.SingleGraphQl(entityName, ["id"], true)).Ok();
+        (await _leaderQuery.SingleGraphQl(entityName, ["id"])).Ok();
         Thread.Sleep(TimeSpan.FromSeconds(20));
         var result = (await _followerQuery.List(entityName)).Ok();
         Assert.Equal(4,result.First().ToDictionary().Count);
         
-        (await _leaderQuery.SingleGraphQl(entityName, ["id", Title],true)).Ok();
+        (await _leaderQuery.SingleGraphQl(entityName, ["id", Title])).Ok();
         Thread.Sleep(TimeSpan.FromSeconds(20));
         result =(await _followerQuery.List(entityName)).Ok();
         Assert.Equal(5, result.First().ToDictionary().Count);
