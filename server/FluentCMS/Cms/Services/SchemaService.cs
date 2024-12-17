@@ -1,18 +1,16 @@
-using System.Collections.Immutable;
 using System.Text.Json;
 using FluentCMS.Cms.Models;
-using FluentCMS.Exceptions;
-using FluentCMS.Utils.Cache;
+using FluentCMS.Types;
 using FluentResults;
 using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Utils.ResultExt;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 namespace FluentCMS.Cms.Services;
-using static InvalidParamExceptionFactory;
 
-public sealed  class SchemaService(
+public sealed class SchemaService(
     IDefinitionExecutor ddlExecutor,
     KateQueryExecutor queryExecutor,
     HookRegistry hook,
@@ -23,10 +21,12 @@ public sealed  class SchemaService(
     {
         var res = await hook.SchemaPreGetAll.Trigger(provider, new SchemaPreGetAllArgs(default));
         IEnumerable<string>? names = res.OutSchemaNames?.Length > 0 ? res.OutSchemaNames : null;
-        return await All(type,names, token);
+        return await All(type, names, token);
     }
 
-    public async Task<Schema[]> All(string type, IEnumerable<string>? names, CancellationToken cancellationToken = default){
+    public async Task<Schema[]> All(string type, IEnumerable<string>? names,
+        CancellationToken cancellationToken = default)
+    {
         var query = BaseQuery();
         if (!string.IsNullOrWhiteSpace(type))
         {
@@ -35,11 +35,11 @@ public sealed  class SchemaService(
 
         if (names is not null)
         {
-            query.WhereIn(Name,names);
+            query.WhereIn(Name, names);
         }
 
         var items = await queryExecutor.Many(query, cancellationToken);
-        return items.Select(x => Ok(ParseSchema(x))).ToArray();
+        return items.Select(x => ParseSchema(x).Ok()).ToArray();
     }
 
     public async Task<Schema?> ByIdWithAction(int id, CancellationToken token = default)
@@ -49,9 +49,11 @@ public sealed  class SchemaService(
         {
             await hook.SchemaPostGetOne.Trigger(provider, new SchemaPostGetOneArgs(schema));
         }
+
         return schema;
 
     }
+
     public async Task<Schema?> ById(int id, CancellationToken cancellationToken = default)
     {
         var query = BaseQuery().Where(Id, id);
@@ -62,11 +64,12 @@ public sealed  class SchemaService(
 
     public async Task<Schema?> GetByNameDefault(string name, string type, CancellationToken token = default)
     {
-        var query = BaseQuery().Where(Name ,name).Where(Type, type);
+        var query = BaseQuery().Where(Name, name).Where(Type, type);
         var item = await queryExecutor.One(query, token);
         var res = ParseSchema(item);
         return res.IsSuccess ? res.Value : null;
     }
+
     public async Task<Schema?> GetByNamePrefixDefault(string name, string type,
         CancellationToken token = default)
     {
@@ -74,13 +77,13 @@ public sealed  class SchemaService(
         var item = await queryExecutor.One(query, token);
 
         var res = ParseSchema(item);
-        
+
         return res.IsSuccess ? res.Value : null;
     }
 
     public async Task<Schema> SaveWithAction(Schema dto, CancellationToken token = default)
     {
-        Ok(await NameNotTakenByOther(dto, token));
+        Result.Ok();
         var res = await hook.SchemaPreSave.Trigger(provider, new SchemaPreSaveArgs(dto));
         return await SaveSchema(res.RefSchema, token);
     }
@@ -92,13 +95,14 @@ public sealed  class SchemaService(
         {
             schema = schema with { Id = find.Id };
         }
+
         var res = await hook.SchemaPreSave.Trigger(provider, new SchemaPreSaveArgs(schema));
         return await SaveSchema(res.RefSchema, token);
     }
 
     public async Task Delete(int id, CancellationToken token = default)
     {
-        var res = await hook.SchemaPreDel.Trigger(provider,  new SchemaPreDelArgs(id) );
+        var res = await hook.SchemaPreDel.Trigger(provider, new SchemaPreDelArgs(id));
         var query = new SqlKata.Query(TableName).Where(Id, res.SchemaId).AsUpdate([Deleted], [true]);
         await queryExecutor.Exec(query, token);
     }
@@ -114,14 +118,14 @@ public sealed  class SchemaService(
 
         var menuBarSchema = new Schema
         (
-            Name:  SchemaName.TopMenuBar,
-            Type : SchemaType.Menu,
-            Settings : new Settings
+            Name: SchemaName.TopMenuBar,
+            Type: SchemaType.Menu,
+            Settings: new Settings
             (
-                Menu : new Menu
+                Menu: new Menu
                 (
-                    Name : SchemaName.TopMenuBar,
-                    MenuItems:[]
+                    Name: SchemaName.TopMenuBar,
+                    MenuItems: []
                 )
             )
         );
@@ -139,17 +143,17 @@ public sealed  class SchemaService(
 
         var entity = new Entity
         (
-            TableName : TableName,
-            Attributes :
+            TableName: TableName,
+            Attributes:
             [
-                new Attribute ( Name ),
-                new Attribute (  Type ),
+                new Attribute(Name),
+                new Attribute(Type),
                 new Attribute
-               ( 
-                    Field : Settings,
-                    DataType : DataType.Text
+                (
+                    Field: Settings,
+                    DataType: DataType.Text
                 ),
-                new Attribute (CreatedBy)
+                new Attribute(CreatedBy)
             ]
         );
         entity = entity.WithDefaultAttr();
@@ -157,12 +161,26 @@ public sealed  class SchemaService(
             token);
     }
 
-    
+    public async Task RemoveEntityInTopMenuBar(Entity entity, CancellationToken token)
+    {
+        var menuBarSchema = await GetByNameDefault(SchemaName.TopMenuBar, SchemaType.Menu, token) ??
+                            throw new ResultException("not find top menu bar");
+        var menuBar = menuBarSchema.Settings.Menu;
+        if (menuBar is not null)
+        {
+            var link = "/entities/" + entity.Name;
+            var menus = menuBar.MenuItems.Where(x => x.Url != link);
+            menuBar = menuBar with { MenuItems = [..menus] };
+            menuBarSchema = menuBarSchema with { Settings = new Settings(Menu: menuBar) };
+            await SaveSchema(menuBarSchema, token);
+        }
+    }
+
 
     public async Task EnsureEntityInTopMenuBar(Entity entity, CancellationToken token)
     {
-        var menuBarSchema = NotNull(await GetByNameDefault(SchemaName.TopMenuBar, SchemaType.Menu, token))
-            .ValOrThrow("not find top menu bar");
+        var menuBarSchema = await GetByNameDefault(SchemaName.TopMenuBar, SchemaType.Menu, token) ??
+                            throw new ResultException("not find top menu bar");
         var menuBar = menuBarSchema.Settings.Menu;
         if (menuBar is not null)
         {
@@ -179,7 +197,7 @@ public sealed  class SchemaService(
                 };
             }
 
-            menuBarSchema = menuBarSchema with { Settings = new Settings(Menu:menuBar) };
+            menuBarSchema = menuBarSchema with { Settings = new Settings(Menu: menuBar) };
             await SaveSchema(menuBarSchema, token);
         }
     }
@@ -199,7 +217,7 @@ public sealed  class SchemaService(
         return new SqlKata.Query(TableName).Select(Fields()).Where(Deleted, false);
     }
 
-    private async Task<Schema> SaveSchema(Schema dto, CancellationToken cancellationToken) 
+    private async Task<Schema> SaveSchema(Schema dto, CancellationToken cancellationToken)
     {
         if (dto.Id == 0)
         {
@@ -211,7 +229,7 @@ public sealed  class SchemaService(
                 { CreatedBy, dto.CreatedBy }
             };
             var query = new SqlKata.Query(TableName).AsInsert(record, true);
-            dto = dto with{Id =  await queryExecutor.Exec(query, cancellationToken)};
+            dto = dto with { Id = await queryExecutor.Exec(query, cancellationToken) };
         }
         else
         {
@@ -240,11 +258,11 @@ public sealed  class SchemaService(
             var s = JsonSerializer.Deserialize<Settings>((string)record[Settings]);
             return new Schema
             (
-                Name : (string)record[Name],
-                Type : (string)record[Type],
-                Settings : s!,
-                CreatedBy : (string)record[CreatedBy],
-                Id : record[Id] switch
+                Name: (string)record[Name],
+                Type: (string)record[Type],
+                Settings: s!,
+                CreatedBy: (string)record[CreatedBy],
+                Id: record[Id] switch
                 {
                     int val => val,
                     long val => (int)val,
@@ -253,6 +271,7 @@ public sealed  class SchemaService(
             );
         });
     }
+
     public async Task<Result> NameNotTakenByOther(Schema schema, CancellationToken token)
     {
         var query = BaseQuery().Where(Name, schema.Name).Where(Type, schema.Type)

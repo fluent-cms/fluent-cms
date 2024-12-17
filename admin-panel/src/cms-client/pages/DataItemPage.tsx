@@ -4,7 +4,7 @@ import {deleteItem, updateItem, useItemData} from "../services/entity";
 import {Divider} from "primereact/divider";
 import {getSubPageColumns, getWriteColumns} from "../services/columnUtil";
 import {Button} from "primereact/button";
-import {Crosstable} from "../containers/Crosstable";
+import {Junction} from "../containers/Junction";
 import {useRequestStatus} from "../containers/useFormStatus";
 import {fileUploadURL, getFullAssetsURL} from "../services/configs";
 import {PageLayout} from "./PageLayout";
@@ -57,7 +57,7 @@ export function DataItemPageComponent({schema, baseRouter}:{schema:any, baseRout
                 const props = {schema, data, column,  getFullAssetsURL,baseRouter}
                 return <div key={column.field}>
                     <Divider/>
-                    { column.type === 'crosstable' && <Crosstable key={column.field} {...props}/> }
+                    { column.type === 'junction' && <Junction key={column.field} {...props}/> }
                 </div>
             })
         }

@@ -28,15 +28,15 @@ public class HookRegistryTests
     public async Task TestEntityPostListChangeTotal()
     {
         _hookRegistry.EntityPostGetList.Register(People.EntityName,
-            parameter => parameter with { RefListResult = parameter.RefListResult with { TotalRecords = 100 } });
-        var res = new ListResult
+            parameter => parameter with { RefListResponse = parameter.RefListResponse with { TotalRecords = 100 } });
+        var res = new ListResponse
         (
             Items:[],
             TotalRecords : 10
         );
         var args = new EntityPostGetListArgs(People.EntityName, res);
         args = await _hookRegistry.EntityPostGetList.Trigger(_serviceProvider,args );
-        Assert.Equal(100, args.RefListResult.TotalRecords);
+        Assert.Equal(100, args.RefListResponse.TotalRecords);
         
     }
 

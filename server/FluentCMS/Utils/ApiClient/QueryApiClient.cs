@@ -1,4 +1,5 @@
 using System.Text.Json;
+using FluentCMS.Utils.DictionaryExt;
 using FluentCMS.Utils.HttpClientExt;
 using FluentCMS.Utils.JsonElementExt;
 using FluentCMS.Utils.QueryBuilder;
@@ -12,51 +13,84 @@ namespace FluentCMS.Utils.ApiClient;
 
 public class QueryApiClient(HttpClient client)
 {
-    private readonly GraphQLHttpClient _graph = new ($"{client.BaseAddress!.AbsoluteUri}graphql", new SystemTextJsonSerializer(),client);
+    private readonly GraphQLHttpClient _graph =
+        new($"{client.BaseAddress!.AbsoluteUri}graphql", new SystemTextJsonSerializer(), client);
 
-    public  Task<Result<JsonElement>> SendSingleGraphQuery(string entity, string[]fields, bool withName = false, CancellationToken ct = default)
-    {
-        var operationName = withName ? entity : "";
-        return SendGraphQuery(
-           $$"""
-           query {{operationName}}{
-               {{entity}}{
-               {{string.Join("\n",fields)}}
-             }
-           }
-           """, 
-           ct);
-    }
 
-    private async Task<Result<JsonElement>> SendGraphQuery(string query, CancellationToken ct = default)
+    // the json decoder will decode unknown object as JsonRecord
+    public Task<Result<JsonElement[]>> List(
+        string query, string? first = null, string? last = null, StrArgs? args = null, int offset = 0, int limit = 0)
+        => client.GetResult<JsonElement[]>(
+            $"/{query}?first={first ?? ""}&last={last ?? ""}&offset={offset}&limit={limit}".ToQueryApi());
+
+    public Task<Result<JsonElement[]>> ListArgs(
+        string query, StrArgs args
+    ) => client.GetResult<JsonElement[]>($"/{query}?{args.ToQueryString()}".ToQueryApi());
+
+    public Task<Result<JsonElement[]>> Many(
+        string query, object[] ids
+    ) => client.GetResult<JsonElement[]>(
+        $"/{query}/?{string.Join("&", ids.Select(x => $"id={x}"))}".ToQueryApi());
+
+    public Task<Result<JsonElement>> Single(
+        string query, object id
+    ) => client.GetResult<JsonElement>($"/{query}/one?id={id}".ToQueryApi());
+
+
+    public Task<Result<JsonElement[]>> Part(
+        string query, string attr, string? first = null, string? last = null, int limit = 0
+    ) => client.GetResult<JsonElement[]>(
+        $"/{query}/part/{attr}?first={first ?? ""}&last={last ?? ""}&limit={limit}".ToQueryApi());
+
+    public Task<Result<JsonElement[]>> ListGraphQl(
+        string entity, string[] fields
+    ) => SendGraphQuery<JsonElement[]>(
+        $$"""
+          query {{entity}}{
+            {{entity}}List{ {{string.Join(",", fields)}} }
+          }
+          """);
+
+    public Task<Result<JsonElement>> SingleGraphQl(
+        string entity, string[] fields
+    ) => SendGraphQuery<JsonElement>(
+        $$"""
+          query {{entity}}{
+              {{entity}}{ {{string.Join(",", fields)}} }
+          }
+          """);
+
+    public Task<Result<JsonElement[]>> ListGraphQlJunction(
+        string entity, string[] fields,
+        string junctionField, string[] targetFields
+    ) => SendGraphQuery<JsonElement[]>(
+        $$"""
+          query {{entity}}{
+            {{entity}}List{
+              {{string.Join(",", fields)}}
+              {{junctionField}}{ {{string.Join(",", targetFields)}} }
+            }
+          }
+          """);
+
+    public Task<Result<JsonElement[]>> ListGraphQlByIds(
+        string entity, object[] ids 
+    ) => SendGraphQuery<JsonElement[]>(
+        $$"""
+          query {{entity}}{
+              {{entity}}List(idSet:[{{string.Join(",", ids.Select(x => x.ToString()))}}])
+              { id }
+          }
+          """);
+
+    private async Task<Result<T>> SendGraphQuery<T>(string query)
     {
-        var response = await _graph.SendQueryAsync<JsonElement>(new GraphQLRequest(query), ct);
+        var response = await _graph.SendQueryAsync<Dictionary<string, T>>(new GraphQLRequest(query));
         if (response.Errors?.Length > 0)
         {
-            return Result.Fail(string.Join(",",response.Errors.Select(x=>x.Message)));
+            return Result.Fail(string.Join(",", response.Errors.Select(x => x.Message)));
         }
-        return response.Data;
-    }
-    public async Task<Result<Record[]>> GetList(string queryName, Span span, Pagination pagination)
-    {
-        var url =
-            $"/api/queries/{queryName}?first={span.First}&last={span.Last}&offset={pagination.Offset}&limit={pagination.Limit}";
-        return await client.GetObject<Record[]>(url);
-    }
-    public async Task<Result<Record>> GetOne(string queryName, object id)
-    {
-        var url = $"/api/queries/{queryName}/one?id=" + id;
-        var (_,_, element,errors) = await client.GetObject<JsonElement>(url);
-        if (errors is not null)
-        {
-            return Result.Fail(errors);
-        }
-        return element.ToDictionary();
-    }
-    public async Task<Result<Record[]>> GetMany(string queryName, string primaryKey, object[]ids)
-    {
-        var param = string.Join("&", ids.Select(x=>$"{primaryKey}={x}"));
-        var url = $"/api/queries/{queryName}/?" + param;
-        return await client.GetObject<Record[]>(url);
+
+        return response.Data.First().Value;
     }
 }

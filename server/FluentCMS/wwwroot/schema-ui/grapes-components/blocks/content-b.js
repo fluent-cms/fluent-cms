@@ -119,11 +119,11 @@ export const contentB = {
     <div class="flex flex-wrap -m-4" data-gjs-type="data-list" data-source="data-list">
       <div class="xl:w-1/4 md:w-1/2 p-4">
         <div class="bg-gray-100 p-6 rounded-lg">
-          <a href="/pages/page-name/{{slug}}" style="display: inline-block" >
+          <a href="/page-name/{{slug}}" style="display: inline-block" >
             <img class="h-40 rounded w-full object-cover object-center mb-6" src="/files{{image}}" alt="content" >
           </a>
           <h3 class="tracking-widest text-red-500 text-xs font-medium title-font">{{subtitle}}</h3>
-          <h2 class="text-lg text-gray-900 font-medium title-font mb-4"><a href="/pages/page-name/{{slug}}">{{title}}</a></h2>
+          <h2 class="text-lg text-gray-900 font-medium title-font mb-4"><a href="/page-name/{{slug}}">{{title}}</a></h2>
           <p class="leading-relaxed text-base prose">{{{desc}}}</p>
         </div>
       </div>

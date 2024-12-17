@@ -1,8 +1,8 @@
 using System.Collections.Immutable;
 using System.Text.Json;
 using FluentCMS.Cms.Models;
-using FluentCMS.Components;
-using FluentCMS.Exceptions;
+using FluentCMS.Builders;
+using FluentCMS.Types;
 using FluentCMS.Utils.Cache;
 using FluentCMS.Graph;
 using FluentCMS.Utils.QueryBuilder;
@@ -13,13 +13,12 @@ using Query = FluentCMS.Utils.QueryBuilder.Query;
 using Schema = FluentCMS.Cms.Models.Schema;
 
 namespace FluentCMS.Cms.Services;
-using static InvalidParamExceptionFactory;
 
 public sealed class QuerySchemaService(
     ISchemaService schemaSvc,
     IEntitySchemaService entitySchemaSvc,
     KeyValueCache<LoadedQuery> queryCache,
-    Components.Cms cms
+    CmsBuilder cms
 ) : IQuerySchemaService
 {
     public async Task<LoadedQuery> ByGraphQlRequest(GraphQlRequestDto dto)
@@ -43,7 +42,7 @@ public sealed class QuerySchemaService(
             var query = dto.Query with
             {
                 IdeUrl =
-                $"{cms.GraphPath}?query={Uri.EscapeDataString(dto.Query.Source)}&operationName={dto.Query.Name}"
+                $"{cms.Options.GraphQlPath}?query={Uri.EscapeDataString(dto.Query.Source)}&operationName={dto.Query.Name}"
             };
             await VerifyQuery(query, ct);
             var schema = new Schema(query.Name, SchemaType.Query, new Settings(Query: query));
@@ -54,22 +53,22 @@ public sealed class QuerySchemaService(
 
     public async Task<LoadedQuery> ByNameAndCache(string name, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(name)) throw new InvalidParamException("query name should not be empty");
+        if (string.IsNullOrWhiteSpace(name)) throw new ResultException("query name should not be empty");
         var query = await queryCache.GetOrSet(name, async (token) =>
         {
-            var schema = NotNull(await schemaSvc.GetByNameDefault(name, SchemaType.Query, token))
-                .ValOrThrow($"can not find query by name {name}");
-            var query = NotNull(schema.Settings.Query)
-                .ValOrThrow("invalid query format");
-            var fields = Ok(Converter.GetRootGraphQlFields(query.Source));
+            var schema = await schemaSvc.GetByNameDefault(name, SchemaType.Query, token)??
+                throw new ResultException($"can not find query by name {name}");
+            var query = schema.Settings.Query ??
+                throw new ResultException("invalid query format");
+            var fields = Converter.GetRootGraphQlFields(query.Source).Ok();
             return await ToLoadedQuery(query, fields, token);
         }, ct);
-        return NotNull(query).ValOrThrow($"can not find query [{name}]");
+        return query ?? throw new ResultException($"can not find query [{name}]");
     }
 
-    public string CreateQueryUrl()
+    public string GraphQlClientUrl()
     {
-        return NotNull(cms).ValOrThrow("query module is not enabled").GraphPath;
+        return cms.Options.GraphQlPath;
     }
     
     public async Task Delete(Schema schema, CancellationToken ct)
@@ -82,10 +81,10 @@ public sealed class QuerySchemaService(
     }
 
     private async Task<LoadedQuery> ToLoadedQuery(Query query, IEnumerable<GraphQLField> fields, CancellationToken ct = default){
-        var entity = Ok(await entitySchemaSvc.GetLoadedEntity(query.EntityName, ct));
-        var selection = Ok(await SelectionSetToNode("", entity, fields, ct));
-        var sorts = Ok(await SortHelper.ToValidSorts(query.Sorts,entity, entitySchemaSvc));
-        var validFilter = Ok(await query.Filters.ToValid(entity, entitySchemaSvc, entitySchemaSvc));
+        var entity = (await entitySchemaSvc.GetLoadedEntity(query.EntityName, ct)).Ok();
+        var selection = (await SelectionSetToNode("", entity, fields, ct)).Ok();
+        var sorts = (await SortHelper.ToValidSorts(query.Sorts,entity, entitySchemaSvc)).Ok();
+        var validFilter = (await query.Filters.ToValid(entity, entitySchemaSvc, entitySchemaSvc)).Ok();
         return query.ToLoadedQuery(entity, selection, sorts,validFilter);
     }
 
@@ -93,15 +92,15 @@ public sealed class QuerySchemaService(
     {
         if (query is null)
         {
-            throw new InvalidParamException("query is null");
+            throw new ResultException("query is null");
         }
 
-        var entity = Ok(await entitySchemaSvc.GetLoadedEntity(query.EntityName, ct));
-        Ok(await query.Filters.ToValid(entity,entitySchemaSvc,entitySchemaSvc));
+        var entity = (await entitySchemaSvc.GetLoadedEntity(query.EntityName, ct)).Ok();
+        (await query.Filters.ToValid(entity,entitySchemaSvc,entitySchemaSvc)).Ok();
 
-        var fields = Ok(Converter.GetRootGraphQlFields(query.Source));
-        Ok(await SelectionSetToNode("", entity, fields, ct));
-        Ok(await SortHelper.ToValidSorts(query.Sorts,entity, entitySchemaSvc));
+        var fields = Converter.GetRootGraphQlFields(query.Source).Ok();
+        (await SelectionSetToNode("", entity, fields, ct)).Ok();
+        (await SortHelper.ToValidSorts(query.Sorts,entity, entitySchemaSvc)).Ok();
     }
 
     private async Task<Result<ImmutableArray<GraphAttribute>>> SelectionSetToNode(
@@ -127,7 +126,7 @@ public sealed class QuerySchemaService(
                 return Result.Fail(err);
             }
 
-            if (graphAttr.Type == DisplayType.Crosstable)
+            if (graphAttr.Type == DisplayType.Junction)
             {
                 var inputs = field.Arguments?.Select(x => new GraphQlArgumentDataProvider(x)) ?? [];
                 if (!QueryHelper.ParseSimpleArguments(inputs).Try(out var res, out var parseErr))
@@ -136,7 +135,7 @@ public sealed class QuerySchemaService(
                 }
 
                 var (sorts, filters, pagination) = res;
-                var target = graphAttr.Crosstable!.TargetEntity;
+                var target = graphAttr.Junction!.TargetEntity;
                 
                 if (!(await SortHelper.ToValidSorts(sorts,target, entitySchemaSvc)).Try(out var validSorts,out   err))
                 {
@@ -168,7 +167,7 @@ public sealed class QuerySchemaService(
     {
         var targetEntity = attr.Type switch
         {
-            DisplayType.Crosstable => attr.Crosstable!.TargetEntity,
+            DisplayType.Junction => attr.Junction!.TargetEntity,
             DisplayType.Lookup => attr.Lookup,
             _ => null
         };
@@ -194,8 +193,8 @@ public sealed class QuerySchemaService(
             return Result.Fail($"Parsing `SectionSet` fail, can not find {fldName} in {entity.Name}");
         }
 
-        if (find.Type is not (DisplayType.Crosstable or DisplayType.Lookup)) return find.ToGraph();
-        if (!(await entitySchemaSvc.LoadOneCompoundAttribute(entity, find, [], ct))
+        if (find.Type is not (DisplayType.Junction or DisplayType.Lookup)) return find.ToGraph();
+        if (!(await entitySchemaSvc.LoadCompoundAttribute(entity, find, [], ct))
             .Try(out var compoundAttr, out var err))
         {
             return Result.Fail(err);

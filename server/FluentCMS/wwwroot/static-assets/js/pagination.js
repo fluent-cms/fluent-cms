@@ -47,7 +47,7 @@ $(document).ready(function() {
         }
         loadingDict[token] = true;
         $.ajax({
-            url: '/pages',
+            url: '/page_part',
             type: 'GET',
             data: {
                 token,

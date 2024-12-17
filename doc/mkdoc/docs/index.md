@@ -1,6 +1,14 @@
 
-Welcome to [Fluent CMS](https://github.com/fluent-cms/fluent-cms)! [![GitHub stars](https://img.shields.io/github/stars/fluent-cms/fluent-cms.svg?style=social&label=Star)](https://github.com/fluent-cms/fluent-cms/stargazers)    
-If you'd like to contribute to the project, please check out our [CONTRIBUTING guide](https://github.com/fluent-cms/fluent-cms/blob/main/CONTRIBUTING.md).Don’t forget to give us a star  ⭐ if you find Fluent CMS helpful!    
+Welcome to [FluentCMS](https://github.com/fluent-cms/fluent-cms)! 🚀  
+[![GitHub stars](https://img.shields.io/github/stars/fluent-cms/fluent-cms.svg?style=social&label=Star)](https://github.com/fluent-cms/fluent-cms/stargazers)
+
+FluentCMS makes content management seamless with its powerful GraphQL API and intuitive drag-and-drop page design features.
+
+If you'd like to contribute, please check out our [CONTRIBUTING guide](https://github.com/fluent-cms/fluent-cms/blob/main/CONTRIBUTING.md).  
+Enjoying FluentCMS? Don’t forget to give us a ⭐ and help us grow!     
+
+
+
 
 ---
 ## What is Fluent CMS?
@@ -125,12 +133,12 @@ To establish a many-to-one relationship between the `Course` and `Teacher` entit
 **Description:** When a course is created or modified, a teacher record can be looked up and linked to the course.
 
 #### 2. **Course and Materials (Many-to-Many Relationship)**
-To establish a many-to-many relationship between the `Course` and `Material` entities, use a `Crosstable` attribute in the `Course` entity. This enables associating multiple materials with a single course.
+To establish a many-to-many relationship between the `Course` and `Material` entities, use a `Junction` attribute in the `Course` entity. This enables associating multiple materials with a single course.
 
 | **Attribute**    | **Value**    |
 |-------------------|--------------|
 | **Field**         | `materials` |
-| **Type**          | Crosstable  |
+| **Type**          | Junction  |
 | **Options**       | Material    |
 
 **Description:** When managing a course, you can select multiple material records from the `Material` table to associate with the course.
@@ -147,7 +155,7 @@ The **List Page** displays entities in a tabular format, enabling sorting, searc
 [Example Course Detail Page](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course/22)  
 The **Detail Page** provides an interface for viewing and managing detailed attributes. Related data such as teachers and materials can be selected or modified.
 
---- 
+
 
 ---
 ## **GraphQL Query**
@@ -731,6 +739,7 @@ To bind a `Data List` to a component, follow these steps:
 |               | - **None**: Displays all available content at once without requiring additional user actions.                                                                          |
 
 
+
 ---
 ## Online Course System Frontend
 Having established our understanding of Fluent CMS essentials like Entity, Query, and Page, we're ready to build a frontend for an online course website.
@@ -791,53 +800,86 @@ Course Details <-------> Teacher Details
 
 When rendering the page, the `PageService` automatically passes the `teacher_id` (e.g., `{teacher_id: 3}`) to the query.
 
+
 ---
 ## Optimizing Caching
-To enhance performance, Fluent CMS implements caching strategies. 
 
-### Cache Types
+Fluent CMS employs advanced caching strategies to boost performance.  
 
-1. **Entity Definition Cache**  
-   Fluent CMS requires caching of all entity definitions to dynamically generate GraphQL types.
+For detailed information on ASP.NET Core caching, visit the official documentation: [ASP.NET Core Caching Overview](https://learn.microsoft.com/en-us/aspnet/core/performance/caching/overview?view=aspnetcore-9.0).
 
-2. **Query Definition Cache**  
-   Each query may depend on multiple related entities. Fluent CMS caches these definitions to compose efficient SQL queries.
+### Cache Schema
 
----
+Fluent CMS automatically invalidates schema caches whenever schema changes are made. The schema cache consists of two types:
 
-### IMemoryCache in Fluent CMS
+1. **Entity Schema Cache**  
+   Caches all entity definitions required to dynamically generate GraphQL types.
 
-By default, Fluent CMS utilizes ASP.NET's `IMemoryCache` for caching.
+2. **Query Schema Cache**  
+   Caches query definitions, including dependencies on multiple related entities, to compose efficient SQL queries.
 
+By default, schema caching is implemented using `IMemoryCache`. However, you can override this by providing a `HybridCache`. Below is a comparison of the two options:
+
+#### **IMemoryCache**
 - **Advantages**:
     - Simple to debug and deploy.
-    - Suitable for single-node web applications.
-
+    - Ideal for single-node web applications.
 - **Disadvantages**:
-    - Not scalable for distributed environments. In multi-node deployments, cache invalidation on one node (e.g., Node A) does not propagate to other nodes (e.g., Node B).
+    - Not suitable for distributed environments. Cache invalidation on one node (e.g., Node A) does not propagate to other nodes (e.g., Node B).
 
----
-
-### HybridCache for Scalable Caching
-
-Starting with ASP.NET 9.0, the framework provides `HybridCache`, which combines a primary memory cache with a secondary external cache (e.g., Redis).
-
+#### **HybridCache**
 - **Key Features**:
-    - **Scalability**: Combines the performance of local memory caching with the distributed consistency of external caching.
-    - **Stampede Resolution**: The `HybridCache` resolves cache stampede issues, as confirmed by its developers.
-
+    - **Scalability**: Combines the speed of local memory caching with the consistency of distributed caching.
+    - **Stampede Resolution**: Effectively handles cache stampede scenarios, as verified by its developers.
 - **Limitations**:  
-  The current implementation lacks "Backend-Assisted Local Cache Invalidation," which means cache invalidation on one node does not immediately propagate to others.
-
+  The current implementation lacks "Backend-Assisted Local Cache Invalidation," meaning invalidation on one node does not instantly propagate to others.
 - **Fluent CMS Strategy**:  
-  To address this, Fluent CMS sets local cache expiration (20 seconds) to one-third of the distributed cache expiration (60 seconds). This ensures memory caches across nodes achieve consistency within 20 seconds, significantly improving over a standard memory cache's 60-second delay.
+  Fluent CMS mitigates this limitation by setting the local cache expiration to 20 seconds (one-third of the distributed cache expiration, which is set to 60 seconds). This ensures cache consistency across nodes within 20 seconds, significantly improving upon the typical 60-second delay in memory caching.
+
+To implement a `HybridCache`, use the following code:
+
+```csharp
+builder.AddRedisDistributedCache(connectionName: CmsConstants.Redis);
+builder.Services.AddHybridCache();
+```
+
+### Cache Data
+
+Fluent CMS does not automatically invalidate data caches. Instead, it leverages ASP.NET Core's output caching for a straightforward implementation. Data caching consists of two types:
+
+1. **Query Data Cache**  
+   Caches the results of queries for faster access.
+
+2. **Page Cache**  
+   Caches the output of rendered pages for quick delivery.
+
+By default, output caching is disabled in Fluent CMS. To enable it, configure and inject the output cache as shown below:
+
+```csharp
+builder.Services.AddOutputCache(cacheOption =>
+{
+    cacheOption.AddBasePolicy(policyBuilder => policyBuilder.Expire(TimeSpan.FromMinutes(1)));
+    cacheOption.AddPolicy(CmsOptions.DefaultPageCachePolicyName,
+        b => b.Expire(TimeSpan.FromMinutes(2)));
+    cacheOption.AddPolicy(CmsOptions.DefaultQueryCachePolicyName,
+        b => b.Expire(TimeSpan.FromSeconds(1)));
+});
+
+// After builder.Build();
+app.UseOutputCache();
+```
+
 
 
 ---
 ## Aspire Integration
-A scalable deployment of Fluent CMS involves multiple web application nodes, a Redis server for distributed caching, and a database server, all behind a load balancer.
+Fluent CMS leverages Aspire to simplify deployment.
+
 
 ### Architecture Overview
+
+A scalable deployment of Fluent CMS involves multiple web application nodes, a Redis server for distributed caching, and a database server, all behind a load balancer.
+
 
 ```
                  +------------------+
@@ -943,6 +985,7 @@ Follow these steps to integrate Fluent CMS into your project using a NuGet packa
 Once your web server is running, you can access the **Admin Panel** at `/admin` and the **Schema Builder** at `/schema`.
 
 You can find an example project [here](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).
+
 
 
 ---

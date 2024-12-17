@@ -2,6 +2,7 @@ using FluentCMS.App;
 using FluentCMS.Cms.Services;
 using FluentCMS.Utils.Nosql;
 using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Utils.ResultExt;
 using FluentCMS.WebAppExt;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
@@ -107,7 +108,7 @@ void RegisterHooks()
         {
             if (param.RecordId == "1000")
             {
-                throw new FluentCMS.Exceptions.InvalidParamException("1000");
+                throw new ResultException("1000");
             }
             return param;
         });
@@ -125,7 +126,7 @@ void RegisterHooks()
 
     registry.EntityPostGetList.Register(TestEntity.EntityName, (param) =>
     {
-        foreach (var item in param.RefListResult.Items)
+        foreach (var item in param.RefListResponse.Items)
         {
             item[TestEntity.FieldName] +=  " AfterQueryMany";
         }

@@ -24,7 +24,7 @@ public class FeedSaver(INosqlDao nosqlDao,ILogger<FeedSaver> logger)
         async Task<Result> Call()
         {
             var fullUrl = $"{config.Url}?id={id}";
-            var requestResult = await _client.GetObject<JsonElement>(fullUrl);
+            var requestResult = await _client.GetResult<JsonElement>(fullUrl);
             if (requestResult.IsFailed)
             {
                 return Result.Fail(requestResult.Errors);
@@ -71,7 +71,7 @@ public class FeedSaver(INosqlDao nosqlDao,ILogger<FeedSaver> logger)
                 fullUrl += $"?last={last}";
             }
 
-            var requestResult = await _client.GetObject<JsonElement[]>(fullUrl);
+            var requestResult = await _client.GetResult<JsonElement[]>(fullUrl);
             if (requestResult.IsFailed)
             {
                 return Result.Fail(requestResult.Errors);

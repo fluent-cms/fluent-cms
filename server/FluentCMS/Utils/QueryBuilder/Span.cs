@@ -21,30 +21,25 @@ public static class SpanConstants
 
 public static class SpanHelper
 {
-    public static bool HasNext(IEnumerable<Record> items)
-    {
-        var last = items.LastOrDefault();
-        return last is not null && last.TryGetValue(SpanConstants.HasNextPage, out var v) && v is true;
-    }
+    public static bool HasNext(Record item) 
+        => item.TryGetValue(SpanConstants.HasNextPage, out var v) && v is true;
+    public static bool HasNext(IEnumerable<Record> items) 
+        => items.LastOrDefault() is { } last && HasNext(last);
+
+    public static string LastCursor(Record item) =>
+        item.TryGetValue(SpanConstants.Cursor, out var v) && v is string s ? s : null ?? "";
 
     public static string LastCursor(IEnumerable<Record> items)
-    {
-        var val = items.Last().TryGetValue(SpanConstants.Cursor, out var v) ?v as string:"" ;
-        return val ?? "";
-    }
+        => LastCursor(items.Last());
 
     public static string FirstCursor(IEnumerable<Record> items)
-    {
-        var val = items.First().TryGetValue(SpanConstants.Cursor, out var v) ? v as string : "";
-        return val ?? "";
-    }
+        => items.First().TryGetValue(SpanConstants.Cursor, out var v) && v is string s? s: null ?? "";
 
-    public static bool HasPrevious(IEnumerable<Record> items)
-    {
-        var first = items.FirstOrDefault();
-        return first is not null && first.TryGetValue(SpanConstants.HasPreviousPage, out var v) && v is true;
-    }
+    public static bool HasPrevious(Record item)
+        => item.TryGetValue(SpanConstants.HasPreviousPage, out var v) && v is true;
     
+    public static bool HasPrevious(IEnumerable<Record> items)
+        => items.FirstOrDefault() is {} first && HasPrevious(first);
 
     public static ValidValue SourceId(this ValidSpan c) => c.EdgeItem![SpanConstants.SourceId].ToValidValue();
     public static ValidValue Edge(this ValidSpan c, string fld) => c.EdgeItem![fld].ToValidValue();
@@ -108,11 +103,11 @@ public static class SpanHelper
                 }
             }
 
-            foreach (var attribute in attrs.GetAttrByType(DisplayType.Crosstable))
+            foreach (var attribute in attrs.GetAttrByType(DisplayType.Junction))
             {
                 if (!item.TryGetValue(attribute.Field, out var value) || value is not Record[] records ||
                     records.Length <= 0) continue;
-                var nextSourceId = records.First()[attribute.Crosstable!.SourceAttribute.Field];
+                var nextSourceId = records.First()[attribute.Junction!.SourceAttribute.Field];
                 SetSpan(true, attribute.Selection, records, attribute.Sorts, nextSourceId);
             }
         }

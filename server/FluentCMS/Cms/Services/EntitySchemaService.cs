@@ -1,14 +1,13 @@
 using System.Collections.Immutable;
 using FluentCMS.Cms.Models;
-using FluentCMS.Exceptions;
 using FluentCMS.Utils.Cache;
 using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Utils.ResultExt;
 using FluentResults;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.Cms.Services;
-using static InvalidParamExceptionFactory;
 
 public sealed class EntitySchemaService(
     ISchemaService schemaSvc,
@@ -33,9 +32,9 @@ public sealed class EntitySchemaService(
         result = executor.TryParseDataType(v, attr.DataType, out var val) switch
         {
             true => new ValidValue(S:val!.S, I:val.I,D: val.D),
-            _ => new ValidValue()
+            _ => ValidValue.EmptyValue
         };
-        return !result.IsEmpty();
+        return result != ValidValue.EmptyValue;
     }
 
     public async Task<Result<AttributeVector>> ResolveVector(LoadedEntity entity, string fieldName)
@@ -55,7 +54,7 @@ public sealed class EntitySchemaService(
 
             if (i == fields.Length - 1) break;
 
-            var res = await LoadOneCompoundAttribute(entity, attr,[], default);
+            var res = await LoadCompoundAttribute(entity, attr,[], default);
             if (res.IsFailed)
             {
                 return Result.Fail(res.Errors);
@@ -64,14 +63,14 @@ public sealed class EntitySchemaService(
             attr = res.Value;
             switch (attr.Type)
             {
-                case DisplayType.Crosstable:
-                    entity = attr.Crosstable!.TargetEntity;
+                case DisplayType.Junction:
+                    entity = attr.Junction!.TargetEntity;
                     break;
                 case DisplayType.Lookup:
                     entity = attr.Lookup!;
                     break;
                 default:
-                    return Result.Fail($"Can not resolve {fieldName}, {attr.Field} is not a composite type");
+                    return Result.Fail($"Can not resolve [{fieldName}], [{attr.Field}] is not a composite type");
             }
 
             attributes.Add(attr);
@@ -110,9 +109,9 @@ public sealed class EntitySchemaService(
         return entity;
     }
 
-    public async Task<Entity?> GetTableDefine(string name, CancellationToken token)
+    public async Task<Entity?> GetTableDefine(string table, CancellationToken token)
     {
-        var cols = await executor.GetColumnDefinitions(name, token);
+        var cols = await executor.GetColumnDefinitions(table, token);
         return new Entity
         (
             Attributes: [..cols.Select(AttributeHelper.ToAttribute)]
@@ -122,13 +121,14 @@ public sealed class EntitySchemaService(
 
     public async Task<Schema> SaveTableDefine(Schema dto, CancellationToken ct = default)
     {
-        Ok(await schemaSvc.NameNotTakenByOther(dto, ct));
-        var entity = NotNull(dto.Settings.Entity).ValOrThrow("invalid payload").WithDefaultAttr();
+        (await schemaSvc.NameNotTakenByOther(dto, ct)).Ok();
+        var entity = (dto.Settings.Entity?? throw new ResultException("invalid payload"));
+        entity = entity.WithDefaultAttr();
         var cols = await executor.GetColumnDefinitions(entity.TableName, ct);
-        Ok(EnsureTableNotExist());
+        EnsureTableNotExist().Ok();
         await VerifyEntity(entity, ct);
         await SaveSchema(); //need  to save first because it will call trigger
-        await CreateCrosstables();
+        await CreateJunctions();
         await SaveMainTable();
         await schemaSvc.EnsureEntityInTopMenuBar(entity, ct);
         await entityCache.Remove("",ct);
@@ -159,11 +159,11 @@ public sealed class EntitySchemaService(
             }
         }
 
-        async Task CreateCrosstables()
+        async Task CreateJunctions()
         {
-            foreach (var attribute in entity.Attributes.GetAttrByType(DisplayType.Crosstable))
+            foreach (var attribute in entity.Attributes.GetAttrByType(DisplayType.Junction))
             {
-                await CreateCrosstable(entity.ToLoadedEntity(),
+                await this.CreateJunction(entity.ToLoadedEntity(),
                     attribute.ToLoaded(entity.TableName), ct);
             }
         }
@@ -200,24 +200,24 @@ public sealed class EntitySchemaService(
         return attr with { Lookup = value.ToLoadedEntity() };
     }
 
-    private async Task<Result<LoadedAttribute>> LoadCrosstable(
+    private async Task<Result<LoadedAttribute>> LoadJunction(
         LoadedEntity entity, 
         LoadedAttribute attr,
-        HashSet<string> visitedCrosstable,
+        HashSet<string> visited,
         CancellationToken token)
     {
-        if (attr.Crosstable is not null)
+        if (attr.Junction is not null)
         {
             return attr;
         }
 
-        if (!attr.GetCrosstableTarget(out var targetName))
+        if (!attr.GetJunctionTarget(out var targetName))
         {
-            return Result.Fail($"Crosstable Option was not set for attribute `{entity.Name}.{attr.Field}`");
+            return Result.Fail($"Junction Option was not set for attribute `{entity.Name}.{attr.Field}`");
         }
         
-        var crosstableTableName = CrosstableHelper.GetCrosstableTableName(entity.Name, targetName);
-        if (!visitedCrosstable.Add(crosstableTableName))
+        var tableName = JunctionHelper.GetJunctionTableName(entity.Name, targetName);
+        if (!visited.Add(tableName))
         {
             return attr;
         }
@@ -228,25 +228,25 @@ public sealed class EntitySchemaService(
             return Result.Fail($"not find entity by name {targetName}, err = {getErr}");
         }
 
-        var (_, _, loadedTarget, loadErr) = await LoadCompoundAttributes(target.ToLoadedEntity(), visitedCrosstable, token);
+        var (_, _, loadedTarget, loadErr) = await LoadCompoundAttributes(target.ToLoadedEntity(), visited, token);
         if (loadErr is not null)
         {
             return Result.Fail(loadErr);
         }
 
-        return attr with { Crosstable = CrosstableHelper.Crosstable(entity, loadedTarget!, attr) };
+        return attr with { Junction = JunctionHelper.Junction(entity, loadedTarget!, attr) };
     }
 
-    public async Task<Result<LoadedAttribute>> LoadOneCompoundAttribute(
+    public async Task<Result<LoadedAttribute>> LoadCompoundAttribute(
         LoadedEntity entity, 
         LoadedAttribute attr,
-        HashSet<string> visitedCrosstable,
-        CancellationToken token)
+        HashSet<string> visited,
+        CancellationToken ct)
     {
         return attr.Type switch
         {
-            DisplayType.Crosstable => await LoadCrosstable(entity, attr,visitedCrosstable, token),
-            DisplayType.Lookup => await LoadLookup(attr, token),
+            DisplayType.Junction => await LoadJunction(entity, attr,visited, ct),
+            DisplayType.Lookup => await LoadLookup(attr, ct),
             _ => attr
         };
     }
@@ -254,6 +254,7 @@ public sealed class EntitySchemaService(
     public async Task Delete(Schema schema, CancellationToken ct)
     {
         await schemaSvc.Delete(schema.Id, ct);
+        if (schema.Settings.Entity is not null) await schemaSvc.RemoveEntityInTopMenuBar(schema.Settings.Entity, ct);
         await entityCache.Remove("",ct);
     }
 
@@ -264,7 +265,8 @@ public sealed class EntitySchemaService(
         return ret;
     }
 
-    private async Task<Result<LoadedEntity>> LoadCompoundAttributes(LoadedEntity entity, HashSet<string> visitedCrosstable, CancellationToken ct)
+    private async Task<Result<LoadedEntity>> LoadCompoundAttributes(
+        LoadedEntity entity, HashSet<string> visited, CancellationToken ct)
     {
         var lst = new List<LoadedAttribute>();
 
@@ -272,8 +274,8 @@ public sealed class EntitySchemaService(
         {
             switch (attribute)
             {
-                case { Type: DisplayType.Lookup  or DisplayType.Crosstable }:
-                    var (_, _, value, errors) = await LoadOneCompoundAttribute(entity, attribute, visitedCrosstable,ct);
+                case { Type: DisplayType.Lookup  or DisplayType.Junction }:
+                    var (_, _, value, errors) = await LoadCompoundAttribute(entity, attribute, visited,ct);
                     if (errors is not null)
                     {
                         return Result.Fail(errors);
@@ -291,40 +293,38 @@ public sealed class EntitySchemaService(
         return entity with { Attributes = [..lst] };
     }
 
-    private async Task CreateCrosstable(LoadedEntity entity, LoadedAttribute attr, CancellationToken ct)
+    private async Task CreateJunction(LoadedEntity entity, LoadedAttribute attr, CancellationToken ct)
     {
-        if (!attr.GetCrosstableTarget(out var crosstableName))
+        if (!attr.GetJunctionTarget(out var name))
         {
-            throw new Exception($"Crosstable Option was not set for attribute `{entity.Name}.{attr.Field}`");
+            throw new Exception($"Junction Option was not set for attribute `{entity.Name}.{attr.Field}`");
         }
 
-        var targetEntity = Ok(await GetLoadedEntity(crosstableName, ct));
-        var crossTable = CrosstableHelper.Crosstable(entity, targetEntity, attr);
+        var targetEntity = (await GetLoadedEntity(name, ct)).Ok();
+        var junction = JunctionHelper.Junction(entity, targetEntity, attr);
         var columns =
-            await executor.GetColumnDefinitions(crossTable.CrossEntity.TableName, ct);
+            await executor.GetColumnDefinitions(junction.JunctionEntity.TableName, ct);
         if (columns.Length == 0)
         {
-            await executor.CreateTable(crossTable.CrossEntity.TableName, crossTable.GetColumnDefinitions(),
+            await executor.CreateTable(junction.JunctionEntity.TableName, junction.GetColumnDefinitions(),
                 ct);
         }
     }
 
     private async Task CheckLookup(Attribute attr, CancellationToken ct)
     {
-        True(attr.DataType == DataType.Int).ThrowNotTrue("lookup datatype should be int");
+        if (attr.DataType != DataType.Int) throw new ResultException("lookup datatype should be int");
         if (!attr.GetLookupTarget(out var lookupName))
-        {
-            throw new InvalidParamException($"Lookup Option was not set for attribute `{attr.Field}`");
-        }
+            throw new ResultException($"Lookup Option was not set for attribute `{attr.Field}`");
 
-        NotNull(await GetEntity(lookupName, ct))
-            .ValOrThrow($"not find entity by name {lookupName}");
+        _ = await GetEntity(lookupName, ct) ??
+            throw new ResultException($"not find entity by name {lookupName}");
     }
 
     private async Task VerifyEntity(Entity entity, CancellationToken ct)
     {
-        NotNull(entity.Attributes.FindOneAttr(entity.TitleAttribute))
-            .ValOrThrow($"`{entity.TitleAttribute}` was not in attributes list");
+        _ = entity.Attributes.FindOneAttr(entity.TitleAttribute) ??
+            throw new ResultException($"`{entity.TitleAttribute}` was not in attributes list");
         foreach (var attribute in entity.Attributes.GetAttrByType(DisplayType.Lookup))
         {
             await CheckLookup(attribute, ct);

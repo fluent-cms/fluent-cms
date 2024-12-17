@@ -5,71 +5,67 @@ using FluentResults;
 
 namespace FluentCMS.Utils.ApiClient;
 
+
 public class EntityApiClient(HttpClient client)
 {
-    public async Task<Result<ListResult>> GetEntityList(string entity, int offset, int limit)
+    public Task<Result<ListResponse>> List(
+        string entity, int offset, int limit
+    ) => client.GetResult<ListResponse>($"/{entity}?offset={offset}&limit={limit}".ToEntityApi());
+
+    public Task<Result<JsonElement>> One(
+        string entity, int id
+    ) => client.GetResult<JsonElement>($"/{entity}/{id}".ToEntityApi());
+
+    public Task<Result<JsonElement>> Insert(
+        string entity, string field, string val
+    ) => Insert(entity, new Dictionary<string,object> { { field, val } });
+
+    public Task<Result<JsonElement>> InsertWithLookup(
+        string entity, string field, object value, string lookupField, object lookupTargetId
+    ) => Insert(entity, new Dictionary<string,object>
     {
-        return await client.GetObject<ListResult>($"/api/entities/{entity}?offset={offset}&limit={limit}");
+        { field, value },
+        { lookupField, new { id = lookupTargetId } }
+    });
+
+    private Task<Result<JsonElement>> Insert(
+        string entity, Dictionary<string,object> payload
+    ) => client.PostResult<JsonElement>($"/{entity}/insert".ToEntityApi(), payload);
+
+    public Task<Result> Update(
+        string entity, int id, string field, string val
+    ) => Update(entity, new Dictionary<string,object>
+    {
+        { "id", id },
+        { field, val }
+    });
+
+    private Task<Result> Update(
+        string entity, Dictionary<string,object> payload
+    ) => client.PostResult($"/{entity}/update".ToEntityApi(), payload);
+
+    public Task<Result> Delete(
+        string entity, object payload
+    ) => client.PostResult($"/{entity}/delete".ToEntityApi(), payload);
+
+    public Task<Result<ListResponse>> GetJunctionData(
+        string source, string target, bool exclude, int sourceId
+    ) => client.GetResult<ListResponse>($"/{source}/{sourceId}/{target}?exclude={exclude}".ToEntityApi());
+
+    public Task<Result> JunctionAdd(string entity, string attr, int sourceId, int id)
+    {
+        var payload = new object[] { new { id } };
+        return client.PostResult($"/{entity}/{sourceId}/{attr}/save".ToEntityApi(), payload);
     }
 
-    public async Task<Result<Dictionary<string,JsonElement>>> AddDataWithLookup(string entity, string field, object value, string lookupField,
-        object lookupTargetId)
+    public Task<Result> JunctionDelete(string entity, string attr, int sourceId, int id)
     {
-        return await AddData(entity, new Dictionary<string, object>
-        {
-            { field, value },
-            { lookupField, new { id = lookupTargetId } }
-        });
+        var payload = new object[] { new { id } };
+        return client.PostResult($"/{entity}/{sourceId}/{attr}/delete".ToEntityApi(), payload);
     }
 
-    public async Task<Result<ListResult>> CrossTable(string source, string target, bool exclude, int sourceId)
-    {
-        return await client.GetObject<ListResult>($"/api/entities/{source}/{sourceId}/{target}?exclude={exclude}");
-    }
+    public Task<Result<ListResponse>> JunctionList(
+        string entity, string attr, int sourceId, bool exclude
+    ) => client.GetResult<ListResponse>($"/{entity}/{sourceId}/{attr}?exclude={exclude}".ToEntityApi());
 
-    public async Task<Result<Dictionary<string,JsonElement>>> GetEntityValue(string entity, int id)
-    {
-        return await client.GetObject<Dictionary<string, JsonElement>>($"/api/entities/{entity}/{id}");
-    }
-
-    public async Task<Result> AddCrosstableData(string source, string crossField, int sourceId, int targetId)
-    {
-        var item = new
-        {
-            id = targetId
-        };
-        var payload = new object[] { item };
-        var res = await client.PostObject($"/api/entities/{source}/{sourceId}/{crossField}/save", payload);
-        return await res.ToResult();
-    }
-
-    public async Task<Result> UpdateSimpleData(string entity, int id, string field, string val)
-    {
-        var payload = new Dictionary<string, object>
-        {
-            { "id", id },
-            { field, val }
-        };
-        return await UpdateData(entity, payload);
-    }
-
-    private async Task<Result> UpdateData(string entity, Dictionary<string, object> payload)
-    {
-        var res = await client.PostObject($"/api/entities/{entity}/update", payload);
-        return await res.ToResult();
-    }
-
-    public async Task<Result<Dictionary<string,JsonElement>>> AddSimpleData(string entity, string field, string val)
-    {
-        var payload = new Dictionary<string, object>
-        {
-            { field, val }
-        };
-        return await AddData(entity, payload);
-    }
-
-    private async Task<Result<Dictionary<string,JsonElement>>> AddData(string entity, Dictionary<string, object> payload)
-    {
-        return await client.PostObject<Dictionary<string,JsonElement>>($"/api/entities/{entity}/insert", payload);
-    }
 }

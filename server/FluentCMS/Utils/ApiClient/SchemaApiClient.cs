@@ -1,3 +1,4 @@
+using System.Text.Json;
 using FluentCMS.Cms.Models;
 using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.HttpClientExt;
@@ -7,47 +8,31 @@ using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.Utils.ApiClient;
 
-public class SchemaApiClient (HttpClient client) 
+public class SchemaApiClient (HttpClient client)
 {
-    public async Task<Result<Schema[]>> GetAll(string type)
-    {
-        return await client.GetObject<Schema[]>($"/api/schemas?type={type}");
-    }
+    public Task<Result<Schema[]>> All(string type) => client.GetResult<Schema[]>($"/?type={type}".ToSchemaApi());
 
-    public async Task<Result> SaveSchema(Schema schema)
-    {
-        return await (await client.PostObject("/api/schemas", schema)).ToResult();
-    }
+    public Task<Result> Save(Schema schema) => client.PostResult("/".ToSchemaApi(), schema);
 
-    public async Task<Result> DeleteSchema(int id)
-    {
-        var url = $"/api/schemas/{id}";
-        var res = await client.DeleteAsync(url);
-        return await res.ToResult();
-    }
+    public Task<Result<JsonElement>> One(int id) => client.GetResult<JsonElement>($"/{id}".ToSchemaApi());
 
-    public async Task<Result> GetTopMenuBar()
-    {
-        var url = "/api/schemas/name/top-menu-bar/?type=menu";
-        var res = await client.GetAsync(url);
-        return await res.ToResult();
-    }
+    public Task<Result<Schema>> GetTopMenuBar() => client.GetResult<Schema>("/name/top-menu-bar/?type=menu".ToSchemaApi());
 
+    public Task<Result> Delete(int id) => client.DeleteResult($"/{id}".ToSchemaApi());
+    
+    public Task<Result<Schema>> SaveEntityDefine(Schema schema)
+        =>  client.PostResult<Schema>("/entity/define".ToSchemaApi(), schema);
 
-    public async Task<Result<Schema>> SaveEntityDefine(Schema schema)
-    {
-        return await client.PostObject<Schema>("/api/schemas/entity/define", schema);
-    }
+    public Task<Result<Entity>> GetTableDefine(string table)
+        =>  client.GetResult<Entity>($"/entity/{table}/define".ToSchemaApi());
 
-    public async Task<Result<Entity>> GetLoadedEntity(string entityName)
-    {
-        return await client.GetObject<Entity>($"/api/schemas/entity/{entityName}");
-    }
+    public Task<Result<Entity>> GetLoadedEntity(string entityName)
+        => client.GetResult<Entity>($"/api/schemas/entity/{entityName}");
     
     public Task<Result<Schema>> EnsureSimpleEntity(string entity, string field) =>
         EnsureSimpleEntity(entity, field, "", "");
 
-    public async Task<Result<Schema>> EnsureSimpleEntity(string entityName, string field, string lookup, string crosstable)
+    public Task<Result<Schema>> EnsureSimpleEntity(string entityName, string field, string lookup, string junction)
     {
         var attr = new List<Attribute>([
             new Attribute
@@ -71,15 +56,15 @@ public class SchemaApiClient (HttpClient client)
             ));
         }
 
-        if (!string.IsNullOrWhiteSpace(crosstable))
+        if (!string.IsNullOrWhiteSpace(junction))
         {
             attr.Add(new Attribute
             (
-                Field: crosstable,
-                Options: crosstable,
-                Header: crosstable,
+                Field: junction,
+                Options: junction,
+                Header: junction,
                 DataType: DataType.Na,
-                Type: DisplayType.Crosstable,
+                Type: DisplayType.Junction,
                 InDetail: true
             ));
         }
@@ -95,13 +80,10 @@ public class SchemaApiClient (HttpClient client)
             Attributes: [..attr]
         );
 
-        var url =
-            $"/api/schemas/entity/add_or_update";
-        return await client.PostObject<Schema>(url, entity);
+        var url = $"/entity/add_or_update".ToSchemaApi();
+        return client.PostResult<Schema>(url, entity);
     }
 
-
-
-
+    public Task<Result> GraphQlClientUrl() => client.GetResult("/graphql".ToSchemaApi());
 }
 

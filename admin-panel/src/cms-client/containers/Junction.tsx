@@ -7,9 +7,9 @@ import {useDialogState} from "../../components/dialogs/useDialogState";
 import {SelectDataTable} from "../../components/dataTable/SelectDataTable";
 import {SaveDialog} from "../../components/dialogs/SaveDialog";
 
-export function Crosstable({baseRouter,column, data, schema, getFullAssetsURL}: {
+export function Junction({baseRouter,column, data, schema, getFullAssetsURL}: {
     data: any,
-    column: { field: string, header: string, crosstable: any },
+    column: { field: string, header: string, junction: any },
     schema: any
     getFullAssetsURL : (arg:string) =>string
     baseRouter:string

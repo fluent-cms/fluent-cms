@@ -19,7 +19,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\FluentCMS.Test.Util\FluentCMS.Test.Util.csproj" />
       <ProjectReference Include="..\FluentCMS\FluentCMS.csproj" />
     </ItemGroup>
 

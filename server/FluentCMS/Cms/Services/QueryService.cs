@@ -1,13 +1,13 @@
 using System.Collections.Immutable;
-using FluentCMS.Exceptions;
+using FluentCMS.Types;
 using FluentCMS.Graph;
 using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.QueryBuilder;
 using FluentCMS.Utils.HookFactory;
+using FluentCMS.Utils.ResultExt;
+using FluentResults;
 
 namespace FluentCMS.Cms.Services;
-
-using static InvalidParamExceptionFactory;
 
 public sealed class QueryService(
     KateQueryExecutor executor,
@@ -34,22 +34,22 @@ public sealed class QueryService(
     {
         if (span.IsEmpty())
         {
-            throw new InvalidParamException("cursor is empty, can not partially execute query");
+            throw new ResultException("cursor is empty, can not partially execute query");
         }
 
         var query = await schemaSvc.ByNameAndCache(name, token);
-        var attribute = NotNull(query.Selection.RecursiveFind(attr)).ValOrThrow("not find attribute");
-        var cross = NotNull(attribute.Crosstable).ValOrThrow($"not find crosstable of {attribute.Field})");
+        var attribute = query.Selection.RecursiveFind(attr)?? throw new ResultException("can not find attribute");
+        var cross = attribute.Junction ?? throw new ResultException($"can not find Junction of {attribute.Field})");
 
         var flyPagination = new Pagination(null, limit.ToString());
         var pagination = PaginationHelper.ToValid(flyPagination, attribute.Pagination,
             cross.TargetEntity.DefaultPageSize, true, args);
 
         var fields = attribute.Selection.GetLocalAttrs();
-        var validSpan = Ok(span.ToValid(fields, resolver));
+        var validSpan = span.ToValid(fields, resolver).Ok();
 
-        var filters = Ok( FilterHelper.ReplaceVariables(attribute.Filters,args, resolver));
-        var sorts = Ok(await SortHelper.ReplaceVariables(attribute.Sorts, args, cross.TargetEntity, resolver)); 
+        var filters = FilterHelper.ReplaceVariables(attribute.Filters,args, resolver).Ok();
+        var sorts = (await SortHelper.ReplaceVariables(attribute.Sorts, args, cross.TargetEntity, resolver)).Ok(); 
         
         var kateQuery = cross.GetRelatedItems(fields, filters, sorts, validSpan, pagination.PlusLimitOne(),
             [validSpan.SourceId()]);
@@ -67,7 +67,7 @@ public sealed class QueryService(
     private async Task<Record[]> ListWithAction(QueryContext ctx, Span span, StrArgs args,CancellationToken token = default)
     {
         var (query, filters,sorts,pagination) = ctx;
-        var validSpan = Ok(span.ToValid(query.Entity.Attributes, resolver));
+        var validSpan = span.ToValid(query.Entity.Attributes, resolver).Ok();
 
         var hookParam = new QueryPreGetListArgs(query.Name, query.EntityName, [..filters], query.Sorts, validSpan,
             pagination.PlusLimitOne());
@@ -99,7 +99,7 @@ public sealed class QueryService(
             return res.OutRecord;
         }
 
-        var kateQuery = Ok(query.Entity.OneQuery(filters, sorts, query.Selection.GetLocalAttrs()));
+        var kateQuery = query.Entity.OneQuery(filters, sorts, query.Selection.GetLocalAttrs()).Ok();
         var item = await executor.One(kateQuery, token);
         if (item is null) return item;
         await AttachRelated(query.Selection, args, [item], token);
@@ -117,23 +117,23 @@ public sealed class QueryService(
             await AttachLookup(attribute, strArgs, items, token);
         }
 
-        foreach (var attribute in attrs.GetAttrByType<GraphAttribute>(DisplayType.Crosstable))
+        foreach (var attribute in attrs.GetAttrByType<GraphAttribute>(DisplayType.Junction))
         {
-            await AttachCrosstable(attribute, strArgs, items, token);
+            await AttachJunction(attribute, strArgs, items, token);
         }
     }
 
-    private async Task AttachCrosstable(GraphAttribute attr, StrArgs args, Record[] items, CancellationToken token)
+    private async Task AttachJunction(GraphAttribute attr, StrArgs args, Record[] items, CancellationToken token)
     {
-        var cross = NotNull(attr.Crosstable).ValOrThrow($"not find crosstable of {attr.AddTableModifier()}");
+        var cross = attr.Junction ?? throw new ResultException($"not find junction of {attr.AddTableModifier()}");
         var target = cross.TargetEntity;
         //no need to attach, ignore
         var ids = cross.SourceEntity.PrimaryKeyAttribute.GetUniq(items);
         if (ids.Length == 0) return;
 
         var fields = attr.Selection.GetLocalAttrs();
-        var filters = Ok( FilterHelper.ReplaceVariables(attr.Filters,args, resolver));
-        var sorts = Ok(await SortHelper.ReplaceVariables(attr.Sorts,args,target, resolver));
+        var filters = FilterHelper.ReplaceVariables(attr.Filters,args, resolver).Ok();
+        var sorts = (await SortHelper.ReplaceVariables(attr.Sorts,args,target, resolver)).Ok();
 
         var fly = PaginationHelper.ResolvePagination(attr, args) ?? attr.Pagination;
         if (fly.IsEmpty())
@@ -167,7 +167,7 @@ public sealed class QueryService(
                         token);
                 }
 
-                foreach (var item in items.Where(x => x[cross.CrossEntity.PrimaryKey].Equals(id.Value)))
+                foreach (var item in items.Where(x => x[cross.JunctionEntity.PrimaryKey].Equals(id.Value)))
                 {
                     item[attr.Field] = targetRecords;
                 }
@@ -177,7 +177,7 @@ public sealed class QueryService(
 
     private async Task AttachLookup(GraphAttribute attr, StrArgs strArgs, Record[] items, CancellationToken token)
     {
-        var lookupEntity = NotNull(attr.Lookup).ValOrThrow($"can not find lookup entity of{attr.Field}");
+        var lookupEntity = attr.Lookup??throw new ResultException($"can not find lookup entity of{attr.Field}");
 
         var selection = attr.Selection.GetLocalAttrs();
         if (selection.FindOneAttr(lookupEntity.PrimaryKey) == null)
@@ -212,7 +212,7 @@ public sealed class QueryService(
         string name, Pagination? pagination,  bool haveCursor, StrArgs args, CancellationToken token =default)
     {
         var query = await schemaSvc.ByNameAndCache(name, token);
-        Ok(query.VerifyVariable(args));
+        Result.Ok();
         return await GetQueryContext(query, pagination,haveCursor,args);
     }
 
@@ -225,8 +225,8 @@ public sealed class QueryService(
     private async Task<QueryContext> GetQueryContext(LoadedQuery query, Pagination? fly, bool haveCursor, StrArgs args)
     {
         var validPagination = PaginationHelper.ToValid(fly, query.Pagination, query.Entity.DefaultPageSize, haveCursor,args);
-        var sort =Ok(await SortHelper.ReplaceVariables(query.Sorts,args, query.Entity, resolver));
-        var filters = Ok(FilterHelper.ReplaceVariables(query.Filters,args, resolver));
+        var sort =(await SortHelper.ReplaceVariables(query.Sorts,args, query.Entity, resolver)).Ok();
+        var filters = FilterHelper.ReplaceVariables(query.Filters,args, resolver).Ok();
         return new QueryContext(query, filters, sort,validPagination);
     }
 }

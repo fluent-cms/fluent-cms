@@ -24,9 +24,8 @@ where TArgs: BaseArgs
 
     private (MethodInfo, object[]) PrepareArgument(IServiceProvider provider, Func<Type, object> getInput)
     {
-        var method = HookChecker
-            .NotNull(Callback.GetType().GetMethod("Invoke"))
-            .ValOrThrow($"{ExceptionPrefix}The hook does not have an Invoke method.");
+        var method = Callback.GetType().GetMethod("Invoke") ??
+            throw new HookException($"{ExceptionPrefix}The hook does not have an Invoke method.");
 
         var parameters = method.GetParameters();
         List<object> args = [];
@@ -77,9 +76,9 @@ where TArgs: BaseArgs
         {
             return null;
         }
-        var resultProperty = HookChecker.NotNull(task.GetType().GetProperty("Result"))
-            .ValOrThrow($"{ExceptionPrefix}Cannot get result property of [{method}]");
-        return HookChecker.NotNull(resultProperty.GetValue(task))
-            .ValOrThrow($"{ExceptionPrefix}Cannot get result from async hook method[{method}]");
+        var resultProperty = task.GetType().GetProperty("Result")??
+            throw new HookException($"{ExceptionPrefix}Cannot get result property of [{method}]");
+        return resultProperty.GetValue(task) ??
+            throw new HookException($"{ExceptionPrefix}Cannot get result from async hook method[{method}]");
     }
 }

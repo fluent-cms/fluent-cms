@@ -3,10 +3,10 @@ import {useState} from "react";
 
 export function useSubSchema(data :any,
                       schema:any,
-                      column: { field: string, header: string, crosstable: any }
+                      column: { field: string, header: string, junction: any }
 ){
     const id = (data ?? {})[schema?.primaryKey ?? '']
-    const targetSchema = column.crosstable.targetEntity;
+    const targetSchema = column.junction.targetEntity;
     const listColumns = getListColumns(targetSchema)
     const formColumns = getWriteColumns(targetSchema)
     const formId = "sublistForm" + targetSchema.name

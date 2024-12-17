@@ -5,7 +5,10 @@ namespace FluentCMS.Utils.QueryBuilder;
 
 // Offset, Limit have to be nullable so they can be resolved from controller
 // set it to sting to support graphQL variable
-public sealed record Pagination(string? Offset = default, string? Limit = default);
+public sealed record Pagination(string? Offset = default, string? Limit = default)
+{
+    public static Pagination Empty => new();
+}
 
 public sealed record ValidPagination(int Offset, int Limit);
 

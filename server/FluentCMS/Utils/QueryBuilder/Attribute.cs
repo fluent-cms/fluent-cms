@@ -33,8 +33,8 @@ public record LoadedAttribute(
     string Validation = "",
     string ValidationMessage = "",
     
-    Crosstable? Crosstable = default,
-    LoadedEntity? Lookup = default
+    Junction? Junction = null,
+    LoadedEntity? Lookup = null
 ) : Attribute(
     Field: Field,
     Header: Header,
@@ -71,7 +71,7 @@ public sealed record GraphAttribute(
     
     LoadedEntity? Lookup = default,
         
-    Crosstable? Crosstable = default,
+    Junction? Junction = default,
     Pagination? Pagination = default
     
 ) : LoadedAttribute(
@@ -90,7 +90,7 @@ public sealed record GraphAttribute(
     Validation : Validation,
     ValidationMessage : ValidationMessage,
     
-    Crosstable:Crosstable,
+    Junction:Junction,
     Lookup :Lookup
 );
 
@@ -123,7 +123,7 @@ public static class AttributeHelper
             Sorts: [],
             Pagination:new Pagination(),
             Lookup: a.Lookup,
-            Crosstable: a.Crosstable,
+            Junction: a.Junction,
             TableName: a.TableName,
             Field: a.Field,
             Header: a.Header,
@@ -165,7 +165,7 @@ public static class AttributeHelper
         return arr.Length > 0;
     }
 
-    public static bool GetCrosstableTarget(this Attribute a, out string val)
+    public static bool GetJunctionTarget(this Attribute a, out string val)
     {
        val = a.Options;
        return !string.IsNullOrWhiteSpace(val);
@@ -173,7 +173,7 @@ public static class AttributeHelper
 
     public static bool IsCompound(this Attribute a)
     {
-        return a.Type is DisplayType.Lookup or DisplayType.Crosstable;
+        return a.Type is DisplayType.Lookup or DisplayType.Junction;
     }
     
     public static Attribute ToAttribute(this ColumnDefinition col)
@@ -226,14 +226,14 @@ public static class AttributeHelper
     public static T[] GetLocalAttrs<T>(this IEnumerable<T>? arr)
         where T : Attribute
     {
-        return arr?.Where(x => x.Type != DisplayType.Crosstable).ToArray() ?? [];
+        return arr?.Where(x => x.Type != DisplayType.Junction).ToArray() ?? [];
     }
 
     public static T[] GetLocalAttrs<T>(this IEnumerable<T>? arr, InListOrDetail listOrDetail)
         where T : Attribute
     {
         return arr?.Where(x =>
-                x.Type != DisplayType.Crosstable &&
+                x.Type != DisplayType.Junction &&
                 (listOrDetail == InListOrDetail.InList ? x.InList : x.InDetail))
             .ToArray() ?? [];
     }
@@ -241,7 +241,7 @@ public static class AttributeHelper
     public static T[] GetLocalAttrs<T>(this IEnumerable<T>? arr, string[] attributes)
         where T : Attribute
     {
-        return arr?.Where(x => x.Type != DisplayType.Crosstable && attributes.Contains(x.Field)).ToArray() ??
+        return arr?.Where(x => x.Type != DisplayType.Junction && attributes.Contains(x.Field)).ToArray() ??
                [];
     }
 

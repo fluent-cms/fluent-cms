@@ -25,15 +25,15 @@ public interface ISchemaService
 
     Task<Schema?> ByIdWithAction(int id, CancellationToken token = default);
     Task<Schema?> ById(int id, CancellationToken cancellationToken = default);
-
+    Task RemoveEntityInTopMenuBar(Entity entity, CancellationToken token);
     public Task EnsureEntityInTopMenuBar(Entity entity, CancellationToken token);
     Task<Result> NameNotTakenByOther(Schema schema, CancellationToken token);
     Task<Schema?> GetByNameDefault(string name, string type, CancellationToken token = default);
     Task<Schema?> GetByNamePrefixDefault(string name, string type, CancellationToken token = default);
     Task<Schema> SaveWithAction(Schema schema, CancellationToken token);
     Task<Schema> AddOrUpdateByNameWithAction(Schema schema, CancellationToken token);
-    Task Delete(int id, CancellationToken token);
-    Task EnsureTopMenuBar(CancellationToken token);
-    Task EnsureSchemaTable(CancellationToken token);
+    Task Delete(int id, CancellationToken token = default);
+    Task EnsureTopMenuBar(CancellationToken token = default);
+    Task EnsureSchemaTable(CancellationToken token = default);
 
 }

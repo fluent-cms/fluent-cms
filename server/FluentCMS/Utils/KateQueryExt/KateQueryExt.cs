@@ -9,9 +9,9 @@ public static class KateQueryExt
     public static void ApplyJoin(this SqlKata.Query query, IEnumerable<AttributeVector> vectors)
     {
         var root = AttributeTreeNode.Parse(vectors);
-        bool hasCrosstable = false;
+        bool hasJunction = false;
         Bfs(root, "");
-        if (hasCrosstable)
+        if (hasJunction)
         {
             query.Distinct();
         }
@@ -37,18 +37,18 @@ public static class KateQueryExt
                             lookup.PrimaryKeyAttribute.AddTableModifier(nextPrefix))
                             .Where(lookup.DeletedAttribute.AddTableModifier(nextPrefix), false);
                         break;
-                    case DisplayType.Crosstable:
-                        hasCrosstable = true;
-                        var cross = node.Attribute.Crosstable;
-                        var crossAlias = $"{nextPrefix}_{cross!.CrossEntity.TableName}";
+                    case DisplayType.Junction:
+                        hasJunction = true;
+                        var cross = node.Attribute.Junction;
+                        var crossAlias = $"{nextPrefix}_{cross!.JunctionEntity.TableName}";
                         query
-                            .LeftJoin($"{cross.CrossEntity.TableName} as {crossAlias}",
+                            .LeftJoin($"{cross.JunctionEntity.TableName} as {crossAlias}",
                                 cross.SourceEntity.PrimaryKeyAttribute.AddTableModifier(prefix),
                                 cross.SourceAttribute.AddTableModifier(crossAlias))
                             .LeftJoin($"{cross.TargetEntity.TableName} as {nextPrefix}",
                                 cross.TargetAttribute.AddTableModifier(crossAlias),
                                 cross.TargetEntity.PrimaryKeyAttribute.AddTableModifier(nextPrefix))
-                            .Where(cross.CrossEntity.DeletedAttribute.AddTableModifier(crossAlias),false)
+                            .Where(cross.JunctionEntity.DeletedAttribute.AddTableModifier(crossAlias),false)
                             .Where(cross.TargetEntity.DeletedAttribute.AddTableModifier(nextPrefix),false);
                     break;
                 }

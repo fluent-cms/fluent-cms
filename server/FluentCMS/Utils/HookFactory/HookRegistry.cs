@@ -18,8 +18,8 @@ public class HookRegistry
         public HookList<EntityPostDelArgs> EntityPostDel { get; } = new();
         public HookList<EntityPreAddArgs> EntityPreAdd { get; } = new();
         public HookList<EntityPostAddArgs> EntityPostAdd { get; } = new();
-        public HookList<CrosstablePreAddArgs> CrosstablePreAdd { get; } = new();
-        public HookList<CrosstablePostAddArgs> CrosstablePostAdd { get; } = new();
-        public HookList<CrosstablePreDelArgs> CrosstablePreDel { get; } = new();
-        public HookList<CrosstablePostDelArgs> CrosstablePostDel { get; } = new();
+        public HookList<JunctionPreAddArgs> JunctionPreAdd { get; } = new();
+        public HookList<JunctionPostAddArgs> JunctionPostAdd { get; } = new();
+        public HookList<JunctionPreDelArgs> JunctionPreDel { get; } = new();
+        public HookList<JunctionPostDelArgs> JunctionPostDel { get; } = new();
 }

@@ -1,17 +1,18 @@
-using FluentCMS.Exceptions;
+using FluentCMS.Types;
 using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.Nosql;
 using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Utils.ResultExt;
 
-namespace FluentCMS.Components;
+namespace FluentCMS.Builders;
 
-public class MongoQuery(ILogger<MongoQuery> logger)
+public class MongoQueryBuilder(ILogger<MongoQueryBuilder> logger)
 {
     
     public static IServiceCollection AddMongoView(IServiceCollection services, MongoConfig config)
     {
+        services.AddSingleton<MongoQueryBuilder>();
         services.AddSingleton<INosqlDao>(p => new MongoDao(config, p.GetRequiredService<ILogger<MongoDao>>()));
-        services.AddSingleton<MongoQuery>();
         return services;
     }
 
@@ -22,7 +23,7 @@ public class MongoQuery(ILogger<MongoQuery> logger)
         hookRegistry.QueryPreGetList.RegisterDynamic(viewName,
             async (INosqlDao dao, QueryPreGetListArgs p) =>
             {
-                var res = InvalidParamExceptionFactory.Ok(await dao.Query(p.EntityName, p.Filters,p.Pagination, p.Sorts, p.Span));
+                var res = (await dao.Query(p.EntityName, p.Filters,p.Pagination, p.Sorts, p.Span)).Ok();
                 return p with { OutRecords = res };
             }
         );
@@ -31,7 +32,7 @@ public class MongoQuery(ILogger<MongoQuery> logger)
             viewName, 
             async (INosqlDao dao, QueryPreGetManyArgs p) =>
             {
-                var res = InvalidParamExceptionFactory.Ok(await dao.Query(p.EntityName, p.Filters,p.Pagination,[]));
+                var res = (await dao.Query(p.EntityName, p.Filters,p.Pagination,[])).Ok();
                 return p with { OutRecords = res };
             }
         );
@@ -40,7 +41,7 @@ public class MongoQuery(ILogger<MongoQuery> logger)
             viewName, 
             async (INosqlDao dao, QueryPreGetOneArgs p) =>
             {
-                var records = InvalidParamExceptionFactory.Ok(await dao.Query(p.EntityName, p.Filters, new ValidPagination(0,1),[]));
+                var records = (await dao.Query(p.EntityName, p.Filters, new ValidPagination(0,1),[])).Ok();
                 return p with { OutRecord = records.First() };
             }
         );

@@ -97,12 +97,12 @@ To establish a many-to-one relationship between the `Course` and `Teacher` entit
 **Description:** When a course is created or modified, a teacher record can be looked up and linked to the course.
 
 #### 2. **Course and Materials (Many-to-Many Relationship)**
-To establish a many-to-many relationship between the `Course` and `Material` entities, use a `Crosstable` attribute in the `Course` entity. This enables associating multiple materials with a single course.
+To establish a many-to-many relationship between the `Course` and `Material` entities, use a `Junction` attribute in the `Course` entity. This enables associating multiple materials with a single course.
 
 | **Attribute**    | **Value**    |
 |-------------------|--------------|
 | **Field**         | `materials` |
-| **Type**          | Crosstable  |
+| **Type**          | Junction  |
 | **Options**       | Material    |
 
 **Description:** When managing a course, you can select multiple material records from the `Material` table to associate with the course.

@@ -1,45 +1,59 @@
 using FluentCMS.Cms.Models;
-using FluentCMS.Exceptions;
+using FluentCMS.Types;
 using FluentCMS.Utils.DictionaryExt;
 using FluentCMS.Utils.PageRender;
 using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Utils.ResultExt;
 using FluentResults;
 using HandlebarsDotNet;
 using HtmlAgilityPack;
 using Microsoft.AspNetCore.WebUtilities;
 
 namespace FluentCMS.Cms.Services;
-using static InvalidParamExceptionFactory;
 
-public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc, PageTemplate template) : IPageService
+public sealed class PageService(ILogger<PageService> logger,ISchemaService schemaSvc, IQueryService querySvc, PageTemplate template) : IPageService
 {
     public async Task<string> GetDetail(string name, string param, StrArgs strArgs, CancellationToken token)
     {
         //detail page format <pageName>/{<routerName>}, not know the exact page name now, match with prefix '/{'. 
-        var ctx = (await GetContext(name+ "/{" , true,token)).ToPageContext();
+        var ctx = ((await GetContext(name+ "/{" , true,token))).Ok().ToPageContext();
         strArgs = GetLocalPaginationArgs(ctx, strArgs); 
         
         var routerName =ctx.Page.Name.Split("/").Last()[1..^1]; // remove '{' and '}'
         strArgs[routerName] = param;
-        
+
         var data = string.IsNullOrWhiteSpace(ctx.Page.Query)
             ? new Dictionary<string, object>()
-            : NotNull(await querySvc.OneWithAction(ctx.Page.Query, strArgs, token))
-                .ValOrThrow($"not find data by of {param}");
+            : await querySvc.OneWithAction(ctx.Page.Query, strArgs, token)
+              ?? throw new ResultException($"not find data by of {param}");
         
         return await RenderPage(ctx, data, strArgs, token);
     }
 
     public async Task<string> Get(string name, StrArgs strArgs, CancellationToken token)
     {
-        var ctx = await GetContext(name , false, token);
-        return await RenderPage(ctx.ToPageContext(),  new Dictionary<string, object>(), strArgs, token);
+        if ((await GetContext(name, false, token)).Try(out var ctx, out var error))
+        {
+            return await RenderPage(ctx.ToPageContext(), new Dictionary<string, object>(), strArgs, token);
+        }
+
+        var msg = string.Join(",", error!.Select(x => x.Message));
+        if (name != "home")
+        {
+            throw new ResultException(msg);
+        }
+
+        logger.LogError("Fail to load page [{page}], err: {err}", name, msg);
+        return $"""
+                <a href="/admin">Log in to Admin</a><br/>
+                <a href="/schema">Go to Schema Builder</a>
+                """;
     }
 
     public async Task<string> GetPart(string partStr, CancellationToken token)
     {
-        var part = NotNull(PagePartHelper.Parse(partStr)).ValOrThrow("Invalid Partial Part");
-        var ctx = (await GetContext(part.Page, false, token)).ToPartialContext(part.NodeId);
+        var part = PagePartHelper.Parse(partStr) ?? throw new ResultException("Invalid Partial Part");
+        var ctx = (await GetContext(part.Page, false, token)).Ok().ToPartialContext(part.NodeId);
 
         var cursor = new Span(part.First, part.Last);
         var args = QueryHelpers.ParseQuery(part.DataSource.QueryString);
@@ -73,7 +87,7 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
     private async Task<string> RenderPage(PageContext ctx, Record data, StrArgs args, CancellationToken token)
     {
         await LoadRelatedData(data, args, ctx.Nodes, token);
-        Ok(TagPagination(ctx, data,args));
+        TagPagination(ctx, data,args).Ok();
 
         foreach (var repeatNode in ctx.Nodes)
         {
@@ -139,21 +153,22 @@ public sealed class PageService(ISchemaService schemaSvc, IQueryService querySvc
     {
         public PartialContext ToPartialContext(string nodeId) => new (Page, Doc.GetElementbyId(nodeId));
     
-        public PageContext ToPageContext() => new (Page, Doc, Ok(Doc.GetDataNodes()));
+        public PageContext ToPageContext() => new (Page, Doc, Doc.GetDataNodes().Ok());
     }
 
     record PageContext(Page Page, HtmlDocument HtmlDocument, DataNode[] Nodes);
     
     record PartialContext(Page Page, HtmlNode Node);
     
-    private async Task<Context> GetContext(string name, bool matchPrefix, CancellationToken token)
+    private async Task<Result<Context>> GetContext(string name, bool matchPrefix, CancellationToken token)
     {
-        var res = matchPrefix
+        var schema = matchPrefix
             ? await schemaSvc.GetByNamePrefixDefault(name, SchemaType.Page, token)
             : await schemaSvc.GetByNameDefault(name, SchemaType.Page, token);
         
-        var schema = NotNull(res).ValOrThrow($"Can not find page [{name}]");
-        var page = NotNull(schema.Settings.Page).ValOrThrow("Invalid page payload");
+        if (schema == null) { return Result.Fail("Can not find schema"); }
+
+        var page = schema.Settings.Page!;
         var doc = new HtmlDocument();
         doc.LoadHtml(page.Html);
         return new Context(page, doc);
