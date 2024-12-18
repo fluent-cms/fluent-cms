@@ -5,6 +5,7 @@ public static class Topics
     public const string EntityCreated = "EntityCreated";
     public const string EntityUpdated = "EntityUpdated";
     public const string EntityDeleted = "EntityDeleted";
+    public static string[] All = [EntityCreated, EntityUpdated, EntityDeleted];
 }
 public static class Operations
 {

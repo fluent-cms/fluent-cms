@@ -1,14 +1,12 @@
-using FluentCMS.Builders;
 using FluentCMS.Types;
 using FluentCMS.Utils.HookFactory;
-using FluentCMS.Utils.Nosql;
 using FluentResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
-namespace FluentCMS.WebAppExt;
+namespace FluentCMS.WebAppBuilders;
 
-public static class AppExt
+public static class WebApplicationExt
 {
     public static async Task UseCmsAsync(this WebApplication app)
     {
@@ -53,7 +51,7 @@ public static class AppExt
         this IServiceCollection services, string brokerList
     ) => EventProduceBuilder.AddKafkaMessageProducer(services, brokerList);
 
-    public static IServiceCollection AddMongoView(
-        this IServiceCollection services, MongoConfig config
-    ) => MongoQueryBuilder.AddMongoView(services, config);
+    public static IServiceCollection AddMongoDbQuery(
+        this IServiceCollection services, string connectionString
+    ) => MongoQueryBuilder.AddMongoDbQuery(services, connectionString);
 }

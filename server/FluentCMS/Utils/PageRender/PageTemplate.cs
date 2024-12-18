@@ -1,8 +1,9 @@
 namespace FluentCMS.Utils.PageRender;
 
-public sealed class PageTemplate(string templatePath)
+public sealed record PageTemplateConfig(string Path);
+public sealed class PageTemplate(PageTemplateConfig config)
 {
-    private readonly string _template = LoadTemplate(templatePath);
+    private readonly string _template = LoadTemplate(config.Path);
 
     static string LoadTemplate(string templatePath)
     {

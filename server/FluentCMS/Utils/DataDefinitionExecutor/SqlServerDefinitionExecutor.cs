@@ -2,7 +2,7 @@ using Microsoft.Data.SqlClient;
 
 namespace FluentCMS.Utils.DataDefinitionExecutor;
 
-public class SqlServerDefinitionExecutor(string connectionString, ILogger<SqlServerDefinitionExecutor> logger ) : IDefinitionExecutor
+public class SqlServerDefinitionExecutor(DefinitionExecutorOptions options, ILogger<SqlServerDefinitionExecutor> logger ) : IDefinitionExecutor
 {
     public bool TryParseDataType(string s, string type, out DatabaseTypeValue? result)
     {
@@ -60,7 +60,7 @@ public class SqlServerDefinitionExecutor(string connectionString, ILogger<SqlSer
         await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(cancellationToken));
     }
 
-    public async Task<ColumnDefinition[]> GetColumnDefinitions(string tableName, CancellationToken cancellationToken)
+    public async Task<ColumnDefinition[]> GetColumnDefinitions(string tableName, CancellationToken ct)
     {
         var sql = @"
                 SELECT COLUMN_NAME, DATA_TYPE
@@ -70,8 +70,8 @@ public class SqlServerDefinitionExecutor(string connectionString, ILogger<SqlSer
         return await ExecuteQuery(sql, async command =>
         {
             var columnDefinitions = new List<ColumnDefinition>();
-            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-            while (await reader.ReadAsync())
+            await using var reader = await command.ExecuteReaderAsync(ct);
+            while (await reader.ReadAsync(ct))
             {
                 columnDefinitions.Add(new ColumnDefinition
                 ( 
@@ -113,7 +113,7 @@ public class SqlServerDefinitionExecutor(string connectionString, ILogger<SqlSer
         params (string, object)[] parameters)
     {
         logger.LogInformation(sql);
-        await using var connection = new SqlConnection(connectionString);
+        await using var connection = new SqlConnection(options.ConnectionString);
         await connection.OpenAsync();
         await using var command = new SqlCommand(sql, connection);
 

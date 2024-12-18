@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace FluentCMS.Utils.DataDefinitionExecutor;
 
-public sealed class SqliteDefinitionExecutor(string connectionString, ILogger<SqliteDefinitionExecutor> logger) : IDefinitionExecutor
+public sealed class SqliteDefinitionExecutor(DefinitionExecutorOptions options, ILogger<SqliteDefinitionExecutor> logger) : IDefinitionExecutor
 {
     public bool TryParseDataType(string s, string type, out DatabaseTypeValue? result)
     {
@@ -48,14 +48,14 @@ public sealed class SqliteDefinitionExecutor(string connectionString, ILogger<Sq
        await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(cancellationToken));
    }
 
-   public async Task<ColumnDefinition[]> GetColumnDefinitions(string tableName,CancellationToken cancellationToken)
+   public async Task<ColumnDefinition[]> GetColumnDefinitions(string tableName,CancellationToken ct)
    {
       var sql = $"PRAGMA table_info({tableName})";
       return await ExecuteQuery(sql, async command =>
       {
-         await using var reader = await command.ExecuteReaderAsync();
+         await using var reader = await command.ExecuteReaderAsync(ct);
          var columnDefinitions = new List<ColumnDefinition>();
-         while (await reader.ReadAsync(cancellationToken))
+         while (await reader.ReadAsync(ct))
          {
             /*cid, name, type, notnull, dflt_value, pk */
             columnDefinitions.Add(new ColumnDefinition
@@ -94,7 +94,7 @@ public sealed class SqliteDefinitionExecutor(string connectionString, ILogger<Sq
         params (string, object)[] parameters)
     {
         logger.LogInformation(sql);
-        await using var connection = new SqliteConnection(connectionString);
+        await using var connection = new SqliteConnection(options.ConnectionString);
         await connection.OpenAsync();
         await using var command = new SqliteCommand(sql, connection);
 

@@ -20,22 +20,24 @@ public sealed class KeyValueCache<T>
 
         if (provider.GetService<HybridCache>() is { } hybridCache)
         {
-            logger.LogInformation($"""
-                                  *********************************************************************************************************************************************
-                                  Prefix: {prefix}, Type: Hybrid cache, Expiration: {_expiration}, LocalCacheExpiration: {_localCacheExpiration}
-                                  *********************************************************************************************************************************************
-                                  """);
+            logger.LogInformation(
+                $"""
+                 *************************************************************************************************************
+                 Prefix: {prefix}, Type: Hybrid cache, Expiration: {_expiration}, LocalCacheExpiration: {_localCacheExpiration}
+                 *************************************************************************************************************
+                 """);
             _cacheProvider = new HybridCacheProvider(hybridCache);
             return;
         }
 
         if (provider.GetService<IMemoryCache>() is { } memoryCache)
         {
-            logger.LogInformation($"""
-                                   *********************************************************************************************************************************************
-                                   Prefix = {prefix}, Type : Memory cache, Expiration: {_expiration}
-                                   *********************************************************************************************************************************************
-                                   """);
+            logger.LogInformation(
+                $"""
+                 ************************************************************************************************************
+                 Prefix = {prefix}, Type : Memory cache, Expiration: {_expiration}
+                 ************************************************************************************************************
+                 """);
              
             _cacheProvider = new MemoryCacheProvider(memoryCache);
             return;

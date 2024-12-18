@@ -4,14 +4,15 @@ using FluentCMS.Utils.HookFactory;
 
 namespace FluentCMS.Utils.EventStreaming;
 
+public sealed record KafkaProducerOptions(string BrokerList);
 public sealed class KafkaProducer:IProducer, IDisposable
 {
     private readonly IProducer<string, string> _producer;
     private readonly ILogger<KafkaProducer> _logger;
 
-    public KafkaProducer(string brokerList, ILogger<KafkaProducer> logger)
+    public KafkaProducer(KafkaProducerOptions options, ILogger<KafkaProducer> logger)
     {
-        var config = new ProducerConfig { BootstrapServers = brokerList };
+        var config = new ProducerConfig { BootstrapServers = options.BrokerList };
         _producer = new ProducerBuilder<string, string>(config).Build();
         _logger = logger;
     }

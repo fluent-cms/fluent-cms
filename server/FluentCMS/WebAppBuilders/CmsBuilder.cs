@@ -21,7 +21,7 @@ using Microsoft.AspNetCore.Rewrite;
 using Npgsql;
 using Schema = FluentCMS.Graph.Schema;
 
-namespace FluentCMS.Builders;
+namespace FluentCMS.WebAppBuilders;
 
 public enum DatabaseProvider
 {
@@ -30,13 +30,13 @@ public enum DatabaseProvider
     SqlServer,
 }
 
-public record Problem(string Title, string? Detail =null);
+public sealed record Problem(string Title, string? Detail =null);
 
+public sealed record DbOption(DatabaseProvider Provider, string ConnectionString);
 public sealed class CmsBuilder(
-    ILogger<CmsBuilder> logger,
-    DatabaseProvider databaseProvider,
-    string connectionString,
-    CmsOptions cmsOptions
+    CmsOptions cmsOptions,
+    DbOption dbOptions,
+    ILogger<CmsBuilder> logger
 )
 {
     private const string FluentCmsContentRoot = "/_content/FluentCMS";
@@ -51,19 +51,44 @@ public sealed class CmsBuilder(
         var cmsOptions = new CmsOptions();
         optionsAction?.Invoke(cmsOptions);
 
-        services.AddSingleton<CmsBuilder>(p => new CmsBuilder(
-            p.GetRequiredService<ILogger<CmsBuilder>>(),
-            databaseProvider,
-            connectionString,
-            cmsOptions
-        ));
-
-        InjectDbServices().Ok();
-        InjectServices();
-        AddGraphql();
+        services.AddSingleton(cmsOptions);
+        services.AddSingleton(new DbOption(databaseProvider, connectionString));
+        services.AddSingleton<CmsBuilder>();
+        services.AddSingleton<HookRegistry>();
+        services.AddScoped<IProfileService, DummyProfileService>();
+        
+        AddDbServices();
+        AddCacheServices();
+        AddStorageServices();
+        AddGraphqlServices();
+        AddPageTemplateServices();
+        AddCmsServices();
+        
         return services;
 
-        void AddGraphql()
+        void AddCmsServices()
+        {
+            services.AddScoped<ISchemaService, SchemaService>();
+            services.AddScoped<IEntitySchemaService, EntitySchemaService>();
+            services.AddScoped<IQuerySchemaService, QuerySchemaService>();
+
+            services.AddScoped<IEntityService, EntityService>();
+            services.AddScoped<IQueryService, QueryService>();
+            services.AddScoped<IPageService, PageService>();
+
+        }
+
+        void AddPageTemplateServices()
+        {
+            services.AddSingleton<PageTemplate>(p =>
+            {
+                var provider = p.GetRequiredService<IWebHostEnvironment>().WebRootFileProvider;
+                var fileInfo = provider.GetFileInfo($"{FluentCmsContentRoot}/static-assets/templates/template.html");
+                return new PageTemplate(new PageTemplateConfig(fileInfo.PhysicalPath!));
+            });
+        }
+
+        void AddGraphqlServices()
         {
             // init for each request, make sure get the latest entity definition
             services.AddScoped<Schema>();
@@ -92,7 +117,7 @@ public sealed class CmsBuilder(
             });
         }
 
-        void InjectServices()
+        void AddCacheServices()
         {
             services.AddMemoryCache();
             services.AddSingleton<KeyValueCache<ImmutableArray<Entity>>>(p =>
@@ -104,80 +129,60 @@ public sealed class CmsBuilder(
                 new KeyValueCache<LoadedQuery>(p,
                     p.GetRequiredService<ILogger<KeyValueCache<LoadedQuery>>>(),
                     "query", cmsOptions.QuerySchemaExpiration));
-
-            services.AddSingleton<PageTemplate>(p =>
-            {
-                var provider = p.GetRequiredService<IWebHostEnvironment>().WebRootFileProvider;
-                var fileInfo = provider.GetFileInfo($"{FluentCmsContentRoot}/static-assets/templates/template.html");
-                return new PageTemplate(fileInfo.PhysicalPath ?? "");
-            });
-            services.AddSingleton<LocalFileStore>(_ => new LocalFileStore(
-                Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/files"), cmsOptions.ImageCompression.MaxWidth,
-                cmsOptions.ImageCompression.Quality)
-            );
-            services.AddSingleton<KateQueryExecutor>(p =>
-                new KateQueryExecutor(p.GetRequiredService<IKateProvider>(), cmsOptions.DatabaseQueryTimeout));
-            services.AddSingleton<HookRegistry>();
-
-            services.AddScoped<ISchemaService, SchemaService>();
-            services.AddScoped<IEntitySchemaService, EntitySchemaService>();
-            services.AddScoped<IQuerySchemaService, QuerySchemaService>();
-
-            services.AddScoped<IEntityService, EntityService>();
-            services.AddScoped<IQueryService, QueryService>();
-            services.AddScoped<IPageService, PageService>();
-
-            services.AddScoped<IProfileService, DummyProfileService>();
         }
 
-        Result InjectDbServices()
+        void AddStorageServices()
         {
-            return databaseProvider switch
+            services.AddSingleton(new LocalFileStoreOptions(
+                Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/files"),
+                cmsOptions.ImageCompression.MaxWidth,
+                cmsOptions.ImageCompression.Quality));
+            services.AddSingleton<LocalFileStore>();
+        }
+
+       
+
+        void AddDbServices()
+        {
+            _ = databaseProvider switch
             {
-                DatabaseProvider.Sqlite => InjectSqliteDbServices(),
-                DatabaseProvider.Postgres => InjectPostgresDbServices(),
-                DatabaseProvider.SqlServer => InjectSqlServerDbServices(),
-                _ => Result.Fail("unsupported database provider")
+                DatabaseProvider.Sqlite => AddSqliteDbServices(),
+                DatabaseProvider.Postgres => AddPostgresDbServices(),
+                DatabaseProvider.SqlServer => AddSqlServerDbServices(),
+                _ => throw new Exception("unsupported database provider")
             };
+            
+            services.AddSingleton(new KateQueryExecutorOption(cmsOptions.DatabaseQueryTimeout));
+            services.AddSingleton<KateQueryExecutor>();
         }
 
-        Result InjectSqliteDbServices()
+        IServiceCollection AddSqliteDbServices()
         {
-            services.AddSingleton<IKateProvider>(p =>
-                new SqliteKateProvider(connectionString, p.GetRequiredService<ILogger<SqliteKateProvider>>()));
-            services.AddSingleton<IDefinitionExecutor>(p =>
-                new SqliteDefinitionExecutor(connectionString,
-                    p.GetRequiredService<ILogger<SqliteDefinitionExecutor>>()));
-            return Result.Ok();
+            services.AddSingleton(new KateProviderOption(connectionString));
+            services.AddSingleton<IKateProvider,SqliteKateProvider>();
+            
+            services.AddSingleton(new DefinitionExecutorOptions(connectionString));
+            services.AddSingleton<IDefinitionExecutor, SqliteDefinitionExecutor>();
+            return services;
         }
 
-        Result InjectSqlServerDbServices()
+        IServiceCollection AddSqlServerDbServices()
         {
-            services.AddSingleton<IKateProvider>(p =>
-                new SqlServerKateProvider(connectionString,
-                    p.GetRequiredService<ILogger<SqlServerKateProvider>>()));
-            services.AddSingleton<IDefinitionExecutor>(p =>
-                new SqlServerDefinitionExecutor(connectionString,
-                    p.GetRequiredService<ILogger<SqlServerDefinitionExecutor>>()));
-            return Result.Ok();
+            services.AddSingleton(new KateProviderOption(connectionString));
+            services.AddSingleton<IKateProvider,SqlServerKateProvider>();
+            
+            services.AddSingleton(new DefinitionExecutorOptions(connectionString));
+            services.AddSingleton<IDefinitionExecutor,SqlServerDefinitionExecutor>();
+            return services;
         }
 
-        Result InjectPostgresDbServices()
+        IServiceCollection AddPostgresDbServices()
         {
             var dataSource = new NpgsqlDataSourceBuilder(connectionString).Build();
-            services.AddSingleton<IKateProvider>((p
-            ) =>
-            {
-                var logger = p.GetRequiredService<ILogger<PostgresKateProvider>>();
-                return new PostgresKateProvider(dataSource, logger);
-            });
-            services.AddSingleton<IDefinitionExecutor>((p
-            ) =>
-            {
-                var logger = p.GetRequiredService<ILogger<PostgresDefinitionExecutor>>();
-                return new PostgresDefinitionExecutor(dataSource, logger);
-            });
-            return Result.Ok();
+            services.AddSingleton(dataSource);
+            services.AddSingleton<IKateProvider,PostgresKateProvider>();
+            services.AddSingleton<IDefinitionExecutor,PostgresDefinitionExecutor>();
+            return services;
         }
     }
 
@@ -278,13 +283,13 @@ public sealed class CmsBuilder(
         var title = assembly.GetCustomAttribute<AssemblyTitleAttribute>()?.Title;
         var informationalVersion =
             assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-        var parts = connectionString.Split(";").Where(x => !x.StartsWith("Password"));
+        var parts = dbOptions.ConnectionString.Split(";").Where(x => !x.StartsWith("Password"));
 
         logger.LogInformation(
             $"""
             *********************************************************
             {title}, Version {informationalVersion?.Split("+").First()}
-            Database : {databaseProvider} - {string.Join(";", parts)}
+            Database : {dbOptions.Provider} - {string.Join(";", parts)}
             Client App is Enabled :{cmsOptions.EnableClient}
             Use CMS' home page: {cmsOptions.MapCmsHomePage}
             GraphQL Client Path: {cmsOptions.GraphQlPath}

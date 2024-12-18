@@ -5,7 +5,7 @@ using FluentResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
-namespace FluentCMS.Builders;
+namespace FluentCMS.WebAppBuilders;
 
 public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger): IAuthBuilder
     where TCmsUser : IdentityUser, new()

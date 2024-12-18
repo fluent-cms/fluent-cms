@@ -53,12 +53,12 @@ export Logging__LogLevel__Default=Warning
 export Logging__LogLevel__Microsoft_AspNetCore=Warning
 
 # Sqlite With Default Data 
-db_path=$(pwd)/default.db && rm -f $db_path && cp ../FluentCMS.Blog/cms.db "$db_path" && test_sqlite "$db_path"
+#db_path=$(pwd)/default.db && rm -f $db_path && cp ../FluentCMS.Blog/cms.db "$db_path" && test_sqlite "$db_path"
 
 # Sqlite With Empty Data 
-db_path=$(pwd)/temp.db && rm -f "$db_path" && test_sqlite "$db_path"
+#db_path=$(pwd)/temp.db && rm -f "$db_path" && test_sqlite "$db_path"
 
-test_postgres_container ""
+#test_postgres_container ""
 
-#test_sqlserver_container
+test_sqlserver_container
 

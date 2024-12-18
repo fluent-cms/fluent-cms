@@ -1,6 +1,6 @@
 using FluentResults;
 
-namespace FluentCMS.Builders;
+namespace FluentCMS.WebAppBuilders;
 
 public interface IAuthBuilder
 {

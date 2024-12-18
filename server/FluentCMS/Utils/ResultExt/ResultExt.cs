@@ -30,6 +30,22 @@ public static class ResultExt
         return ok;
     }
     
+    
+    public static Result<TTarget[]> ShortcutMap<TSource, TTarget>(this IEnumerable<TSource> items,Func<TSource,Result<TTarget> > mapper)
+    {
+        var ret = new List<TTarget>();
+        foreach (var s in items)
+        {
+            var res = mapper(s);
+            if (res.IsFailed)
+            {
+                return Result.Fail(res.Errors);
+            }
+            ret.Add(res.Value);
+        }
+        return ret.ToArray();
+    }
+    
     /// <summary>
     /// Throws a <see cref="ResultException"/> if the result indicates failure.
     /// Use this method to terminate the current execution flow and return an error message to the client.

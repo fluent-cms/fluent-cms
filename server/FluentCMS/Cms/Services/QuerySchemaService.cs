@@ -1,7 +1,5 @@
 using System.Collections.Immutable;
-using System.Text.Json;
 using FluentCMS.Cms.Models;
-using FluentCMS.Builders;
 using FluentCMS.Types;
 using FluentCMS.Utils.Cache;
 using FluentCMS.Graph;
@@ -18,7 +16,7 @@ public sealed class QuerySchemaService(
     ISchemaService schemaSvc,
     IEntitySchemaService entitySchemaSvc,
     KeyValueCache<LoadedQuery> queryCache,
-    CmsBuilder cms
+    CmsOptions cmsOptions
 ) : IQuerySchemaService
 {
     public async Task<LoadedQuery> ByGraphQlRequest(GraphQlRequestDto dto)
@@ -42,11 +40,11 @@ public sealed class QuerySchemaService(
             var query = dto.Query with
             {
                 IdeUrl =
-                $"{cms.Options.GraphQlPath}?query={Uri.EscapeDataString(dto.Query.Source)}&operationName={dto.Query.Name}"
+                $"{cmsOptions.GraphQlPath}?query={Uri.EscapeDataString(dto.Query.Source)}&operationName={dto.Query.Name}"
             };
             await VerifyQuery(query, ct);
             var schema = new Schema(query.Name, SchemaType.Query, new Settings(Query: query));
-            await schemaSvc.AddOrUpdateByNameWithAction(schema, default);
+            await schemaSvc.AddOrUpdateByNameWithAction(schema,ct);
             return await ToLoadedQuery(query, dto.Fields, ct);
         }
     }
@@ -68,7 +66,7 @@ public sealed class QuerySchemaService(
 
     public string GraphQlClientUrl()
     {
-        return cms.Options.GraphQlPath;
+        return cmsOptions.GraphQlPath;
     }
     
     public async Task Delete(Schema schema, CancellationToken ct)
@@ -154,7 +152,7 @@ public sealed class QuerySchemaService(
             attributes.Add(graphAttr);
         }
 
-        if (attributes.FindOneAttr(entity.PrimaryKey) == default)
+        if (attributes.FindOneAttr(entity.PrimaryKey) is null)
         {
             return Result.Fail($"Primary Key [{entity.PrimaryKey}] not found in [{prefix}]");
         }

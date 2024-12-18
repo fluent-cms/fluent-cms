@@ -31,7 +31,7 @@ public interface ISchemaService
     Task<Schema?> GetByNameDefault(string name, string type, CancellationToken token = default);
     Task<Schema?> GetByNamePrefixDefault(string name, string type, CancellationToken token = default);
     Task<Schema> SaveWithAction(Schema schema, CancellationToken token);
-    Task<Schema> AddOrUpdateByNameWithAction(Schema schema, CancellationToken token);
+    Task<Schema> AddOrUpdateByNameWithAction(Schema schema, CancellationToken token = default);
     Task Delete(int id, CancellationToken token = default);
     Task EnsureTopMenuBar(CancellationToken token = default);
     Task EnsureSchemaTable(CancellationToken token = default);
