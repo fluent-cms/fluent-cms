@@ -3,31 +3,11 @@ using Confluent.Kafka;
 
 namespace FluentCMS.Utils.EventStreaming;
 
-public class KafkaConsumer(KafkaConfig config): IConsumer
+public class KafkaConsumer(IConsumer<string,string> consumer): IRecordConsumer
 {
-    private readonly IConsumer<string, string> _consumer
-        = new ConsumerBuilder<string, string>(
-            new ConsumerConfig
-            {
-                GroupId = config.GroupId,
-                BootstrapServers = config.BrokerAddress
-            }
-        ).Build();
+    public void Subscribe() => consumer.Subscribe(Topics.All);
 
-    public void Subscribe() => _consumer.Subscribe(Topics.All);
+    public RecordMessage? Consume(CancellationToken ct)
+        => JsonSerializer.Deserialize<RecordMessage>(consumer.Consume(ct).Message.Value);
 
-    public async Task<RecordMessage?> Consume(CancellationToken ct)
-    {
-        return await Task.Run(() =>
-        {
-            var consumeResult = _consumer.Consume(ct);
-            return JsonSerializer.Deserialize<RecordMessage>(consumeResult.Message.Value);
-        },ct);
-    }
-
-
-    public void Dispose()
-    {
-        _consumer.Dispose();
-    }
 }

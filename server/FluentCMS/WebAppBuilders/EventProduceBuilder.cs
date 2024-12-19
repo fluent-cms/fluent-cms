@@ -5,11 +5,10 @@ namespace FluentCMS.WebAppBuilders;
 
 public class EventProduceBuilder(ILogger<EventProduceBuilder> logger)
 {
-    public static IServiceCollection AddKafkaMessageProducer(IServiceCollection services, string brokerList)
+    public static IServiceCollection AddKafkaMessageProducer(IServiceCollection services)
     {
         services.AddSingleton<EventProduceBuilder>();
-        services.AddSingleton(new KafkaProducerOptions(brokerList));
-        services.AddSingleton<IProducer,KafkaProducer>();
+        services.AddSingleton<IRecordProducer, KafkaProducer>();
         return services;
     }
 
@@ -17,24 +16,24 @@ public class EventProduceBuilder(ILogger<EventProduceBuilder> logger)
     {
         logger.LogInformation($"Register message producer hook for {entityName}");
         var registry = app.Services.GetRequiredService<HookRegistry>();
-        var messageProducer = app.Services.GetRequiredService<IProducer>();
+        var messageProducer = app.Services.GetRequiredService<IRecordProducer>();
         registry.EntityPostAdd.RegisterAsync(entityName, async parameter =>
         {
-            await messageProducer.ProduceRecord(Topics.EntityCreated, Operations.Create, parameter.Name,
-                parameter.RecordId, parameter.Record);
+            await messageProducer.Produce(Topics.EntityCreated,new RecordMessage(Operations.Create, parameter.Name,
+                parameter.RecordId, parameter.Record));
             return parameter;
         });
 
         registry.EntityPostUpdate.RegisterAsync(entityName, async parameter =>
         {
-            await messageProducer.ProduceRecord(Topics.EntityCreated, Operations.Create, parameter.Name,
-                parameter.RecordId, parameter.Record);
+            await messageProducer.Produce(Topics.EntityCreated, new RecordMessage( Operations.Create, parameter.Name,
+                parameter.RecordId, parameter.Record));
             return parameter;
         });
         registry.EntityPostDel.RegisterAsync(entityName, async parameter =>
         {
-            await messageProducer.ProduceRecord(Topics.EntityCreated, Operations.Create, parameter.Name,
-                parameter.RecordId, parameter.Record);
+            await messageProducer.Produce(Topics.EntityCreated,new RecordMessage( Operations.Create, parameter.Name,
+                parameter.RecordId, parameter.Record));
             return parameter;
         });
         return app;

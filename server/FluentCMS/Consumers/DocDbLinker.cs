@@ -7,7 +7,7 @@ namespace FluentCMS.Consumers;
 
 public record ApiLinks(string Entity, string Api, string Collection);
 public sealed class DocDbLinker(
-    IConsumer consumer, 
+    IRecordConsumer consumer, 
     DataFetcher dataFetcher, 
     IDocumentDbDao dao,
     ILogger<DocDbLinker> logger,
@@ -22,7 +22,7 @@ public sealed class DocDbLinker(
         {
             try
             {
-                var message = await consumer.Consume(stoppingToken);
+                var message = consumer.Consume(stoppingToken);
                 if (message is null)
                 {
                     logger.LogWarning("got empty message, ignore the message");
@@ -65,11 +65,5 @@ public sealed class DocDbLinker(
                 }
             }
         }
-    }
-
-    public override void Dispose()
-    {
-        consumer.Dispose();
-        base.Dispose();
     }
 }

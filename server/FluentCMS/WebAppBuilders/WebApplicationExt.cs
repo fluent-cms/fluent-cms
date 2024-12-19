@@ -48,10 +48,10 @@ public static class WebApplicationExt
         => AuthBuilder<TUser>.AddCmsAuth<TUser, TRole, TContext>(services);
 
     public static IServiceCollection AddKafkaMessageProducer(
-        this IServiceCollection services, string brokerList
-    ) => EventProduceBuilder.AddKafkaMessageProducer(services, brokerList);
+        this IServiceCollection services
+    ) => EventProduceBuilder.AddKafkaMessageProducer(services);
 
     public static IServiceCollection AddMongoDbQuery(
-        this IServiceCollection services, string connectionString
-    ) => MongoQueryBuilder.AddMongoDbQuery(services, connectionString);
+        this IServiceCollection services 
+    ) => MongoQueryBuilder.AddMongoDbQuery(services);
 }

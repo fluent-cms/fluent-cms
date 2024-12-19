@@ -17,7 +17,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\FluentCMS.Blog.Share\FluentCMS.Blog.Share.csproj" />
       <ProjectReference Include="..\FluentCMS\FluentCMS.csproj" />
       <ProjectReference Include="..\FluentCMS.Blog.ServiceDefaults\FluentCMS.Blog.ServiceDefaults.csproj" />
     </ItemGroup>

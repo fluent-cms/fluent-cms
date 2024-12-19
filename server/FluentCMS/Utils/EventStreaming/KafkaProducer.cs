@@ -1,32 +1,15 @@
 using System.Text.Json;
 using Confluent.Kafka;
-using FluentCMS.Utils.HookFactory;
 
 namespace FluentCMS.Utils.EventStreaming;
 
-public sealed record KafkaProducerOptions(string BrokerList);
-public sealed class KafkaProducer:IProducer, IDisposable
+public sealed class KafkaProducer(ILogger<KafkaProducer> logger,IProducer<string,string> producer):IRecordProducer
 {
-    private readonly IProducer<string, string> _producer;
-    private readonly ILogger<KafkaProducer> _logger;
-
-    public KafkaProducer(KafkaProducerOptions options, ILogger<KafkaProducer> logger)
+    public async Task Produce(string topic, RecordMessage message)
     {
-        var config = new ProducerConfig { BootstrapServers = options.BrokerList };
-        _producer = new ProducerBuilder<string, string>(config).Build();
-        _logger = logger;
-    }
-    
-    public async Task ProduceRecord(string topic, string operation, string entityName, string recordId, Record record)
-    {
-        var message = new RecordMessage(operation, entityName, recordId, record); 
-        await _producer.ProduceAsync(topic,
+        await producer.ProduceAsync(topic,
             new Message<string, string> { Key = message.Key, Value = JsonSerializer.Serialize(message) });
-        _logger.LogInformation($"Produced Message: topic={topic}, entity={entityName}, record id={recordId}");
-    }
-    
-    public void Dispose()
-    {
-        _producer.Dispose();
+        logger.LogInformation("Produced Message: topic={topic}, entity={entityName}, key={key}", 
+            topic, message.EntityName, message.Key);
     }
 }

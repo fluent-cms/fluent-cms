@@ -8,11 +8,10 @@ namespace FluentCMS.WebAppBuilders;
 public class MongoQueryBuilder(ILogger<MongoQueryBuilder> logger)
 {
     
-    public static IServiceCollection AddMongoDbQuery(IServiceCollection services, string connectionString)
+    public static IServiceCollection AddMongoDbQuery(IServiceCollection services)
     {
         services.AddSingleton<MongoQueryBuilder>();
-        services.AddSingleton<MongoDaoConfig>(_ => new MongoDaoConfig(connectionString));
-        services.AddSingleton<IDocumentDbDao,MongoDao>();
+        services.AddScoped<IDocumentDbDao,MongoDao>();
         return services;
     }
 

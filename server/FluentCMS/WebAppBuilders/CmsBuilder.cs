@@ -195,11 +195,12 @@ public sealed class CmsBuilder(
         UseGraphql();
         UseExceptionHandler();
 
-        if (!cmsOptions.EnableClient) return;
-        UseAdminPanel();
-        UserRedirects();
-        app.MapStaticAssets();
-
+        if (cmsOptions.EnableClient)
+        {
+            UseAdminPanel();
+            UserRedirects();
+            app.MapStaticAssets();
+        }
         return;
 
         void UserRedirects()

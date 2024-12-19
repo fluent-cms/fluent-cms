@@ -1,5 +1,5 @@
 using FluentCMS.Auth.models;
-using FluentCMS.Blog.Share;
+using FluentCMS.Blog;
 using FluentCMS.Types;
 using FluentCMS.WebAppBuilders;
 using FluentCMS.Utils.ResultExt;
@@ -9,18 +9,18 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var provider = builder.Configuration.GetValue<string>(CmsConstants.DatabaseProvider) ??
+var provider = builder.Configuration.GetValue<string>(Constants.DatabaseProvider) ??
                throw new Exception("DatabaseProvider not found");
 var conn = builder.Configuration.GetConnectionString(provider) ?? 
            throw new Exception($"Connection string {provider} not found"); 
 
 _ = provider switch
 {
-    CmsConstants.Sqlite => builder.Services.AddDbContext<CmsDbContext>(options => options.UseSqlite(conn))
+    Constants.Sqlite => builder.Services.AddDbContext<CmsDbContext>(options => options.UseSqlite(conn))
         .AddSqliteCms(conn),
-    CmsConstants.Postgres => builder.Services.AddDbContext<CmsDbContext>(options => options.UseNpgsql(conn))
+    Constants.Postgres => builder.Services.AddDbContext<CmsDbContext>(options => options.UseNpgsql(conn))
         .AddPostgresCms(conn),
-    CmsConstants.SqlServer => builder.Services.AddDbContext<CmsDbContext>(options => options.UseSqlServer(conn))
+    Constants.SqlServer => builder.Services.AddDbContext<CmsDbContext>(options => options.UseSqlServer(conn))
         .AddSqlServerCms(conn),
     _ => throw new Exception("Database provider not found")
 };
@@ -57,8 +57,8 @@ void AddOutputCachePolicy()
 
 void AddHybridCache()
 {
-    if (builder.Configuration.GetConnectionString(CmsConstants.Redis) is null) return;
-    builder.AddRedisDistributedCache(connectionName: CmsConstants.Redis);
+    if (builder.Configuration.GetConnectionString(Constants.Redis) is null) return;
+    builder.AddRedisDistributedCache(connectionName: Constants.Redis);
     builder.Services.AddHybridCache();
 }
 
@@ -67,10 +67,4 @@ async Task EnsureDbCreatedAsync()
     using var scope = app.Services.CreateScope();
     var ctx = scope.ServiceProvider.GetRequiredService<CmsDbContext>();
     await ctx.Database.EnsureCreatedAsync();
-}
-
-internal class CmsDbContext : IdentityDbContext<IdentityUser>
-{
-    public CmsDbContext(){}
-    public CmsDbContext(DbContextOptions<CmsDbContext> options):base(options){}
 }

@@ -1,6 +1,6 @@
-namespace FluentCMS.Blog.Share;
+namespace FluentCMS.Blog;
 
-public static class CmsConstants
+public static class Constants
 {
     public const string DatabaseProvider = "DatabaseProvider";
     

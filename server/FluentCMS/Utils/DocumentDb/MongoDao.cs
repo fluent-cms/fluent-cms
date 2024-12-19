@@ -6,21 +6,10 @@ using MongoDB.Driver;
 
 namespace FluentCMS.Utils.DocumentDb;
 
-public record MongoDaoConfig(string ConnectionString);
-public sealed class MongoDao(ILogger<MongoDao> logger, MongoDaoConfig config):IDocumentDbDao 
+public sealed class MongoDao(ILogger<MongoDao> logger, IMongoDatabase db):IDocumentDbDao 
 {
     private static readonly FilterDefinitionBuilder<BsonDocument> Filter =  Builders<BsonDocument>.Filter;
-    private readonly IMongoDatabase _db = GetDatabase(config.ConnectionString,logger);
-
-    private static IMongoDatabase GetDatabase(string s, ILogger<MongoDao> logger)
-    {
-        var client = new MongoClient(s);
-        var database = client.GetDatabase(client.Settings.Credential.Source);
-        logger.LogInformation("Connecting to {database}", database);
-        return client.GetDatabase(client.Settings.Credential.Source);
-    }
-        
-    private IMongoCollection<BsonDocument> GetCollection(string name) => _db.GetCollection<BsonDocument>(name);
+    private IMongoCollection<BsonDocument> GetCollection(string name) => db.GetCollection<BsonDocument>(name);
     public Task Delete(string collection, string id) 
         => GetCollection(collection).DeleteOneAsync(Filter.Eq("id", id));
 
@@ -40,6 +29,7 @@ public sealed class MongoDao(ILogger<MongoDao> logger, MongoDaoConfig config):ID
         ValidPagination pagination,
         ValidSpan? span)
     {
+        logger.LogInformation("Querying for {collection}", collection);
         if (!validFilters.ToFilter().Try(out var filters, out var err))
             return Result.Fail(err);
 
