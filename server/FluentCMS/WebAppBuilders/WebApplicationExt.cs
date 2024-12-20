@@ -51,6 +51,11 @@ public static class WebApplicationExt
         this IServiceCollection services
     ) => EventProduceBuilder.AddKafkaMessageProducer(services);
 
+    public static IServiceCollection AddNatsMessageProducer(
+        this IServiceCollection services
+    ) => EventProduceBuilder.AddNatsMessageProducer(services);
+
+    
     public static IServiceCollection AddMongoDbQuery(
         this IServiceCollection services 
     ) => MongoQueryBuilder.AddMongoDbQuery(services);

@@ -3,13 +3,12 @@ using Confluent.Kafka;
 
 namespace FluentCMS.Utils.EventStreaming;
 
-public sealed class KafkaProducer(ILogger<KafkaProducer> logger,IProducer<string,string> producer):IRecordProducer
+public sealed class KafkaProducer(ILogger<KafkaProducer> logger,IProducer<string,string> producer):IStringMessageProducer
 {
-    public async Task Produce(string topic, RecordMessage message)
+    public async Task Produce(string topic, string message)
     {
         await producer.ProduceAsync(topic,
-            new Message<string, string> { Key = message.Key, Value = JsonSerializer.Serialize(message) });
-        logger.LogInformation("Produced Message: topic={topic}, entity={entityName}, key={key}", 
-            topic, message.EntityName, message.Key);
+            new Message<string, string> { Value = message });
+        logger.LogInformation("Produced Message: topic={topic}, message={message}", topic, message);
     }
 }

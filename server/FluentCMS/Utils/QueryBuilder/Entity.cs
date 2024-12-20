@@ -18,7 +18,7 @@ public record Entity(
     ImmutableArray<Attribute> Attributes,
     string Name = "",
     string TableName = "",
-    string PrimaryKey ="",
+    string PrimaryKey = DefaultFields.Id,
     string Title ="",
     string TitleAttribute ="",
     int DefaultPageSize = EntityConstants.DefaultPageSize
@@ -167,7 +167,7 @@ public static class EntityHelper
             list.Add(new Attribute
            ( 
                 Field : DefaultFields.Id, Header : "id",
-                IsDefault : true, InDetail:true, InList:true,
+                IsDefault : true, InDetail:false, InList:true,
                 DataType : DataType.Int, 
                 Type : DisplayType.Number
             ));

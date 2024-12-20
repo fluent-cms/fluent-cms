@@ -11,6 +11,7 @@
     <ItemGroup>
         <PackageReference Include="Aspire.Confluent.Kafka" Version="9.0.0" />
         <PackageReference Include="Aspire.MongoDB.Driver" Version="9.0.0" />
+        <PackageReference Include="Aspire.NATS.Net" Version="9.0.0" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
     </ItemGroup>

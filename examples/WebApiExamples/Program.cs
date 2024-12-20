@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using FluentCMS.Auth.models;
 using FluentCMS.Utils.ResultExt;
 using FluentCMS.WebAppBuilders;
 using FluentResults;
@@ -22,8 +23,8 @@ var app = builder.Build();
 //use fluent cms' CRUD 
 await app.UseCmsAsync();
 
-Result.Ok();
-Result.Ok();
+(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [RoleConstants.Sa])).Ok();
+(await app.EnsureCmsUser("admin@cms.com", "Admin1!", [RoleConstants.Admin])).Ok();
 
 var registry = app.GetHookRegistry();
 registry.EntityPreAdd.Register("teacher", addArgs =>

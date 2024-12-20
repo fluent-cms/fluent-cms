@@ -1,13 +1,23 @@
-using System.Text.Json;
 using Confluent.Kafka;
 
 namespace FluentCMS.Utils.EventStreaming;
 
-public class KafkaConsumer(IConsumer<string,string> consumer): IRecordConsumer
+public class KafkaConsumer(ILogger<KafkaConsumer> logger, IConsumer<string, string> consumer) : IStringMessageConsumer
 {
-    public void Subscribe() => consumer.Subscribe(Topics.All);
-
-    public RecordMessage? Consume(CancellationToken ct)
-        => JsonSerializer.Deserialize<RecordMessage>(consumer.Consume(ct).Message.Value);
-
+    public async Task Subscribe(Func<string, Task> handler, CancellationToken ct)
+    {
+        consumer.Subscribe(Topics.CmsCrud);
+        while (!ct.IsCancellationRequested)
+        {
+            var s = consumer.Consume(ct).Message.Value;
+            if (s is not null)
+            {
+                await handler(s);
+            }
+            else
+            {
+                logger.LogError("Got null message");
+            }
+        }
+    }
 }

@@ -12,7 +12,7 @@ public sealed record Query(
     ImmutableArray<Sort> Sorts,
     ImmutableArray<string> ReqVariables,
     string IdeUrl = "",
-    Pagination? Pagination= default
+    Pagination? Pagination= null
 );
 
 

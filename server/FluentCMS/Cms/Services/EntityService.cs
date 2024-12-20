@@ -198,9 +198,8 @@ public sealed class EntityService(
             throw new ResultException("Can not find id ");
         }
 
-        Result.Ok();
-        Result.Ok();
-
+        entity.ValidateLocalAttributes(record).Ok();
+        entity.ValidateTitleAttributes(record).Ok();
 
         var res = await hookRegistry.EntityPreUpdate.Trigger(provider,
             new EntityPreUpdateArgs(entity.Name, id.ToString()!, record));
@@ -215,8 +214,8 @@ public sealed class EntityService(
     private async Task<Record> Insert(RecordContext ctx, CancellationToken token)
     {
         var (entity, record) = ctx;
-        Result.Ok();
-        Result.Ok();
+        entity.ValidateLocalAttributes(record).Ok();
+        entity.ValidateTitleAttributes(record).Ok();
 
         var res = await hookRegistry.EntityPreAdd.Trigger(provider,
             new EntityPreAddArgs(entity.Name, record));

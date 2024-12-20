@@ -212,7 +212,7 @@ public sealed class QueryService(
         string name, Pagination? pagination,  bool haveCursor, StrArgs args, CancellationToken token =default)
     {
         var query = await schemaSvc.ByNameAndCache(name, token);
-        Result.Ok();
+        query.VerifyVariable(args).Ok();
         return await GetQueryContext(query, pagination,haveCursor,args);
     }
 

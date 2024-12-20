@@ -1,8 +1,10 @@
 using FluentCMS.App;
 
 var builder = DistributedApplication.CreateBuilder(args);
-var kafka = builder
-    .AddKafka(AppConstants.Kafka);
+
+var nats = builder
+    .AddNats(AppConstants.Nats)
+    .WithLifetime(ContainerLifetime.Persistent);
 
 var mongoCmsDb = builder
     .AddMongoDB("mongo")
@@ -12,11 +14,11 @@ var mongoCmsDb = builder
 
 var postgresCmsDb = builder
     .AddPostgres(AppConstants.PostgresCms)
-    .WithLifetime(ContainerLifetime.Persistent)
-    .WithDataVolume(isReadOnly:false);
+    .WithLifetime(ContainerLifetime.Persistent);
+//    .WithDataVolume(isReadOnly:false);
 
 builder.AddProject<Projects.FluentCMS_App>("web")
-    .WithReference(kafka).WaitFor(kafka)
+    .WithReference(nats).WaitFor(nats)
     .WithReference(mongoCmsDb).WaitFor(mongoCmsDb)
     .WithReference(postgresCmsDb).WaitFor(postgresCmsDb);
 
