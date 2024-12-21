@@ -1,6 +1,4 @@
-using FluentCMS.Cms.Models;
 using FluentCMS.Cms.Services;
-using FluentCMS.Utils.ApiClient;
 using FluentCMS.Utils.DataDefinitionExecutor;
 using FluentCMS.Utils.QueryBuilder;
 using FluentCMS.WebAppBuilders;
@@ -10,43 +8,133 @@ namespace FluentCMS.App;
 
 public static class WebApp
 {
-    public static async Task<WebApplication>  Build(string[] args)
+    private const string Cors ="cors";
+    public static async Task<WebApplication?>  Build(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args) ;
+        if (builder.Configuration.GetValue<bool>(AppConstants.EnableWebApp) is not true)
+        {
+            return null;
+        }
         
         builder.AddServiceDefaults();
+        if (builder.Environment.IsDevelopment()) builder.Services.AddCorsPolicy();
+        
         builder.AddNatsClient(AppConstants.Nats);
         builder.AddMongoDBClient(connectionName: AppConstants.MongoCms);
+
+        var queryLinksArray = builder.Configuration.GetRequiredSection("QueryLinksArray").Get<QueryLinks[]>()!;
+        var entities = builder.Configuration.GetRequiredSection("TrackingEntities").Get<string[]>()!;
         
-        builder.Services.AddMongoDbQuery()
-            .AddNatsMessageProducer()
-            .AddPostgresCms(builder.Configuration.GetConnectionString(AppConstants.PostgresCms)!);
+        builder.Services.AddMongoDbQuery(queryLinksArray);
+        builder.Services.AddNatsMessageProducer(entities);
+        
+        builder.Services.AddPostgresCms(builder.Configuration.GetConnectionString(AppConstants.PostgresCms)!);
+        
         
         var app =builder.Build();
+        app.UseCors(Cors);
         app.MapDefaultEndpoints();
-        
         await app.UseCmsAsync();
-        await app.Seed();
-        app.RegisterMongoViewHook("post");
-        
+
+        if (builder.Configuration.GetValue<bool>("add-schema")) await app.AddSchema();
+        if (builder.Configuration.GetValue<bool>("add-data")) await app.AddData();
+        if (builder.Configuration.GetValue<bool>("add-query")) await app.AddQuery();
+            
         return app;
     }
-
-    private static async Task Seed(this WebApplication app)
+    private static void AddCorsPolicy(this IServiceCollection services )
     {
-        using var scope = app.Services.CreateScope();
-        var schemaService = scope.ServiceProvider.GetRequiredService<ISchemaService>();
-        if (await schemaService.GetByNameDefault("post", SchemaType.Entity) is not null)
+        services.AddCors(options =>
         {
-            return;
-        }
-
-        await AddSchema(scope.ServiceProvider.GetRequiredService<IEntitySchemaService>());
+            options.AddPolicy(
+                Cors, 
+                policy => { policy.WithOrigins("http://127.0.0.1:5173")
+                    .AllowAnyHeader()
+                    .AllowCredentials(); 
+                });
+        });
     }
 
-   
-    private static async Task AddSchema(IEntitySchemaService entitySchemaService)
+    private static async Task AddQuery(this WebApplication app)
     {
+        using var scope = app.Services.CreateScope();
+        var service = scope.ServiceProvider.GetRequiredService<IQuerySchemaService>();
+        var query = new Query
+        (
+            Name : "post-sync",
+            EntityName : "post",
+            Filters: [new Filter("id",MatchTypes.MatchAll,[new Constraint(Matches.In,["$id"])])],
+            Sorts : [new Sort("id",SortOrder.Asc)],
+            ReqVariables:[],
+            Source:
+            """
+            query post($id:Int){
+              postList(idSet:[$id],sort:id){
+                id, title, body,abstract
+                tag{id,name}
+                category{id,name}
+                author{id,name}
+              }
+            }
+            """
+            
+        );
+        await service.SaveQuery(query);
+    }
+
+    private static async Task AddData(IEntityService service, string entity, string[] fields, int commitCount)
+    {
+        
+        for (var i = 0; i < commitCount; i++)
+        {
+            var vals = new List<IEnumerable<object>>();
+            for (var j = 0; j < 1000; j++)
+            {
+                var val = fields.Select(s => $"{entity}.{s}-{i}-{j}").Cast<object>().ToArray();
+                vals.Add(val);
+            }
+            await service.BatchInsert(entity, fields, vals);
+        }
+    }
+    
+    private static async Task AddData(this WebApplication app)
+    {
+        using var scope = app.Services.CreateScope();
+        var service = scope.ServiceProvider.GetRequiredService<IEntityService>();
+        await AddData(service, "tags", ["name", "description", "image"],1000);
+        await AddData(service, "authors", ["name", "description", "image"],1000);
+        await AddData(service, "categories", ["name", "description", "image"],1000);
+        
+        for (var i = 0; i < 1000; i++)
+        {
+            var vals = new List<IEnumerable<object>>();
+            for (var j = 0; j < 1000; j++)
+            {
+                object[] val = [$"title-{i}-{j}",$"abstrct-{i}-{j}",$"body-{i}-{j}",$"imge-{i}-{j}", i * 1000 + j + 1];
+                vals.Add(val);
+            }
+            await service.BatchInsert("posts",["title", "abstract","body","image","category"] , vals);
+        }
+
+        for (var i = 0; i < 1000; i++)
+        {
+            var vals = new List<IEnumerable<object>>();
+            for (var j = 0; j < 1000; j++)
+            {
+                var id = i * 1000 + j + 1;
+                vals.Add([ id, id]);
+            }
+
+            await service.BatchInsert("author_post", ["post_id", "author_id"], vals);
+            await service.BatchInsert("post_tag", ["post_id", "tag_id"], vals);
+        }
+    }
+
+    private static async Task AddSchema(this WebApplication app)
+    {
+        using var scope = app.Services.CreateScope();
+        var entitySchemaService = scope.ServiceProvider.GetRequiredService<IEntitySchemaService>();
         await entitySchemaService.SaveTableDefine(
             new Entity(
                 Attributes: [
@@ -60,6 +148,8 @@ public static class WebApp
                 Title:"Tag",
                 Name: "tag"
             ));
+        
+       
         await entitySchemaService.SaveTableDefine(
             new Entity(
                 Attributes: [

@@ -12,6 +12,8 @@ public static class WebApplicationExt
     {
         await app.Services.GetRequiredService<CmsBuilder>().UseCmsAsync(app);
         app.Services.GetService<IAuthBuilder>()?.UseCmsAuth(app);
+        app.Services.GetService<MongoQueryBuilder>()?.UserMongoDbQuery(app);
+        app.Services.GetService<EventProduceBuilder>()?.UseEventProducer(app);
     }
 
     public static HookRegistry GetHookRegistry(this WebApplication app) =>
@@ -21,14 +23,10 @@ public static class WebApplicationExt
         this WebApplication app, string email, string password, string[] role
     ) => await app.Services.GetRequiredService<IAuthBuilder>().EnsureCmsUser(app, email, password, role);
 
-    public static void RegisterMongoViewHook(
-        this WebApplication app, string viewName = "*"
-    ) => app.Services.GetRequiredService<MongoQueryBuilder>().RegisterMongoViewHook(app, viewName);
-
-    public static void RegisterMessageProducerHook(
-        this WebApplication app, string entityName = "*"
-    ) => app.Services.GetRequiredService<EventProduceBuilder>().RegisterMessageProducerHook(app, entityName);
-
+    public static IServiceCollection AddMongoDbQuery(
+        this IServiceCollection services, IEnumerable<QueryLinks> queryCollectionLinks
+        )=>MongoQueryBuilder.AddMongoDbQuery(services, queryCollectionLinks);
+    
     public static IServiceCollection AddPostgresCms(
         this IServiceCollection services, string connectionString, Action<CmsOptions>? action = null
         ) => CmsBuilder.AddCms(services, DatabaseProvider.Postgres, connectionString,action);
@@ -48,15 +46,10 @@ public static class WebApplicationExt
         => AuthBuilder<TUser>.AddCmsAuth<TUser, TRole, TContext>(services);
 
     public static IServiceCollection AddKafkaMessageProducer(
-        this IServiceCollection services
-    ) => EventProduceBuilder.AddKafkaMessageProducer(services);
+        this IServiceCollection services, string[] entities
+    ) => EventProduceBuilder.AddKafkaMessageProducer(services, entities);
 
     public static IServiceCollection AddNatsMessageProducer(
-        this IServiceCollection services
-    ) => EventProduceBuilder.AddNatsMessageProducer(services);
-
-    
-    public static IServiceCollection AddMongoDbQuery(
-        this IServiceCollection services 
-    ) => MongoQueryBuilder.AddMongoDbQuery(services);
+        this IServiceCollection services,string[] entities
+    ) => EventProduceBuilder.AddNatsMessageProducer(services,entities);
 }

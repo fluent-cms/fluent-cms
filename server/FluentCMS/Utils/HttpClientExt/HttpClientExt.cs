@@ -6,6 +6,12 @@ namespace FluentCMS.Utils.HttpClientExt;
 
 public static class HttpClientExt
 {
+    public static async Task<Result<string>> GetStringResult(this HttpClient client, string uri)
+    {
+        var res = await client.GetAsync(uri);
+        return await res.ParseString();
+    }
+
     public static async Task<Result<T>> GetResult<T>(this HttpClient client, string uri)
     {
         var res = await client.GetAsync(uri);
@@ -51,7 +57,18 @@ public static class HttpClientExt
         }
         return Result.Ok();
     }
-    
+
+    private static async Task<Result<string>> ParseString(this HttpResponseMessage msg)
+    {
+        var str = await msg.Content.ReadAsStringAsync();
+        if (!msg.IsSuccessStatusCode)
+        {
+            return Result.Fail(
+                $"fail to request {msg.RequestMessage?.RequestUri}, message= {str}");
+        }
+        return Result.Ok(str);
+    }
+
     private static async Task<Result<T>> ParseResult<T>(this HttpResponseMessage msg)
     {
         var str = await msg.Content.ReadAsStringAsync();

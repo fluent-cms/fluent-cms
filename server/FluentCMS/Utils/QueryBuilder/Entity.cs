@@ -114,6 +114,9 @@ public static class EntityHelper
             .WhereIn(e.PrimaryKey, ids.GetValues());
     }
 
+    public static SqlKata.Query BatchInsert(this LoadedEntity e, IEnumerable<string> cols, IEnumerable<IEnumerable<object>> items)
+        => new SqlKata.Query(e.TableName).AsInsert(cols, items);
+
     public static SqlKata.Query Insert(this LoadedEntity e, Record item)
     {
         //omit auto generated value
@@ -167,7 +170,7 @@ public static class EntityHelper
             list.Add(new Attribute
            ( 
                 Field : DefaultFields.Id, Header : "id",
-                IsDefault : true, InDetail:false, InList:true,
+                IsDefault : true, InDetail:true, InList:true,
                 DataType : DataType.Int, 
                 Type : DisplayType.Number
             ));

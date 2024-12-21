@@ -1,12 +1,12 @@
-using FluentCMS.Consumers;
+
+using FluentCMS.DataLink.Types;
 
 namespace FluentCMS.HostAppBuilders;
 
-
 public static class HostApplicationExt
 {
-    public static IServiceCollection AddMongoLinker(
+    public static IServiceCollection AddNatsMongoLink(
         this IServiceCollection collection,
         ApiLinks[] apiLinksArray
-    ) => DocDbLinkerBuilder.AddDocDbLinker(collection, apiLinksArray);
+    ) => DocDbLinkerBuilder.AddNatsMongoLink(collection, apiLinksArray);
 }

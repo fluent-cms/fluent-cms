@@ -4,54 +4,63 @@ using FluentCMS.Utils.HookFactory;
 
 namespace FluentCMS.WebAppBuilders;
 
-public class EventProduceBuilder(ILogger<EventProduceBuilder> logger)
+public record EventProduceBuilderOptions(string[] Entities);
+
+public class EventProduceBuilder(ILogger<EventProduceBuilder> logger, EventProduceBuilderOptions options)
 {
-    public static IServiceCollection AddNatsMessageProducer(IServiceCollection services)
+    private string[] _trackingEntities = [];
+    public static IServiceCollection AddNatsMessageProducer(IServiceCollection services, string[] entities)
     {
+        services.AddSingleton(new EventProduceBuilderOptions(Entities:entities));
         services.AddSingleton<EventProduceBuilder>();
         services.AddSingleton<IStringMessageProducer, NatsProducer>();
         return services;
     }
 
-    public static IServiceCollection AddKafkaMessageProducer(IServiceCollection services)
+    public static IServiceCollection AddKafkaMessageProducer(IServiceCollection services,string[] entities)
     {
+        services.AddSingleton(new EventProduceBuilderOptions(Entities:entities));
         services.AddSingleton<EventProduceBuilder>();
         services.AddSingleton<IStringMessageProducer, KafkaProducer>();
         return services;
     }
 
-    public WebApplication RegisterMessageProducerHook(WebApplication app, string entityName = "*")
+    public WebApplication UseEventProducer(WebApplication app)
     {
-        logger.LogInformation("Register message producer hook for {entityName}",entityName);
         var registry = app.Services.GetRequiredService<HookRegistry>();
         var messageProducer = app.Services.GetRequiredService<IStringMessageProducer>();
-        registry.EntityPostAdd.RegisterAsync(entityName, async parameter =>
+        var option = app.Services.GetRequiredService<EventProduceBuilderOptions>();
+        foreach (var entity in option.Entities)
         {
-            await messageProducer.Produce(
-                Topics.CmsCrud, 
-                EncodeMessage(Operations.Create, parameter.Name, parameter.RecordId, parameter.Record));
-            return parameter;
-        });
+            registry.EntityPostAdd.RegisterAsync(entity, async parameter =>
+            {
+                await messageProducer.Produce(
+                    Topics.CmsCrud,
+                    EncodeMessage(Operations.Create, parameter.Name, parameter.RecordId, parameter.Record));
+                return parameter;
+            });
 
-        registry.EntityPostUpdate.RegisterAsync(entityName, async parameter =>
-        {
-            await messageProducer.Produce(
-                Topics.CmsCrud,
-                EncodeMessage(Operations.Create, parameter.Name, parameter.RecordId, parameter.Record)
-            );
-            return parameter;
-        });
-        registry.EntityPostDel.RegisterAsync(entityName, async parameter =>
-        {
-            await messageProducer.Produce(
-                Topics.CmsCrud,
-                EncodeMessage( Operations.Create, parameter.Name, parameter.RecordId, parameter.Record));
-            return parameter;
-        });
+            registry.EntityPostUpdate.RegisterAsync(entity, async parameter =>
+            {
+                await messageProducer.Produce(
+                    Topics.CmsCrud,
+                    EncodeMessage(Operations.Create, parameter.Name, parameter.RecordId, parameter.Record)
+                );
+                return parameter;
+            });
+            registry.EntityPostDel.RegisterAsync(entity, async parameter =>
+            {
+                await messageProducer.Produce(
+                    Topics.CmsCrud,
+                    EncodeMessage(Operations.Create, parameter.Name, parameter.RecordId, parameter.Record));
+                return parameter;
+            });
+        }
+
         return app;
     }
 
     private static string EncodeMessage(string operation, string entity, string id, Record data
-    ) => JsonSerializer.Serialize<RecordMessage>(new RecordMessage(operation, entity, id, data));
+    ) => JsonSerializer.Serialize(new RecordMessage(operation, entity, id, data));
 }
     

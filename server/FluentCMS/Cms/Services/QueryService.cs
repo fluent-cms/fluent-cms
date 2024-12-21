@@ -218,7 +218,7 @@ public sealed class QueryService(
 
     private async Task<QueryContext> FromGraphQlRequest(GraphQlRequestDto dto, StrArgs args)
     {
-         var loadedQuery = await schemaSvc.ByGraphQlRequest(dto);
+         var loadedQuery = await schemaSvc.ByGraphQlRequest(dto.Query,dto.Fields);
          return await GetQueryContext(loadedQuery, null,false,args);
     }
 

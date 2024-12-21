@@ -227,6 +227,7 @@ public sealed class CmsBuilder(
             
             // if auth component is not use, the handler will use dummy profile service
             apiGroup.MapGroup("/profile").MapProfileHandlers();
+            
             app.MapGroup(cmsOptions.RouteOptions.PageBaseUrl).MapPages().CacheOutput(cmsOptions.PageCachePolicy);
             if (cmsOptions.MapCmsHomePage) app.MapHomePage().CacheOutput(cmsOptions.PageCachePolicy);
         }

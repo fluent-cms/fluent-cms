@@ -19,34 +19,40 @@ public sealed class QuerySchemaService(
     CmsOptions cmsOptions
 ) : IQuerySchemaService
 {
-    public async Task<LoadedQuery> ByGraphQlRequest(GraphQlRequestDto dto)
+    public async Task<LoadedQuery> ByGraphQlRequest(Query query, GraphQLField[] fields)
     {
-        if (string.IsNullOrWhiteSpace(dto.Query.Name))
+        if (string.IsNullOrWhiteSpace(query.Name))
         {
-            return await ToLoadedQuery(dto.Query,dto.Fields);
+            return await ToLoadedQuery(query,fields);
         }
 
-        var loadedQuery = await queryCache.GetOrSet(dto.Query.Name, SaveToDbAndCache);
-        if (loadedQuery.Source != dto.Query.Source)
+        var loadedQuery = await queryCache.GetOrSet(query.Name, SaveToDbAndCache);
+        if (loadedQuery.Source != query.Source)
         {
-            await queryCache.Remove(dto.Query.Name);
-            loadedQuery = await queryCache.GetOrSet(dto.Query.Name, SaveToDbAndCache);
+            await queryCache.Remove(query.Name);
+            loadedQuery = await queryCache.GetOrSet(query.Name, SaveToDbAndCache);
         }
         
         return loadedQuery;
 
         async ValueTask<LoadedQuery> SaveToDbAndCache(CancellationToken ct)
         {
-            var query = dto.Query with
-            {
-                IdeUrl =
-                $"{cmsOptions.GraphQlPath}?query={Uri.EscapeDataString(dto.Query.Source)}&operationName={dto.Query.Name}"
-            };
-            await VerifyQuery(query, ct);
-            var schema = new Schema(query.Name, SchemaType.Query, new Settings(Query: query));
-            await schemaSvc.AddOrUpdateByNameWithAction(schema,ct);
-            return await ToLoadedQuery(query, dto.Fields, ct);
+            await SaveQuery(query,ct);
+            return await ToLoadedQuery(query, fields, ct);
         }
+    }
+
+    public async Task SaveQuery(Query query, CancellationToken ct = default)
+    {
+        query = query with
+        {
+            IdeUrl =
+            $"{cmsOptions.GraphQlPath}?query={Uri.EscapeDataString(query.Source)}&operationName={query.Name}"
+        };
+        await VerifyQuery(query, ct);
+        var schema = new Schema(query.Name, SchemaType.Query, new Settings(Query: query));
+        await schemaSvc.AddOrUpdateByNameWithAction(schema, ct);
+
     }
 
     public async Task<LoadedQuery> ByNameAndCache(string name, CancellationToken ct = default)

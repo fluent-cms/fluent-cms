@@ -229,20 +229,19 @@ public static class AttributeHelper
         return arr?.Where(x => x.Type != DisplayType.Junction).ToArray() ?? [];
     }
 
-    public static T[] GetLocalAttrs<T>(this IEnumerable<T>? arr, InListOrDetail listOrDetail)
+    public static T[] GetLocalAttrs<T>(this IEnumerable<T>? arr, string primaryKey, InListOrDetail listOrDetail)
         where T : Attribute
     {
         return arr?.Where(x =>
-                x.Type != DisplayType.Junction &&
-                (listOrDetail == InListOrDetail.InList ? x.InList : x.InDetail))
-            .ToArray() ?? [];
+            x.Field == primaryKey
+            || x.Type != DisplayType.Junction && (listOrDetail == InListOrDetail.InList ? x.InList : x.InDetail)
+        ).ToArray() ?? [];
     }
 
     public static T[] GetLocalAttrs<T>(this IEnumerable<T>? arr, string[] attributes)
         where T : Attribute
     {
-        return arr?.Where(x => x.Type != DisplayType.Junction && attributes.Contains(x.Field)).ToArray() ??
-               [];
+        return arr?.Where(x => x.Type != DisplayType.Junction && attributes.Contains(x.Field)).ToArray() ?? [];
     }
 
     public static T[] GetAttrByType<T>(this IEnumerable<T>? arr, string displayType)

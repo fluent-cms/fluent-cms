@@ -6,6 +6,6 @@ public class NatsProducer(ILogger<NatsProducer> logger,INatsConnection connectio
 {
     public async Task Produce(string topic, string msg)
     {
-        await connection.PublishAsync<string>(topic, msg);
+        await connection.PublishAsync(topic, msg);
     }
 }
