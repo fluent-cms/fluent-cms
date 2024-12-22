@@ -23,7 +23,7 @@ public class HookList<TArgs>
         return args;
     }
 
-    private bool StartsWith(string str, string prefix)
+    private static bool StartsWith(string str, string prefix)
     {
         if (!prefix.EndsWith("*"))
         {

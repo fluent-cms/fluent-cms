@@ -66,7 +66,7 @@ public sealed class SyncWorker(
     }
 
     private async Task<Result> FetchSaveSingle(ApiLinks links, string id
-    ) => (await new HttpClient().GetStringResult($"{links.Api}/one?{links.PrimaryKey}={id}"))
+    ) => (await new HttpClient().GetStringResult($"{links.Api}/single?{links.PrimaryKey}={id}"))
         .Try(out var s, out var e)
             ? await Result.Try(() => dao.Upsert(links.Collection, links.PrimaryKey, s))
             : Result.Fail(e).WithError("Failed to fetch single data");

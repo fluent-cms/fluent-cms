@@ -32,9 +32,9 @@ public class MongoQueryBuilder(ILogger<MongoQueryBuilder> logger)
                 }
             );
 
-            hookRegistry.QueryPreGetOne.RegisterDynamic(
+            hookRegistry.QueryPreGetSingle.RegisterDynamic(
                 query,
-                async (IDocumentDbDao dao, QueryPreGetOneArgs p) =>
+                async (IDocumentDbDao dao, QueryPreGetSingleArgs p) =>
                 {
                     var records = (await dao.Query(collection, p.Filters, [], new ValidPagination(0, 1))).Ok();
                     return p with { OutRecord = records.First() };

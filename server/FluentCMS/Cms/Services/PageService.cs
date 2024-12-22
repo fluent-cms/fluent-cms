@@ -24,7 +24,7 @@ public sealed class PageService(ILogger<PageService> logger,ISchemaService schem
 
         var data = string.IsNullOrWhiteSpace(ctx.Page.Query)
             ? new Dictionary<string, object>()
-            : await querySvc.OneWithAction(ctx.Page.Query, strArgs, token)
+            : await querySvc.SingleWithAction(ctx.Page.Query, strArgs, token)
               ?? throw new ResultException($"not find data by of {param}");
         
         return await RenderPage(ctx, data, strArgs, token);

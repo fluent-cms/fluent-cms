@@ -83,16 +83,16 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
                 ISchemaPermissionService schemaPermissionService, SchemaPreGetAllArgs args
             ) => args with { OutSchemaNames = schemaPermissionService.GetAll() });
 
-            registry.SchemaPostGetOne.RegisterDynamic("*", (
-                ISchemaPermissionService schemaPermissionService, SchemaPostGetOneArgs args
+            registry.SchemaPostGetSingle.RegisterDynamic("*", (
+                ISchemaPermissionService schemaPermissionService, SchemaPostGetSingleArgs args
             ) =>
             {
                 schemaPermissionService.GetOne(args.Schema);
                 return args;
             });
 
-            registry.EntityPreGetOne.RegisterDynamic("*", (
-                IEntityPermissionService service, EntityPreGetOneArgs args
+            registry.EntityPreGetSingle.RegisterDynamic("*", (
+                IEntityPermissionService service, EntityPreGetSingleArgs args
             ) =>
             {
                 service.GetOne(args.Name, args.RecordId);

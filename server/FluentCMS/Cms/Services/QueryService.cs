@@ -10,6 +10,7 @@ using FluentResults;
 namespace FluentCMS.Cms.Services;
 
 public sealed class QueryService(
+    ILogger<QueryService> logger,
     KateQueryExecutor executor,
     IQuerySchemaService schemaSvc,
     IEntitySchemaService resolver,
@@ -23,11 +24,11 @@ public sealed class QueryService(
     public async Task<Record[]> ListWithAction(string name, Span span, Pagination pagination, StrArgs args, CancellationToken token)
         => await ListWithAction(await FromSavedQuery(name,pagination, !span.IsEmpty(),args,token), span, args, token);
 
-    public async Task<Record?> OneWithAction(GraphQlRequestDto dto)
-        => await OneWithAction(await FromGraphQlRequest(dto,dto.Args), dto.Args);
+    public async Task<Record?> SingleWithAction(GraphQlRequestDto dto)
+        => await SingleWithAction(await FromGraphQlRequest(dto,dto.Args), dto.Args);
 
-    public async Task<Record?> OneWithAction(string name, StrArgs args, CancellationToken token)
-        => await OneWithAction(await FromSavedQuery(name, null, false,args, token),args,token);
+    public async Task<Record?> SingleWithAction(string name, StrArgs args, CancellationToken token)
+        => await SingleWithAction(await FromSavedQuery(name, null, false,args, token),args,token);
 
     public async Task<Record[]> Partial(string name, string attr, Span span, int limit, StrArgs args,
         CancellationToken token)
@@ -74,6 +75,7 @@ public sealed class QueryService(
         var res = await hook.QueryPreGetList.Trigger(provider, hookParam);
         if (res.OutRecords is not null)
         {
+            logger.LogInformation("Returning records from hook, query = {query}", ctx.Query.Name);
             return span.ToPage(res.OutRecords, pagination.Limit);
         }
 
@@ -89,13 +91,14 @@ public sealed class QueryService(
         return items;
     }
 
-    private async Task<Record?> OneWithAction(QueryContext ctx, StrArgs args, CancellationToken token = default)
+    private async Task<Record?> SingleWithAction(QueryContext ctx, StrArgs args, CancellationToken token = default)
     {
         var (query, filters,sorts,_) = ctx;
-        var res = await hook.QueryPreGetOne.Trigger(provider,
-            new QueryPreGetOneArgs(ctx.Query.Name, query.EntityName, [..filters]));
+        var res = await hook.QueryPreGetSingle.Trigger(provider,
+            new QueryPreGetSingleArgs(ctx.Query.Name, query.EntityName, [..filters]));
         if (res.OutRecord is not null)
         {
+            logger.LogInformation("Query Single: Returning records from hook, query = {query}", ctx.Query.Name);
             return res.OutRecord;
         }
 

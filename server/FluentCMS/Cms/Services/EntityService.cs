@@ -26,11 +26,11 @@ public sealed class EntityService(
             throw new ResultException($"not find record by [{id}]");
     }
 
-    public async Task<Record> One(string entityName, string id, CancellationToken ct = default)
+    public async Task<Record> Single(string entityName, string id, CancellationToken ct = default)
     {
         var ctx = await GetIdCtx(entityName, id, ct);
-        var res = await hookRegistry.EntityPreGetOne.Trigger(provider,
-            new EntityPreGetOneArgs(entityName, id, null));
+        var res = await hookRegistry.EntityPreGetSingle.Trigger(provider,
+            new EntityPreGetSingleArgs(entityName, id, null));
         if (res.OutRecord is not null)
         {
             return res.OutRecord;
@@ -45,7 +45,7 @@ public sealed class EntityService(
             await LoadLookupData(attribute, [record], ct);
         }
 
-        await hookRegistry.EntityPostGetOne.Trigger(provider, new EntityPostGetOneArgs(entityName, id, record));
+        await hookRegistry.EntityPostGetSingle.Trigger(provider, new EntityPostGetSingleArgs(entityName, id, record));
         return record;
     }
 

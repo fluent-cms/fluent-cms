@@ -47,7 +47,7 @@ public sealed class SchemaService(
         var schema = await ById(id, token);
         if (schema is not null)
         {
-            await hook.SchemaPostGetOne.Trigger(provider, new SchemaPostGetOneArgs(schema));
+            await hook.SchemaPostGetSingle.Trigger(provider, new SchemaPostGetSingleArgs(schema));
         }
 
         return schema;

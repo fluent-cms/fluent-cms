@@ -17,4 +17,4 @@ public record QueryPreGetManyArgs(
     ImmutableArray<ValidFilter> Filters,
     ValidPagination Pagination,
     Record[]? OutRecords = default) : BaseArgs(Name);
-public record QueryPreGetOneArgs(string Name,string EntityName, ImmutableArray<ValidFilter> Filters, Record? OutRecord = default):BaseArgs(Name) ;
+public record QueryPreGetSingleArgs(string Name,string EntityName, ImmutableArray<ValidFilter> Filters, Record? OutRecord = default):BaseArgs(Name) ;

@@ -8,31 +8,32 @@ namespace FluentCMS.App;
 
 public static class WebApp
 {
-    private const string Cors ="cors";
-    public static async Task<WebApplication?>  Build(string[] args)
+    private const string Cors = "cors";
+
+    public static async Task<WebApplication?> Build(string[] args)
     {
-        var builder = WebApplication.CreateBuilder(args) ;
+        var builder = WebApplication.CreateBuilder(args);
         if (builder.Configuration.GetValue<bool>(AppConstants.EnableWebApp) is not true)
         {
             return null;
         }
-        
+
         builder.AddServiceDefaults();
         if (builder.Environment.IsDevelopment()) builder.Services.AddCorsPolicy();
-        
+
         builder.AddNatsClient(AppConstants.Nats);
         builder.AddMongoDBClient(connectionName: AppConstants.MongoCms);
 
         var queryLinksArray = builder.Configuration.GetRequiredSection("QueryLinksArray").Get<QueryLinks[]>()!;
         var entities = builder.Configuration.GetRequiredSection("TrackingEntities").Get<string[]>()!;
-        
+
         builder.Services.AddMongoDbQuery(queryLinksArray);
         builder.Services.AddNatsMessageProducer(entities);
-        
+
         builder.Services.AddPostgresCms(builder.Configuration.GetConnectionString(AppConstants.PostgresCms)!);
-        
-        
-        var app =builder.Build();
+
+
+        var app = builder.Build();
         app.UseCors(Cors);
         app.MapDefaultEndpoints();
         await app.UseCmsAsync();
@@ -40,18 +41,21 @@ public static class WebApp
         if (builder.Configuration.GetValue<bool>("add-schema")) await app.AddSchema();
         if (builder.Configuration.GetValue<bool>("add-data")) await app.AddData();
         if (builder.Configuration.GetValue<bool>("add-query")) await app.AddQuery();
-            
+
         return app;
     }
-    private static void AddCorsPolicy(this IServiceCollection services )
+
+    private static void AddCorsPolicy(this IServiceCollection services)
     {
         services.AddCors(options =>
         {
             options.AddPolicy(
-                Cors, 
-                policy => { policy.WithOrigins("http://127.0.0.1:5173")
-                    .AllowAnyHeader()
-                    .AllowCredentials(); 
+                Cors,
+                policy =>
+                {
+                    policy.WithOrigins("http://127.0.0.1:5173")
+                        .AllowAnyHeader()
+                        .AllowCredentials();
                 });
         });
     }
@@ -62,14 +66,14 @@ public static class WebApp
         var service = scope.ServiceProvider.GetRequiredService<IQuerySchemaService>();
         var query = new Query
         (
-            Name : "post-sync",
-            EntityName : "post",
-            Filters: [new Filter("id",MatchTypes.MatchAll,[new Constraint(Matches.In,["$id"])])],
-            Sorts : [new Sort("id",SortOrder.Asc)],
-            ReqVariables:[],
+            Name: "post_sync",
+            EntityName: "post",
+            Filters: [new Filter("id", MatchTypes.MatchAll, [new Constraint(Matches.In, ["$id"])])],
+            Sorts: [new Sort("id", SortOrder.Asc)],
+            ReqVariables: [],
             Source:
             """
-            query post($id:Int){
+            query post_sync($id:Int){
               postList(idSet:[$id],sort:id){
                 id, title, body,abstract
                 tag{id,name}
@@ -78,14 +82,13 @@ public static class WebApp
               }
             }
             """
-            
         );
         await service.SaveQuery(query);
     }
 
     private static async Task AddData(IEntityService service, string entity, string[] fields, int commitCount)
     {
-        
+
         for (var i = 0; i < commitCount; i++)
         {
             var vals = new List<IEnumerable<object>>();
@@ -94,27 +97,30 @@ public static class WebApp
                 var val = fields.Select(s => $"{entity}.{s}-{i}-{j}").Cast<object>().ToArray();
                 vals.Add(val);
             }
+
             await service.BatchInsert(entity, fields, vals);
         }
     }
-    
+
     private static async Task AddData(this WebApplication app)
     {
         using var scope = app.Services.CreateScope();
         var service = scope.ServiceProvider.GetRequiredService<IEntityService>();
-        await AddData(service, "tags", ["name", "description", "image"],1000);
-        await AddData(service, "authors", ["name", "description", "image"],1000);
-        await AddData(service, "categories", ["name", "description", "image"],1000);
-        
+        await AddData(service, "tags", ["name", "description", "image"], 1000);
+        await AddData(service, "authors", ["name", "description", "image"], 1000);
+        await AddData(service, "categories", ["name", "description", "image"], 1000);
+
         for (var i = 0; i < 1000; i++)
         {
             var vals = new List<IEnumerable<object>>();
             for (var j = 0; j < 1000; j++)
             {
-                object[] val = [$"title-{i}-{j}",$"abstrct-{i}-{j}",$"body-{i}-{j}",$"imge-{i}-{j}", i * 1000 + j + 1];
+                object[] val =
+                    [$"title-{i}-{j}", $"abstrct-{i}-{j}", $"body-{i}-{j}", $"imge-{i}-{j}", i * 1000 + j + 1];
                 vals.Add(val);
             }
-            await service.BatchInsert("posts",["title", "abstract","body","image","category"] , vals);
+
+            await service.BatchInsert("posts", ["title", "abstract", "body", "image", "category"], vals);
         }
 
         for (var i = 0; i < 1000; i++)
@@ -123,7 +129,7 @@ public static class WebApp
             for (var j = 0; j < 1000; j++)
             {
                 var id = i * 1000 + j + 1;
-                vals.Add([ id, id]);
+                vals.Add([id, id]);
             }
 
             await service.BatchInsert("author_post", ["post_id", "author_id"], vals);
@@ -137,63 +143,68 @@ public static class WebApp
         var entitySchemaService = scope.ServiceProvider.GetRequiredService<IEntitySchemaService>();
         await entitySchemaService.SaveTableDefine(
             new Entity(
-                Attributes: [
-                    new Attribute(Field: "name", Header:"Name"),
-                    new Attribute(Field: "description", Header:"Description"),
-                    new Attribute(Field: "image",Header:"Image",Type: DisplayType.Image),
+                Attributes:
+                [
+                    new Attribute(Field: "name", Header: "Name"),
+                    new Attribute(Field: "description", Header: "Description"),
+                    new Attribute(Field: "image", Header: "Image", Type: DisplayType.Image),
                 ],
-                DefaultPageSize:50,
-                TitleAttribute:"name",
-                TableName:"tags",
-                Title:"Tag",
+                DefaultPageSize: 50,
+                TitleAttribute: "name",
+                TableName: "tags",
+                Title: "Tag",
                 Name: "tag"
             ));
-        
-       
+
+
         await entitySchemaService.SaveTableDefine(
             new Entity(
-                Attributes: [
-                    new Attribute(Field: "name", Header:"Name"),
-                    new Attribute(Field: "description", Header:"Description"),
-                    new Attribute(Field: "image",Header:"Image",Type: DisplayType.Image),
+                Attributes:
+                [
+                    new Attribute(Field: "name", Header: "Name"),
+                    new Attribute(Field: "description", Header: "Description"),
+                    new Attribute(Field: "image", Header: "Image", Type: DisplayType.Image),
                 ],
-                TitleAttribute:"name",
-                TableName:"authors",
-                DefaultPageSize:50,
-                Title:"Author",
+                TitleAttribute: "name",
+                TableName: "authors",
+                DefaultPageSize: 50,
+                Title: "Author",
                 Name: "author"
             ));
         await entitySchemaService.SaveTableDefine(
             new Entity(
                 Attributes:
                 [
-                    new Attribute(Field: "name", Header:"Name"),
-                    new Attribute(Field: "description", Header:"Description"),
-                    new Attribute(Field: "image",Header:"Image", Type: DisplayType.Image),
+                    new Attribute(Field: "name", Header: "Name"),
+                    new Attribute(Field: "description", Header: "Description"),
+                    new Attribute(Field: "image", Header: "Image", Type: DisplayType.Image),
                 ],
-                TitleAttribute:"name",
-                TableName:"categories",
-                Title:"Category",
-                DefaultPageSize:50,
+                TitleAttribute: "name",
+                TableName: "categories",
+                Title: "Category",
+                DefaultPageSize: 50,
                 Name: "category"
             ));
         await entitySchemaService.SaveTableDefine(
             new Entity(
                 Attributes:
                 [
-                    new Attribute(Field: "title" ,Header:"Title"),
-                    new Attribute(Field: "abstract",Header:"Abstract"),
-                    new Attribute(Field: "body",Header:"Body"),
-                    new Attribute(Field: "image",Header:"Image", Type: DisplayType.Image),
-                    
-                    new Attribute(Field: "tag",Header:"Tag", DataType: DataType.Na, Type:DisplayType.Junction,Options:"tag"),
-                    new Attribute(Field: "author",Header:"Author", DataType: DataType.Na, Type:DisplayType.Junction,Options:"author"),
-                    new Attribute(Field: "category",Header:"Category", DataType: DataType.Int, Type:DisplayType.Lookup,Options:"category"),
+                    new Attribute(Field: "title", Header: "Title"),
+                    new Attribute(Field: "abstract", Header: "Abstract"),
+                    new Attribute(Field: "body", Header: "Body"),
+                    new Attribute(Field: "image", Header: "Image", Type: DisplayType.Image),
+
+                    new Attribute(Field: "tag", Header: "Tag", DataType: DataType.Na, Type: DisplayType.Junction,
+                        Options: "tag"),
+                    new Attribute(Field: "author", Header: "Author", DataType: DataType.Na, Type: DisplayType.Junction,
+                        Options: "author"),
+                    new Attribute(Field: "category", Header: "Category", DataType: DataType.Int,
+                        Type: DisplayType.Lookup, Options: "category"),
                 ],
-                TitleAttribute:"title",
-                TableName:"posts",
-                Title:"Post",
-                DefaultPageSize:50,
+                TitleAttribute: "title",
+                TableName: "posts",
+                Title: "Post",
+                DefaultPageSize: 50,
                 Name: "post"
             ));
     }

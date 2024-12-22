@@ -1,5 +1,6 @@
 using FluentCMS.Cms.Services;
 using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Utils.ResultExt;
 using GraphQL;
 using GraphQL.Resolvers;
 using GraphQLParser.AST;
@@ -14,12 +15,22 @@ public static class Resolvers
         context.Source is Record record ? record[context.FieldDefinition.Name] : null);
 
     public static IFieldResolver GetSingleResolver(IQueryService queryService, string entityName)
-        => new FuncFieldResolver<Record>(async context =>
-            await queryService.OneWithAction(GetRequestDto(context, entityName)));
+    {
+        return new FuncFieldResolver<Record>(async context =>
+        {
+            var dto = GetRequestDto(context, entityName);
+            return await ResultException.Try(()=>queryService.SingleWithAction(dto));
+        });
+    }
 
     public static IFieldResolver GetListResolver(IQueryService queryService, string entityName)
-        => new FuncFieldResolver<Record[]>(async context =>
-            await queryService.ListWithAction(GetRequestDto(context, entityName)));
+    {
+        return new FuncFieldResolver<Record[]>(async context =>
+        {
+            var dto = GetRequestDto(context, entityName);
+            return await ResultException.Try(() => queryService.ListWithAction(dto));
+        });
+    }
 
     private static GraphQlRequestDto GetRequestDto(IResolveFieldContext context, string entityName)
     {
