@@ -17,18 +17,17 @@ public static class WebApp
         {
             return null;
         }
-
-        builder.AddServiceDefaults();
         if (builder.Environment.IsDevelopment()) builder.Services.AddCorsPolicy();
+        builder.AddServiceDefaults();
 
         builder.AddNatsClient(AppConstants.Nats);
-        builder.AddMongoDBClient(connectionName: AppConstants.MongoCms);
-
-        var queryLinksArray = builder.Configuration.GetRequiredSection("QueryLinksArray").Get<QueryLinks[]>()!;
         var entities = builder.Configuration.GetRequiredSection("TrackingEntities").Get<string[]>()!;
-
-        builder.Services.AddMongoDbQuery(queryLinksArray);
         builder.Services.AddNatsMessageProducer(entities);
+        
+        
+        builder.AddMongoDBClient(connectionName: AppConstants.MongoCms);
+        var queryLinksArray = builder.Configuration.GetRequiredSection("QueryLinksArray").Get<QueryLinks[]>()!;
+        builder.Services.AddMongoDbQuery(queryLinksArray);
 
         builder.Services.AddPostgresCms(builder.Configuration.GetConnectionString(AppConstants.PostgresCms)!);
 

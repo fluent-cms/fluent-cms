@@ -3,7 +3,7 @@ using FluentCMS.HostAppBuilders;
 
 namespace FluentCMS.App;
 
-public static class HostApp
+public static class WorkerApp
 {
     public static IHost? Build(string[] args)
     {

@@ -3,6 +3,7 @@ using FluentCMS.DataLink.Types;
 using FluentCMS.Utils.DocumentDb;
 using FluentCMS.Utils.EventStreaming;
 using FluentCMS.Utils.HttpClientExt;
+using FluentCMS.Utils.JsonElementExt;
 using FluentCMS.Utils.ResultExt;
 using FluentResults;
 
@@ -16,6 +17,7 @@ public sealed class SyncWorker(
 {
     private readonly Dictionary<string, ApiLinks> _dict = links.ToDictionary(x => x.Entity, x => x);
 
+    private readonly HttpClient _httpClient = new();
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
         await consumer.Subscribe(async s =>
@@ -65,9 +67,13 @@ public sealed class SyncWorker(
         }, ct);
     }
 
-    private async Task<Result> FetchSaveSingle(ApiLinks links, string id
-    ) => (await new HttpClient().GetStringResult($"{links.Api}/single?{links.PrimaryKey}={id}"))
-        .Try(out var s, out var e)
-            ? await Result.Try(() => dao.Upsert(links.Collection, links.PrimaryKey, s))
-            : Result.Fail(e).WithError("Failed to fetch single data");
+    private async Task<Result> FetchSaveSingle(ApiLinks links, string id )
+    {
+        if (!(await _httpClient.GetResult<JsonElement>($"{links.Api}/single?{links.PrimaryKey}={id}"))
+            .Try(out var s, out var e))
+        {
+            return Result.Fail(e).WithError("Failed to fetch single data");
+        } 
+        return await Result.Try(() => dao.Upsert(links.Collection, links.PrimaryKey, s.ToDictionary()));
+    }
 }

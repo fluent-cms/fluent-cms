@@ -69,26 +69,28 @@ public class MigrateWorker( IDocumentDbDao dao,
         {
             return Result.Fail(err).WithError("Failed to fetch data");
         }
+        
+        var elements = JsonSerializer.Deserialize<JsonElement[]>(s);
+        if (elements is null || elements.Length == 0)
+        {
+            return (cursor,"");
+        }
 
+        var items = elements.Select(x => x.ToDictionary()).ToArray();
+        var nextCursor = SpanHelper.HasNext(items) ? SpanHelper.LastCursor(items) : "";
+        
+        foreach (var item in items)
+        {
+            SpanHelper.Clean(item);
+        }
         try
         {
-            await dao.BatchInsert(links.Collection, s);
+            await dao.BatchInsert(links.Collection, items);
         }
         catch (Exception e)
         {
             return Result.Fail(e.Message);
         }
-        
-        var eles = JsonSerializer.Deserialize<JsonElement[]>(s);
-        if (eles is null || eles.Length == 0)
-        {
-            return (cursor,"");
-        }
-        var lastItem = eles.Last().ToDictionary();
-        if (!SpanHelper.HasNext(lastItem))
-        {
-            return (cursor, "");
-        }
-        return (cursor,SpanHelper.LastCursor(lastItem));
+        return (cursor,nextCursor);
     }
 }

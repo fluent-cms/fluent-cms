@@ -21,22 +21,26 @@ public sealed class MongoDao(ILogger<MongoDao> logger, IMongoDatabase db):IDocum
         );
     }
 
-    public Task Delete(string collection, string id) 
-        => GetCollection(collection).DeleteOneAsync(Filter.Eq("id", id));
-
-    public Task Upsert(string collection, string primaryKey, string json)
+    public Task Upsert(string collection, string primaryKey, Record record)
     {
-        var doc = BsonDocument.Parse(json);
+        var doc = new BsonDocument(record);
         return GetCollection(collection).ReplaceOneAsync(
             Filter.Eq(primaryKey, doc[primaryKey]),
             doc,
             new ReplaceOptions { IsUpsert = true });
     }
 
+    public Task Delete(string collection, string id) 
+        => GetCollection(collection).DeleteOneAsync(Filter.Eq("id", id));
     public Task BatchInsert(string collection, string rawJson)
     {
         var items = BsonSerializer.Deserialize<BsonArray>(rawJson).Select(x=> x as BsonDocument);
         return GetCollection(collection).InsertManyAsync(items!);
+    }
+
+    public Task BatchInsert(string collection, IEnumerable<IDictionary<string,object>> records)
+    {
+        return GetCollection(collection).InsertManyAsync(records.Select(x=> new BsonDocument(x)));
     }
 
     public async Task<Result<Record[]>> Query(
