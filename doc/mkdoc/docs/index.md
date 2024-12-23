@@ -942,8 +942,8 @@ By adopting these caching and deployment strategies, Fluent CMS ensures improved
 
 
 ---
-## Optimize Query with Document DB
-    Optimizing query performance by syncing relational data to a document database, such as MongoDB, significantly improves speed and scalability for high-demand applications.
+## Query with Document DB
+Optimizing query performance by syncing relational data to a document database, such as MongoDB, significantly improves speed and scalability for high-demand applications.
 
 ### Limitations of ASP.NET Core Output Caching
 ASP.NET Core's output caching reduces database access when repeated queries are performed. However, its effectiveness is limited when dealing with numerous distinct queries:

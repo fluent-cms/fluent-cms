@@ -55,7 +55,7 @@
         <PackageReadmeFile>readme.md</PackageReadmeFile>
         <TargetFramework>net9.0</TargetFramework>
         <PackageId>FluentCMS</PackageId>
-        <Version>0.3.1</Version>
+        <Version>0.3.2</Version>
         <Authors>Jason C</Authors>
         <Company>fluent-cms</Company>
         <Description>A headless CMS with GraphQL API and drag-and-drop page designer.</Description>

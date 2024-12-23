@@ -961,7 +961,7 @@ By adopting these caching and deployment strategies, Fluent CMS ensures improved
 </details>
 
 ---
-## Optimize Query with Document DB
+## Query with Document DB
 <details>
 <summary>
     Optimizing query performance by syncing relational data to a document database, such as MongoDB, significantly improves speed and scalability for high-demand applications.
