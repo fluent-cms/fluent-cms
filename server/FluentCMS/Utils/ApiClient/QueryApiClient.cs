@@ -34,7 +34,7 @@ public class QueryApiClient(HttpClient client)
 
     public Task<Result<JsonElement>> Single(
         string query, object id
-    ) => client.GetResult<JsonElement>($"/{query}/one?id={id}".ToQueryApi());
+    ) => client.GetResult<JsonElement>($"/{query}/single?id={id}".ToQueryApi());
 
 
     public Task<Result<JsonElement[]>> Part(

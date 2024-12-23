@@ -4,33 +4,50 @@ using FluentCMS.Utils.HookFactory;
 
 namespace FluentCMS.WebAppBuilders;
 
-public record EventProduceBuilderOptions(string[] Entities);
+public record MessageProduceBuilderOptions(string[] Entities);
 
-public class EventProduceBuilder(ILogger<EventProduceBuilder> logger, EventProduceBuilderOptions options)
+public class MessageProduceBuilder(ILogger<MessageProduceBuilder> logger, MessageProduceBuilderOptions options)
 {
-    private string[] _trackingEntities = [];
     public static IServiceCollection AddNatsMessageProducer(IServiceCollection services, string[] entities)
     {
-        services.AddSingleton(new EventProduceBuilderOptions(Entities:entities));
-        services.AddSingleton<EventProduceBuilder>();
+        services.AddSingleton(new MessageProduceBuilderOptions(Entities:entities));
+        services.AddSingleton<MessageProduceBuilder>();
         services.AddSingleton<IStringMessageProducer, NatsProducer>();
         return services;
     }
 
     public static IServiceCollection AddKafkaMessageProducer(IServiceCollection services,string[] entities)
     {
-        services.AddSingleton(new EventProduceBuilderOptions(Entities:entities));
-        services.AddSingleton<EventProduceBuilder>();
+        services.AddSingleton(new MessageProduceBuilderOptions(Entities:entities));
+        services.AddSingleton<MessageProduceBuilder>();
         services.AddSingleton<IStringMessageProducer, KafkaProducer>();
         return services;
     }
 
     public WebApplication UseEventProducer(WebApplication app)
     {
+        Print();
+        RegisterHooks(app);
+        return app;
+    }
+    
+    private void Print()
+    {
+        var info = string.Join(",", options.Entities.Select(x => x.ToString()));
+        logger.LogInformation(
+            """
+            *********************************************************
+            Using Message Producer
+            Produce message for these entities: {info}
+            *********************************************************
+            """,info); 
+    }
+
+    private void RegisterHooks(WebApplication app)
+    {
         var registry = app.Services.GetRequiredService<HookRegistry>();
         var messageProducer = app.Services.GetRequiredService<IStringMessageProducer>();
-        var option = app.Services.GetRequiredService<EventProduceBuilderOptions>();
-        foreach (var entity in option.Entities)
+        foreach (var entity in options.Entities)
         {
             registry.EntityPostAdd.RegisterAsync(entity, async parameter =>
             {
@@ -56,8 +73,6 @@ public class EventProduceBuilder(ILogger<EventProduceBuilder> logger, EventProdu
                 return parameter;
             });
         }
-
-        return app;
     }
 
     private static string EncodeMessage(string operation, string entity, string id, Record data

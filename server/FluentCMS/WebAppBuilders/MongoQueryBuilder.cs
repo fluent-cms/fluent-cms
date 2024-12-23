@@ -5,22 +5,27 @@ using FluentCMS.Utils.ResultExt;
 
 namespace FluentCMS.WebAppBuilders;
 
-public record QueryLinks(string Query, string Collection);
-public class MongoQueryBuilder(ILogger<MongoQueryBuilder> logger)
+public record QueryCollectionLinks(string Query, string Collection);
+public class MongoQueryBuilder(ILogger<MongoQueryBuilder> logger, QueryCollectionLinks[] queryLinksArray)
 {
-    public static IServiceCollection AddMongoDbQuery(IServiceCollection services, IEnumerable<QueryLinks> queryCollectionLinks)
+    public static IServiceCollection AddMongoDbQuery(IServiceCollection services, IEnumerable<QueryCollectionLinks> queryLinksArray)
     {
-        services.AddSingleton(queryCollectionLinks);
+        services.AddSingleton(queryLinksArray.ToArray());
         services.AddSingleton<MongoQueryBuilder>();
         services.AddScoped<IDocumentDbDao,MongoDao>();
         return services;
     }
 
-    public WebApplication UserMongoDbQuery(WebApplication app)
+    public WebApplication UseMongoDbQuery(WebApplication app)
     {
-        var queryCollectionLinks = app.Services.GetRequiredService<IEnumerable<QueryLinks>>();
+        Print();
+        RegisterHooks(app);
+        return app;
+    }
 
-        foreach (var (query, collection) in queryCollectionLinks)
+    private void RegisterHooks(WebApplication app)
+    {
+        foreach (var (query, collection) in queryLinksArray)
         {
             var hookRegistry = app.Services.GetRequiredService<HookRegistry>();
             hookRegistry.QueryPreGetList.RegisterDynamic(
@@ -41,6 +46,18 @@ public class MongoQueryBuilder(ILogger<MongoQueryBuilder> logger)
                 }
             );
         }
-        return app;
+    }
+
+    private void Print()
+    {
+        var info = string.Join(",", queryLinksArray.Select(x => x.ToString()));
+        logger.LogInformation(
+            """
+            *********************************************************
+            Using MongoDb Query
+            Query Collection Links:
+            {queryLinksArray}
+            *********************************************************
+            """,info); 
     }
 }

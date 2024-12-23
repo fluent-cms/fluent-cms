@@ -12,8 +12,8 @@ public static class WebApplicationExt
     {
         await app.Services.GetRequiredService<CmsBuilder>().UseCmsAsync(app);
         app.Services.GetService<IAuthBuilder>()?.UseCmsAuth(app);
-        app.Services.GetService<MongoQueryBuilder>()?.UserMongoDbQuery(app);
-        app.Services.GetService<EventProduceBuilder>()?.UseEventProducer(app);
+        app.Services.GetService<MongoQueryBuilder>()?.UseMongoDbQuery(app);
+        app.Services.GetService<MessageProduceBuilder>()?.UseEventProducer(app);
     }
 
     public static HookRegistry GetHookRegistry(this WebApplication app) =>
@@ -24,7 +24,7 @@ public static class WebApplicationExt
     ) => await app.Services.GetRequiredService<IAuthBuilder>().EnsureCmsUser(app, email, password, role);
 
     public static IServiceCollection AddMongoDbQuery(
-        this IServiceCollection services, IEnumerable<QueryLinks> queryCollectionLinks
+        this IServiceCollection services, IEnumerable<QueryCollectionLinks> queryCollectionLinks
         )=>MongoQueryBuilder.AddMongoDbQuery(services, queryCollectionLinks);
     
     public static IServiceCollection AddPostgresCms(
@@ -47,9 +47,9 @@ public static class WebApplicationExt
 
     public static IServiceCollection AddKafkaMessageProducer(
         this IServiceCollection services, string[] entities
-    ) => EventProduceBuilder.AddKafkaMessageProducer(services, entities);
+    ) => MessageProduceBuilder.AddKafkaMessageProducer(services, entities);
 
     public static IServiceCollection AddNatsMessageProducer(
         this IServiceCollection services,string[] entities
-    ) => EventProduceBuilder.AddNatsMessageProducer(services,entities);
+    ) => MessageProduceBuilder.AddNatsMessageProducer(services,entities);
 }

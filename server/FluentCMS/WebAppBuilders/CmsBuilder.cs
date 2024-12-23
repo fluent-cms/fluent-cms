@@ -290,7 +290,7 @@ public sealed class CmsBuilder(
         logger.LogInformation(
             $"""
             *********************************************************
-            {title}, Version {informationalVersion?.Split("+").First()}
+            Using {title}, Version {informationalVersion?.Split("+").First()}
             Database : {dbOptions.Provider} - {string.Join(";", parts)}
             Client App is Enabled :{cmsOptions.EnableClient}
             Use CMS' home page: {cmsOptions.MapCmsHomePage}

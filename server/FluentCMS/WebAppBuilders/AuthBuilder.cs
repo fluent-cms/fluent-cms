@@ -38,16 +38,7 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
 
         return app;
 
-        void Print()
-        {
-            logger.LogInformation(
-             """
-             *********************************************************
-             Using CMS Auth API endpoints
-             *********************************************************
-             """);
-             
-        }
+        
         
         void MapEndpoints()
         {
@@ -150,5 +141,15 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
     {
         using var scope = app.Services.CreateScope();
         return await scope.ServiceProvider.GetRequiredService<IAccountService>().EnsureUser(email, password,role);
+    }
+
+    private void Print()
+    {
+        logger.LogInformation(
+            """
+            *********************************************************
+            Using CMS Auth API endpoints
+            *********************************************************
+            """);
     }
 }

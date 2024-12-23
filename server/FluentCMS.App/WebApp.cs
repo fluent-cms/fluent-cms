@@ -26,7 +26,7 @@ public static class WebApp
         
         
         builder.AddMongoDBClient(connectionName: AppConstants.MongoCms);
-        var queryLinksArray = builder.Configuration.GetRequiredSection("QueryLinksArray").Get<QueryLinks[]>()!;
+        var queryLinksArray = builder.Configuration.GetRequiredSection("QueryLinksArray").Get<QueryCollectionLinks[]>()!;
         builder.Services.AddMongoDbQuery(queryLinksArray);
 
         builder.Services.AddPostgresCms(builder.Configuration.GetConnectionString(AppConstants.PostgresCms)!);

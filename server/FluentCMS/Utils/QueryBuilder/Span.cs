@@ -42,7 +42,7 @@ public static class SpanHelper
 
     public static string Cursor(JsonElement item) => item.GetProperty(SpanConstants.Cursor).GetString() ?? "";
 
-    private static string Cursor(Record item) =>
+    public static string Cursor(Record item) =>
         item.TryGetValue(SpanConstants.Cursor, out var v) && v is string s ? s : null ?? "";
 
     public static string LastCursor(IEnumerable<Record> items) => 
