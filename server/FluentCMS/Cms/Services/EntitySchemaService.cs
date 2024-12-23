@@ -118,6 +118,10 @@ public sealed class EntitySchemaService(
         );
     }
 
+    public async Task SaveTableDefine(Entity entity, CancellationToken token = default)
+    {
+        await SaveTableDefine(ToSchema(entity), token);
+    }
 
     public async Task<Schema> SaveTableDefine(Schema dto, CancellationToken ct = default)
     {
@@ -323,8 +327,18 @@ public sealed class EntitySchemaService(
 
     private async Task VerifyEntity(Entity entity, CancellationToken ct)
     {
+        if (string.IsNullOrEmpty(entity.TableName)) throw new ResultException("table name should not be empty");
+        if (string.IsNullOrEmpty(entity.TitleAttribute)) throw new ResultException("title should not be empty");
+        if (string.IsNullOrEmpty(entity.PrimaryKey)) throw new ResultException("primary key should not be empty");
+        
+        if (entity.DefaultPageSize <1) throw new ResultException("default page size should be greater than 0");
+        
+        _ = entity.Attributes.FindOneAttr(entity.PrimaryKey) ??
+            throw new ResultException($"`{entity.PrimaryKey}` was not in attributes list");
+        
         _ = entity.Attributes.FindOneAttr(entity.TitleAttribute) ??
             throw new ResultException($"`{entity.TitleAttribute}` was not in attributes list");
+        
         foreach (var attribute in entity.Attributes.GetAttrByType(DisplayType.Lookup))
         {
             await CheckLookup(attribute, ct);
@@ -334,9 +348,13 @@ public sealed class EntitySchemaService(
     public async Task<Schema> AddOrUpdateByName(Entity entity, CancellationToken ct)
     {
         var find = await schemaSvc.GetByNameDefault(entity.Name, SchemaType.Entity, ct);
-        var schema = new Schema
-        (
-            Id: find?.Id ?? 0,
+        var schema = ToSchema(entity, find?.Id ?? 0);
+        return await SaveTableDefine(schema, ct);
+    }
+
+    private Schema ToSchema(Entity entity, int id = 0)
+        => new (
+            Id: id,
             Name: entity.Name,
             Type: SchemaType.Entity,
             Settings: new Settings
@@ -345,6 +363,4 @@ public sealed class EntitySchemaService(
             ),
             CreatedBy: ""
         );
-        return await SaveTableDefine(schema, ct);
-    }
 }

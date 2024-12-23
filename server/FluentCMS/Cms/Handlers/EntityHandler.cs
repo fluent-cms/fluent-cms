@@ -23,7 +23,7 @@ public static class EntityHandler
             string name,
             string id,
             CancellationToken ct
-        ) => await entityService.One(name, id, ct));
+        ) => await entityService.Single(name, id, ct));
 
         app.MapPost("/{name}/insert", async (
             IEntityService entityService,

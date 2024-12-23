@@ -1,7 +1,5 @@
 using System.Collections.Immutable;
-using System.Text.Json;
 using FluentCMS.Cms.Models;
-using FluentCMS.Builders;
 using FluentCMS.Types;
 using FluentCMS.Utils.Cache;
 using FluentCMS.Graph;
@@ -18,37 +16,43 @@ public sealed class QuerySchemaService(
     ISchemaService schemaSvc,
     IEntitySchemaService entitySchemaSvc,
     KeyValueCache<LoadedQuery> queryCache,
-    CmsBuilder cms
+    CmsOptions cmsOptions
 ) : IQuerySchemaService
 {
-    public async Task<LoadedQuery> ByGraphQlRequest(GraphQlRequestDto dto)
+    public async Task<LoadedQuery> ByGraphQlRequest(Query query, GraphQLField[] fields)
     {
-        if (string.IsNullOrWhiteSpace(dto.Query.Name))
+        if (string.IsNullOrWhiteSpace(query.Name))
         {
-            return await ToLoadedQuery(dto.Query,dto.Fields);
+            return await ToLoadedQuery(query,fields);
         }
 
-        var loadedQuery = await queryCache.GetOrSet(dto.Query.Name, SaveToDbAndCache);
-        if (loadedQuery.Source != dto.Query.Source)
+        var loadedQuery = await queryCache.GetOrSet(query.Name, SaveToDbAndCache);
+        if (loadedQuery.Source != query.Source)
         {
-            await queryCache.Remove(dto.Query.Name);
-            loadedQuery = await queryCache.GetOrSet(dto.Query.Name, SaveToDbAndCache);
+            await queryCache.Remove(query.Name);
+            loadedQuery = await queryCache.GetOrSet(query.Name, SaveToDbAndCache);
         }
         
         return loadedQuery;
 
         async ValueTask<LoadedQuery> SaveToDbAndCache(CancellationToken ct)
         {
-            var query = dto.Query with
-            {
-                IdeUrl =
-                $"{cms.Options.GraphQlPath}?query={Uri.EscapeDataString(dto.Query.Source)}&operationName={dto.Query.Name}"
-            };
-            await VerifyQuery(query, ct);
-            var schema = new Schema(query.Name, SchemaType.Query, new Settings(Query: query));
-            await schemaSvc.AddOrUpdateByNameWithAction(schema, default);
-            return await ToLoadedQuery(query, dto.Fields, ct);
+            await SaveQuery(query,ct);
+            return await ToLoadedQuery(query, fields, ct);
         }
+    }
+
+    public async Task SaveQuery(Query query, CancellationToken ct = default)
+    {
+        query = query with
+        {
+            IdeUrl =
+            $"{cmsOptions.GraphQlPath}?query={Uri.EscapeDataString(query.Source)}&operationName={query.Name}"
+        };
+        await VerifyQuery(query, ct);
+        var schema = new Schema(query.Name, SchemaType.Query, new Settings(Query: query));
+        await schemaSvc.AddOrUpdateByNameWithAction(schema, ct);
+
     }
 
     public async Task<LoadedQuery> ByNameAndCache(string name, CancellationToken ct = default)
@@ -68,7 +72,7 @@ public sealed class QuerySchemaService(
 
     public string GraphQlClientUrl()
     {
-        return cms.Options.GraphQlPath;
+        return cmsOptions.GraphQlPath;
     }
     
     public async Task Delete(Schema schema, CancellationToken ct)
@@ -154,7 +158,7 @@ public sealed class QuerySchemaService(
             attributes.Add(graphAttr);
         }
 
-        if (attributes.FindOneAttr(entity.PrimaryKey) == default)
+        if (attributes.FindOneAttr(entity.PrimaryKey) is null)
         {
             return Result.Fail($"Primary Key [{entity.PrimaryKey}] not found in [{prefix}]");
         }

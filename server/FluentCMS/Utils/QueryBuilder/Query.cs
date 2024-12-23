@@ -12,7 +12,7 @@ public sealed record Query(
     ImmutableArray<Sort> Sorts,
     ImmutableArray<string> ReqVariables,
     string IdeUrl = "",
-    Pagination? Pagination= default
+    Pagination? Pagination= null
 );
 
 
@@ -56,12 +56,9 @@ public static class QueryHelper{
 
     public static Result VerifyVariable(this LoadedQuery query, StrArgs args)
     {
-        foreach (var key in query.ReqVariables)
+        foreach (var key in query.ReqVariables.Where(key => !args.ContainsKey(key)))
         {
-            if (!args.ContainsKey(key))
-            {
-                return Result.Fail($"Variable {key} doesn't exist");
-            }
+            return Result.Fail($"Variable {key} doesn't exist");
         }
 
         return Result.Ok();

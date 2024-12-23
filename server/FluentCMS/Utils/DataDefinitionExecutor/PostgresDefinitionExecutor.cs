@@ -54,7 +54,7 @@ public class PostgresDefinitionExecutor(NpgsqlDataSource dataSource, ILogger<Pos
         await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(cancellationToken));
     }
     
-    public async Task<ColumnDefinition[]> GetColumnDefinitions(string tableName, CancellationToken cancellationToken)
+    public async Task<ColumnDefinition[]> GetColumnDefinitions(string tableName, CancellationToken ct)
     {
         var sql = @"SELECT column_name, data_type, character_maximum_length, is_nullable, column_default
                 FROM information_schema.columns
@@ -64,7 +64,7 @@ public class PostgresDefinitionExecutor(NpgsqlDataSource dataSource, ILogger<Pos
         {
             await using var reader = command.ExecuteReader();
             var columnDefinitions = new List<ColumnDefinition>();
-            while (await reader.ReadAsync(cancellationToken))
+            while (await reader.ReadAsync(ct))
             {
                 columnDefinitions.Add(new ColumnDefinition(reader.GetString(0),reader.GetString(1)));
             }

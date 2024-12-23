@@ -42,7 +42,7 @@ public class QueryApiTest
         Assert.Equal(limit, items.Length);
         
         if (!SpanHelper.HasNext(items.Last().ToDictionary())) return;
-        items  = (await _query.List(query:_tag,last: SpanHelper.LastCursor(items.Last().ToDictionary()),limit:limit)).Ok();
+        items  = (await _query.List(query:_tag,last: SpanHelper.Cursor(items.Last()),limit:limit)).Ok();
         Assert.Single(items);
     }
     
@@ -57,7 +57,7 @@ public class QueryApiTest
     }
 
     [Fact]
-    public async Task One()
+    public async Task Single()
     {
         (await _account.EnsureLogin()).Ok();
         await AddTags(1);
@@ -86,7 +86,7 @@ public class QueryApiTest
             && arr.Last() is Dictionary<string,object> lastTag)
         {
             
-            var cursor = SpanHelper.LastCursor(lastTag);
+            var cursor = SpanHelper.Cursor(lastTag);
             var tags = (await _query.Part(query: _post,attr:_tag, last: cursor,limit:10)).Ok();
             Assert.Equal(2,tags.Length);
         }

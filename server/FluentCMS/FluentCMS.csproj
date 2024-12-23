@@ -14,6 +14,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Aspire.NATS.Net" Version="9.0.0" />
         <PackageReference Include="Confluent.Kafka" Version="2.6.1" />
         <PackageReference Include="DynamicExpresso.Core" Version="2.17.2" />
         <PackageReference Include="FluentMigrator.Runner.Postgres" Version="6.2.0" />
@@ -37,7 +38,7 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
         <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" Version="9.0.0-preview.7.24406.2" />
-        <PackageReference Include="MongoDB.Driver" Version="3.1.0" />
+        <PackageReference Include="MongoDB.Driver" Version="2.30.0" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.2" />
         <PackageReference Include="SkiaSharp" Version="3.116.1" />
         <PackageReference Include="SqlKata" Version="2.4.0" />
@@ -54,7 +55,7 @@
         <PackageReadmeFile>readme.md</PackageReadmeFile>
         <TargetFramework>net9.0</TargetFramework>
         <PackageId>FluentCMS</PackageId>
-        <Version>0.3.1</Version>
+        <Version>0.3.2</Version>
         <Authors>Jason C</Authors>
         <Company>fluent-cms</Company>
         <Description>A headless CMS with GraphQL API and drag-and-drop page designer.</Description>

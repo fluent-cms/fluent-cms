@@ -5,7 +5,7 @@ namespace FluentCMS.Cms.Handlers;
 
 public static class PageHandler
 {
-    public static RouteHandlerBuilder MapHomePage(this WebApplication app)
+    public static RouteHandlerBuilder MapHomePage(this IEndpointRouteBuilder app)
     {
         return app.MapGet("/", async (
             IPageService pageService,

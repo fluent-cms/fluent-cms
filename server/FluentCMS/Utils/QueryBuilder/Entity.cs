@@ -18,7 +18,7 @@ public record Entity(
     ImmutableArray<Attribute> Attributes,
     string Name = "",
     string TableName = "",
-    string PrimaryKey ="",
+    string PrimaryKey = DefaultFields.Id,
     string Title ="",
     string TitleAttribute ="",
     int DefaultPageSize = EntityConstants.DefaultPageSize
@@ -113,6 +113,9 @@ public static class EntityHelper
             .Select(attrs.Select(x=>x.AddTableModifier()))
             .WhereIn(e.PrimaryKey, ids.GetValues());
     }
+
+    public static SqlKata.Query BatchInsert(this LoadedEntity e, IEnumerable<string> cols, IEnumerable<IEnumerable<object>> items)
+        => new SqlKata.Query(e.TableName).AsInsert(cols, items);
 
     public static SqlKata.Query Insert(this LoadedEntity e, Record item)
     {

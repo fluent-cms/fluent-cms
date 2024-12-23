@@ -47,7 +47,7 @@ public sealed class SchemaService(
         var schema = await ById(id, token);
         if (schema is not null)
         {
-            await hook.SchemaPostGetOne.Trigger(provider, new SchemaPostGetOneArgs(schema));
+            await hook.SchemaPostGetSingle.Trigger(provider, new SchemaPostGetSingleArgs(schema));
         }
 
         return schema;
@@ -83,7 +83,7 @@ public sealed class SchemaService(
 
     public async Task<Schema> SaveWithAction(Schema dto, CancellationToken token = default)
     {
-        Result.Ok();
+        (await NameNotTakenByOther(dto, token)).Ok();
         var res = await hook.SchemaPreSave.Trigger(provider, new SchemaPreSaveArgs(dto));
         return await SaveSchema(res.RefSchema, token);
     }

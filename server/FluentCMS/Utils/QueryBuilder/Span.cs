@@ -7,7 +7,7 @@ using FluentResults;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
-public sealed record Span(string? First = default, string? Last = default);
+public sealed record Span(string? First = null, string? Last = null);
 
 public sealed record ValidSpan(Span Span, ImmutableDictionary<string,object>? EdgeItem = default);
 
@@ -21,38 +21,51 @@ public static class SpanConstants
 
 public static class SpanHelper
 {
-    public static bool HasNext(Record item) 
+    public static void Clean(Record item)
+    {
+        item.Remove(SpanConstants.HasNextPage);
+        item.Remove(SpanConstants.HasPreviousPage);
+        item.Remove(SpanConstants.Cursor);
+    }
+
+    public static bool HasNext(Record item)
         => item.TryGetValue(SpanConstants.HasNextPage, out var v) && v is true;
-    public static bool HasNext(IEnumerable<Record> items) 
+
+    public static bool HasNext(IEnumerable<Record> items)
         => items.LastOrDefault() is { } last && HasNext(last);
 
-    public static string LastCursor(Record item) =>
+    private static bool HasPrevious(Record item)
+        => item.TryGetValue(SpanConstants.HasPreviousPage, out var v) && v is true;
+
+    public static bool HasPrevious(IEnumerable<Record> items)
+        => items.FirstOrDefault() is { } first && HasPrevious(first);
+
+    public static string Cursor(JsonElement item) => item.GetProperty(SpanConstants.Cursor).GetString() ?? "";
+
+    public static string Cursor(Record item) =>
         item.TryGetValue(SpanConstants.Cursor, out var v) && v is string s ? s : null ?? "";
 
-    public static string LastCursor(IEnumerable<Record> items)
-        => LastCursor(items.Last());
+    public static string LastCursor(IEnumerable<Record> items) => 
+        items.LastOrDefault() is { } item ? Cursor(item) : "";
 
-    public static string FirstCursor(IEnumerable<Record> items)
-        => items.First().TryGetValue(SpanConstants.Cursor, out var v) && v is string s? s: null ?? "";
+    public static string FirstCursor(IEnumerable<Record> items) =>
+        items.FirstOrDefault() is { } item ? Cursor(item) : "";
 
-    public static bool HasPrevious(Record item)
-        => item.TryGetValue(SpanConstants.HasPreviousPage, out var v) && v is true;
-    
-    public static bool HasPrevious(IEnumerable<Record> items)
-        => items.FirstOrDefault() is {} first && HasPrevious(first);
 
     public static ValidValue SourceId(this ValidSpan c) => c.EdgeItem![SpanConstants.SourceId].ToValidValue();
     public static ValidValue Edge(this ValidSpan c, string fld) => c.EdgeItem![fld].ToValidValue();
-    
+
     public static bool IsEmpty(this Span c) => string.IsNullOrWhiteSpace(c.First) && string.IsNullOrWhiteSpace(c.Last);
-    
-    public static bool IsForward(this Span c) => !string.IsNullOrWhiteSpace(c.Last) || string.IsNullOrWhiteSpace(c.First);
-    
-    public static string GetCompareOperator(this Span c,string order)
-    {
-        return  c.IsForward() ? order == SortOrder.Asc ? ">" : "<":
-            order == SortOrder.Asc ? "<" : ">";
-    }
+
+    public static bool IsForward(this Span c) =>
+        !string.IsNullOrWhiteSpace(c.Last) || string.IsNullOrWhiteSpace(c.First);
+
+    public static string GetCompareOperator(this Span c, string order)
+        => c.IsForward()
+            ? order == SortOrder.Asc ? ">" : "<"
+            : order == SortOrder.Asc
+                ? "<"
+                : ">";
 
     public static Record[] ToPage(this Span c, Record[] items, int takeCount)
     {
@@ -69,9 +82,9 @@ public static class SpanHelper
             items = [..items.Reverse()];
         }
 
-        var (pre, next) = (hasMore, c.First??"", c.Last??"") switch
+        var (pre, next) = (hasMore, c.First ?? "", c.Last ?? "") switch
         {
-            (true, "", "") => (false, true), // home page, should not has previous
+            (true, "", "") => (false, true), // home page, should not have previous
             (false, "", "") => (false, false), // home page
             (true, _, _) => (true, true), // no matter click next or previous, show both
             (false, _, "") => (false, true), // click preview, should have next
@@ -82,16 +95,13 @@ public static class SpanHelper
         items.Last()[SpanConstants.HasNextPage] = next;
         return items;
     }
-    public static void SetSpan(bool needAddCursor, ImmutableArray<GraphAttribute> attrs, Record[] items,
+
+    public static void SetSpan(ImmutableArray<GraphAttribute> attrs, Record[] items,
         IEnumerable<ValidSort> sorts, object? sourceId)
     {
         var arr = sorts.ToArray();
-        if (needAddCursor)
-        {
-            if (items.Length == 0) return;
-            SpanHelper.SetCursor(sourceId, items.First(), arr);
-            if (items.Length > 1) SetCursor(sourceId, items.Last(), arr);
-        }
+        if (HasPrevious(items)) SetCursor(sourceId, items.First(), arr);
+        if (HasNext(items)) SetCursor(sourceId, items.Last(), arr);
 
         foreach (var item in items)
         {
@@ -99,7 +109,7 @@ public static class SpanHelper
             {
                 if (item.TryGetValue(attribute.Field, out var value) && value is Record record)
                 {
-                    SetSpan(false, attribute.Selection, [record], [], null);
+                    SetSpan(attribute.Selection, [record], [], null);
                 }
             }
 
@@ -108,7 +118,7 @@ public static class SpanHelper
                 if (!item.TryGetValue(attribute.Field, out var value) || value is not Record[] records ||
                     records.Length <= 0) continue;
                 var nextSourceId = records.First()[attribute.Junction!.SourceAttribute.Field];
-                SetSpan(true, attribute.Selection, records, attribute.Sorts, nextSourceId);
+                SetSpan(attribute.Selection, records, attribute.Sorts, nextSourceId);
             }
         }
     }
@@ -125,11 +135,12 @@ public static class SpanHelper
         {
             dict[SpanConstants.SourceId] = sourceId;
         }
+
         var cursor = JsonSerializer.Serialize(dict);
         item[SpanConstants.Cursor] = Base64UrlEncoder.Encode(cursor);
     }
-    
-    public static Result<ValidSpan> ToValid(this Span c, IEnumerable<Attribute> attrs,IAttributeValueResolver resolver)
+
+    public static Result<ValidSpan> ToValid(this Span c, IEnumerable<Attribute> attrs, IAttributeValueResolver resolver)
     {
         if (c.IsEmpty()) return new ValidSpan(c);
 
@@ -138,15 +149,15 @@ public static class SpanHelper
         {
             var recordStr = c.IsForward() ? c.Last : c.First;
             recordStr = Base64UrlEncoder.Decode(recordStr);
-            var item = JsonSerializer.Deserialize<Dictionary<string,JsonElement>>(recordStr);
+            var item = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(recordStr);
             var dict = new Dictionary<string, object>();
             foreach (var (key, value) in item!)
             {
                 var val = value.ToPrimitive();
-                if (val is string s )
+                if (val is string s)
                 {
                     var field = arr.FindOneAttr(key);
-                    if (field is not null )
+                    if (field is not null)
                     {
                         if (!resolver.ResolveVal(field, s, out var result))
                         {
@@ -156,10 +167,11 @@ public static class SpanHelper
                         val = result.Value;
                     }
                 }
+
                 dict[key] = val;
             }
 
-            return new ValidSpan(c,dict.ToImmutableDictionary());
+            return new ValidSpan(c, dict.ToImmutableDictionary());
         }
         catch (Exception e)
         {

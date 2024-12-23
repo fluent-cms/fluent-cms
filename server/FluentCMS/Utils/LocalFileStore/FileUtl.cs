@@ -3,12 +3,13 @@ using SkiaSharp;
 
 namespace FluentCMS.Utils.LocalFileStore;
 
-public class LocalFileStore(string pathPrefix, int maxImageWith, int quality)
+public record LocalFileStoreOptions(string PathPrefix, int MaxImageWith, int Quality);
+public class LocalFileStore(LocalFileStoreOptions options)
 {
     public async Task<Result<string[]>> Save(IEnumerable<IFormFile> files)
     {
         var dir = GetDirectoryName();
-        Directory.CreateDirectory(Path.Combine(pathPrefix, dir));
+        Directory.CreateDirectory(Path.Combine(options.PathPrefix, dir));
         List<string> ret = new();
 
         foreach (var file in files)
@@ -19,13 +20,13 @@ public class LocalFileStore(string pathPrefix, int maxImageWith, int quality)
             }
 
             var fileName = Path.Combine(dir, GetFileName(file.FileName));
-            await using var saveStream = File.Create(Path.Combine(pathPrefix, fileName));
+            await using var saveStream = File.Create(Path.Combine(options.PathPrefix, fileName));
 
             if (IsImage(file))
             {
                 await using var inStream = file.OpenReadStream();
                 using var originalBitmap = SKBitmap.Decode(inStream);
-                if (originalBitmap.Width > maxImageWith)
+                if (originalBitmap.Width > options.MaxImageWith)
                 {
                     CompressImage(originalBitmap, saveStream );
                 }
@@ -46,18 +47,18 @@ public class LocalFileStore(string pathPrefix, int maxImageWith, int quality)
 
     private bool IsImage(IFormFile file)
     {
-        string[] validExtensions = { ".jpg", ".jpeg", ".png", ".bmp", ".gif" };
+        string[] validExtensions = [".jpg", ".jpeg", ".png", ".bmp", ".gif"];
         var ext = Path.GetExtension(file.FileName).ToLower();
         return validExtensions.Contains(ext);
     }
 
     private void CompressImage(SKBitmap originalBitmap, Stream outStream)
     {
-        var scaleFactor = (float)maxImageWith / originalBitmap.Width;
+        var scaleFactor = (float)options.MaxImageWith / originalBitmap.Width;
         var newHeight = (int)(originalBitmap.Height * scaleFactor);
 
-        var resizedImage = originalBitmap.Resize(new SKImageInfo(maxImageWith, newHeight), SKSamplingOptions.Default);
-        resizedImage?.Encode(outStream, SKEncodedImageFormat.Jpeg, quality);
+        var resizedImage = originalBitmap.Resize(new SKImageInfo(options.MaxImageWith, newHeight), SKSamplingOptions.Default);
+        resizedImage?.Encode(outStream, SKEncodedImageFormat.Jpeg, options.Quality);
     }
 
     private string GetFileName(string fileName)

@@ -370,7 +370,7 @@ FluentCMS generates two API endpoints for each saved query:
    [https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery)
 
 2. **Single Record:**  
-   [https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/one/](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/one)
+   [https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/single/](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/single)
 
 ---
 

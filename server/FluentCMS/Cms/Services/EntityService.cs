@@ -26,26 +26,26 @@ public sealed class EntityService(
             throw new ResultException($"not find record by [{id}]");
     }
 
-    public async Task<Record> One(string entityName, string id, CancellationToken token)
+    public async Task<Record> Single(string entityName, string id, CancellationToken ct = default)
     {
-        var ctx = await GetIdCtx(entityName, id, token);
-        var res = await hookRegistry.EntityPreGetOne.Trigger(provider,
-            new EntityPreGetOneArgs(entityName, id, default));
+        var ctx = await GetIdCtx(entityName, id, ct);
+        var res = await hookRegistry.EntityPreGetSingle.Trigger(provider,
+            new EntityPreGetSingleArgs(entityName, id, null));
         if (res.OutRecord is not null)
         {
             return res.OutRecord;
         }
 
-        var query = ctx.Entity.ByIdQuery(ctx.Id, ctx.Entity.Attributes.GetLocalAttrs(InListOrDetail.InDetail), []);
-        var record = await queryExecutor.One(query, token)??
+        var query = ctx.Entity.ByIdQuery(ctx.Id, ctx.Entity.Attributes.GetLocalAttrs(ctx.Entity.PrimaryKey,InListOrDetail.InDetail), []);
+        var record = await queryExecutor.One(query, ct)??
             throw new ResultException($"not find record by [{id}]");
 
         foreach (var attribute in ctx.Entity.Attributes.GetAttrByType(DisplayType.Lookup, InListOrDetail.InDetail))
         {
-            await LoadLookupData(attribute, [record], token);
+            await LoadLookupData(attribute, [record], ct);
         }
 
-        await hookRegistry.EntityPostGetOne.Trigger(provider, new EntityPostGetOneArgs(entityName, id, record));
+        await hookRegistry.EntityPostGetSingle.Trigger(provider, new EntityPostGetSingleArgs(entityName, id, record));
         return record;
     }
 
@@ -61,6 +61,12 @@ public sealed class EntityService(
     public async Task<Record> Insert(string name, JsonElement ele, CancellationToken token)
     {
         return await Insert(await GetRecordCtx(name, ele, token), token);
+    }
+
+    public async Task BatchInsert(string tableName,IEnumerable<string>cols, IEnumerable<IEnumerable<object>> items)
+    {
+        var query = new SqlKata.Query(tableName).AsInsert(cols, items);
+        await queryExecutor.Exec(query);
     }
 
     public async Task<Record> Update(string name, JsonElement ele, CancellationToken token)
@@ -114,7 +120,7 @@ public sealed class EntityService(
         var ctx = await GetJunctionCtx(name, id, attr, token);
         var target = ctx.Junction.TargetEntity;
 
-        var selectAttributes = target.Attributes.GetLocalAttrs(InListOrDetail.InList);
+        var selectAttributes = target.Attributes.GetLocalAttrs(target.PrimaryKey,InListOrDetail.InList);
 
         var dictionary = args.GroupByFirstIdentifier();
         var filter = (await FilterHelper.Parse(target, dictionary, entitySchemaSvc, entitySchemaSvc)).Ok();
@@ -139,7 +145,7 @@ public sealed class EntityService(
         var validPagination = PaginationHelper.ToValid(pagination, entity.DefaultPageSize);
         var res = await hookRegistry.EntityPreGetList.Trigger(provider,
             new EntityPreGetListArgs(entity.Name, entity, filters, [..sorts], validPagination));
-        var attributes = entity.Attributes.GetLocalAttrs(InListOrDetail.InList);
+        var attributes = entity.Attributes.GetLocalAttrs(entity.PrimaryKey,InListOrDetail.InList);
 
         var query = entity.ListQuery([..res.RefFilters], [..res.RefSorts], res.RefPagination, null, attributes);
 
@@ -198,9 +204,8 @@ public sealed class EntityService(
             throw new ResultException("Can not find id ");
         }
 
-        Result.Ok();
-        Result.Ok();
-
+        entity.ValidateLocalAttributes(record).Ok();
+        entity.ValidateTitleAttributes(record).Ok();
 
         var res = await hookRegistry.EntityPreUpdate.Trigger(provider,
             new EntityPreUpdateArgs(entity.Name, id.ToString()!, record));
@@ -215,8 +220,8 @@ public sealed class EntityService(
     private async Task<Record> Insert(RecordContext ctx, CancellationToken token)
     {
         var (entity, record) = ctx;
-        Result.Ok();
-        Result.Ok();
+        entity.ValidateLocalAttributes(record).Ok();
+        entity.ValidateTitleAttributes(record).Ok();
 
         var res = await hookRegistry.EntityPreAdd.Trigger(provider,
             new EntityPreAddArgs(entity.Name, record));

@@ -2,9 +2,7 @@ namespace FluentCMS.Utils.EventStreaming;
 
 public static class Topics
 {
-    public const string EntityCreated = "EntityCreated";
-    public const string EntityUpdated = "EntityUpdated";
-    public const string EntityDeleted = "EntityDeleted";
+    public const string CmsCrud = "CmsCrud";
 }
 public static class Operations
 {

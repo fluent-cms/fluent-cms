@@ -34,7 +34,7 @@ public class QueryApiClient(HttpClient client)
 
     public Task<Result<JsonElement>> Single(
         string query, object id
-    ) => client.GetResult<JsonElement>($"/{query}/one?id={id}".ToQueryApi());
+    ) => client.GetResult<JsonElement>($"/{query}/single?id={id}".ToQueryApi());
 
 
     public Task<Result<JsonElement[]>> Part(
@@ -43,10 +43,10 @@ public class QueryApiClient(HttpClient client)
         $"/{query}/part/{attr}?first={first ?? ""}&last={last ?? ""}&limit={limit}".ToQueryApi());
 
     public Task<Result<JsonElement[]>> ListGraphQl(
-        string entity, string[] fields
+        string entity, string[] fields, string? queryName = null
     ) => SendGraphQuery<JsonElement[]>(
         $$"""
-          query {{entity}}{
+          query {{queryName ?? entity}}{
             {{entity}}List{ {{string.Join(",", fields)}} }
           }
           """);
@@ -83,7 +83,7 @@ public class QueryApiClient(HttpClient client)
           }
           """);
 
-    private async Task<Result<T>> SendGraphQuery<T>(string query)
+    public async Task<Result<T>> SendGraphQuery<T>(string query)
     {
         var response = await _graph.SendQueryAsync<Dictionary<string, T>>(new GraphQLRequest(query));
         if (response.Errors?.Length > 0)

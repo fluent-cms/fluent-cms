@@ -48,10 +48,6 @@ public class EntityApiClient(HttpClient client)
         string entity, object payload
     ) => client.PostResult($"/{entity}/delete".ToEntityApi(), payload);
 
-    public Task<Result<ListResponse>> GetJunctionData(
-        string source, string target, bool exclude, int sourceId
-    ) => client.GetResult<ListResponse>($"/{source}/{sourceId}/{target}?exclude={exclude}".ToEntityApi());
-
     public Task<Result> JunctionAdd(string entity, string attr, int sourceId, int id)
     {
         var payload = new object[] { new { id } };

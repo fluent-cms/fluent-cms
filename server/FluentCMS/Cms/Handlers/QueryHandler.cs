@@ -19,12 +19,12 @@ public static class QueryHandlers
             CancellationToken ct
         ) => await svc.ListWithAction(name, new Span(first, last), new Pagination(offset, limit), ctx.Args(), ct));
 
-        app.MapGet("/{name}/one", async (
+        app.MapGet("/{name}/single", async (
             IQueryService queryService,
             HttpContext httpContext,
             string name,
             CancellationToken token
-        ) => await queryService.OneWithAction(name, httpContext.Args(), token));
+        ) => await queryService.SingleWithAction(name, httpContext.Args(), token));
 
         app.MapGet("/{name}/part/{attr}", async (
             IQueryService svc,

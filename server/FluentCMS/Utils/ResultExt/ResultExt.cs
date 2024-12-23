@@ -5,7 +5,32 @@ namespace FluentCMS.Utils.ResultExt;
 /// <summary>
 /// Represents an exception that is deliberately thrown to notify a client about a specific error.
 /// </summary>
-public class ResultException(string message) : Exception(message);
+public class ResultException(string message) : Exception(message)
+{
+    public static async Task<T> Try<T>(Func<Task<T>> func)
+    {
+        try
+        {
+            return await func();
+        }
+        catch(Exception ex)
+        {
+            throw new ResultException(ex.Message);  
+        }
+    }
+
+    public static async Task Try(Func<Task> func)
+    {
+        try
+        {
+            await func();
+        }
+        catch (Exception ex)
+        {
+            throw new ResultException(ex.Message);
+        }
+    }
+}
 
 public static class ResultExt
 {
@@ -28,6 +53,22 @@ public static class ResultExt
     {
         (var ok, _, err) = res;
         return ok;
+    }
+    
+    
+    public static Result<TTarget[]> ShortcutMap<TSource, TTarget>(this IEnumerable<TSource> items,Func<TSource,Result<TTarget> > mapper)
+    {
+        var ret = new List<TTarget>();
+        foreach (var s in items)
+        {
+            var res = mapper(s);
+            if (res.IsFailed)
+            {
+                return Result.Fail(res.Errors);
+            }
+            ret.Add(res.Value);
+        }
+        return ret.ToArray();
     }
     
     /// <summary>

@@ -93,6 +93,11 @@
               </ul>
             </li>
             
+            <li class="nav-item" data-bs-level="2"><a href="#query-with-document-db" class="nav-link">Query with Document DB</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
             <li class="nav-item" data-bs-level="2"><a href="#integrating-it-into-your-project" class="nav-link">Integrating it into Your Project</a>
               <ul class="nav flex-column">
               </ul>
@@ -719,7 +724,7 @@ Pagination on sub field</p>
 </li>
 <li>
 <p><strong>Single Record:</strong><br />
-<a href="https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/one">https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/one/</a></p>
+<a href="https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/single">https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/single/</a></p>
 </li>
 </ol>
 <hr />
@@ -1117,6 +1122,122 @@ builder.Build().Run();
 </ol>
 <p>By adopting these caching and deployment strategies, Fluent CMS ensures improved performance, scalability, and ease of configuration.</p>
 <hr />
+<h2 id="query-with-document-db">Query with Document DB</h2>
+<p>Optimizing query performance by syncing relational data to a document database, such as MongoDB, significantly improves speed and scalability for high-demand applications.</p>
+<h3 id="limitations-of-aspnet-core-output-caching">Limitations of ASP.NET Core Output Caching</h3>
+<p>ASP.NET Core's output caching reduces database access when repeated queries are performed. However, its effectiveness is limited when dealing with numerous distinct queries:</p>
+<ol>
+<li>The application server consumes excessive memory to cache data. The same list might be cached multiple times in different orders.</li>
+<li>The database server experiences high load when processing numerous distinct queries simultaneously.</li>
+</ol>
+<h3 id="using-document-databases-to-improve-query-performance">Using Document Databases to Improve Query Performance</h3>
+<p>For the query below, FluentCMS joins the <code>post</code>, <code>tag</code>, <code>category</code>, and <code>author</code> tables:</p>
+<pre><code class="language-graphql">query post_sync($id: Int) {
+  postList(idSet: [$id], sort: id) {
+    id, title, body, abstract
+    tag {
+      id, name
+    }
+    category {
+      id, name
+    }
+    author {
+      id, name
+    }
+  }
+}
+</code></pre>
+<p>By saving each post along with its related data as a single document in a document database, such as MongoDB, several improvements are achieved:
+- Reduced database server load since data retrieval from multiple tables is eliminated.
+- Reduced application server processing, as merging data is no longer necessary.</p>
+<h3 id="performance-testing">Performance Testing</h3>
+<p>Using K6 scripts with 1,000 virtual users concurrently accessing the query API, the performance difference between PostgreSQL and MongoDB was tested, showing MongoDB to be significantly faster:</p>
+<pre><code class="language-javascript">export default function () {
+    const id = Math.floor(Math.random() * 1000000) + 1; // Random id between 1 and 1,000,000
+    /* PostgreSQL */
+    // const url = `http://localhost:5091/api/queries/post_sync/?id=${id}`;
+
+    /* MongoDB */
+    const url = `http://localhost:5091/api/queries/post/?id=${id}`;
+
+    const res = http.get(url);
+
+    check(res, {
+        'is status 200': (r) =&gt; r.status === 200,
+        'response time is &lt; 200ms': (r) =&gt; r.timings.duration &lt; 200,
+    });
+}
+/*
+MongoDB:
+     http_req_waiting...............: avg=50.8ms   min=774µs    med=24.01ms max=3.23s    p(90)=125.65ms p(95)=211.32ms
+PostgreSQL:
+     http_req_waiting...............: avg=5.54s   min=11.61ms med=4.08s max=44.67s  p(90)=13.45s  p(95)=16.53s
+*/
+</code></pre>
+<h3 id="synchronizing-query-data-to-document-db">Synchronizing Query Data to Document DB</h3>
+<h4 id="architecture-overview_1">Architecture Overview</h4>
+<p><img alt="Architecture Overview" src="https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/mongo-sync.png" /></p>
+<h4 id="enabling-message-publishing-in-webapp">Enabling Message Publishing in WebApp</h4>
+<p>To enable publishing messages to the Message Broker, use Aspire to add a NATS resource. Detailed documentation is available in <a href="https://learn.microsoft.com/en-us/dotnet/aspire/messaging/nats-integration?tabs=dotnet-cli">Microsoft Docs</a>.</p>
+<p>Add the following line to the Aspire HostApp project:</p>
+<pre><code class="language-csharp">builder.AddNatsClient(AppConstants.Nats);
+</code></pre>
+<p>Add the following lines to the WebApp project:</p>
+<pre><code class="language-csharp">builder.AddNatsClient(AppConstants.Nats);
+var entities = builder.Configuration.GetRequiredSection(&quot;TrackingEntities&quot;).Get&lt;string[]&gt;()!;
+builder.Services.AddNatsMessageProducer(entities);
+</code></pre>
+<p>FluentCMS publishes events for changes made to entities listed in <code>appsettings.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;TrackingEntities&quot;: [
+    &quot;post&quot;
+  ]
+}
+</code></pre>
+<h4 id="enabling-message-consumption-in-worker-app">Enabling Message Consumption in Worker App</h4>
+<p>Add the following to the Worker App:</p>
+<pre><code class="language-csharp">var builder = Host.CreateApplicationBuilder(args);
+
+builder.AddNatsClient(AppConstants.Nats);
+builder.AddMongoDBClient(AppConstants.MongoCms);
+
+var apiLinksArray = builder.Configuration.GetRequiredSection(&quot;ApiLinksArray&quot;).Get&lt;ApiLinks[]&gt;()!;
+builder.Services.AddNatsMongoLink(apiLinksArray);
+</code></pre>
+<p>Define the <code>ApiLinksArray</code> in <code>appsettings.json</code> to specify entity changes and the corresponding query API:</p>
+<pre><code class="language-json">{
+  &quot;ApiLinksArray&quot;: [
+    {
+      &quot;Entity&quot;: &quot;post&quot;,
+      &quot;Api&quot;: &quot;http://localhost:5001/api/queries/post_sync&quot;,
+      &quot;Collection&quot;: &quot;post&quot;,
+      &quot;PrimaryKey&quot;: &quot;id&quot;
+    }
+  ]
+}
+</code></pre>
+<p>When changes occur to the <code>post</code> entity, the Worker Service calls the query API to retrieve aggregated data and saves it as a document.</p>
+<h4 id="migrating-query-data-to-document-db">Migrating Query Data to Document DB</h4>
+<p>After adding a new entry to <code>ApiLinksArray</code>, the Worker App will perform a migration from the start to populate the Document DB.</p>
+<h3 id="replacing-queries-with-document-db">Replacing Queries with Document DB</h3>
+<h4 id="architecture-overview_2">Architecture Overview</h4>
+<p><img alt="Architecture Overview" src="https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/mongo-query.png" />   </p>
+<p>To enable MongoDB queries in your WebApp, use the Aspire MongoDB integration. Details are available in <a href="https://learn.microsoft.com/en-us/dotnet/aspire/database/mongodb-integration?tabs=dotnet-cli">Microsoft Docs</a>.</p>
+<p>Add the following code to your WebApp:</p>
+<pre><code class="language-csharp">builder.AddMongoDBClient(connectionName: AppConstants.MongoCms);
+var queryLinksArray = builder.Configuration.GetRequiredSection(&quot;QueryLinksArray&quot;).Get&lt;QueryLinks[]&gt;()!;
+builder.Services.AddMongoDbQuery(queryLinksArray);
+</code></pre>
+<p>Define <code>QueryLinksArray</code> in <code>appsettings.json</code> to specify MongoDB queries:</p>
+<pre><code class="language-json">{
+  &quot;QueryLinksArray&quot;: [
+    { &quot;Query&quot;: &quot;post&quot;, &quot;Collection&quot;: &quot;post&quot; },
+    { &quot;Query&quot;: &quot;post_test_mongo&quot;, &quot;Collection&quot;: &quot;post&quot; }
+  ]
+}
+</code></pre>
+<p>The WebApp will now query MongoDB directly for the specified collections.</p>
+<hr />
 <h2 id="integrating-it-into-your-project">Integrating it into Your Project</h2>
 <p>Follow these steps to integrate Fluent CMS into your project using a NuGet package.</p>
 <ol>
@@ -1342,5 +1463,5 @@ app.RegisterMessageProducerHook();
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2024-12-17 12:17:42.737481+00:00
+Build Date UTC : 2024-12-23 19:57:07.354881+00:00
 -->
