@@ -1,0 +1,34 @@
+@startuml C4_Elements
+!include ../../../C4-PlantUML/C4_Container.puml
+
+title System Overview
+
+Person(end_user, "End User", "Browse content")
+Person(editor, "Editor", "Manage content")
+
+System_Boundary(webApp,"Web App"){
+    Container(entityService,"Entity Service")
+    Container(queryService,"Query Service")
+    Container(messageProducer,"Message Producer")
+    Container(documentDbDao,"DocumentDB Dao")
+}
+System_Boundary(workApp, "Worker App"){
+    Container(syncWorker,"Sync Worker")
+    Container(migrateWorker,"Migrate Worker")
+}
+
+ContainerDb(documentDb, "Document DB", "Mongo", "")
+Container(messageBroker, "Message Broker", "NATS", "")
+
+'Rel(editor, entityService,"call","")
+'Rel(entityService, messageProducer,"publish message","")
+'Rel(messageProducer, messageBroker, "publish message","")
+'Rel(messageBroker, syncWorker, "call","")
+'Rel(syncWorker, queryService, "call","")
+'Rel(syncWorker, documentDb, "access","")
+
+Rel(end_user, queryService, "call","")
+Rel(queryService, documentDbDao, "call","")
+Rel(documentDbDao, documentDb, "call","")
+
+@enduml
