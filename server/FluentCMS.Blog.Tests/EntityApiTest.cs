@@ -1,5 +1,6 @@
 using FluentCMS.Utils.ApiClient;
 using FluentCMS.Utils.JsonElementExt;
+using FluentCMS.Utils.QueryBuilder;
 using FluentCMS.Utils.ResultExt;
 using IdGen;
 
@@ -128,6 +129,33 @@ public class EntityApiTest
         Assert.Single(res.Items);
         res = (await _entityApiClient.JunctionList(postEntityName, tagEntityName, 1, false)).Ok();
         Assert.Empty(res.Items);
+    }
+
+    [Fact]
+    public async Task LookupApiWorks()
+    {
+        (await _accountApiClient.EnsureLogin()).Ok();
+        var tagEntityName = TagEntityName();
+        (await _schemaApiClient.EnsureSimpleEntity(tagEntityName, Name)).Ok();
+        for (var i = 0; i < EntityConstants.DefaultPageSize - 1; i++)
+        {
+            await _entityApiClient.Insert(tagEntityName,Name,$"tag{i}");
+        }
+
+        var res = (await _entityApiClient.LookupList(tagEntityName,"")).Ok();
+        Assert.False(res.GetProperty("hasMore").GetBoolean());
+
+        for (var i = EntityConstants.DefaultPageSize; i < EntityConstants.DefaultPageSize + 10; i++)
+        {
+            await _entityApiClient.Insert(tagEntityName,Name,$"tag{i}");
+        }
+        
+        res = (await _entityApiClient.LookupList(tagEntityName,"")).Ok();
+        Assert.True(res.GetProperty("hasMore").GetBoolean());
+
+        res = (await _entityApiClient.LookupList(tagEntityName,"tag11")).Ok();
+        Assert.True(res.GetProperty("hasMore").GetBoolean());
+        Assert.Equal(1,res.GetProperty("items").GetArrayLength());
     }
 
 }

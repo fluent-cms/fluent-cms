@@ -64,4 +64,8 @@ public class EntityApiClient(HttpClient client)
         string entity, string attr, int sourceId, bool exclude
     ) => client.GetResult<ListResponse>($"/{entity}/{sourceId}/{attr}?exclude={exclude}".ToEntityApi());
 
+    public Task<Result<JsonElement>> LookupList(
+        string entity,  string query
+        ) =>client.GetResult<JsonElement>($"/lookup/{entity}/?query={Uri.EscapeDataString(query)}".ToEntityApi());
+    
 }
