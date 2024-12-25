@@ -88,7 +88,7 @@ public sealed class QuerySchemaService(
         var entity = (await entitySchemaSvc.GetLoadedEntity(query.EntityName, ct)).Ok();
         var selection = (await SelectionSetToNode("", entity, fields, ct)).Ok();
         var sorts = (await SortHelper.ToValidSorts(query.Sorts,entity, entitySchemaSvc)).Ok();
-        var validFilter = (await query.Filters.ToValid(entity, entitySchemaSvc, entitySchemaSvc)).Ok();
+        var validFilter = (await query.Filters.ToValidFilters(entity, entitySchemaSvc, entitySchemaSvc)).Ok();
         return query.ToLoadedQuery(entity, selection, sorts,validFilter);
     }
 
@@ -100,7 +100,7 @@ public sealed class QuerySchemaService(
         }
 
         var entity = (await entitySchemaSvc.GetLoadedEntity(query.EntityName, ct)).Ok();
-        (await query.Filters.ToValid(entity,entitySchemaSvc,entitySchemaSvc)).Ok();
+        (await query.Filters.ToValidFilters(entity,entitySchemaSvc,entitySchemaSvc)).Ok();
 
         var fields = Converter.GetRootGraphQlFields(query.Source).Ok();
         (await SelectionSetToNode("", entity, fields, ct)).Ok();
@@ -146,7 +146,7 @@ public sealed class QuerySchemaService(
                     return Result.Fail(err);
                 }
 
-                if (!(await filters.ToValid(target, entitySchemaSvc, entitySchemaSvc)).Try(out var validFilters,
+                if (!(await filters.ToValidFilters(target, entitySchemaSvc, entitySchemaSvc)).Try(out var validFilters,
                         out err))
                 {
                     return Result.Fail(err);

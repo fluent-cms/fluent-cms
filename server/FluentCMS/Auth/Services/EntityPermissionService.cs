@@ -65,7 +65,7 @@ public class EntityPermissionService(
         {
             string[] attrs = [Constants.CreatedBy];
             //need to query database to get userId in case client fake data
-            var record = await entityService.OneByAttributes(entityName, recordId, attrs);
+            var record = await entityService.SingleByIdBasic(entityName, recordId, attrs);
             if (record.TryGetValue(Constants.CreatedBy, out var createdBy) && (string)createdBy == userId)
             {
                 return;
@@ -103,7 +103,7 @@ public class EntityPermissionService(
         {
             string[] attrs = [Constants.CreatedBy];
             //need to query database to get userId in case client fake data
-            var record = await entityService.OneByAttributes(entityName, recordId, attrs);
+            var record = await entityService.SingleByIdBasic(entityName, recordId, attrs);
             if (record.TryGetValue(Constants.CreatedBy, out var createdBy) && (string)createdBy == userId)
             {
                 return;

@@ -15,7 +15,6 @@ export function SelectDataTable({baseRouter,primaryKey, titleAttribute, columns,
     entityName:string
     baseRouter: string
 }) {
-    console.log({entityName});
     const {items, totalRecords} = data ?? {}
     return columns && data && <DataTable
         sortMode="multiple"

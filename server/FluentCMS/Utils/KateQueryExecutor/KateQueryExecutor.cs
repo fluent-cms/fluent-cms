@@ -17,7 +17,7 @@ public sealed class KateQueryExecutor(IKateProvider provider, KateQueryExecutorO
          await db.FirstOrDefaultAsync(query: query, timeout: option.Timeout, cancellationToken: cancellationToken));
    }
 
-   public async Task<Record[]> Many(Query query,  CancellationToken cancellationToken )
+   public async Task<Record[]> Many(Query query,  CancellationToken cancellationToken =default)
    {
       return await provider.Execute(async db =>
       {

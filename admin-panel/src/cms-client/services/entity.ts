@@ -1,11 +1,20 @@
-import useSWR, {useSWRConfig} from "swr";
+import useSWR from "swr";
 import {fullAPIURI} from "./configs";
 import axios from "axios";
 import {catchResponse, decodeError, fetcher, swrConfig} from "../../services/util";
 import {encodeLazyState} from "./lazyState";
 
+export function getLookupData(schemaName: string, query: string){
+    return catchResponse(()=>axios.get(fullAPIURI(`/entities/lookup/${schemaName}?query=${encodeURIComponent(query)}`)))
+}
+
+export function useLookupData(schemaName: string, query: string) {
+    let res = useSWR(fullAPIURI(`/entities/lookup/${schemaName}?query=${encodeURIComponent(query)}`), fetcher, swrConfig);
+    return {...res, error: decodeError(res.error)}
+}
 
 export function useListData(schemaName: string | undefined, lazyState: any) {
+    console.log({lazyState});
     let res = useSWR(fullAPIURI(`/entities/${schemaName}?${encodeLazyState(lazyState)}`), fetcher,swrConfig);
     return {...res, error:decodeError(res.error)}
 }

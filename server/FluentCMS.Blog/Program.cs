@@ -4,8 +4,9 @@ using FluentCMS.Types;
 using FluentCMS.WebAppBuilders;
 using FluentCMS.Utils.ResultExt;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+const string cors = "cors";
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +30,7 @@ builder.Services.AddCmsAuth<IdentityUser,IdentityRole,CmsDbContext>();
 AddHybridCache();
 AddOutputCachePolicy();
 builder.AddServiceDefaults();
+if (builder.Environment.IsDevelopment()) AddCorsPolicy();
 
 var app = builder.Build();
 
@@ -40,6 +42,8 @@ await app.UseCmsAsync();
 
 app.MapDefaultEndpoints();
 app.UseOutputCache();
+app.UseCors(cors);
+
 app.Run();
 return;
 
@@ -67,4 +71,19 @@ async Task EnsureDbCreatedAsync()
     using var scope = app.Services.CreateScope();
     var ctx = scope.ServiceProvider.GetRequiredService<CmsDbContext>();
     await ctx.Database.EnsureCreatedAsync();
+}
+
+void AddCorsPolicy()
+{
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy(
+            cors,
+            policy =>
+            {
+                policy.WithOrigins("http://127.0.0.1:5173")
+                    .AllowAnyHeader()
+                    .AllowCredentials();
+            });
+    });
 }

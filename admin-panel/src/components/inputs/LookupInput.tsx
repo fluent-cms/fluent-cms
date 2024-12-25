@@ -1,30 +1,57 @@
 import {Dropdown} from "primereact/dropdown";
 import {InputPanel} from "./InputPanel";
-import React from "react";
+import React, {useState} from "react";
+import {AutoComplete} from "primereact/autocomplete";
 
 export function LookupInput(props: {
     data: any,
-    column: { field: string, header: string,lookup:any;},
+    column: { field: string, header: string, lookup: any; },
     control: any
     className: any
     register: any,
     items: any[]
-    id:any
+    id: any
+    search:any 
+    hasMore:boolean,
 }) {
-    const {items,column} = props;
-    return  <InputPanel  {...props} component={ (field:any) => {
-        return <Dropdown
-            id={field.name}
-            value={field.value ? field.value[column.lookup.primaryKey] : null}
-            options={items}
-            focusInputRef={field.ref}
-            onChange={(e) => {
-                field.onChange({[column.lookup.primaryKey]:e.value})
-            }}
-            className={'w-full'}
-            optionValue={column.lookup.primaryKey}
-            optionLabel={column.lookup.titleAttribute}
-        />
+    const {items, column, search, hasMore} = props;
+    const [filteredItems, setFilteredItems] = useState(items);
+    const searchItems = async (event: any) => {
+        var items = await search(event.query)
+        console.log("searchResult", event.query, items);
+        setFilteredItems(items);
+    }
+
+    return <InputPanel  {...props} component={(field: any) => {
+        console.log("field.value", field.value);
+        return hasMore ?
+            <AutoComplete
+                className={'w-full'}
+                dropdown
+                id={field.name}
+                field={column.lookup.titleAttribute}
+                value={field.value}
+                suggestions={filteredItems}
+                completeMethod={searchItems}
+                onChange={(e) => {
+                    var selectedItem = typeof (e.value) === "object" ? e.value : {[column.lookup.titleAttribute]: e.value};
+                    field.onChange(selectedItem);
+                }}
+            />
+            :
+            <Dropdown
+                id={field.name}
+                value={field.value ? field.value[column.lookup.primaryKey] : null}
+                options={items}
+                focusInputRef={field.ref}
+                onChange={(e) => {
+                    field.onChange({[column.lookup.primaryKey]: e.value})
+                }}
+                className={'w-full'}
+                optionValue={column.lookup.primaryKey}
+                optionLabel={column.lookup.titleAttribute}
+                filter
+            />
     }
     }/>
 }

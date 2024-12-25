@@ -15,36 +15,42 @@ public static class EntityHandler
             string name,
             [FromQuery] string? offset,
             [FromQuery] string? limit,
+            [FromQuery] ListResponseMode? mode,
             CancellationToken ct
-        ) => await entityService.List(name, new Pagination(offset, limit), context.Args(), ct));
+        ) => await entityService.ListWithAction(
+            name,
+            mode?? ListResponseMode.all,
+            new Pagination(offset, limit),
+            context.Args(),
+            ct));
 
         app.MapGet("/{name}/{id}", async (
             IEntityService entityService,
             string name,
             string id,
             CancellationToken ct
-        ) => await entityService.Single(name, id, ct));
+        ) => await entityService.SingleWithAction(name, id, ct));
 
         app.MapPost("/{name}/insert", async (
             IEntityService entityService,
             string name,
             [FromBody] JsonElement ele,
             CancellationToken ct
-        ) => await entityService.Insert(name, ele, ct));
+        ) => await entityService.InsertWithAction(name, ele, ct));
 
         app.MapPost("/{name}/update", async (
             IEntityService entityService,
             string name,
             [FromBody] JsonElement ele,
             CancellationToken ct
-        ) => await entityService.Update(name, ele, ct));
+        ) => await entityService.UpdateWithAction(name, ele, ct));
 
         app.MapPost("/{name}/delete", async (
             IEntityService entityService,
             string name,
             [FromBody] JsonElement ele,
             CancellationToken ct
-        ) => await entityService.Delete(name, ele, ct));
+        ) => await entityService.DeleteWithAction(name, ele, ct));
 
         app.MapPost("/{entityName}/{id}/{attributeName}/delete", async (
             IEntityService entityService,
@@ -79,5 +85,12 @@ public static class EntityHandler
             context.Args(),
             new Pagination(offset, limit),
             ct));
+
+        app.MapGet("lookup/{name}", async (
+            IEntityService entityService,
+            string name,
+            [FromQuery] string? query,
+            CancellationToken ct
+        ) => await entityService.LookupList(name, query ?? "", ct));
     }
 }

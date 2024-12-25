@@ -117,7 +117,7 @@ public static class FilterHelper
         return ret.ToArray();
     }
 
-    public static async Task<Result<ValidFilter[]>> ToValid(
+    public static async Task<Result<ValidFilter[]>> ToValidFilters(
         this IEnumerable<Filter> filters,
         LoadedEntity entity,
         IEntityVectorResolver vectorResolver,
@@ -151,7 +151,8 @@ public static class FilterHelper
     public static async Task<Result<ValidFilter[]>> Parse(
         LoadedEntity entity,
         Dictionary<string, StrArgs> dictionary,
-        IEntityVectorResolver vectorResolver, IAttributeValueResolver valueResolver
+        IEntityVectorResolver vectorResolver, 
+        IAttributeValueResolver valueResolver
     )
     {
         var ret = new List<ValidFilter>();

@@ -24,10 +24,12 @@ builder.AddProject<Projects.FluentCMS_App>("web")
     .WithReference(mongoCmsDb).WaitFor(mongoCmsDb)
     .WithReference(postgresCmsDb).WaitFor(postgresCmsDb);
 
+/*
 builder.AddProject<Projects.FluentCMS_App>("worker")
     .WithEnvironment(AppConstants.EnableHostApp, "true")
     .WithArgs(args)
     .WithReference(nats).WaitFor(nats)
     .WithReference(mongoCmsDb).WaitFor(mongoCmsDb);
+    */
 
 builder.Build().Run();
