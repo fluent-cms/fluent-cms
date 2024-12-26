@@ -1,4 +1,4 @@
-using FluentCMS.Utils.DocumentDb;
+using FluentCMS.Utils.DocumentDbDao;
 using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.QueryBuilder;
 using FluentCMS.Utils.ResultExt;

@@ -5,7 +5,7 @@ using FluentResults;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
-namespace FluentCMS.Utils.DocumentDb;
+namespace FluentCMS.Utils.DocumentDbDao;
 
 internal static class MongoDbExt
 {

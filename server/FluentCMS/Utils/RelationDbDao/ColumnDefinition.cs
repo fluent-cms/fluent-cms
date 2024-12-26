@@ -1,4 +1,4 @@
-namespace FluentCMS.Utils.DataDefinitionExecutor;
+namespace FluentCMS.Utils.RelationDbDao;
 
 public static class DataType
 {

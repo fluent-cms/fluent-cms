@@ -1,9 +1,15 @@
+using System.Data;
 using Npgsql;
+using SqlKata.Compilers;
+using SqlKata.Execution;
 
-namespace FluentCMS.Utils.DataDefinitionExecutor;
+namespace FluentCMS.Utils.RelationDbDao;
 
-public class PostgresDefinitionExecutor(NpgsqlDataSource dataSource, ILogger<PostgresDefinitionExecutor> logger):IDefinitionExecutor
+public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connection):IDao
 {
+    private readonly Compiler _compiler = new PostgresCompiler();
+    public async ValueTask<IDbTransaction> BeginTransaction() => await connection.BeginTransactionAsync();
+
     public bool TryParseDataType(string s, string type, out DatabaseTypeValue? result)
     {
         result = type switch
@@ -16,9 +22,16 @@ public class PostgresDefinitionExecutor(NpgsqlDataSource dataSource, ILogger<Pos
         return result != null;
     }
 
-    public async Task CreateTable(string tableName, ColumnDefinition[] columnDefinitions, CancellationToken cancellationToken)
+    public Task<T> Execute<T>(Func<QueryFactory, Task<T>> queryFunc)
     {
-        var columnDefinitionStrs = columnDefinitions.Select(column => column.ColumnName.ToLower() switch
+        var db = new QueryFactory(connection, _compiler);
+        db.Logger = result => logger.LogInformation(result.ToString());
+        return queryFunc(db);
+    }
+
+    public async Task CreateTable(string table, ColumnDefinition[] cols,CancellationToken ct,IDbTransaction? tx)
+    {
+        var parts = cols.Select(column => column.ColumnName.ToLower() switch
         {
             "id" => "id SERIAL PRIMARY KEY",
             "deleted" => "deleted BOOLEAN DEFAULT FALSE",
@@ -27,7 +40,7 @@ public class PostgresDefinitionExecutor(NpgsqlDataSource dataSource, ILogger<Pos
             _ => $"\"{column.ColumnName}\" {DataTypeToString(column.DataType)}"
         });
         
-        var sql= $"CREATE TABLE {tableName} ({string.Join(", ", columnDefinitionStrs)});";
+        var sql= $"CREATE TABLE {table} ({string.Join(", ", parts)});";
         sql += $"""
                 CREATE OR REPLACE FUNCTION __update_updated_at_column()
                     RETURNS TRIGGER AS $$
@@ -37,30 +50,30 @@ public class PostgresDefinitionExecutor(NpgsqlDataSource dataSource, ILogger<Pos
                 END;
                 $$ LANGUAGE plpgsql;
                 
-                CREATE TRIGGER update_{tableName}_updated_at 
-                                BEFORE UPDATE ON {tableName} 
+                CREATE TRIGGER update_{table}_updated_at 
+                                BEFORE UPDATE ON {table} 
                                 FOR EACH ROW
                 EXECUTE FUNCTION __update_updated_at_column();
                 """;
-        await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(cancellationToken));
+        await ExecuteQuery(sql, tx, cmd => cmd.ExecuteNonQueryAsync(ct));
     }
-   
-    public async Task AlterTableAddColumns(string tableName, ColumnDefinition[] columnDefinitions, CancellationToken cancellationToken)
+
+    public async Task AddColumns(string table, ColumnDefinition[] cols, CancellationToken ct,IDbTransaction? tx)
     {
-        var parts = columnDefinitions.Select(x =>
-            $"Alter Table {tableName} ADD COLUMN \"{x.ColumnName}\" {DataTypeToString(x.DataType)}"
+        var parts = cols.Select(x =>
+            $"Alter Table {table} ADD COLUMN \"{x.ColumnName}\" {DataTypeToString(x.DataType)}"
         );
         var sql = string.Join(";", parts.ToArray());
-        await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(cancellationToken));
+        await ExecuteQuery(sql, tx, cmd => cmd.ExecuteNonQueryAsync(ct));
     }
     
-    public async Task<ColumnDefinition[]> GetColumnDefinitions(string tableName, CancellationToken ct)
+    public async Task<ColumnDefinition[]> GetColumnDefinitions(string table, CancellationToken ct)
     {
         var sql = @"SELECT column_name, data_type, character_maximum_length, is_nullable, column_default
                 FROM information_schema.columns
                 WHERE table_name = @tableName;";
 
-        return await ExecuteQuery(sql, async command =>
+        return await ExecuteQuery(sql, null,async command =>
         {
             await using var reader = command.ExecuteReader();
             var columnDefinitions = new List<ColumnDefinition>();
@@ -69,9 +82,9 @@ public class PostgresDefinitionExecutor(NpgsqlDataSource dataSource, ILogger<Pos
                 columnDefinitions.Add(new ColumnDefinition(reader.GetString(0),reader.GetString(1)));
             }
             return columnDefinitions.ToArray();
-        }, ("tableName", tableName));
+        }, ("tableName", table));
     }
-    
+
     private string DataTypeToString(string dataType)
     {
         return dataType switch
@@ -85,11 +98,14 @@ public class PostgresDefinitionExecutor(NpgsqlDataSource dataSource, ILogger<Pos
     }
 
     //use callback  instead of return QueryFactory to ensure proper disposing connection
-    private async Task<T> ExecuteQuery<T>(string sql, Func<NpgsqlCommand, Task<T>> executeFunc, params (string, object)[] parameters)
+    private async Task<T> ExecuteQuery<T>(string sql, IDbTransaction? tx, Func<NpgsqlCommand, Task<T>> executeFunc, params (string, object)[] parameters)
     {
         logger.LogInformation(sql);
-        await using var command = dataSource.CreateCommand(sql);
-
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        if (tx is not null)
+            command.Transaction = tx as NpgsqlTransaction ?? throw new Exception("Transaction not supported");
+       
         foreach (var (paramName, paramValue) in parameters)
         {
             command.Parameters.AddWithValue(paramName, paramValue);

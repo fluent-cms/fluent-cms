@@ -19,7 +19,7 @@
     "defaultPageSize": {
       "type": "number",
       "title": "Default Page Size",
-      "default": 20,
+      "default": 50,
       "description": "Default Page Size for pagination"
     },
     "tableName": {

@@ -1,8 +1,7 @@
-using System.Collections.Immutable;
 using FluentCMS.Utils.QueryBuilder;
 using FluentResults;
 
-namespace FluentCMS.Utils.DocumentDb;
+namespace FluentCMS.Utils.DocumentDbDao;
 
 public interface IDocumentDbDao
 {

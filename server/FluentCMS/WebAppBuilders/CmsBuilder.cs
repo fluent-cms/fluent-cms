@@ -1,11 +1,12 @@
 using System.Collections.Immutable;
+using System.Data;
 using System.Reflection;
 using FluentCMS.Auth.Handlers;
 using FluentCMS.Auth.Services;
 using FluentCMS.Cms.Handlers;
 using FluentCMS.Cms.Services;
 using FluentCMS.Utils.Cache;
-using FluentCMS.Utils.DataDefinitionExecutor;
+using FluentCMS.Utils.RelationDbDao;
 using FluentCMS.Graph;
 using FluentCMS.Types;
 using FluentCMS.Utils.HookFactory;
@@ -18,6 +19,9 @@ using FluentResults;
 using GraphQL;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Rewrite;
+using Microsoft.Data.SqlClient;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal;
 using Npgsql;
 using Schema = FluentCMS.Graph.Schema;
 
@@ -153,35 +157,43 @@ public sealed class CmsBuilder(
             };
             
             services.AddSingleton(new KateQueryExecutorOption(cmsOptions.DatabaseQueryTimeout));
-            services.AddSingleton<KateQueryExecutor>();
+            services.AddScoped<KateQueryExecutor>();
         }
 
         IServiceCollection AddSqliteDbServices()
         {
-            services.AddSingleton(new KateProviderOption(connectionString));
-            services.AddSingleton<IKateProvider,SqliteKateProvider>();
-            
-            services.AddSingleton(new DefinitionExecutorOptions(connectionString));
-            services.AddSingleton<IDefinitionExecutor, SqliteDefinitionExecutor>();
+            services.AddScoped(_ =>
+            {
+                var connection = new SqliteConnection(connectionString);
+                connection.Open();
+                return connection;
+            });
+            services.AddScoped<IDao, SqliteDao>();
             return services;
         }
 
         IServiceCollection AddSqlServerDbServices()
         {
-            services.AddSingleton(new KateProviderOption(connectionString));
-            services.AddSingleton<IKateProvider,SqlServerKateProvider>();
-            
-            services.AddSingleton(new DefinitionExecutorOptions(connectionString));
-            services.AddSingleton<IDefinitionExecutor,SqlServerDefinitionExecutor>();
+            services.AddScoped(_ =>
+            {
+                var connection = new SqlConnection(connectionString);
+                connection.Open();
+                return connection;
+            });
+            services.AddScoped<IDao,SqlServerIDao>();
             return services;
         }
 
         IServiceCollection AddPostgresDbServices()
         {
-            var dataSource = new NpgsqlDataSourceBuilder(connectionString).Build();
-            services.AddSingleton(dataSource);
-            services.AddSingleton<IKateProvider,PostgresKateProvider>();
-            services.AddSingleton<IDefinitionExecutor,PostgresDefinitionExecutor>();
+            services.AddScoped(_ =>
+            {
+                var connection = new NpgsqlConnection(connectionString);
+                connection.Open(); 
+                return connection;
+            });
+            
+            services.AddScoped<IDao,PostgresDao>();
             return services;
         }
     }

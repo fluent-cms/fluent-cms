@@ -34,7 +34,27 @@ public class ResultException(string message) : Exception(message)
 
 public static class ResultExt
 {
-    public static Result BindAction<TValue>(this Result<TValue> res, Action<TValue> action)
+    public static Result<T> OnFail<T>(this Result<T> result, string message)
+    {
+        if (result.IsFailed)
+        {
+            result.Errors.Insert(0, new Error(message));
+        }
+
+        return result;
+    }
+
+    public static async Task<Result<T>> OnFail<T>(this Task<Result<T>> res, string message)
+    {
+        var result = await res;
+        if (result.IsFailed)
+        {
+            result = Result.Fail([new Error(message), ..result.Errors]);
+        }
+        return result;
+    }
+
+    public static Result PipeAction<TValue>(this Result<TValue> res, Action<TValue> action)
     {
         return res.Bind(x =>
         {
@@ -80,7 +100,7 @@ public static class ResultExt
     {
         if (result is not null && result.IsFailed)
         {
-            throw new ResultException($"{string.Join("\r\n",result.Errors.Select(e =>e.Message))}");
+            throw new ResultException($"{string.Join(";",result.Errors.Select(e =>e.Message))}");
         }
     }
     
@@ -88,7 +108,7 @@ public static class ResultExt
     {
         return result switch
         {
-            { IsFailed: true } => throw new ResultException($"{string.Join("\r\n",result.Errors.Select(x=>x.Message))}"),
+            { IsFailed: true } => throw new ResultException($"{string.Join(";",result.Errors.Select(x=>x.Message))}"),
             _ => result.Value
         };
     }

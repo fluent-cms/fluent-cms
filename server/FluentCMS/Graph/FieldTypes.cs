@@ -1,5 +1,5 @@
 using System.Globalization;
-using FluentCMS.Utils.DataDefinitionExecutor;
+using FluentCMS.Utils.RelationDbDao;
 using FluentCMS.Utils.QueryBuilder;
 using GraphQL.Types;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
@@ -38,13 +38,13 @@ public static class FieldTypes
                 Resolver = Resolvers.ValueResolver,
                 ResolvedType = attribute.Type switch
                 {
-                    DisplayType.Junction when attribute.GetJunctionTarget(out var target) => dict[target].ListType,
-                    DisplayType.Lookup when attribute.GetLookupTarget(out var target) => dict[target].SingleType,
+                    DisplayType.Junction when attribute.GetJunctionTarget(out var target) && dict.ContainsKey(target) => dict[target].ListType,
+                    DisplayType.Lookup when attribute.GetLookupTarget(out var target) && dict.ContainsKey(target) => dict[target].SingleType,
                     _ => null
                 },
                 Arguments = attribute.Type switch
                 {
-                    DisplayType.Junction when attribute.GetJunctionTarget(out var target) => JunctionArgs(target),
+                    DisplayType.Junction when attribute.GetJunctionTarget(out var target) && dict.ContainsKey(target) => JunctionArgs(target),
                     _ => null
                 }
             };

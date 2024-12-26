@@ -5,7 +5,7 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 
-namespace FluentCMS.Utils.DocumentDb;
+namespace FluentCMS.Utils.DocumentDbDao;
 
 public sealed class MongoDao(ILogger<MongoDao> logger, IMongoDatabase db):IDocumentDbDao 
 {

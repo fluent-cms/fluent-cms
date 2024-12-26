@@ -1,6 +1,6 @@
 using FluentCMS.DataLink.Types;
 using FluentCMS.DataLink.Workers;
-using FluentCMS.Utils.DocumentDb;
+using FluentCMS.Utils.DocumentDbDao;
 using FluentCMS.Utils.EventStreaming;
 
 namespace FluentCMS.HostAppBuilders;

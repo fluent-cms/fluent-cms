@@ -88,7 +88,7 @@ public sealed class EntityService(
 
     public async Task<LookupListResponse> LookupList(string name, string startsVal, CancellationToken ct = default)
     {
-        var (entity, sorts, pagination, attributes) = await GetLookupContext(name, startsVal, ct);
+        var (entity, sorts, pagination, attributes) = await GetLookupContext(name, ct);
         var count = await queryExecutor.Count(entity.CountQuery([]), ct);
         if (count < entity.DefaultPageSize)
         {
@@ -342,7 +342,7 @@ public sealed class EntityService(
 
     private record LookupContext(LoadedEntity Entity, ValidSort[] Sorts, ValidPagination Pagination, LoadedAttribute[] Attributes);
 
-    private async Task<LookupContext> GetLookupContext(string name, string startsVal, CancellationToken ct = default)
+    private async Task<LookupContext> GetLookupContext(string name, CancellationToken ct = default)
     {
         var entity = (await entitySchemaSvc.GetLoadedEntity(name, ct)).Ok();
         var sort = new Sort(entity.TitleAttribute, SortOrder.Asc);

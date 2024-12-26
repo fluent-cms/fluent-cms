@@ -80,10 +80,13 @@ public static Result<(Sort[], Filter[], Pagination)> ParseArguments(IDataProvide
             var res = input.Name() switch
             {
                 FilterConstants.FilterExprKey => FilterHelper.ParseFilterExpr(input)
-                    .BindAction(f => filters = [..filters, ..f]),
-                SortConstant.SortExprKey => SortHelper.ParseSortExpr(input).BindAction(s => sorts = [..sorts, ..s]),
+                    .PipeAction(f => filters = [..filters, ..f]),
+                
+                SortConstant.SortExprKey => SortHelper.ParseSortExpr(input)
+                    .PipeAction(s => sorts = [..sorts, ..s]),
                 _ => Result.Ok()
             };
+            
             if (res.IsFailed)
             {
                 return Result.Fail(res.Errors);
@@ -103,10 +106,10 @@ public static Result<(Sort[], Filter[], Pagination)> ParseArguments(IDataProvide
             var name = input.Name();
             var res = name switch
             {
-                PaginationConstants.OffsetKey => Val(input).BindAction(v => offset = v),
-                PaginationConstants.LimitKey => Val(input).BindAction(v => limit = v),
-                SortConstant.SortKey => SortHelper.ParseSorts(input).BindAction(s => sorts.AddRange(s)),
-                _ => FilterHelper.ParseFilter(input).BindAction(f => filters.Add(f)),
+                PaginationConstants.OffsetKey => Val(input).PipeAction(v => offset = v),
+                PaginationConstants.LimitKey => Val(input).PipeAction(v => limit = v),
+                SortConstant.SortKey => SortHelper.ParseSorts(input).PipeAction(s => sorts.AddRange(s)),
+                _ => FilterHelper.ParseFilter(input).PipeAction(f => filters.Add(f)),
             };
             if (res.IsFailed)
             {

@@ -1,6 +1,6 @@
 using MongoDB.Bson;
 
-namespace FluentCMS.Utils.DocumentDb;
+namespace FluentCMS.Utils.DocumentDbDao;
 
 public static class BsonDocumentExt
 {

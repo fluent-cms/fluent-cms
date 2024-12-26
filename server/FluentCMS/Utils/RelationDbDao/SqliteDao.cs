@@ -1,11 +1,23 @@
 using System.Data;
 using Microsoft.Data.Sqlite;
-using Microsoft.Extensions.Logging;
+using SqlKata.Compilers;
+using SqlKata.Execution;
 
-namespace FluentCMS.Utils.DataDefinitionExecutor;
+namespace FluentCMS.Utils.RelationDbDao;
 
-public sealed class SqliteDefinitionExecutor(DefinitionExecutorOptions options, ILogger<SqliteDefinitionExecutor> logger) : IDefinitionExecutor
+public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> logger) : IDao
 {
+    private readonly Compiler _compiler = new SqliteCompiler();
+
+    public async Task<T> Execute<T>(Func<QueryFactory, Task<T>> queryFunc)
+    {
+        var db = new QueryFactory(connection, _compiler);
+        db.Logger = result => logger.LogInformation(result.ToString());
+        return await queryFunc(db);
+    }
+
+    public async ValueTask<IDbTransaction> BeginTransaction() => await connection.BeginTransactionAsync();
+
     public bool TryParseDataType(string s, string type, out DatabaseTypeValue? result)
     {
         result = type switch
@@ -17,9 +29,12 @@ public sealed class SqliteDefinitionExecutor(DefinitionExecutorOptions options, 
         return result != null;
     }
 
-   public async Task CreateTable(string tableName, ColumnDefinition[] columnDefinitions, CancellationToken cancellationToken)
+    public async ValueTask<IDbTransaction> BeginTransactionAsync(CancellationToken ct = default)=> await connection.BeginTransactionAsync(ct);
+    
+
+    public async Task CreateTable(string tableName, ColumnDefinition[] cols, CancellationToken ct,IDbTransaction? tx)
    {
-       var columnDefinitionStrs = columnDefinitions.Select(column => column.ColumnName.ToLower() switch
+       var columnDefinitionStrs = cols.Select(column => column.ColumnName.ToLower() switch
        {
            "id" => "id INTEGER  primary key autoincrement",
            "deleted" => "deleted INTEGER   default 0",
@@ -36,22 +51,22 @@ public sealed class SqliteDefinitionExecutor(DefinitionExecutorOptions options, 
             BEGIN 
                 UPDATE {tableName} SET updated_at = (datetime('now','localtime')) WHERE id = OLD.id; 
             END;";
-      await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(cancellationToken));
+      await ExecuteQuery(sql,tx, async cmd => await cmd.ExecuteNonQueryAsync(ct));
    }
 
-   public async Task AlterTableAddColumns(string tableName, ColumnDefinition[] columnDefinitions, CancellationToken cancellationToken)
+   public async Task AddColumns(string table, ColumnDefinition[] cols, CancellationToken ct,IDbTransaction? tx)
    {
-       var parts = columnDefinitions.Select(x =>
-           $"Alter Table {tableName} ADD COLUMN {x.ColumnName} {DataTypeToString(x.DataType)}"
+       var parts = cols.Select(x =>
+           $"Alter Table {table} ADD COLUMN {x.ColumnName} {DataTypeToString(x.DataType)}"
        );
        var sql = string.Join(";", parts.ToArray());
-       await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(cancellationToken));
+       await ExecuteQuery(sql, tx,async cmd => await cmd.ExecuteNonQueryAsync(ct));
    }
 
-   public async Task<ColumnDefinition[]> GetColumnDefinitions(string tableName,CancellationToken ct)
+   public async Task<ColumnDefinition[]> GetColumnDefinitions(string table,CancellationToken ct)
    {
-      var sql = $"PRAGMA table_info({tableName})";
-      return await ExecuteQuery(sql, async command =>
+      var sql = $"PRAGMA table_info({table})";
+      return await ExecuteQuery(sql,null, async command =>
       {
          await using var reader = await command.ExecuteReaderAsync(ct);
          var columnDefinitions = new List<ColumnDefinition>();
@@ -90,13 +105,14 @@ public sealed class SqliteDefinitionExecutor(DefinitionExecutorOptions options, 
         };
     }
 
-    private async Task<T> ExecuteQuery<T>(string sql, Func<SqliteCommand, Task<T>> executeFunc,
+    private async Task<T> ExecuteQuery<T>(string sql,IDbTransaction? tx, Func<SqliteCommand, Task<T>> executeFunc,
         params (string, object)[] parameters)
     {
         logger.LogInformation(sql);
-        await using var connection = new SqliteConnection(options.ConnectionString);
-        await connection.OpenAsync();
         await using var command = new SqliteCommand(sql, connection);
+        if (tx is not null)
+            command.Transaction =
+                tx as SqliteTransaction ?? throw new Exception("Transaction is not a Sqlite transaction");
 
         foreach (var (paramName, paramValue) in parameters)
         {

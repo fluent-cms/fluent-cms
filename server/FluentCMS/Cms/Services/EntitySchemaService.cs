@@ -1,17 +1,19 @@
 using System.Collections.Immutable;
+using System.Data;
 using FluentCMS.Cms.Models;
 using FluentCMS.Utils.Cache;
-using FluentCMS.Utils.DataDefinitionExecutor;
+using FluentCMS.Utils.RelationDbDao;
 using FluentCMS.Utils.QueryBuilder;
 using FluentCMS.Utils.ResultExt;
 using FluentResults;
+using FluentResults.Extensions;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.Cms.Services;
 
 public sealed class EntitySchemaService(
     ISchemaService schemaSvc,
-    IDefinitionExecutor executor,
+    IDao dao,
     KeyValueCache<ImmutableArray<Entity>> entityCache
 ) : IEntitySchemaService
 {
@@ -29,7 +31,7 @@ public sealed class EntitySchemaService(
 
     public bool ResolveVal(Attribute attr, string v, out ValidValue result)
     {
-        result = executor.TryParseDataType(v, attr.DataType, out var val) switch
+        result = dao.TryParseDataType(v, attr.DataType, out var val) switch
         {
             true => new ValidValue(S:val!.S, I:val.I,D: val.D),
             _ => ValidValue.EmptyValue
@@ -49,12 +51,12 @@ public sealed class EntitySchemaService(
             attr = entity.Attributes.FindOneAttr(field);
             if (attr is null)
             {
-                return Result.Fail($"Fail to attribute vector: can not find {field} in {entity.Name} ");
+                return Result.Fail($"Fail to resolve attribute vector: Cannot find [{field}] in {entity.Name} ");
             }
 
             if (i == fields.Length - 1) break;
 
-            var res = await LoadCompoundAttribute(entity, attr,[], default);
+            var res = await LoadCompoundAttribute(entity, attr,[],CancellationToken.None);
             if (res.IsFailed)
             {
                 return Result.Fail(res.Errors);
@@ -70,7 +72,7 @@ public sealed class EntitySchemaService(
                     entity = attr.Lookup!;
                     break;
                 default:
-                    return Result.Fail($"Can not resolve [{fieldName}], [{attr.Field}] is not a composite type");
+                    return Result.Fail($"Fail to resolve [{fieldName}], [{attr.Field}] is not a composite type");
             }
 
             attributes.Add(attr);
@@ -97,13 +99,13 @@ public sealed class EntitySchemaService(
         var item = await schemaSvc.GetByNameDefault(name, SchemaType.Entity, token);
         if (item is null)
         {
-            return Result.Fail($"can not find entity {name} ");
+            return Result.Fail($"Cannot find entity [{name}]");
         }
 
         var entity = item.Settings.Entity;
         if (entity is null)
         {
-            return Result.Fail($"entity {name} is invalid");
+            return Result.Fail($"Entity [{name}] is invalid");
         }
 
         return entity;
@@ -111,7 +113,7 @@ public sealed class EntitySchemaService(
 
     public async Task<Entity?> GetTableDefine(string table, CancellationToken token)
     {
-        var cols = await executor.GetColumnDefinitions(table, token);
+        var cols = await dao.GetColumnDefinitions(table, token);
         return new Entity
         (
             Attributes: [..cols.Select(AttributeHelper.ToAttribute)]
@@ -125,50 +127,62 @@ public sealed class EntitySchemaService(
 
     public async Task<Schema> SaveTableDefine(Schema dto, CancellationToken ct = default)
     {
+        
         (await schemaSvc.NameNotTakenByOther(dto, ct)).Ok();
         var entity = (dto.Settings.Entity?? throw new ResultException("invalid payload"));
         entity = entity.WithDefaultAttr();
-        var cols = await executor.GetColumnDefinitions(entity.TableName, ct);
+        var cols = await dao.GetColumnDefinitions(entity.TableName, ct);
         EnsureTableNotExist().Ok();
         await VerifyEntity(entity, ct);
-        await SaveSchema(); //need  to save first because it will call trigger
-        await CreateJunctions();
-        await SaveMainTable();
-        await schemaSvc.EnsureEntityInTopMenuBar(entity, ct);
-        await entityCache.Remove("",ct);
-        return dto;
+        
+        using var tx = await dao.BeginTransaction();
 
-        async Task SaveSchema()
+        try
+        {
+            await SaveSchema(tx); //need  to save first because it will call trigger
+            await CreateJunctions(tx);
+            await SaveMainTable(tx);
+            await schemaSvc.EnsureEntityInTopMenuBar(entity, ct, tx);
+
+            await entityCache.Remove("", ct);
+            tx.Commit();
+            return dto;
+        }
+        catch 
+        {
+            tx.Rollback();
+            throw;
+        }
+
+
+        async Task SaveSchema(IDbTransaction t)
         {
             dto = dto with { Settings = new Settings(entity) };
-            dto = await schemaSvc.SaveWithAction(dto, ct);
+            dto = await schemaSvc.SaveWithAction(dto, ct,t);
             entity = dto.Settings.Entity!;
         }
 
-        async Task SaveMainTable()
+        async Task SaveMainTable(IDbTransaction t)
         {
             if (cols.Length > 0) //if table exists, alter table add columns
             {
                 var columnDefinitions = entity.AddedColumnDefinitions(cols);
                 if (columnDefinitions.Length > 0)
                 {
-                    await executor.AlterTableAddColumns(entity.TableName, columnDefinitions,
-                        ct);
+                    await dao.AddColumns(entity.TableName, columnDefinitions, ct,t);
                 }
             }
             else
             {
-                await executor.CreateTable(entity.TableName, entity.Definitions().EnsureDeleted(),
-                    ct);
+                await dao.CreateTable(entity.TableName, entity.Definitions().EnsureDeleted(), ct,t);
             }
         }
 
-        async Task CreateJunctions()
+        async Task CreateJunctions(IDbTransaction t)
         {
             foreach (var attribute in entity.Attributes.GetAttrByType(DisplayType.Junction))
             {
-                await this.CreateJunction(entity.ToLoadedEntity(),
-                    attribute.ToLoaded(entity.TableName), ct);
+                await CreateJunction(entity.ToLoadedEntity(), attribute.ToLoaded(entity.TableName), ct,t);
             }
         }
 
@@ -182,38 +196,25 @@ public sealed class EntitySchemaService(
         }
     }
 
-    private async Task<Result<LoadedAttribute>> LoadLookup(LoadedAttribute attr, CancellationToken ct)
+    private async Task<Result<LoadedAttribute>> LoadLookup(
+        LoadedAttribute attr, CancellationToken ct
+    ) => attr.Lookup switch
     {
-        if (attr.Lookup is not null)
-        {
-            return attr;
-        }
-
-        if (!attr.GetLookupTarget(out var lookupName))
-        {
-            return Result.Fail($"Lookup Option was not set for attribute `{attr.Field}`");
-        }
-
-        var (_, isFailed, value, _) = await GetEntity(lookupName, ct);
-        if (isFailed)
-        {
-            return Result.Fail(
-                $"not find entity by name {lookupName} for lookup {attr.Field}");
-        }
-
-        return attr with { Lookup = value.ToLoadedEntity() };
-    }
+        not null => attr,
+        _ => attr.GetLookupTarget(out var lookupTarget)
+            ? await GetEntity(lookupTarget, ct)
+                .Map(lookup => attr with { Lookup = lookup.ToLoadedEntity() })
+                .OnFail("Failed to load lookup")
+            : Result.Fail($"Lookup target was not set for attribute `{attr.Field}`")
+    };
 
     private async Task<Result<LoadedAttribute>> LoadJunction(
         LoadedEntity entity, 
         LoadedAttribute attr,
         HashSet<string> visited,
-        CancellationToken token)
+        CancellationToken ct)
     {
-        if (attr.Junction is not null)
-        {
-            return attr;
-        }
+        if (attr.Junction is not null) return attr;
 
         if (!attr.GetJunctionTarget(out var targetName))
         {
@@ -226,19 +227,10 @@ public sealed class EntitySchemaService(
             return attr;
         }
 
-        var (_, _, target, getErr) = await GetEntity(targetName, token);
-        if (getErr is not null)
-        {
-            return Result.Fail($"not find entity by name {targetName}, err = {getErr}");
-        }
-
-        var (_, _, loadedTarget, loadErr) = await LoadCompoundAttributes(target.ToLoadedEntity(), visited, token);
-        if (loadErr is not null)
-        {
-            return Result.Fail(loadErr);
-        }
-
-        return attr with { Junction = JunctionHelper.Junction(entity, loadedTarget!, attr) };
+        return await GetEntity(targetName, ct)
+            .Map(e => e.ToLoadedEntity())
+            .Map(x => attr with { Junction = JunctionHelper.Junction(entity, x, attr) })
+            .OnFail($"Failed to load Junction for attribute {attr.Field}");
     }
 
     public async Task<Result<LoadedAttribute>> LoadCompoundAttribute(
@@ -297,7 +289,7 @@ public sealed class EntitySchemaService(
         return entity with { Attributes = [..lst] };
     }
 
-    private async Task CreateJunction(LoadedEntity entity, LoadedAttribute attr, CancellationToken ct)
+    private async Task CreateJunction(LoadedEntity entity, LoadedAttribute attr, CancellationToken ct, IDbTransaction tx)
     {
         if (!attr.GetJunctionTarget(out var name))
         {
@@ -307,11 +299,10 @@ public sealed class EntitySchemaService(
         var targetEntity = (await GetLoadedEntity(name, ct)).Ok();
         var junction = JunctionHelper.Junction(entity, targetEntity, attr);
         var columns =
-            await executor.GetColumnDefinitions(junction.JunctionEntity.TableName, ct);
+            await dao.GetColumnDefinitions(junction.JunctionEntity.TableName, ct);
         if (columns.Length == 0)
         {
-            await executor.CreateTable(junction.JunctionEntity.TableName, junction.GetColumnDefinitions(),
-                ct);
+            await dao.CreateTable(junction.JunctionEntity.TableName, junction.GetColumnDefinitions(), ct,tx);
         }
     }
 
