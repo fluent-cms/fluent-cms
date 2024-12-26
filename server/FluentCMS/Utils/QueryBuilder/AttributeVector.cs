@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using FluentResults;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
@@ -15,7 +14,7 @@ public static class AttributeVectorConstants
 }
 
 //reference type make it easier to build a tree
-public class AttributeTreeNode(LoadedAttribute? attribute = default)
+public class AttributeTreeNode(LoadedAttribute? attribute = null)
 {
     public LoadedAttribute? Attribute { get;} = attribute;
     public List<AttributeTreeNode> Children { get; } = new();

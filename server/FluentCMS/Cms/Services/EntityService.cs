@@ -55,7 +55,7 @@ public sealed class EntityService(
         var record = await queryExecutor.One(query, ct) ??
                      throw new ResultException($"not find record by [{id}]");
 
-        foreach (var attribute in ctx.Entity.Attributes.GetAttrByType(DisplayType.Lookup, InListOrDetail.InDetail))
+        foreach (var attribute in ctx.Entity.Attributes.GetAttrByType(DataType.Lookup, InListOrDetail.InDetail))
         {
             await LoadLookupData(attribute, [record], ct);
         }
@@ -207,7 +207,7 @@ public sealed class EntityService(
         {
             var items = await queryExecutor.Many(query, token);
             if (items.Length == 0) return items;
-            foreach (var attribute in entity.Attributes.GetAttrByType(DisplayType.Lookup, InListOrDetail.InList))
+            foreach (var attribute in entity.Attributes.GetAttrByType(DataType.Lookup, InListOrDetail.InList))
             {
                 await LoadLookupData(attribute, items, token);
             }

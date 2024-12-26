@@ -14,7 +14,6 @@ export function useLookupData(schemaName: string, query: string) {
 }
 
 export function useListData(schemaName: string | undefined, lazyState: any) {
-    console.log({lazyState});
     let res = useSWR(fullAPIURI(`/entities/${schemaName}?${encodeLazyState(lazyState)}`), fetcher,swrConfig);
     return {...res, error:decodeError(res.error)}
 }

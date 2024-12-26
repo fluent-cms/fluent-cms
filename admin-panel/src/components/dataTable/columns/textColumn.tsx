@@ -5,15 +5,15 @@ export function textColumn({primaryKey, column, titleAttribute, baseRouter, enti
     baseRouter:string
     primaryKey: string,
     titleAttribute: string;
-    column:  {type :string, field:string, header:any, linkToEntity:string,lookup:any}
+    column:  {displayType :string, field:string, header:any, linkToEntity:string,lookup:any}
     entityName:string
 }){
     let field = column.field;
-    if (column.type == "lookup"){
+    if (column.displayType == "lookup"){
         field = column.field + "." + column.lookup.titleAttribute;
     }
     var dataType = 'text';
-    switch (column.type){
+    switch (column.displayType){
         case 'number':
             dataType = 'numeric';
             break;
@@ -25,7 +25,7 @@ export function textColumn({primaryKey, column, titleAttribute, baseRouter, enti
 
     const bodyTemplate = (item:any) => {
         let val = item[column.field]
-        if (column.type === "lookup" && val){
+        if (column.displayType === "lookup" && val){
             val = val[column.lookup.titleAttribute]
         }
 

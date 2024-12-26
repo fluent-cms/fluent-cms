@@ -14,9 +14,9 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
     {
         result = type switch
         {
-            DataType.String or DataType.Text or DataType.Na => new DatabaseTypeValue(s),
-            DataType.Int when int.TryParse(s, out var resultInt) => new DatabaseTypeValue(I: resultInt),
-            DataType.Datetime when DateTime.TryParse(s, out var resultDateTime) => new DatabaseTypeValue(D: resultDateTime),
+            ColumnType.String or ColumnType.Text  => new DatabaseTypeValue(s),
+            ColumnType.Int when int.TryParse(s, out var resultInt) => new DatabaseTypeValue(I: resultInt),
+            ColumnType.Datetime when DateTime.TryParse(s, out var resultDateTime) => new DatabaseTypeValue(D: resultDateTime),
             _ => null
         };
         return result != null;
@@ -29,15 +29,15 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
         return queryFunc(db);
     }
 
-    public async Task CreateTable(string table, ColumnDefinition[] cols,CancellationToken ct,IDbTransaction? tx)
+    public async Task CreateTable(string table, IEnumerable<Column> cols,CancellationToken ct,IDbTransaction? tx)
     {
-        var parts = cols.Select(column => column.ColumnName.ToLower() switch
+        var parts = cols.Select(column => column.Name.ToLower() switch
         {
             "id" => "id SERIAL PRIMARY KEY",
             "deleted" => "deleted BOOLEAN DEFAULT FALSE",
             "created_at" => "created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
             "updated_at" => "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
-            _ => $"\"{column.ColumnName}\" {DataTypeToString(column.DataType)}"
+            _ => $"\"{column.Name}\" {DataTypeToString(column.Type)}"
         });
         
         var sql= $"CREATE TABLE {table} ({string.Join(", ", parts)});";
@@ -58,28 +58,28 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
         await ExecuteQuery(sql, tx, cmd => cmd.ExecuteNonQueryAsync(ct));
     }
 
-    public async Task AddColumns(string table, ColumnDefinition[] cols, CancellationToken ct,IDbTransaction? tx)
+    public async Task AddColumns(string table, IEnumerable<Column> cols, CancellationToken ct,IDbTransaction? tx)
     {
         var parts = cols.Select(x =>
-            $"Alter Table {table} ADD COLUMN \"{x.ColumnName}\" {DataTypeToString(x.DataType)}"
+            $"Alter Table {table} ADD COLUMN \"{x.Name}\" {DataTypeToString(x.Type)}"
         );
         var sql = string.Join(";", parts.ToArray());
         await ExecuteQuery(sql, tx, cmd => cmd.ExecuteNonQueryAsync(ct));
     }
     
-    public async Task<ColumnDefinition[]> GetColumnDefinitions(string table, CancellationToken ct)
+    public async Task<Column[]> GetColumnDefinitions(string table, CancellationToken ct,IDbTransaction? tx)
     {
         var sql = @"SELECT column_name, data_type, character_maximum_length, is_nullable, column_default
                 FROM information_schema.columns
                 WHERE table_name = @tableName;";
 
-        return await ExecuteQuery(sql, null,async command =>
+        return await ExecuteQuery(sql, tx,async command =>
         {
             await using var reader = command.ExecuteReader();
-            var columnDefinitions = new List<ColumnDefinition>();
+            var columnDefinitions = new List<Column>();
             while (await reader.ReadAsync(ct))
             {
-                columnDefinitions.Add(new ColumnDefinition(reader.GetString(0),reader.GetString(1)));
+                columnDefinitions.Add(new Column(reader.GetString(0),reader.GetString(1)));
             }
             return columnDefinitions.ToArray();
         }, ("tableName", table));
@@ -89,10 +89,10 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
     {
         return dataType switch
         {
-            DataType.Int => "INTEGER",
-            DataType.Text => "TEXT",
-            DataType.Datetime => "TIMESTAMP",
-            DataType.String => "varchar(255)",
+            ColumnType.Int => "INTEGER",
+            ColumnType.Text => "TEXT",
+            ColumnType.Datetime => "TIMESTAMP",
+            ColumnType.String => "varchar(255)",
             _ => throw new NotSupportedException($"Type {dataType} is not supported")
         };
     }

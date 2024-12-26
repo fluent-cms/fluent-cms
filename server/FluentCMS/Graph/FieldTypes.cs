@@ -36,15 +36,15 @@ public static class FieldTypes
             {
                 Name = attribute.Field,
                 Resolver = Resolvers.ValueResolver,
-                ResolvedType = attribute.Type switch
+                ResolvedType = attribute.DataType switch
                 {
-                    DisplayType.Junction when attribute.GetJunctionTarget(out var target) && dict.ContainsKey(target) => dict[target].ListType,
-                    DisplayType.Lookup when attribute.GetLookupTarget(out var target) && dict.ContainsKey(target) => dict[target].SingleType,
+                    DataType.Junction when attribute.GetJunctionTarget(out var target) && dict.ContainsKey(target) => dict[target].ListType,
+                    DataType.Lookup when attribute.GetLookupTarget(out var target) && dict.ContainsKey(target) => dict[target].SingleType,
                     _ => null
                 },
-                Arguments = attribute.Type switch
+                Arguments = attribute.DataType switch
                 {
-                    DisplayType.Junction when attribute.GetJunctionTarget(out var target) && dict.ContainsKey(target) => JunctionArgs(target),
+                    DataType.Junction when attribute.GetJunctionTarget(out var target) && dict.ContainsKey(target) => JunctionArgs(target),
                     _ => null
                 }
             };

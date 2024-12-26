@@ -130,7 +130,7 @@ public sealed class QuerySchemaService(
                 return Result.Fail(err);
             }
 
-            if (graphAttr.Type == DisplayType.Junction)
+            if (graphAttr.DataType == DataType.Junction)
             {
                 var inputs = field.Arguments?.Select(x => new GraphQlArgumentDataProvider(x)) ?? [];
                 if (!QueryHelper.ParseSimpleArguments(inputs).Try(out var res, out var parseErr))
@@ -169,10 +169,10 @@ public sealed class QuerySchemaService(
     private async Task<Result<GraphAttribute>> LoadSelection(string prefix, GraphAttribute attr,
         GraphQLField field, CancellationToken ct)
     {
-        var targetEntity = attr.Type switch
+        var targetEntity = attr.DataType switch
         {
-            DisplayType.Junction => attr.Junction!.TargetEntity,
-            DisplayType.Lookup => attr.Lookup,
+            DataType.Junction => attr.Junction!.TargetEntity,
+            DataType.Lookup => attr.Lookup,
             _ => null
         };
 
@@ -197,7 +197,7 @@ public sealed class QuerySchemaService(
             return Result.Fail($"Parsing `SectionSet` fail, can not find {fldName} in {entity.Name}");
         }
 
-        if (find.Type is not (DisplayType.Junction or DisplayType.Lookup)) return find.ToGraph();
+        if (find.DataType is not (DataType.Junction or DataType.Lookup)) return find.ToGraph();
         if (!(await entitySchemaSvc.LoadCompoundAttribute(entity, find, [], ct))
             .Try(out var compoundAttr, out var err))
         {

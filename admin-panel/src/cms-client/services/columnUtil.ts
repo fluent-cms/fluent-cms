@@ -3,12 +3,12 @@ export function getWriteColumns(schema:any) {
     return schema?.attributes?.filter((column: any) =>
         !!column.inDetail
         && !column.isDefault
-        && column.type !=="junction"
+        && column.displayType !=="junction"
     ) ?? []
 }
 
 export function getSubPageColumns(schema:any) {
-    return schema?.attributes?.filter((column: any) => column.type === 'junction' || column.type === 'subtable') ?? []
+    return schema?.attributes?.filter((column: any) => column.displayType === 'junction') ?? []
 }
 
 export function getListColumns(schema:any) {

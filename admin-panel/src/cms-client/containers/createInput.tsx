@@ -11,8 +11,8 @@ import {DropDownInput} from "../../components/inputs/DropDownInput";
 import {MultiSelectInput} from "../../components/inputs/MultiSelectInput";
 
 export function createInput(props :any) {
-    const {type, field} = props.column
-    switch (type) {
+    const {field, displayType} = props.column
+    switch (displayType) {
         case 'text':
             return <TextInput className={'field col-12 md:col-4'} key={field} {...props}/>
         case 'textarea':
@@ -27,7 +27,6 @@ export function createInput(props :any) {
             return <DatetimeInput className={'field col-12  md:col-4'} key={field} {...props}/>
         case 'date':
             return <DateInput className={'field col-12  md:col-4'} key={field} {...props}/>
-
         case 'image':
             return <FileInput previewImage className={'field col-12  md:col-4'} key={field} {...props}/>
         case 'gallery':

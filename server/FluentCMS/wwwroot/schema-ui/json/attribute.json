@@ -34,17 +34,18 @@
     },
     "dataType":{
       "type": "string",
-      "title": "Database Type",
-      "description": "Database type",
+      "title": "Data Type",
+      "description": "Data type",
       "enum":[
         "String",
         "Text",
         "Int",
         "Datetime",
-        "NA"
+        "Lookup",
+        "Junction"
       ]
     },
-    "type": {
+    "displayType": {
       "title": "Display type",
       "description": "Display type",
       "type": "string",
@@ -66,7 +67,8 @@
         "lookup",
         "multiselect",
 
-        "junction"
+        "junction",
+        "tree"
       ]
     },
     "validation": {

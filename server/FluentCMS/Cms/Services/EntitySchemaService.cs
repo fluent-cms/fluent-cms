@@ -29,9 +29,10 @@ public sealed class EntitySchemaService(
         }, ct);
     }
 
-    public bool ResolveVal(Attribute attr, string v, out ValidValue result)
+    public bool ResolveVal(LoadedAttribute attr, string v, out ValidValue result)
     {
-        result = dao.TryParseDataType(v, attr.DataType, out var val) switch
+        var colType = attr.DataType == DataType.Lookup ? attr.Lookup!.PrimaryKeyAttribute.DataType : attr.DataType;
+        result = dao.TryParseDataType(v, colType, out var val) switch
         {
             true => new ValidValue(S:val!.S, I:val.I,D: val.D),
             _ => ValidValue.EmptyValue
@@ -63,12 +64,12 @@ public sealed class EntitySchemaService(
             }
 
             attr = res.Value;
-            switch (attr.Type)
+            switch (attr.DataType)
             {
-                case DisplayType.Junction:
+                case DataType.Junction:
                     entity = attr.Junction!.TargetEntity;
                     break;
-                case DisplayType.Lookup:
+                case DataType.Lookup:
                     entity = attr.Lookup!;
                     break;
                 default:
@@ -116,7 +117,7 @@ public sealed class EntitySchemaService(
         var cols = await dao.GetColumnDefinitions(table, token);
         return new Entity
         (
-            Attributes: [..cols.Select(AttributeHelper.ToAttribute)]
+            Attributes: [..cols.Select(x=>AttributeHelper.ToAttribute(x.Name,x.Type))]
         );
     }
 
@@ -166,21 +167,24 @@ public sealed class EntitySchemaService(
         {
             if (cols.Length > 0) //if table exists, alter table add columns
             {
-                var columnDefinitions = entity.AddedColumnDefinitions(cols);
-                if (columnDefinitions.Length > 0)
+                var set = cols.Select(x => x.Name.ToLower()).ToHashSet();
+                var missing = entity.Attributes.GetLocalAttrs().Where(c => !set.Contains(c.Field)).ToArray();
+                if (missing.Length > 0)
                 {
-                    await dao.AddColumns(entity.TableName, columnDefinitions, ct,t);
+                    var missingCols = await ToColumns(missing);
+                    await dao.AddColumns(entity.TableName, missingCols, ct,t);
                 }
             }
             else
             {
-                await dao.CreateTable(entity.TableName, entity.Definitions().EnsureDeleted(), ct,t);
+                var columns = await ToColumns(entity.Attributes.GetLocalAttrs());
+                await dao.CreateTable(entity.TableName, columns.EnsureDeleted(), ct,t);
             }
         }
 
         async Task CreateJunctions(IDbTransaction t)
         {
-            foreach (var attribute in entity.Attributes.GetAttrByType(DisplayType.Junction))
+            foreach (var attribute in entity.Attributes.GetAttrByType(DataType.Junction))
             {
                 await CreateJunction(entity.ToLoadedEntity(), attribute.ToLoaded(entity.TableName), ct,t);
             }
@@ -195,17 +199,41 @@ public sealed class EntitySchemaService(
                 : Result.Ok();
         }
     }
+    
+    
+    private async Task<Column[]> ToColumns(IEnumerable<Attribute> attributes)
+    {
+        var ret = new List<Column>();
+        foreach (var attribute in attributes)
+        {
+            ret.Add(await ToColumn(attribute));
+        }
+        return ret.ToArray();
+    }
+
+    private async Task<Column> ToColumn(Attribute attribute)
+    {
+        var dataType= attribute.DataType switch
+        {
+            DataType.Junction => throw new Exception("Junction attribute does not map to database"),
+            DataType.Lookup => (await GetLookupEntity(attribute).Map(x=> x.Attributes.FindOneAttr(x.PrimaryKey)!.DataType)).Ok(),
+            _ => attribute.DataType
+        };
+        return new Column(attribute.Field, dataType);
+    }
+
+    private async Task<Result<Entity>> GetLookupEntity(Attribute attribute, CancellationToken ct = default)
+        => attribute.GetLookupTarget(out var entity)
+            ? await GetEntity(entity,ct)
+            : Result.Fail($"Lookup target was not set to {attribute.Field}");
+
 
     private async Task<Result<LoadedAttribute>> LoadLookup(
         LoadedAttribute attr, CancellationToken ct
     ) => attr.Lookup switch
     {
         not null => attr,
-        _ => attr.GetLookupTarget(out var lookupTarget)
-            ? await GetEntity(lookupTarget, ct)
-                .Map(lookup => attr with { Lookup = lookup.ToLoadedEntity() })
-                .OnFail("Failed to load lookup")
-            : Result.Fail($"Lookup target was not set for attribute `{attr.Field}`")
+        _ => await GetLookupEntity(attr, ct).Map(x => attr with { Lookup = x.ToLoadedEntity() })
     };
 
     private async Task<Result<LoadedAttribute>> LoadJunction(
@@ -239,10 +267,10 @@ public sealed class EntitySchemaService(
         HashSet<string> visited,
         CancellationToken ct)
     {
-        return attr.Type switch
+        return attr.DataType switch
         {
-            DisplayType.Junction => await LoadJunction(entity, attr,visited, ct),
-            DisplayType.Lookup => await LoadLookup(attr, ct),
+            DataType.Junction => await LoadJunction(entity, attr,visited, ct),
+            DataType.Lookup => await LoadLookup(attr, ct),
             _ => attr
         };
     }
@@ -270,7 +298,7 @@ public sealed class EntitySchemaService(
         {
             switch (attribute)
             {
-                case { Type: DisplayType.Lookup  or DisplayType.Junction }:
+                case { DataType: DataType.Lookup  or DataType.Junction }:
                     var (_, _, value, errors) = await LoadCompoundAttribute(entity, attribute, visited,ct);
                     if (errors is not null)
                     {
@@ -299,16 +327,17 @@ public sealed class EntitySchemaService(
         var targetEntity = (await GetLoadedEntity(name, ct)).Ok();
         var junction = JunctionHelper.Junction(entity, targetEntity, attr);
         var columns =
-            await dao.GetColumnDefinitions(junction.JunctionEntity.TableName, ct);
+            await dao.GetColumnDefinitions(junction.JunctionEntity.TableName, ct, tx);
         if (columns.Length == 0)
         {
-            await dao.CreateTable(junction.JunctionEntity.TableName, junction.GetColumnDefinitions(), ct,tx);
+            var cols =await ToColumns(junction.JunctionEntity.Attributes);
+            await dao.CreateTable(junction.JunctionEntity.TableName, cols.EnsureDeleted(), ct,tx);
         }
     }
 
     private async Task CheckLookup(Attribute attr, CancellationToken ct)
     {
-        if (attr.DataType != DataType.Int) throw new ResultException("lookup datatype should be int");
+        if (attr.DataType != DataType.Lookup) throw new ResultException("lookup datatype should be int");
         if (!attr.GetLookupTarget(out var lookupName))
             throw new ResultException($"Lookup Option was not set for attribute `{attr.Field}`");
 
@@ -330,7 +359,7 @@ public sealed class EntitySchemaService(
         _ = entity.Attributes.FindOneAttr(entity.TitleAttribute) ??
             throw new ResultException($"`{entity.TitleAttribute}` was not in attributes list");
         
-        foreach (var attribute in entity.Attributes.GetAttrByType(DisplayType.Lookup))
+        foreach (var attribute in entity.Attributes.GetAttrByType(DataType.Lookup))
         {
             await CheckLookup(attribute, ct);
         }

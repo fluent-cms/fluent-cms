@@ -57,7 +57,7 @@ export function DataItemPageComponent({schema, baseRouter}:{schema:any, baseRout
                 const props = {schema, data, column,  getFullAssetsURL,baseRouter}
                 return <div key={column.field}>
                     <Divider/>
-                    { column.type === 'junction' && <Junction key={column.field} {...props}/> }
+                    { column.displayType === 'junction' && <Junction key={column.field} {...props}/> }
                 </div>
             })
         }

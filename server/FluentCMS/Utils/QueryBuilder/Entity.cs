@@ -2,8 +2,7 @@ using System.Collections.Immutable;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using DynamicExpresso;
-using FluentCMS.Types;
-using FluentCMS.Utils.RelationDbDao;
+
 using FluentCMS.Utils.KateQueryExt;
 using FluentCMS.Utils.ResultExt;
 using FluentResults;
@@ -114,9 +113,6 @@ public static class EntityHelper
             .WhereIn(e.PrimaryKey, ids.GetValues());
     }
 
-    public static SqlKata.Query BatchInsert(this LoadedEntity e, IEnumerable<string> cols, IEnumerable<IEnumerable<object>> items)
-        => new SqlKata.Query(e.TableName).AsInsert(cols, items);
-
     public static SqlKata.Query Insert(this LoadedEntity e, Record item)
     {
         //omit auto generated value
@@ -150,29 +146,17 @@ public static class EntityHelper
         new SqlKata.Query(e.TableName)
             .Where(e.DeletedAttribute.AddTableModifier(), false);
 
-    public static ColumnDefinition[] AddedColumnDefinitions(this Entity e, ColumnDefinition[] columnDefinitions)
-    {
-        var set = columnDefinitions.Select(x => x.ColumnName.ToLower()).ToHashSet();
-        var items = e.Attributes.GetLocalAttrs().Where(x => !set.Contains(x.Field.ToLower().Trim()));
-        return items.Select(x => new ColumnDefinition(x.Field, x.DataType) ).ToArray();
-    }
-
-    public static ColumnDefinition[] Definitions(this Entity e)
-        => e.Attributes.GetLocalAttrs()
-            .Select(x => new ColumnDefinition (ColumnName : x.Field, DataType : x.DataType ))
-            .ToArray();
-
     public static Entity WithDefaultAttr(this Entity e)
     {
         var list = new List<Attribute>();
         if (e.Attributes.FindOneAttr(DefaultFields.Id) is null)
         {
             list.Add(new Attribute
-           ( 
+            ( 
                 Field : DefaultFields.Id, Header : "id",
                 IsDefault : true, InDetail:true, InList:true,
                 DataType : DataType.Int, 
-                Type : DisplayType.Number
+                DisplayType : DisplayType.Number
             ));
         }
 
@@ -258,9 +242,10 @@ public static class EntityHelper
         {
             var attribute = e.Attributes.FindOneAttr(property.Name);
             if (attribute == null) continue;
-            var res = attribute.Type switch
+            
+            var res = attribute.DataType switch
             {
-                DisplayType.Lookup => SubElement(property.Value, attribute.Lookup!.PrimaryKey).Bind(x=>Convert(x, attribute)),
+                DataType.Lookup => SubElement(property.Value, attribute.Lookup!.PrimaryKey).Bind(x=>Convert(x, attribute)),
                 _ => Convert(property.Value, attribute)
             };
             if (res.IsFailed)
@@ -282,7 +267,7 @@ public static class EntityHelper
             return Result.Ok<JsonElement?>(null!);
         }
         
-        Result<object> Convert(JsonElement? element, Attribute attribute)
+        Result<object> Convert(JsonElement? element, LoadedAttribute attribute)
         {
             if (element is null)
             {

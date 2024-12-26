@@ -1,5 +1,4 @@
 using System.Globalization;
-using FluentCMS.Utils.RelationDbDao;
 using FluentCMS.Utils.QueryBuilder;
 using GraphQL.Types;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
@@ -42,10 +41,9 @@ public static class Args
         {
             DataType.Int => new QueryArgument<ListGraphType<IntGraphType>>(),
             DataType.Datetime => new QueryArgument<ListGraphType<DateGraphType>>(),
-            _ => attr.Type switch
+            _ => attr.DataType switch
             {
-                DisplayType.Dropdown => new QueryArgument(new ListGraphType(GetAttributeOptionEnum(attr))),
-                DisplayType.Multiselect => new QueryArgument(new ListGraphType(GetAttributeOptionEnum(attr))),
+                DataType.Lookup => new QueryArgument(new ListGraphType(GetAttributeOptionEnum(attr))),
                 _ => new QueryArgument<ListGraphType<StringGraphType>>()
             }
         };

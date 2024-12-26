@@ -53,7 +53,7 @@ public static class ConstraintsHelper
 {
     public static Result<ValidConstraint[]> ResolveValues(
         this IEnumerable<Constraint> constraints,
-        Attribute attribute,
+        LoadedAttribute attribute,
         IAttributeValueResolver resolver
     )
     {
@@ -76,7 +76,7 @@ public static class ConstraintsHelper
 
     public static Result<ValidConstraint[]> ReplaceVariables(
         this IEnumerable<ValidConstraint> constraints,
-        Attribute attribute,
+        LoadedAttribute attribute,
         StrArgs? args,
         IAttributeValueResolver resolver
     )
@@ -99,7 +99,7 @@ public static class ConstraintsHelper
     }
 
     
-    private static Result<ValidValue[]> ReplaceVariables(IEnumerable<ValidValue> fromValues, Attribute attribute,
+    private static Result<ValidValue[]> ReplaceVariables(IEnumerable<ValidValue> fromValues, LoadedAttribute attribute,
         StrArgs? args, IAttributeValueResolver resolver)
     {
         var list = new List<ValidValue>();
@@ -134,7 +134,7 @@ public static class ConstraintsHelper
         return list.ToArray();
     }
 
-    private static Result<ValidValue[]> ResolveValues(IEnumerable<string> fromValues, Attribute attribute, IAttributeValueResolver resolver)
+    private static Result<ValidValue[]> ResolveValues(IEnumerable<string> fromValues, LoadedAttribute attribute, IAttributeValueResolver resolver)
     {
         var list = new List<ValidValue>();
 

@@ -24,7 +24,7 @@ function createDefaultState(rows:any, cols:any[],qs: string) {
 
 function createDefaultFilter(cols:any[]) {
     const getMathMode = (col:any) =>{
-        switch (col.type){
+        switch (col.displayType){
             case 'number': return FilterMatchMode.EQUALS
             case 'datetime': return FilterMatchMode.DATE_IS
             default: return FilterMatchMode.STARTS_WITH
@@ -33,7 +33,7 @@ function createDefaultFilter(cols:any[]) {
     const filters:any = {}
 
     cols.forEach(col =>{
-        if (col.type == "lookup"){
+        if (col.displayType == "lookup"){
             filters[col.field + "." + col.lookup.titleAttribute] = {operator: 'and', constraints: [{ value: null, matchMode: getMathMode(col) }]}
 
         }else {

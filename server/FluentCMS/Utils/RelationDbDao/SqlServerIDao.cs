@@ -22,22 +22,22 @@ public class SqlServerIDao(SqlConnection connection, ILogger<SqlServerIDao> logg
     {
         result = type switch
         {
-            DataType.Datetime or DataType.String or DataType.Text or DataType.Na => new DatabaseTypeValue(s),
-            DataType.Int when int.TryParse(s, out var resultInt) => new DatabaseTypeValue(I: resultInt),
+            ColumnType.Datetime or ColumnType.String or ColumnType.Text => new DatabaseTypeValue(s),
+            ColumnType.Int when int.TryParse(s, out var resultInt) => new DatabaseTypeValue(I: resultInt),
             _ => null
         };
         return result != null;
     }
 
-    public async Task CreateTable(string table, ColumnDefinition[] cols,  CancellationToken ct,IDbTransaction? tx)
+    public async Task CreateTable(string table, IEnumerable<Column> cols,  CancellationToken ct,IDbTransaction? tx)
     {
-        var columnDefinitionStrs = cols.Select(column => column.ColumnName.ToLower() switch
+        var columnDefinitionStrs = cols.Select(column => column.Name.ToLower() switch
         {
             "id" => "[id] INT IDENTITY(1,1) PRIMARY KEY",
             "deleted" => "[deleted] BIT DEFAULT 0",
             "created_at" => "[created_at] DATETIME DEFAULT GETDATE()",
             "updated_at" => "[updated_at] DATETIME DEFAULT GETDATE()",
-            _ => $"[{column.ColumnName}] {DataTypeToString(column.DataType)}"
+            _ => $"[{column.Name}] {DataTypeToString(column.Type)}"
         });
 
         var sql = $"CREATE TABLE [{table}] ({string.Join(", ", columnDefinitionStrs)});";
@@ -60,37 +60,32 @@ public class SqlServerIDao(SqlConnection connection, ILogger<SqlServerIDao> logg
         await ExecuteQuery(sql,tx, async cmd => await cmd.ExecuteNonQueryAsync(ct));
     }
 
-    public async Task AddColumns(string table, ColumnDefinition[] cols, CancellationToken ct,IDbTransaction? tx)
+    public async Task AddColumns(string table, IEnumerable<Column> cols, CancellationToken ct, IDbTransaction? tx)
     {
-        if (cols.Length == 0)
-        {
-            return;
-        }
-        
         var parts = cols.Select(x =>
-            $"ALTER TABLE [{table}] ADD [{x.ColumnName}] {DataTypeToString(x.DataType)}"
+            $"ALTER TABLE [{table}] ADD [{x.Name}] {DataTypeToString(x.Type)}"
         );
-        var sql = string.Join(";", parts.ToArray());
-        await ExecuteQuery(sql,tx, async cmd => await cmd.ExecuteNonQueryAsync(ct));
+        var sql = string.Join(";", parts);
+        await ExecuteQuery(sql, tx, async cmd => await cmd.ExecuteNonQueryAsync(ct));
     }
 
-    public async Task<ColumnDefinition[]> GetColumnDefinitions(string table, CancellationToken ct)
+    public async Task<Column[]> GetColumnDefinitions(string table, CancellationToken ct, IDbTransaction? tx)
     {
         var sql = @"
                 SELECT COLUMN_NAME, DATA_TYPE
                 FROM INFORMATION_SCHEMA.COLUMNS
                 WHERE TABLE_NAME = @tableName";
 
-        return await ExecuteQuery(sql,null, async command =>
+        return await ExecuteQuery(sql,tx, async command =>
         {
-            var columnDefinitions = new List<ColumnDefinition>();
+            var columnDefinitions = new List<Column>();
             await using var reader = await command.ExecuteReaderAsync(ct);
             while (await reader.ReadAsync(ct))
             {
-                columnDefinitions.Add(new ColumnDefinition
+                columnDefinitions.Add(new Column
                 ( 
-                    ColumnName : reader.GetString(0),
-                    DataType : StringToDataType(reader.GetString(1))
+                    Name : reader.GetString(0),
+                    Type : StringToDataType(reader.GetString(1))
                 ));
             }
 
@@ -102,10 +97,10 @@ public class SqlServerIDao(SqlConnection connection, ILogger<SqlServerIDao> logg
     {
         return dataType switch
         {
-            DataType.Int => "INT",
-            DataType.Text => "TEXT",
-            DataType.Datetime => "DATETIME",
-            DataType.String => "NVARCHAR(255)",
+            ColumnType.Int => "INT",
+            ColumnType.Text => "TEXT",
+            ColumnType.Datetime => "DATETIME",
+            ColumnType.String => "NVARCHAR(255)",
             _ => throw new NotSupportedException($"Type {dataType} is not supported")
         };
     }
@@ -115,10 +110,10 @@ public class SqlServerIDao(SqlConnection connection, ILogger<SqlServerIDao> logg
         s = s.ToLower();
         return s switch
         {
-            "int" => DataType.Int,
-            "text" => DataType.Text,
-            "datetime" => DataType.Datetime,
-            _ => DataType.String
+            "int" => ColumnType.Int,
+            "text" => ColumnType.Text,
+            "datetime" => ColumnType.Datetime,
+            _ => ColumnType.String
         };
     }
 

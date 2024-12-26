@@ -1,4 +1,3 @@
-using FluentCMS.Utils.RelationDbDao;
 using FluentCMS.Utils.KateQueryExt;
 
 namespace FluentCMS.Utils.QueryBuilder;
@@ -14,18 +13,20 @@ public record Junction(
 
 public static class JunctionHelper
 {
-    public static ColumnDefinition[] GetColumnDefinitions(this Junction c)
+    /*
+    public static Attribute[] GetAttributes(this Junction c)
     {
         return
         [
-            new ColumnDefinition(DefaultFields.Id, DataType.Int),
-            new ColumnDefinition(c.SourceAttribute.Field, DataType.Int),
-            new ColumnDefinition(c.TargetAttribute.Field, DataType.Int),
-            new ColumnDefinition(DefaultFields.CreatedAt, DataType.Datetime),
-            new ColumnDefinition(DefaultFields.UpdatedAt, DataType.Datetime),
-            new ColumnDefinition(DefaultFields.Deleted, DataType.Int),
+            new Column(DefaultFields.Id, DataType.Int),
+            new Column(c.SourceAttribute.Field, DataType.Int),
+            new Column(c.TargetAttribute.Field, DataType.Int),
+            new Column(DefaultFields.CreatedAt, DataType.Datetime),
+            new Column(DefaultFields.UpdatedAt, DataType.Datetime),
+            new Column(DefaultFields.Deleted, DataType.Int),
         ];
     }
+    */
 
     public static Junction Junction(LoadedEntity sourceEntity, LoadedEntity targetEntity,
         LoadedAttribute crossAttribute)
@@ -52,10 +53,31 @@ public static class JunctionHelper
             TableName: tableName,
             DataType: DataType.Int
         );
-
-        var crossEntity = new LoadedEntity
+        
+        var idAttr = new LoadedAttribute
         (
-            Attributes: [sourceAttribute, targetAttribute],
+            Field: DefaultFields.Id,
+            TableName: tableName,
+            DataType: DataType.Int
+        );
+
+        var created = new LoadedAttribute
+        (
+            Field: DefaultFields.CreatedAt,
+            TableName: tableName,
+            DataType: DataType.Datetime
+        );
+
+        var updated = new LoadedAttribute
+        (
+            Field: DefaultFields.UpdatedAt,
+            TableName: tableName,
+            DataType: DataType.Datetime
+        );
+
+        var junctionEntity = new LoadedEntity
+        (
+            Attributes: [idAttr,sourceAttribute, targetAttribute,created,updated],
             PrimaryKeyAttribute: id,
             LoadedTitleAttribute: id,
             DeletedAttribute: deleted,
@@ -63,7 +85,7 @@ public static class JunctionHelper
             TableName: tableName
         );
         return new Junction(
-            JunctionEntity: crossEntity,
+            JunctionEntity: junctionEntity,
             TargetEntity: targetEntity,
             SourceEntity: sourceEntity,
             SourceAttribute: sourceAttribute,

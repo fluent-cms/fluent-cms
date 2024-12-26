@@ -51,8 +51,8 @@ public class SchemaApiClient (HttpClient client)
                 Header: lookup,
                 InList: true,
                 InDetail: true,
-                DataType: DataType.Int,
-                Type: DisplayType.Lookup
+                DataType: DataType.Lookup,
+                DisplayType: DisplayType.Lookup
             ));
         }
 
@@ -63,8 +63,8 @@ public class SchemaApiClient (HttpClient client)
                 Field: junction,
                 Options: junction,
                 Header: junction,
-                DataType: DataType.Na,
-                Type: DisplayType.Junction,
+                DataType: DataType.Junction,
+                DisplayType: DisplayType.Junction,
                 InDetail: true
             ));
         }

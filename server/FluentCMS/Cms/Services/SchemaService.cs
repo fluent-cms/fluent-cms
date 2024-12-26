@@ -1,7 +1,6 @@
 using System.Data;
 using System.Text.Json;
 using FluentCMS.Cms.Models;
-using FluentCMS.Types;
 using FluentResults;
 using FluentCMS.Utils.RelationDbDao;
 using FluentCMS.Utils.HookFactory;
@@ -158,7 +157,8 @@ public sealed class SchemaService(
             ]
         );
         entity = entity.WithDefaultAttr();
-        await dao.CreateTable(entity.TableName, entity.Definitions().EnsureDeleted(),ct,tx);
+        cols = entity.Attributes.Select(x => new Column(x.Field, x.DataType)).ToArray();
+        await dao.CreateTable(entity.TableName, cols.EnsureDeleted(),ct,tx);
     }
 
     public async Task RemoveEntityInTopMenuBar(Entity entity, CancellationToken ct, IDbTransaction? tx)
@@ -281,4 +281,6 @@ public sealed class SchemaService(
         var count = await queryExecutor.Count(query, token);
         return count == 0 ? Result.Ok() : Result.Fail($"the schema name {schema.Name} was taken by other schema");
     }
+    
+    
 }

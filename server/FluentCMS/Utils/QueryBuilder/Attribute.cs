@@ -1,6 +1,5 @@
 using System.Collections.Immutable;
 using System.Globalization;
-using FluentCMS.Utils.RelationDbDao;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
@@ -8,7 +7,7 @@ public record Attribute(
     string Field,
     string Header = "",
     string DataType = DataType.String,
-    string Type = DisplayType.Text,
+    string DisplayType = DisplayType.Text,
     bool InList = true,
     bool InDetail = true,
     bool IsDefault = false,
@@ -23,7 +22,7 @@ public record LoadedAttribute(
 
     string Header = "",
     string DataType = DataType.String,
-    string Type = DisplayType.Text,
+    string DisplayType = DisplayType.Text,
 
     bool InList = true,
     bool InDetail = true,
@@ -38,7 +37,7 @@ public record LoadedAttribute(
 ) : Attribute(
     Field: Field,
     Header: Header,
-    Type: Type,
+    DisplayType: DisplayType,
     DataType: DataType,
     InList: InList,
     InDetail: InDetail,
@@ -59,7 +58,7 @@ public sealed record GraphAttribute(
 
     string Header = "",
     string DataType = DataType.String,
-    string Type = DisplayType.Text,
+    string DisplayType = DisplayType.Text,
 
     bool InList = true,
     bool InDetail = true,
@@ -69,10 +68,10 @@ public sealed record GraphAttribute(
     string Validation = "",
     string ValidationMessage = "",
     
-    LoadedEntity? Lookup = default,
+    LoadedEntity? Lookup = null,
         
-    Junction? Junction = default,
-    Pagination? Pagination = default
+    Junction? Junction = null,
+    Pagination? Pagination = null
     
 ) : LoadedAttribute(
     TableName:TableName,
@@ -80,7 +79,7 @@ public sealed record GraphAttribute(
 
     Header :Header,
     DataType : DataType,
-    Type : Type,
+    DisplayType : DisplayType,
 
     InList : InList,
     InDetail : InDetail,
@@ -104,7 +103,7 @@ public static class AttributeHelper
             Field: a.Field,
             Header: a.Header,
             DataType: a.DataType,
-            Type: a.Type,
+            DisplayType: a.DisplayType,
             InList: a.InList,
             InDetail: a.InDetail,
             IsDefault: a.IsDefault,
@@ -128,7 +127,7 @@ public static class AttributeHelper
             Field: a.Field,
             Header: a.Header,
             DataType: a.DataType,
-            Type: a.Type,
+            DisplayType: a.DisplayType,
             InList: a.InList,
             InDetail: a.InDetail,
             IsDefault: a.IsDefault,
@@ -173,22 +172,20 @@ public static class AttributeHelper
 
     public static bool IsCompound(this Attribute a)
     {
-        return a.Type is DisplayType.Lookup or DisplayType.Junction;
+        return a.DataType is DataType.Lookup or DataType.Junction;
     }
     
-    public static Attribute ToAttribute(this ColumnDefinition col)
+    public static Attribute ToAttribute(string name, string colType)
     {
         return new Attribute(
-            Field: col.ColumnName,
-            Header: SnakeToTitle(col.ColumnName),
-            DataType: col.DataType
+            Field: name,
+            Header: SnakeToTitle(name),
+            DataType: colType 
         );
 
         string SnakeToTitle(string snakeStr)
         {
-            // Split the snake_case string by underscores
             var components = snakeStr.Split('_');
-            // Capitalize the first letter of each component and join them with spaces
             for (var i = 0; i < components.Length; i++)
             {
                 if (components[i].Length > 0)
@@ -196,7 +193,6 @@ public static class AttributeHelper
                     components[i] = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(components[i]);
                 }
             }
-
             return string.Join(" ", components);
         }
     }
@@ -226,7 +222,7 @@ public static class AttributeHelper
     public static T[] GetLocalAttrs<T>(this IEnumerable<T>? arr)
         where T : Attribute
     {
-        return arr?.Where(x => x.Type != DisplayType.Junction).ToArray() ?? [];
+        return arr?.Where(x => x.DataType != DataType.Junction).ToArray() ?? [];
     }
 
     public static T[] GetLocalAttrs<T>(this IEnumerable<T>? arr, string primaryKey, InListOrDetail listOrDetail)
@@ -234,27 +230,27 @@ public static class AttributeHelper
     {
         return arr?.Where(x =>
             x.Field == primaryKey
-            || x.Type != DisplayType.Junction && (listOrDetail == InListOrDetail.InList ? x.InList : x.InDetail)
+            || x.DataType != DataType.Junction && (listOrDetail == InListOrDetail.InList ? x.InList : x.InDetail)
         ).ToArray() ?? [];
     }
 
     public static T[] GetLocalAttrs<T>(this IEnumerable<T>? arr, string[] attributes)
         where T : Attribute
     {
-        return arr?.Where(x => x.Type != DisplayType.Junction && attributes.Contains(x.Field)).ToArray() ?? [];
+        return arr?.Where(x => x.DataType != DataType.Junction && attributes.Contains(x.Field)).ToArray() ?? [];
     }
 
-    public static T[] GetAttrByType<T>(this IEnumerable<T>? arr, string displayType)
+    public static T[] GetAttrByType<T>(this IEnumerable<T>? arr, string t)
         where T : Attribute
     {
-        return arr?.Where(x => x.Type == displayType).ToArray() ?? [];
+        return arr?.Where(x => x.DataType == t).ToArray() ?? [];
     }
 
     public static T[] GetAttrByType<T>(this IEnumerable<T>? arr, string type,
         InListOrDetail listOrDetail)
         where T : Attribute
     {
-        return arr?.Where(x => x.Type == type && (listOrDetail == InListOrDetail.InList ? x.InList : x.InDetail))
+        return arr?.Where(x => x.DataType == type && (listOrDetail == InListOrDetail.InList ? x.InList : x.InDetail))
             .ToArray() ?? [];
     }
 

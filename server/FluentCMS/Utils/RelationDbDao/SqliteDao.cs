@@ -22,8 +22,8 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
     {
         result = type switch
         {
-            DataType.Datetime or DataType.String or DataType.Text or DataType.Na => new DatabaseTypeValue(s),
-            DataType.Int when int.TryParse(s, out var resultInt) => new DatabaseTypeValue(I: resultInt),
+            ColumnType.Datetime or ColumnType.String or ColumnType.Text  => new DatabaseTypeValue(s),
+            ColumnType.Int when int.TryParse(s, out var resultInt) => new DatabaseTypeValue(I: resultInt),
             _ => null
         };
         return result != null;
@@ -32,15 +32,15 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
     public async ValueTask<IDbTransaction> BeginTransactionAsync(CancellationToken ct = default)=> await connection.BeginTransactionAsync(ct);
     
 
-    public async Task CreateTable(string tableName, ColumnDefinition[] cols, CancellationToken ct,IDbTransaction? tx)
+    public async Task CreateTable(string tableName, IEnumerable<Column> cols, CancellationToken ct,IDbTransaction? tx)
    {
-       var columnDefinitionStrs = cols.Select(column => column.ColumnName.ToLower() switch
+       var columnDefinitionStrs = cols.Select(column => column.Name.ToLower() switch
        {
            "id" => "id INTEGER  primary key autoincrement",
            "deleted" => "deleted INTEGER   default 0",
            "created_at" => "created_at integer default (datetime('now','localtime'))",
            "updated_at" => "updated_at integer default (datetime('now','localtime'))",
-           _ => $"{column.ColumnName} {DataTypeToString(column.DataType)}"
+           _ => $"{column.Name} {DataTypeToString(column.Type)}"
        });
         
        var sql= $"CREATE TABLE {tableName} ({string.Join(", ", columnDefinitionStrs)});";
@@ -54,29 +54,29 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
       await ExecuteQuery(sql,tx, async cmd => await cmd.ExecuteNonQueryAsync(ct));
    }
 
-   public async Task AddColumns(string table, ColumnDefinition[] cols, CancellationToken ct,IDbTransaction? tx)
+   public async Task AddColumns(string table, IEnumerable<Column> cols, CancellationToken ct,IDbTransaction? tx)
    {
        var parts = cols.Select(x =>
-           $"Alter Table {table} ADD COLUMN {x.ColumnName} {DataTypeToString(x.DataType)}"
+           $"Alter Table {table} ADD COLUMN {x.Name} {DataTypeToString(x.Type)}"
        );
        var sql = string.Join(";", parts.ToArray());
        await ExecuteQuery(sql, tx,async cmd => await cmd.ExecuteNonQueryAsync(ct));
    }
 
-   public async Task<ColumnDefinition[]> GetColumnDefinitions(string table,CancellationToken ct)
+   public async Task<Column[]> GetColumnDefinitions(string table,CancellationToken ct, IDbTransaction? tx)
    {
       var sql = $"PRAGMA table_info({table})";
-      return await ExecuteQuery(sql,null, async command =>
+      return await ExecuteQuery(sql,tx, async command =>
       {
          await using var reader = await command.ExecuteReaderAsync(ct);
-         var columnDefinitions = new List<ColumnDefinition>();
+         var columnDefinitions = new List<Column>();
          while (await reader.ReadAsync(ct))
          {
             /*cid, name, type, notnull, dflt_value, pk */
-            columnDefinitions.Add(new ColumnDefinition
+            columnDefinitions.Add(new Column
            ( 
-                ColumnName : reader.GetString(1),
-                DataType : StringToDataType(reader.GetString(2))
+                Name : reader.GetString(1),
+                Type : StringToDataType(reader.GetString(2))
             ));
          }
          return columnDefinitions.ToArray();
@@ -87,10 +87,10 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
     {
         return dataType switch
         {
-            DataType.Int => "INTEGER",
-            DataType.Text => "TEXT",
-            DataType.Datetime => "INTEGER",
-            DataType.String => "TEXT",
+            ColumnType.Int => "INTEGER",
+            ColumnType.Text => "TEXT",
+            ColumnType.Datetime => "INTEGER",
+            ColumnType.String => "TEXT",
             _ => throw new NotSupportedException($"Type {dataType} is not supported")
         };
     }
@@ -100,8 +100,8 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
         s = s.ToLower();
         return s switch
         {
-            "integer" => DataType.Int,
-            _ => DataType.Text
+            "integer" => ColumnType.Int,
+            _ => ColumnType.Text
         };
     }
 

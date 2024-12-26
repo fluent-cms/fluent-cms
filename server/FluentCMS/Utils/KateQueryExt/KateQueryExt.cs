@@ -26,9 +26,9 @@ public static class KateQueryExt
                 }
                 nextPrefix += node.Attribute.Field;
 
-                switch (node.Attribute.Type)
+                switch (node.Attribute.DataType)
                 {
-                    case DisplayType.Lookup:
+                    case DataType.Lookup:
                         var lookup = node.Attribute.Lookup!;
                         query
                             .LeftJoin($"{lookup.TableName} as {nextPrefix}",
@@ -36,7 +36,7 @@ public static class KateQueryExt
                             lookup.PrimaryKeyAttribute.AddTableModifier(nextPrefix))
                             .Where(lookup.DeletedAttribute.AddTableModifier(nextPrefix), false);
                         break;
-                    case DisplayType.Junction:
+                    case DataType.Junction:
                         hasJunction = true;
                         var cross = node.Attribute.Junction;
                         var crossAlias = $"{nextPrefix}_{cross!.JunctionEntity.TableName}";

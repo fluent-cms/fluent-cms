@@ -105,7 +105,7 @@ public static class SpanHelper
 
         foreach (var item in items)
         {
-            foreach (var attribute in attrs.GetAttrByType(DisplayType.Lookup))
+            foreach (var attribute in attrs.GetAttrByType(DataType.Lookup))
             {
                 if (item.TryGetValue(attribute.Field, out var value) && value is Record record)
                 {
@@ -113,7 +113,7 @@ public static class SpanHelper
                 }
             }
 
-            foreach (var attribute in attrs.GetAttrByType(DisplayType.Junction))
+            foreach (var attribute in attrs.GetAttrByType(DataType.Junction))
             {
                 if (!item.TryGetValue(attribute.Field, out var value) || value is not Record[] records ||
                     records.Length <= 0) continue;
@@ -140,7 +140,7 @@ public static class SpanHelper
         item[SpanConstants.Cursor] = Base64UrlEncoder.Encode(cursor);
     }
 
-    public static Result<ValidSpan> ToValid(this Span c, IEnumerable<Attribute> attrs, IAttributeValueResolver resolver)
+    public static Result<ValidSpan> ToValid(this Span c, IEnumerable<LoadedAttribute> attrs, IAttributeValueResolver resolver)
     {
         if (c.IsEmpty()) return new ValidSpan(c);
 

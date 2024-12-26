@@ -121,12 +121,12 @@ public sealed class QueryService(
     {
         if (attrs is null) return;
 
-        foreach (var attribute in attrs.GetAttrByType<GraphAttribute>(DisplayType.Lookup))
+        foreach (var attribute in attrs.GetAttrByType<GraphAttribute>(DataType.Lookup))
         {
             await AttachLookup(attribute, strArgs, items, ct);
         }
 
-        foreach (var attribute in attrs.GetAttrByType<GraphAttribute>(DisplayType.Junction))
+        foreach (var attribute in attrs.GetAttrByType<GraphAttribute>(DataType.Junction))
         {
             await AttachJunction(attribute, strArgs, items, ct);
         }
