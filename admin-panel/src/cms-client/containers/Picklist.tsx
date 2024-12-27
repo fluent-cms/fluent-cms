@@ -7,7 +7,7 @@ import {useDialogState} from "../../components/dialogs/useDialogState";
 import {SelectDataTable} from "../../components/dataTable/SelectDataTable";
 import {SaveDialog} from "../../components/dialogs/SaveDialog";
 
-export function Junction({baseRouter,column, data, schema, getFullAssetsURL}: {
+export function Picklist({baseRouter,column, data, schema, getFullAssetsURL}: {
     data: any,
     column: { field: string, header: string, junction: any },
     schema: any

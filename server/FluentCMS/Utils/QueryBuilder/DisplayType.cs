@@ -22,5 +22,5 @@ public static class DisplayType
     public const string Lookup = "lookup";
     public const string Multiselect = "multiselect";
 
-    public const string Junction = "junction";
+    public const string Picklist = "picklist";
 }

@@ -10,4 +10,5 @@ public static class DataType
 
     public const string Lookup = "Lookup";
     public const string Junction = "Junction";
+    public const string Collection = "Collection";
 }

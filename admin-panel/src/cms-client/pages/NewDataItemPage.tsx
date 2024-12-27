@@ -29,7 +29,7 @@ export function NewDataItemPageComponent({schema,baseRouter}:{schema:any, baseRo
 
     return <>
         <Status/>
-        <ItemForm {...{data:{}, onSubmit, columns, formId,uploadUrl,  getFullAssetsURL}}/>
         <Button label={'Save ' + schema.title} type="submit" form={formId}/>
+        <ItemForm {...{data:{}, onSubmit, columns, formId,uploadUrl,  getFullAssetsURL}}/>
     </>
 }

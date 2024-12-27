@@ -42,7 +42,8 @@
         "Int",
         "Datetime",
         "Lookup",
-        "Junction"
+        "Junction",
+        "Collection"
       ]
     },
     "displayType": {
@@ -67,19 +68,14 @@
         "lookup",
         "multiselect",
 
-        "junction",
-        "tree"
+        "picklist",
+        "datatable"
       ]
     },
     "validation": {
       "title": "Validation Rule",
       "type": "string",
       "description": "simple C# statements of Dynamic Expresso"
-    },
-    "validationMessage":{
-      "title": "Validation Error Message",
-      "type": "string",
-      "description": "The error message displayed when validation fails."
     },
     "options": {
       "title": "Options",

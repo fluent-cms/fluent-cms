@@ -7,8 +7,16 @@ namespace FluentCMS.Utils.RelationDbDao;
 
 public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connection):IDao
 {
+    private NpgsqlTransaction? _transaction;
     private readonly Compiler _compiler = new PostgresCompiler();
-    public async ValueTask<IDbTransaction> BeginTransaction() => await connection.BeginTransactionAsync();
+
+    public async ValueTask<IDbTransaction?> BeginTransaction()
+    {
+        _transaction = await connection.BeginTransactionAsync();   
+        return _transaction;
+    }
+
+    public void EndTransaction()=> _transaction = null;
 
     public bool TryParseDataType(string s, string type, out DatabaseTypeValue? result)
     {
@@ -22,14 +30,15 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
         return result != null;
     }
 
-    public Task<T> Execute<T>(Func<QueryFactory, Task<T>> queryFunc)
+    public Task<T> ExecuteKateQuery<T>(Func<QueryFactory, IDbTransaction, Task<T>> queryFunc)
     {
         var db = new QueryFactory(connection, _compiler);
         db.Logger = result => logger.LogInformation(result.ToString());
-        return queryFunc(db);
+            
+        return queryFunc(db,_transaction);
     }
 
-    public async Task CreateTable(string table, IEnumerable<Column> cols,CancellationToken ct,IDbTransaction? tx)
+    public async Task CreateTable(string table, IEnumerable<Column> cols,CancellationToken ct)
     {
         var parts = cols.Select(column => column.Name.ToLower() switch
         {
@@ -55,25 +64,25 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
                                 FOR EACH ROW
                 EXECUTE FUNCTION __update_updated_at_column();
                 """;
-        await ExecuteQuery(sql, tx, cmd => cmd.ExecuteNonQueryAsync(ct));
+        await ExecuteQuery(sql, cmd => cmd.ExecuteNonQueryAsync(ct));
     }
 
-    public async Task AddColumns(string table, IEnumerable<Column> cols, CancellationToken ct,IDbTransaction? tx)
+    public async Task AddColumns(string table, IEnumerable<Column> cols, CancellationToken ct)
     {
         var parts = cols.Select(x =>
             $"Alter Table {table} ADD COLUMN \"{x.Name}\" {DataTypeToString(x.Type)}"
         );
         var sql = string.Join(";", parts.ToArray());
-        await ExecuteQuery(sql, tx, cmd => cmd.ExecuteNonQueryAsync(ct));
+        await ExecuteQuery(sql, cmd => cmd.ExecuteNonQueryAsync(ct));
     }
     
-    public async Task<Column[]> GetColumnDefinitions(string table, CancellationToken ct,IDbTransaction? tx)
+    public async Task<Column[]> GetColumnDefinitions(string table, CancellationToken ct)
     {
         var sql = @"SELECT column_name, data_type, character_maximum_length, is_nullable, column_default
                 FROM information_schema.columns
                 WHERE table_name = @tableName;";
 
-        return await ExecuteQuery(sql, tx,async command =>
+        return await ExecuteQuery(sql, async command =>
         {
             await using var reader = command.ExecuteReader();
             var columnDefinitions = new List<Column>();
@@ -98,13 +107,12 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
     }
 
     //use callback  instead of return QueryFactory to ensure proper disposing connection
-    private async Task<T> ExecuteQuery<T>(string sql, IDbTransaction? tx, Func<NpgsqlCommand, Task<T>> executeFunc, params (string, object)[] parameters)
+    private async Task<T> ExecuteQuery<T>(string sql, Func<NpgsqlCommand, Task<T>> executeFunc, params (string, object)[] parameters)
     {
         logger.LogInformation(sql);
         await using var command = connection.CreateCommand();
         command.CommandText = sql;
-        if (tx is not null)
-            command.Transaction = tx as NpgsqlTransaction ?? throw new Exception("Transaction not supported");
+        command.Transaction = _transaction;
        
         foreach (var (paramName, paramValue) in parameters)
         {

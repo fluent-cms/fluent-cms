@@ -64,7 +64,7 @@ public class SchemaApiClient (HttpClient client)
                 Options: junction,
                 Header: junction,
                 DataType: DataType.Junction,
-                DisplayType: DisplayType.Junction,
+                DisplayType: DisplayType.Picklist,
                 InDetail: true
             ));
         }

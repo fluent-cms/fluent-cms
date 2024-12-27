@@ -8,15 +8,22 @@ namespace FluentCMS.Utils.RelationDbDao;
 public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> logger) : IDao
 {
     private readonly Compiler _compiler = new SqliteCompiler();
+    private SqliteTransaction? _transaction;
 
-    public async Task<T> Execute<T>(Func<QueryFactory, Task<T>> queryFunc)
+    public async Task<T> ExecuteKateQuery<T>(Func<QueryFactory,IDbTransaction?, Task<T>> queryFunc)
     {
         var db = new QueryFactory(connection, _compiler);
         db.Logger = result => logger.LogInformation(result.ToString());
-        return await queryFunc(db);
+        return await queryFunc(db, _transaction);
     }
 
-    public async ValueTask<IDbTransaction> BeginTransaction() => await connection.BeginTransactionAsync();
+    public async ValueTask<IDbTransaction?> BeginTransaction()
+    {
+        _transaction = await connection.BeginTransactionAsync() as SqliteTransaction;
+        return _transaction;
+    }
+    
+    public void EndTransaction() => _transaction = null;
 
     public bool TryParseDataType(string s, string type, out DatabaseTypeValue? result)
     {
@@ -29,10 +36,7 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
         return result != null;
     }
 
-    public async ValueTask<IDbTransaction> BeginTransactionAsync(CancellationToken ct = default)=> await connection.BeginTransactionAsync(ct);
-    
-
-    public async Task CreateTable(string tableName, IEnumerable<Column> cols, CancellationToken ct,IDbTransaction? tx)
+   public async Task CreateTable(string tableName, IEnumerable<Column> cols, CancellationToken ct)
    {
        var columnDefinitionStrs = cols.Select(column => column.Name.ToLower() switch
        {
@@ -51,22 +55,22 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
             BEGIN 
                 UPDATE {tableName} SET updated_at = (datetime('now','localtime')) WHERE id = OLD.id; 
             END;";
-      await ExecuteQuery(sql,tx, async cmd => await cmd.ExecuteNonQueryAsync(ct));
+      await ExecuteQuery(sql,async cmd => await cmd.ExecuteNonQueryAsync(ct));
    }
 
-   public async Task AddColumns(string table, IEnumerable<Column> cols, CancellationToken ct,IDbTransaction? tx)
+   public async Task AddColumns(string table, IEnumerable<Column> cols, CancellationToken ct)
    {
        var parts = cols.Select(x =>
            $"Alter Table {table} ADD COLUMN {x.Name} {DataTypeToString(x.Type)}"
        );
        var sql = string.Join(";", parts.ToArray());
-       await ExecuteQuery(sql, tx,async cmd => await cmd.ExecuteNonQueryAsync(ct));
+       await ExecuteQuery(sql,async cmd => await cmd.ExecuteNonQueryAsync(ct));
    }
 
-   public async Task<Column[]> GetColumnDefinitions(string table,CancellationToken ct, IDbTransaction? tx)
+   public async Task<Column[]> GetColumnDefinitions(string table,CancellationToken ct)
    {
       var sql = $"PRAGMA table_info({table})";
-      return await ExecuteQuery(sql,tx, async command =>
+      return await ExecuteQuery(sql, async command =>
       {
          await using var reader = await command.ExecuteReaderAsync(ct);
          var columnDefinitions = new List<Column>();
@@ -105,14 +109,12 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
         };
     }
 
-    private async Task<T> ExecuteQuery<T>(string sql,IDbTransaction? tx, Func<SqliteCommand, Task<T>> executeFunc,
+    private async Task<T> ExecuteQuery<T>(string sql, Func<SqliteCommand, Task<T>> executeFunc,
         params (string, object)[] parameters)
     {
         logger.LogInformation(sql);
         await using var command = new SqliteCommand(sql, connection);
-        if (tx is not null)
-            command.Transaction =
-                tx as SqliteTransaction ?? throw new Exception("Transaction is not a Sqlite transaction");
+        command.Transaction = _transaction;
 
         foreach (var (paramName, paramValue) in parameters)
         {

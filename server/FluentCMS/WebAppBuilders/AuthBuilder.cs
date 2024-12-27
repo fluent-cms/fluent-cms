@@ -59,7 +59,15 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
                 ISchemaPermissionService schemaPermissionService, SchemaPreSaveArgs args
             ) => args with
             {
-                RefSchema = await schemaPermissionService.Save(args.RefSchema)
+                RefSchema = await schemaPermissionService.BeforeSave(args.RefSchema)
+            });
+            
+            registry.SchemaPostSave.RegisterDynamic("*", async (
+                ISchemaPermissionService schemaPermissionService, SchemaPostSaveArgs args
+            ) =>
+            {
+                await schemaPermissionService.AfterSave(args.Schema);
+                return args;
             });
 
             registry.SchemaPreDel.RegisterDynamic("*", async (

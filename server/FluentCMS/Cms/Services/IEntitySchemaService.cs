@@ -9,7 +9,7 @@ public interface IEntitySchemaService: IEntityVectorResolver, IAttributeValueRes
 {
     Task<Result<LoadedEntity>> GetLoadedEntity(string name, CancellationToken token = default);
     Task<Entity?> GetTableDefine(string table, CancellationToken token);
-    Task<Schema> SaveTableDefine(Schema schemaDto, CancellationToken ct);
+    Task<Schema> SaveTableDefine(Schema schema, CancellationToken ct);
     Task<Schema> AddOrUpdateByName(Entity entity, CancellationToken ct =default);
     Task<Result<LoadedAttribute>> LoadCompoundAttribute(LoadedEntity entity, LoadedAttribute attr,HashSet<string> visited, CancellationToken ct);
     ValueTask<ImmutableArray<Entity>> AllEntities(CancellationToken ct = default);

@@ -193,9 +193,9 @@ public static class WebApp
                     new Attribute(Field: "body", Header: "Body"),
                     new Attribute(Field: "image", Header: "Image", DisplayType: DisplayType.Image),
 
-                    new Attribute(Field: "tag", Header: "Tag", DataType: DataType.Junction, DisplayType: DisplayType.Junction,
+                    new Attribute(Field: "tag", Header: "Tag", DataType: DataType.Junction, DisplayType: DisplayType.Picklist,
                         Options: "tag"),
-                    new Attribute(Field: "author", Header: "Author", DataType: DataType.Junction, DisplayType: DisplayType.Junction,
+                    new Attribute(Field: "author", Header: "Author", DataType: DataType.Junction, DisplayType: DisplayType.Picklist,
                         Options: "author"),
                     new Attribute(Field: "category", Header: "Category", DataType: DataType.Lookup,
                         DisplayType: DisplayType.Lookup, Options: "category"),

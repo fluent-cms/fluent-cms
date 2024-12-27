@@ -4,7 +4,7 @@ import {deleteItem, updateItem, useItemData} from "../services/entity";
 import {Divider} from "primereact/divider";
 import {getSubPageColumns, getWriteColumns} from "../services/columnUtil";
 import {Button} from "primereact/button";
-import {Junction} from "../containers/Junction";
+import {Picklist} from "../containers/Picklist";
 import {useRequestStatus} from "../containers/useFormStatus";
 import {fileUploadURL, getFullAssetsURL} from "../services/configs";
 import {PageLayout} from "./PageLayout";
@@ -48,16 +48,16 @@ export function DataItemPageComponent({schema, baseRouter}:{schema:any, baseRout
     }
     return <>
         <Status/>
-        <ItemForm {...{data, id, onSubmit, columns,formId,uploadUrl,  getFullAssetsURL}} />
         <Button type={'submit'} label={"Save " + schema.title} icon="pi pi-check" form={formId}/>
         {' '}
         <Button type={'button'} label={"Delete " + schema.title} severity="danger" onClick={onDelete}/>
+        <ItemForm {...{data, id, onSubmit, columns,formId,uploadUrl,  getFullAssetsURL}} />
         {
             subPages.map((column: any) => {
                 const props = {schema, data, column,  getFullAssetsURL,baseRouter}
                 return <div key={column.field}>
                     <Divider/>
-                    { column.displayType === 'junction' && <Junction key={column.field} {...props}/> }
+                    { column.displayType === 'picklist' && <Picklist key={column.field} {...props}/> }
                 </div>
             })
         }

@@ -12,8 +12,7 @@ public record Attribute(
     bool InDetail = true,
     bool IsDefault = false,
     string Options = "",
-    string Validation = "",
-    string ValidationMessage = ""
+    string Validation = ""
 );
 
 public record LoadedAttribute(
@@ -30,7 +29,6 @@ public record LoadedAttribute(
 
     string Options = "", 
     string Validation = "",
-    string ValidationMessage = "",
     
     Junction? Junction = null,
     LoadedEntity? Lookup = null
@@ -43,7 +41,6 @@ public record LoadedAttribute(
     InDetail: InDetail,
     IsDefault:IsDefault,
     Validation:Validation,
-    ValidationMessage:ValidationMessage,
     Options: Options
 );
 
@@ -66,7 +63,6 @@ public sealed record GraphAttribute(
 
     string Options = "", 
     string Validation = "",
-    string ValidationMessage = "",
     
     LoadedEntity? Lookup = null,
         
@@ -87,7 +83,6 @@ public sealed record GraphAttribute(
 
     Options :Options, 
     Validation : Validation,
-    ValidationMessage : ValidationMessage,
     
     Junction:Junction,
     Lookup :Lookup
@@ -108,8 +103,7 @@ public static class AttributeHelper
             InDetail: a.InDetail,
             IsDefault: a.IsDefault,
             Options: a.Options,
-            Validation: a.Validation,
-            ValidationMessage: a.ValidationMessage
+            Validation: a.Validation
         );
     }
 
@@ -132,8 +126,7 @@ public static class AttributeHelper
             InDetail: a.InDetail,
             IsDefault: a.IsDefault,
             Options: a.Options,
-            Validation: a.Validation,
-            ValidationMessage: a.ValidationMessage
+            Validation: a.Validation
         );
     }
 
@@ -158,7 +151,7 @@ public static class AttributeHelper
         val = a.Options;
         return !string.IsNullOrWhiteSpace(val);
     }
-    public static bool GetSelectItems(this Attribute a, out string[] arr)
+    public static bool GetDropdownOptions(this Attribute a, out string[] arr)
     {
         arr = a.Options.Split(',');
         return arr.Length > 0;
@@ -174,7 +167,12 @@ public static class AttributeHelper
     {
         return a.DataType is DataType.Lookup or DataType.Junction;
     }
-    
+
+    public static bool IsLocal(this Attribute a)
+    {
+        return a.DataType  != DataType.Junction && a.DataType  != DataType.Collection;
+    }
+
     public static Attribute ToAttribute(string name, string colType)
     {
         return new Attribute(
@@ -222,7 +220,7 @@ public static class AttributeHelper
     public static T[] GetLocalAttrs<T>(this IEnumerable<T>? arr)
         where T : Attribute
     {
-        return arr?.Where(x => x.DataType != DataType.Junction).ToArray() ?? [];
+        return arr?.Where(x=>x.IsLocal()).ToArray() ?? [];
     }
 
     public static T[] GetLocalAttrs<T>(this IEnumerable<T>? arr, string primaryKey, InListOrDetail listOrDetail)
@@ -230,14 +228,14 @@ public static class AttributeHelper
     {
         return arr?.Where(x =>
             x.Field == primaryKey
-            || x.DataType != DataType.Junction && (listOrDetail == InListOrDetail.InList ? x.InList : x.InDetail)
+            || x.IsLocal() && (listOrDetail == InListOrDetail.InList ? x.InList : x.InDetail)
         ).ToArray() ?? [];
     }
 
     public static T[] GetLocalAttrs<T>(this IEnumerable<T>? arr, string[] attributes)
         where T : Attribute
     {
-        return arr?.Where(x => x.DataType != DataType.Junction && attributes.Contains(x.Field)).ToArray() ?? [];
+        return arr?.Where(x => x.IsLocal() && attributes.Contains(x.Field)).ToArray() ?? [];
     }
 
     public static T[] GetAttrByType<T>(this IEnumerable<T>? arr, string t)

@@ -1,4 +1,3 @@
-using System.Data;
 using FluentCMS.Cms.Models;
 using FluentResults;
 using FluentCMS.Utils.QueryBuilder;
@@ -19,23 +18,25 @@ public static class SchemaName
 
 public interface ISchemaService
 {
-    Task<Schema[]> All(string type, IEnumerable<string>? names, CancellationToken cancellationToken = default);
-    Task<Schema[]> AllWithAction(string type, CancellationToken token = default);
+    Task<Schema[]> All(string type, IEnumerable<string>? names, CancellationToken ct = default);
+    Task<Schema[]> AllWithAction(string type, CancellationToken ct = default);
 
-    Task<Schema?> ByIdWithAction(int id, CancellationToken token = default);
-    Task<Schema?> ById(int id, CancellationToken cancellationToken = default);
+    Task<Schema?> ByIdWithAction(int id, CancellationToken ct = default);
+    Task<Schema?> ById(int id, CancellationToken ct = default);
 
-    Task<Result> NameNotTakenByOther(Schema schema, CancellationToken token);
-    Task<Schema?> GetByNameDefault(string name, string type, CancellationToken token = default);
-    Task<Schema?> GetByNamePrefixDefault(string name, string type, CancellationToken token = default);
+    Task<Result> NameNotTakenByOther(Schema schema, CancellationToken ct);
+    Task<Schema?> GetByNameDefault(string name, string type, CancellationToken ct = default);
+    Task<Schema?> GetByNamePrefixDefault(string name, string type, CancellationToken ct = default);
 
-    Task<Schema> SaveWithAction(Schema schema, CancellationToken ct=default, IDbTransaction? tx=null);
-    Task<Schema> AddOrUpdateByNameWithAction(Schema schema, CancellationToken ct = default,IDbTransaction? tx=null );
-    Task Delete(int id, CancellationToken token = default,IDbTransaction? tx =null);
+    Task<Schema> SaveWithAction(Schema schema, CancellationToken ct=default);
+    Task<Schema> Save(Schema dto,CancellationToken ct  = default);
     
-    Task EnsureTopMenuBar(CancellationToken ct = default,IDbTransaction? tx = null);
-    Task EnsureSchemaTable(CancellationToken token = default,IDbTransaction? trans = null);
+    Task<Schema> AddOrUpdateByNameWithAction(Schema schema, CancellationToken ct = default);
+    Task Delete(int id, CancellationToken ct = default);
+    
+    Task EnsureTopMenuBar(CancellationToken ct = default);
+    Task EnsureSchemaTable(CancellationToken ct = default);
 
-    Task RemoveEntityInTopMenuBar(Entity entity, CancellationToken ct,IDbTransaction? tx= null);
-    public Task EnsureEntityInTopMenuBar(Entity entity, CancellationToken ct,IDbTransaction? tx = null);
+    Task RemoveEntityInTopMenuBar(Entity entity, CancellationToken ct = default);
+    public Task EnsureEntityInTopMenuBar(Entity entity, CancellationToken ct = default);
 }

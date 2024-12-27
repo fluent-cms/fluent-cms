@@ -3,7 +3,6 @@ using System.Security.Claims;
 using FluentCMS.Auth.models;
 using FluentCMS.Cms.Services;
 using FluentCMS.Cms.Models;
-using FluentCMS.Utils.RelationDbDao;
 using FluentCMS.Utils.IdentityExt;
 using FluentCMS.Utils.QueryBuilder;
 using FluentCMS.Utils.ResultExt;
@@ -47,22 +46,29 @@ public class SchemaPermissionService<TUser>(
         await EnsureWritePermissionAsync(find);
     }
 
-    public async Task<Schema> Save(Schema schema)
+    public async Task<Schema> BeforeSave(Schema schema)
     {
         if (!contextAccessor.HttpContext.GetUserId(out var userId))
         {
             throw new ResultException($"You are not logged in, can not save schema {schema.Type} [{schema.Name}]");
         }
         await EnsureWritePermissionAsync(schema);
-        
-        if (schema.Id != 0) return schema;
-        
-        schema = schema with { CreatedBy = userId};
-        if (schema.Type != SchemaType.Entity) return schema;
-        
-        await EnsureCurrentUserHaveEntityAccess(schema);
-        schema = EnsureSchemaHaveCreatedByField(schema).Ok();
+
+        if (schema.Id == 0)
+        {
+            schema = schema with { CreatedBy = userId };
+            if (schema.Type == SchemaType.Entity)
+            {
+                schema = EnsureSchemaHaveCreatedByField(schema).Ok();
+            }
+        }
+
         return schema;
+    }
+
+    public async Task AfterSave(Schema schema)
+    {
+        await EnsureCurrentUserHaveEntityAccess(schema);
     }
 
     private async Task EnsureWritePermissionAsync(Schema schema)

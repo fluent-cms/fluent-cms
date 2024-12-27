@@ -8,15 +8,22 @@ namespace FluentCMS.Utils.RelationDbDao;
 public class SqlServerIDao(SqlConnection connection, ILogger<SqlServerIDao> logger ) : IDao
 {
     private readonly Compiler _compiler = new SqlServerCompiler();
+    private  SqlTransaction? _transaction = null;
 
-    public async Task<T> Execute<T>(Func<QueryFactory, Task<T>> queryFunc)
+    public async Task<T> ExecuteKateQuery<T>(Func<QueryFactory, IDbTransaction?, Task<T>> queryFunc)
     {
         var db = new QueryFactory(connection, _compiler);
         db.Logger = result => logger.LogInformation(result.ToString());
-        return await queryFunc(db);
+        return await queryFunc(db,_transaction);
     }
 
-    public async ValueTask<IDbTransaction> BeginTransaction()=>await connection.BeginTransactionAsync();
+    public async ValueTask<IDbTransaction?> BeginTransaction()
+    {
+        _transaction= await connection.BeginTransactionAsync() as SqlTransaction;
+        return _transaction;
+    }
+
+    public void EndTransaction() => _transaction = null;
 
     public bool TryParseDataType(string s, string type, out DatabaseTypeValue? result)
     {
@@ -29,7 +36,7 @@ public class SqlServerIDao(SqlConnection connection, ILogger<SqlServerIDao> logg
         return result != null;
     }
 
-    public async Task CreateTable(string table, IEnumerable<Column> cols,  CancellationToken ct,IDbTransaction? tx)
+    public async Task CreateTable(string table, IEnumerable<Column> cols,  CancellationToken ct)
     {
         var columnDefinitionStrs = cols.Select(column => column.Name.ToLower() switch
         {
@@ -42,7 +49,7 @@ public class SqlServerIDao(SqlConnection connection, ILogger<SqlServerIDao> logg
 
         var sql = $"CREATE TABLE [{table}] ({string.Join(", ", columnDefinitionStrs)});";
         
-        await ExecuteQuery(sql, tx,async cmd => await cmd.ExecuteNonQueryAsync(ct));
+        await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(ct));
         sql = $"""
                CREATE TRIGGER trg_{table}_updated_at 
                ON [{table}] 
@@ -57,26 +64,26 @@ public class SqlServerIDao(SqlConnection connection, ILogger<SqlServerIDao> logg
                END;
                """;
 
-        await ExecuteQuery(sql,tx, async cmd => await cmd.ExecuteNonQueryAsync(ct));
+        await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(ct));
     }
 
-    public async Task AddColumns(string table, IEnumerable<Column> cols, CancellationToken ct, IDbTransaction? tx)
+    public async Task AddColumns(string table, IEnumerable<Column> cols, CancellationToken ct)
     {
         var parts = cols.Select(x =>
             $"ALTER TABLE [{table}] ADD [{x.Name}] {DataTypeToString(x.Type)}"
         );
         var sql = string.Join(";", parts);
-        await ExecuteQuery(sql, tx, async cmd => await cmd.ExecuteNonQueryAsync(ct));
+        await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(ct));
     }
 
-    public async Task<Column[]> GetColumnDefinitions(string table, CancellationToken ct, IDbTransaction? tx)
+    public async Task<Column[]> GetColumnDefinitions(string table, CancellationToken ct)
     {
         var sql = @"
                 SELECT COLUMN_NAME, DATA_TYPE
                 FROM INFORMATION_SCHEMA.COLUMNS
                 WHERE TABLE_NAME = @tableName";
 
-        return await ExecuteQuery(sql,tx, async command =>
+        return await ExecuteQuery(sql, async command =>
         {
             var columnDefinitions = new List<Column>();
             await using var reader = await command.ExecuteReaderAsync(ct);
@@ -120,13 +127,12 @@ public class SqlServerIDao(SqlConnection connection, ILogger<SqlServerIDao> logg
     // Use callback instead of return QueryFactory to ensure proper disposing connection
     private async Task<T> ExecuteQuery<T>(
         string sql, 
-        IDbTransaction? tx,
         Func<SqlCommand, Task<T>> executeFunc, 
         params (string, object)[] parameters)
     {
         logger.LogInformation(sql);
         await using var command = new SqlCommand(sql, connection);
-        if (tx is not null) command.Transaction = tx as SqlTransaction ?? throw new Exception("Transaction is not supported");
+        command.Transaction = _transaction as SqlTransaction;
 
         foreach (var (paramName, paramValue) in parameters)
         {

@@ -7,10 +7,18 @@ public sealed record DatabaseTypeValue(string S = "", int? I = null, DateTime? D
 
 public interface IDao
 {
+    //after begin transaction, all operation begin to use this transaction
+    //it is the caller's duty to dispose transaction
     ValueTask<IDbTransaction> BeginTransaction();
+    
+    //can not know if transaction is valid from the transaction object itself
+    //the client should dispose transaction object and let dao know transaction has ended
+    void EndTransaction();
+    
     bool TryParseDataType(string s, string type, out DatabaseTypeValue? data);
-    Task<T> Execute<T>(Func<QueryFactory, Task<T>> queryFunc);
-    Task CreateTable(string table, IEnumerable<Column> cols, CancellationToken ct = default, IDbTransaction? tx = null);
-    Task AddColumns(string table, IEnumerable<Column> cols, CancellationToken ct = default, IDbTransaction? tx = null);
-    Task<Column[]> GetColumnDefinitions(string table, CancellationToken ct,IDbTransaction? tx = null);
+    Task<T> ExecuteKateQuery<T>(Func<QueryFactory,IDbTransaction?, Task<T>> queryFunc);
+    
+    Task CreateTable(string table, IEnumerable<Column> cols, CancellationToken ct = default);
+    Task AddColumns(string table, IEnumerable<Column> cols, CancellationToken ct = default);
+    Task<Column[]> GetColumnDefinitions(string table, CancellationToken ct);
 }

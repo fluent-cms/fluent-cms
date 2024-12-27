@@ -196,10 +196,12 @@ public static class EntityHelper
     
     public static Result ValidateLocalAttributes(this LoadedEntity e,Record record)
     {
-        var interpreter = new Interpreter();
-        interpreter.Reference(typeof(Regex));
+        var interpreter = new Interpreter().Reference(typeof(Regex));
+        var result = Result.Ok();
+        
+        
         var errs = new List<IError>();
-        foreach (var localAttribute in e.Attributes.GetLocalAttrs().Where(x=>!string.IsNullOrWhiteSpace(x.Validation)))
+        foreach (var localAttribute in e.Attributes.Where(x=>x.IsLocal() && !string.IsNullOrWhiteSpace(x.Validation)))
         {
             if (!Validate(localAttribute).Try(out var err))
             {
@@ -218,19 +220,23 @@ public static class EntityHelper
                 _=> typeof(string)
             };
 
-            var err = string.IsNullOrWhiteSpace(attribute.ValidationMessage) ? null : attribute.ValidationMessage;
             try
             {
-                if (!interpreter.Eval<bool>(attribute.Validation, new Parameter(attribute.Field, typeOfAttribute, value)))
+                var res = interpreter.Eval(attribute.Validation,
+                    new Parameter(attribute.Field, typeOfAttribute, value));
+                return res switch
                 {
-                    return Result.Fail(err ?? $"Validate fail for {attribute.Header}");
-                }
+                    true => Result.Ok(),
+                    "" => Result.Ok(),
 
-                return Result.Ok();
+                    false => Result.Fail($"Validation failed for {attribute.Header}"),
+                    string errMsg => Result.Fail(errMsg),
+                    _ => Result.Fail($"Validation failed for {attribute.Header}, expression should return string or bool result"),
+                };
             }
             catch (Exception ex)
             {
-                return Result.Fail(err ?? $"validate fail for {attribute.Header}, ex = {ex.Message}");
+                return Result.Fail($"validate fail for {attribute.Header}, Validate Rule is not correct, ex = {ex.Message}");
             }
         }
     }

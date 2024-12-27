@@ -1,7 +1,7 @@
 using System.Collections.Immutable;
-using System.Data;
 using FluentCMS.Cms.Models;
 using FluentCMS.Utils.Cache;
+using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.RelationDbDao;
 using FluentCMS.Utils.QueryBuilder;
 using FluentCMS.Utils.ResultExt;
@@ -14,7 +14,9 @@ namespace FluentCMS.Cms.Services;
 public sealed class EntitySchemaService(
     ISchemaService schemaSvc,
     IDao dao,
-    KeyValueCache<ImmutableArray<Entity>> entityCache
+    KeyValueCache<ImmutableArray<Entity>> entityCache,
+HookRegistry hook,
+    IServiceProvider provider
 ) : IEntitySchemaService
 {
     public ValueTask<ImmutableArray<Entity>> AllEntities(CancellationToken ct = default)
@@ -126,81 +128,85 @@ public sealed class EntitySchemaService(
         await SaveTableDefine(ToSchema(entity), token);
     }
 
-    public async Task<Schema> SaveTableDefine(Schema dto, CancellationToken ct = default)
+    public async Task<Schema> SaveTableDefine(Schema schema, CancellationToken ct = default)
     {
+        (await schemaSvc.NameNotTakenByOther(schema, ct)).Ok();
+
+        schema = schema with
+        {
+            Settings = new Settings(
+                (schema.Settings.Entity ?? throw new ResultException("invalid payload")).WithDefaultAttr()
+            )
+        };
+        await VerifyEntity(schema.Settings.Entity!, ct);
         
-        (await schemaSvc.NameNotTakenByOther(dto, ct)).Ok();
-        var entity = (dto.Settings.Entity?? throw new ResultException("invalid payload"));
-        entity = entity.WithDefaultAttr();
-        var cols = await dao.GetColumnDefinitions(entity.TableName, ct);
-        EnsureTableNotExist().Ok();
-        await VerifyEntity(entity, ct);
+        var cols = await dao.GetColumnDefinitions(schema.Settings.Entity!.TableName, ct);
+        EnsureTableNotExist(schema,cols).Ok();
+        
+        schema = (await hook.SchemaPreSave.Trigger(provider, new SchemaPreSaveArgs(schema))).RefSchema;
         
         using var tx = await dao.BeginTransaction();
-
         try
         {
-            await SaveSchema(tx); //need  to save first because it will call trigger
-            await CreateJunctions(tx);
-            await SaveMainTable(tx);
-            await schemaSvc.EnsureEntityInTopMenuBar(entity, ct, tx);
-
-            await entityCache.Remove("", ct);
+            schema = await schemaSvc.Save(schema, ct);
+            await CreateJunctions(schema,ct);
+            await CreateMainTable(schema,cols,ct);
+            await schemaSvc.EnsureEntityInTopMenuBar(schema.Settings.Entity!, ct);
             tx.Commit();
-            return dto;
+            return schema;
         }
-        catch 
+        catch
         {
             tx.Rollback();
             throw;
         }
-
-
-        async Task SaveSchema(IDbTransaction t)
+        finally
         {
-            dto = dto with { Settings = new Settings(entity) };
-            dto = await schemaSvc.SaveWithAction(dto, ct,t);
-            entity = dto.Settings.Entity!;
-        }
-
-        async Task SaveMainTable(IDbTransaction t)
-        {
-            if (cols.Length > 0) //if table exists, alter table add columns
-            {
-                var set = cols.Select(x => x.Name.ToLower()).ToHashSet();
-                var missing = entity.Attributes.GetLocalAttrs().Where(c => !set.Contains(c.Field)).ToArray();
-                if (missing.Length > 0)
-                {
-                    var missingCols = await ToColumns(missing);
-                    await dao.AddColumns(entity.TableName, missingCols, ct,t);
-                }
-            }
-            else
-            {
-                var columns = await ToColumns(entity.Attributes.GetLocalAttrs());
-                await dao.CreateTable(entity.TableName, columns.EnsureDeleted(), ct,t);
-            }
-        }
-
-        async Task CreateJunctions(IDbTransaction t)
-        {
-            foreach (var attribute in entity.Attributes.GetAttrByType(DataType.Junction))
-            {
-                await CreateJunction(entity.ToLoadedEntity(), attribute.ToLoaded(entity.TableName), ct,t);
-            }
-        }
-
-        Result EnsureTableNotExist()
-        {
-            var creatingNewEntity = dto.Id == 0;
-            var tableExists = cols.Length > 0;
-            return creatingNewEntity && tableExists
-                ? Result.Fail($"Fail to add new entity, the table {entity.TableName} already exists")
-                : Result.Ok();
+            dao.EndTransaction();
+            await entityCache.Remove("", ct);
+            await hook.SchemaPostSave.Trigger(provider, new SchemaPostSaveArgs(schema));
         }
     }
-    
-    
+
+    private async Task CreateMainTable(Schema schema, Column[] columns,CancellationToken ct)
+    {
+        var entity = schema.Settings.Entity!;
+        if (columns.Length > 0) //if table exists, alter table add columns
+        {
+            var set = columns.Select(x => x.Name.ToLower()).ToHashSet();
+            var missing = entity.Attributes.GetLocalAttrs().Where(c => !set.Contains(c.Field)).ToArray();
+            if (missing.Length > 0)
+            {
+                var missingCols = await ToColumns(missing);
+                await dao.AddColumns(entity.TableName, missingCols, ct);
+            }
+        }
+        else
+        {
+            var newColumns = await ToColumns(entity.Attributes.GetLocalAttrs());
+            await dao.CreateTable(entity.TableName, newColumns.EnsureDeleted(), ct);
+        }
+    }
+
+    private async Task CreateJunctions(Schema schema, CancellationToken ct)
+    {
+        var entity = schema.Settings.Entity!;
+        foreach (var attribute in entity.Attributes.GetAttrByType(DataType.Junction))
+        {
+            await CreateJunction(entity.ToLoadedEntity(), attribute.ToLoaded(entity.TableName), ct);
+        }
+    }
+
+    private static Result EnsureTableNotExist(Schema schema, Column[] columns)
+    {
+        var creatingNewEntity = schema.Id == 0;
+        var tableExists = columns.Length > 0;
+        
+        return creatingNewEntity && tableExists
+            ? Result.Fail($"Fail to add new entity, the table {schema.Settings.Entity!.TableName} already exists")
+            : Result.Ok();
+    }
+
     private async Task<Column[]> ToColumns(IEnumerable<Attribute> attributes)
     {
         var ret = new List<Column>();
@@ -317,7 +323,7 @@ public sealed class EntitySchemaService(
         return entity with { Attributes = [..lst] };
     }
 
-    private async Task CreateJunction(LoadedEntity entity, LoadedAttribute attr, CancellationToken ct, IDbTransaction tx)
+    private async Task CreateJunction(LoadedEntity entity, LoadedAttribute attr, CancellationToken ct)
     {
         if (!attr.GetJunctionTarget(out var name))
         {
@@ -327,11 +333,11 @@ public sealed class EntitySchemaService(
         var targetEntity = (await GetLoadedEntity(name, ct)).Ok();
         var junction = JunctionHelper.Junction(entity, targetEntity, attr);
         var columns =
-            await dao.GetColumnDefinitions(junction.JunctionEntity.TableName, ct, tx);
+            await dao.GetColumnDefinitions(junction.JunctionEntity.TableName, ct);
         if (columns.Length == 0)
         {
             var cols =await ToColumns(junction.JunctionEntity.Attributes);
-            await dao.CreateTable(junction.JunctionEntity.TableName, cols.EnsureDeleted(), ct,tx);
+            await dao.CreateTable(junction.JunctionEntity.TableName, cols.EnsureDeleted(), ct);
         }
     }
 
