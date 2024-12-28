@@ -57,15 +57,28 @@ public class EntityApiClient(HttpClient client)
     public Task<Result> JunctionDelete(string entity, string attr, int sourceId, int id)
     {
         var payload = new object[] { new { id } };
-        return client.PostResult($"/{entity}/{sourceId}/{attr}/delete".ToEntityApi(), payload);
+        return client.PostResult($"/junction/{entity}/{sourceId}/{attr}/delete".ToEntityApi(), payload);
     }
 
     public Task<Result<ListResponse>> JunctionList(
         string entity, string attr, int sourceId, bool exclude
-    ) => client.GetResult<ListResponse>($"/{entity}/{sourceId}/{attr}?exclude={exclude}".ToEntityApi());
+    ) => client.GetResult<ListResponse>($"/junction/{entity}/{sourceId}/{attr}?exclude={exclude}".ToEntityApi());
 
     public Task<Result<JsonElement>> LookupList(
         string entity,  string query
         ) =>client.GetResult<JsonElement>($"/lookup/{entity}/?query={Uri.EscapeDataString(query)}".ToEntityApi());
     
+     public Task<Result<ListResponse>> CollectionList(
+            string entity, string attr, int sourceId
+        ) => client.GetResult<ListResponse>($"/collection/{entity}/{sourceId}/{attr}".ToEntityApi());
+
+    
+     public Task<Result<JsonElement>> CollectionInsert(
+            string entity, string attr, int sourceId, object payload
+        ) => client.PostResult<JsonElement>($"/collection/{entity}/{sourceId}/{attr}/insert".ToEntityApi(), payload);
+     
+      public Task<Result<JsonElement>> CollectionUpdate(
+                 string entity, string attr, int sourceId, object payload
+             ) => client.PostResult<JsonElement>($"/collection/{entity}/{sourceId}/{attr}/update".ToEntityApi(), payload);
+          
 }

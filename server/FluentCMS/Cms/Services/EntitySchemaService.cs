@@ -74,6 +74,9 @@ HookRegistry hook,
                 case DataType.Lookup:
                     entity = attr.Lookup!;
                     break;
+                case DataType.Collection:
+                    entity = attr.Collection!.TargetEntity;
+                    break;
                 default:
                     return Result.Fail($"Fail to resolve [{fieldName}], [{attr.Field}] is not a composite type");
             }
@@ -233,7 +236,6 @@ HookRegistry hook,
             ? await GetEntity(entity,ct)
             : Result.Fail($"Lookup target was not set to {attribute.Field}");
 
-
     private async Task<Result<LoadedAttribute>> LoadLookup(
         LoadedAttribute attr, CancellationToken ct
     ) => attr.Lookup switch
@@ -241,6 +243,17 @@ HookRegistry hook,
         not null => attr,
         _ => await GetLookupEntity(attr, ct).Map(x => attr with { Lookup = x.ToLoadedEntity() })
     };
+    
+    private async Task<Result<LoadedAttribute>> LoadCollection(
+        LoadedAttribute attr, CancellationToken ct
+    )
+    {
+        return attr.Collection switch
+        {
+            not null => attr,
+            _ => await GetCollection(attr,ct).Map(c=>attr with{Collection =c })
+        };
+    }
 
     private async Task<Result<LoadedAttribute>> LoadJunction(
         LoadedEntity entity, 
@@ -277,6 +290,7 @@ HookRegistry hook,
         {
             DataType.Junction => await LoadJunction(entity, attr,visited, ct),
             DataType.Lookup => await LoadLookup(attr, ct),
+            DataType.Collection => await LoadCollection(attr,ct),
             _ => attr
         };
     }
@@ -302,21 +316,18 @@ HookRegistry hook,
 
         foreach (var attribute in entity.Attributes)
         {
-            switch (attribute)
+            if (!attribute.IsCompound())
             {
-                case { DataType: DataType.Lookup  or DataType.Junction }:
-                    var (_, _, value, errors) = await LoadCompoundAttribute(entity, attribute, visited,ct);
-                    if (errors is not null)
-                    {
-                        return Result.Fail(errors);
-                    }
-
-                    lst.Add(value);
-                    break;
-
-                default:
-                    lst.Add(attribute);
-                    break;
+                lst.Add(attribute);
+            }
+            else
+            {
+                var (isSuccess, _, loadedAttribute, errors) = await LoadCompoundAttribute(entity, attribute, visited, ct);
+                if (!isSuccess)
+                {
+                    return Result.Fail(errors);
+                }
+                lst.Add(loadedAttribute);
             }
         }
 
@@ -341,14 +352,19 @@ HookRegistry hook,
         }
     }
 
-    private async Task CheckLookup(Attribute attr, CancellationToken ct)
-    {
-        if (attr.DataType != DataType.Lookup) throw new ResultException("lookup datatype should be int");
-        if (!attr.GetLookupTarget(out var lookupName))
-            throw new ResultException($"Lookup Option was not set for attribute `{attr.Field}`");
 
-        _ = await GetEntity(lookupName, ct) ??
-            throw new ResultException($"not find entity by name {lookupName}");
+    private async Task<Result<Collection>> GetCollection(Attribute attr, CancellationToken ct)
+    {
+        if (!attr.GetCollectionTarget(out var entityName, out var linkAttrName))
+        {
+            return Result.Fail($"Collection target entity or collection target entity link attribute was not set for attribute `{attr.Field}`");
+        }
+
+        var  entity= await GetEntity(entityName, ct).Ok();
+        var loadAttribute = entity.Attributes.FindOneAttr(linkAttrName);
+        if (loadAttribute is null) return Result.Fail($"Not found [{linkAttrName}] from entity [{entityName}]");
+        return new Collection(entity.ToLoadedEntity(),loadAttribute.ToLoaded(entity.TableName));
+    
     }
 
     private async Task VerifyEntity(Entity entity, CancellationToken ct)
@@ -367,7 +383,12 @@ HookRegistry hook,
         
         foreach (var attribute in entity.Attributes.GetAttrByType(DataType.Lookup))
         {
-            await CheckLookup(attribute, ct);
+            _= await GetLookupEntity(attribute, ct);
+        }
+        
+        foreach (var attribute in entity.Attributes.GetAttrByType(DataType.Collection))
+        {
+            _= await GetCollection(attribute, ct);
         }
     }
 

@@ -3,7 +3,6 @@ import {imageColumn} from "./imageColumn";
 import {fileColumn} from "./fileColumn";
 
 export function createColumn(props:any) {
-    console.log(props.column);
     switch (props.column.displayType){
         case 'image':
         case 'gallery':

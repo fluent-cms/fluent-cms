@@ -19,7 +19,7 @@ public static class EntityHandler
             CancellationToken ct
         ) => await entityService.ListWithAction(
             name,
-            mode?? ListResponseMode.all,
+            mode ?? ListResponseMode.all,
             new Pagination(offset, limit),
             context.Args(),
             ct));
@@ -52,25 +52,25 @@ public static class EntityHandler
             CancellationToken ct
         ) => await entityService.DeleteWithAction(name, ele, ct));
 
-        app.MapPost("/{entityName}/{id}/{attributeName}/delete", async (
+        app.MapPost("/{name}/{id}/{attributeName}/delete", async (
             IEntityService entityService,
-            string entityName,
+            string name,
             string id,
             string attributeName,
             [FromBody] JsonElement[] items,
             CancellationToken ct
-        ) => await entityService.JunctionDelete(entityName, id, attributeName, items, ct));
+        ) => await entityService.JunctionDelete(name, id, attributeName, items, ct));
 
-        app.MapPost("/{name}/{id}/{attr}/save", async (
+        app.MapPost("/junction/{name}/{id}/{attr}/save", async (
             IEntityService entityService,
             string name,
             string id,
             string attr,
             JsonElement[] elements,
             CancellationToken ct
-        ) => await entityService.JunctionAdd(name, id, attr, elements, ct));
+        ) => await entityService.JunctionSave(name, id, attr, elements, ct));
 
-        app.MapGet("/{name}/{id}/{attr}", async (
+        app.MapGet("/junction/{name}/{id}/{attr}", async (
             IEntityService entityService,
             HttpContext context,
             string name,
@@ -82,11 +82,44 @@ public static class EntityHandler
             CancellationToken ct
         ) => await entityService.JunctionList(
             name, id, attr, exclude,
-            context.Args(),
             new Pagination(offset, limit),
+            context.Args(),
             ct));
 
-        app.MapGet("lookup/{name}", async (
+        app.MapGet("/collection/{name}/{id}/{attr}", async (
+            IEntityService entityService,
+            HttpContext context,
+            string name,
+            string id,
+            string attr,
+            [FromQuery] string? offset,
+            [FromQuery] string? limit,
+            CancellationToken ct
+        ) => await entityService.CollectionList(
+            name, id, attr,
+            new Pagination(offset, limit),
+            context.Args(),
+            ct));
+
+        app.MapPost("/collection/{name}/{id}/{attr}/insert", async (
+            IEntityService entityService,
+            string name,
+            string id,
+            string attr,
+            JsonElement element,
+            CancellationToken ct
+        ) => await entityService.CollectionInsert(name, id, attr, element, ct));
+
+        app.MapPost("/collection/{name}/{id}/{attr}/update", async (
+            IEntityService entityService,
+            string name,
+            string id,
+            string attr,
+            JsonElement element,
+            CancellationToken ct
+        ) => await entityService.CollectionUpdate(name, id, attr, element, ct));
+
+        app.MapGet("/lookup/{name}", async (
             IEntityService entityService,
             string name,
             [FromQuery] string? query,

@@ -1,17 +1,22 @@
 import {Dialog} from "primereact/dialog";
 import {Button} from "primereact/button";
 
-export function SaveDialog({visible, handleHide,handleSave, children,header}: {
+export function SaveDialog({visible, handleHide, formId, handleSave, children, header}: {
     visible: any,
     handleHide: any,
-    handleSave:any
-    children:any
-    header:string
+    children: any
+    header: string
+    formId?: string
+    handleSave?: any
 }) {
     const productDialogFooter = (
         <>
             <Button label="Cancel" icon="pi pi-times" outlined onClick={handleHide}/>
-            <Button label="Save" icon="pi pi-check" onClick={handleSave}/>
+            {
+                formId 
+                ? <Button type={'submit'} label={"Save"} icon="pi pi-check" form={formId}/> 
+                : <Button label="Save" icon="pi pi-check" onClick={handleSave}/>
+            }
         </>
     );
 

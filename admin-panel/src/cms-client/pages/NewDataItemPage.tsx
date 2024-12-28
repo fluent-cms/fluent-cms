@@ -1,5 +1,4 @@
 import {ItemForm} from "../containers/ItemForm";
-import { getWriteColumns} from "../services/columnUtil";
 import {addItem} from "../services/entity";
 import {Button} from "primereact/button";
 import {fileUploadURL, getFullAssetsURL} from "../services/configs";
@@ -15,7 +14,6 @@ export function NewDataItemPage({baseRouter}:{baseRouter:string}) {
 export function NewDataItemPageComponent({schema,baseRouter}:{schema:any, baseRouter:string }) {
     const {checkError, Status} = useRequestStatus(schema.name)
     const formId = "newForm" + schema.name
-    const columns = getWriteColumns(schema)
     const uploadUrl = fileUploadURL()
 
     const onSubmit = async (formData: any) => {
@@ -28,8 +26,8 @@ export function NewDataItemPageComponent({schema,baseRouter}:{schema:any, baseRo
     }
 
     return <>
+        <Button label={'Save ' + schema.title} type="submit" form={formId}  icon="pi pi-check"/>
         <Status/>
-        <Button label={'Save ' + schema.title} type="submit" form={formId}/>
-        <ItemForm {...{data:{}, onSubmit, columns, formId,uploadUrl,  getFullAssetsURL}}/>
+        <ItemForm {...{schema,data:{}, onSubmit,  formId,uploadUrl,  getFullAssetsURL}}/>
     </>
 }

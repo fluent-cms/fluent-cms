@@ -1,7 +1,7 @@
-import {deleteSubPageItems, saveSubPageItems, useSubPageData} from "../services/entity";
+import {deleteJunctionItems, saveJunctionItems, useJunctionData} from "../services/entity";
 import {Button} from "primereact/button";
 import {useRequestStatus} from "./useFormStatus";
-import {useSubSchema} from "./useSubSchema";
+import {usePicklist} from "./usePicklist";
 import {useLazyStateHandlers} from "./useLazyStateHandlers";
 import {useDialogState} from "../../components/dialogs/useDialogState";
 import {SelectDataTable} from "../../components/dataTable/SelectDataTable";
@@ -16,19 +16,16 @@ export function Picklist({baseRouter,column, data, schema, getFullAssetsURL}: {
 }) {
     const {visible, handleShow, handleHide} = useDialogState()
     const {
-        id,
-        listColumns,
-        targetSchema,
-        existingItems,
-        setExistingItems,
-        toAddItems,
-        setToAddItems
-    } = useSubSchema(data, schema, column)
+        id, targetSchema, listColumns,
+        existingItems, setExistingItems,
+        toAddItems, setToAddItems
+    } = usePicklist(data, schema, column)
+    
     const {lazyState ,eventHandlers}= useLazyStateHandlers(10, listColumns,"");
-    const {data: subgridData, mutate: subgridMutate} = useSubPageData(schema.name, id, column.field, false, lazyState);
+    const {data: subgridData, mutate: subgridMutate} = useJunctionData(schema.name, id, column.field, false, lazyState);
 
     const {lazyState :excludedLazyState,eventHandlers:excludedEventHandlers}= useLazyStateHandlers(10, listColumns,"");
-    const {data: excludedSubgridData, mutate: execMutate} = useSubPageData(schema.name, id, column.field, true,excludedLazyState)
+    const {data: excludedSubgridData, mutate: execMutate} = useJunctionData(schema.name, id, column.field, true,excludedLazyState)
     const {checkError, Status, confirm} = useRequestStatus(column.field)
 
     const mutateDate = () => {
@@ -40,14 +37,14 @@ export function Picklist({baseRouter,column, data, schema, getFullAssetsURL}: {
     }
 
     const handleSave = async () => {
-        await saveSubPageItems(schema.name, id, column.field, toAddItems)
+        await saveJunctionItems(schema.name, id, column.field, toAddItems)
         handleHide()
         mutateDate()
     }
 
     const onDelete = async () => {
         confirm('Do you want to delete these item?', async () => {
-            const {error} = await deleteSubPageItems(schema.name, id, column.field, existingItems)
+            const {error} = await deleteJunctionItems(schema.name, id, column.field, existingItems)
             checkError(error, 'Delete Succeed')
             if (!error) {
                 mutateDate()

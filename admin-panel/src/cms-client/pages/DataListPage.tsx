@@ -1,7 +1,6 @@
 import {Link, useParams } from "react-router-dom";
 import {useListData} from "../services/entity";
 import {useLazyStateHandlers} from "../containers/useLazyStateHandlers";
-import {getListColumns, } from "../services/columnUtil";
 import {Button} from "primereact/button";
 import {getFullAssetsURL} from "../services/configs";
 import {PageLayout} from "./PageLayout";
@@ -17,8 +16,7 @@ export function DataListPage({baseRouter}:{baseRouter:string}){
 }
 
 export function DataListPageComponent({schema,baseRouter}:{schema:any,baseRouter:string}) {
-    const columns = getListColumns(schema)
-    const {primaryKey,titleAttribute} = schema;
+    const columns = schema?.attributes?.filter((column: any) => column.inList ) ?? [];
     let {lazyState, eventHandlers} = useLazyStateHandlers(schema.defaultPageSize,columns, useLocation().search.replace("?",""))
     const {data, error, isLoading}= useListData(schema.name,lazyState)
 
@@ -31,7 +29,7 @@ export function DataListPageComponent({schema,baseRouter}:{schema:any,baseRouter
         <h2>{schema.title} list</h2>
         <Link to={"new"}><Button>Create New {schema.title}</Button></Link>
         <div className="card">
-            <LazyDataTable {...{entityName:schema.name,baseRouter,columns ,primaryKey, titleAttribute ,data, eventHandlers, lazyState,  getFullAssetsURL}}/>
+            <LazyDataTable {...{columns,schema,baseRouter,data, eventHandlers, lazyState,  getFullAssetsURL}}/>
         </div>
     </>
 }

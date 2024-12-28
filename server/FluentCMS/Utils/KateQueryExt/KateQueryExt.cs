@@ -95,7 +95,7 @@ public static class KateQueryExt
                         : q.ApplyAndConstraint(filedName, c.Match, c.Values.GetValues());
                     if (ret.IsFailed)
                     {
-                        result = Result.Fail(ret.Errors);
+                        result.WithErrors(ret.Errors);
                         break;
                     }
                 }

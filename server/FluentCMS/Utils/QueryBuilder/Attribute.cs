@@ -31,7 +31,8 @@ public record LoadedAttribute(
     string Validation = "",
     
     Junction? Junction = null,
-    LoadedEntity? Lookup = null
+    LoadedEntity? Lookup = null,
+    Collection ? Collection = null
 ) : Attribute(
     Field: Field,
     Header: Header,
@@ -151,6 +152,21 @@ public static class AttributeHelper
         val = a.Options;
         return !string.IsNullOrWhiteSpace(val);
     }
+
+    public static bool GetCollectionTarget(this Attribute a, out string entityName, out string linkingAttribute)
+    {
+        (entityName, linkingAttribute) = ("", "");
+        var parts = a.Options.Split('.');
+        if (parts.Length != 2)
+        {
+            return false;
+        }
+
+        (entityName, linkingAttribute) = (parts[0], parts[1]);
+        return true;
+    }
+    
+
     public static bool GetDropdownOptions(this Attribute a, out string[] arr)
     {
         arr = a.Options.Split(',');
@@ -165,7 +181,7 @@ public static class AttributeHelper
 
     public static bool IsCompound(this Attribute a)
     {
-        return a.DataType is DataType.Lookup or DataType.Junction;
+        return a.DataType is DataType.Lookup or DataType.Junction or DataType.Collection;
     }
 
     public static bool IsLocal(this Attribute a)

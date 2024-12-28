@@ -29,10 +29,10 @@ public class SchemaApiClient (HttpClient client)
     public Task<Result<Entity>> GetLoadedEntity(string entityName)
         => client.GetResult<Entity>($"/api/schemas/entity/{entityName}");
     
-    public Task<Result<Schema>> EnsureSimpleEntity(string entity, string field) =>
-        EnsureSimpleEntity(entity, field, "", "");
-
-    public Task<Result<Schema>> EnsureSimpleEntity(string entityName, string field, string lookup, string junction)
+    public Task<Result<Schema>> EnsureSimpleEntity(string entityName, string field, 
+        string lookup = "", 
+        string junction = "", 
+        string collection = "", string linkAttribute = "")
     {
         var attr = new List<Attribute>([
             new Attribute
@@ -65,6 +65,19 @@ public class SchemaApiClient (HttpClient client)
                 Header: junction,
                 DataType: DataType.Junction,
                 DisplayType: DisplayType.Picklist,
+                InDetail: true
+            ));
+        }
+
+        if (!string.IsNullOrWhiteSpace(collection))
+        {
+            attr.Add(new Attribute
+            (
+                Field: collection,
+                Options: $"{collection}.{linkAttribute}",
+                Header: junction,
+                DataType: DataType.Collection,
+                DisplayType: DisplayType.EditTable,
                 InDetail: true
             ));
         }

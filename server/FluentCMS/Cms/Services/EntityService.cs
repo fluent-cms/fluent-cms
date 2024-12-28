@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using System.Text.Json;
 using FluentCMS.Utils.DictionaryExt;
 using FluentCMS.Utils.HookFactory;
@@ -15,7 +14,6 @@ public sealed class EntityService(
     HookRegistry hookRegistry
 ) : IEntityService
 {
-
     public async Task<ListResponse?> ListWithAction(
         string name, 
         ListResponseMode mode, 
@@ -24,13 +22,10 @@ public sealed class EntityService(
         CancellationToken ct)
     {
         var entity = (await entitySchemaSvc.GetLoadedEntity(name, ct)).Ok();
-        var groupedArgs = args.GroupByFirstIdentifier();
-
-        var filters = (await FilterHelper.Parse(entity, groupedArgs, entitySchemaSvc, entitySchemaSvc)).Ok();
-        var sorts = (await SortHelper.Parse(entity, groupedArgs, entitySchemaSvc)).Ok();
-        return await ListWithAction(entity,mode, [..filters], [..sorts], pagination, ct);
+        var (filters, sorts,validPagination) = await GetListArgs(entity, args,pagination);
+        return await ListWithAction(entity,mode, [..filters], [..sorts], validPagination, ct);
     }
-
+    
     public async Task<Record> SingleByIdBasic(string entityName, string id, string[] attributes,
         CancellationToken ct)
     {
@@ -64,10 +59,9 @@ public sealed class EntityService(
         return record;
     }
 
-
     public async Task<Record> InsertWithAction(string name, JsonElement ele, CancellationToken ct)
     {
-        return await Insert(await GetRecordCtx(name, ele, ct), ct);
+        return await InsertWithAction(await GetRecordCtx(name, ele, ct), ct);
     }
 
     public async Task BatchInsert(string tableName, IEnumerable<string> cols, IEnumerable<IEnumerable<object>> items)
@@ -78,13 +72,15 @@ public sealed class EntityService(
 
     public async Task<Record> UpdateWithAction(string name, JsonElement ele, CancellationToken ct)
     {
-        return await Update(await GetRecordCtx(name, ele, ct), ct);
+        return await UpdateWithAction(await GetRecordCtx(name, ele, ct), ct);
     }
 
     public async Task<Record> DeleteWithAction(string name, JsonElement ele, CancellationToken ct)
     {
         return await Delete(await GetRecordCtx(name, ele, ct), ct);
     }
+
+
 
     public async Task<LookupListResponse> LookupList(string name, string startsVal, CancellationToken ct = default)
     {
@@ -128,7 +124,7 @@ public sealed class EntityService(
         return ret;
     }
 
-    public async Task<int> JunctionAdd(string name, string id, string attr, JsonElement[] elements,
+    public async Task<int> JunctionSave(string name, string id, string attr, JsonElement[] elements,
         CancellationToken ct)
     {
         var ctx = await GetJunctionCtx(name, id, attr, ct);
@@ -145,46 +141,72 @@ public sealed class EntityService(
         return ret;
     }
 
-
-    public async Task<ListResponse> JunctionList(string name, string id, string attr, bool exclude,
-        StrArgs args, Pagination pagination, CancellationToken ct)
+    public async Task<ListResponse> JunctionList(string name, string sid, string attr, bool exclude,Pagination pagination, 
+        StrArgs args, CancellationToken ct)
     {
-        var ctx = await GetJunctionCtx(name, id, attr, ct);
-        var target = ctx.Junction.TargetEntity;
+        var (_, junction, id) = await GetJunctionCtx(name, sid, attr, ct);
+        var target = junction.TargetEntity;
 
         var selectAttributes = target.Attributes.GetLocalAttrs(target.PrimaryKey, InListOrDetail.InList);
 
-        var dictionary = args.GroupByFirstIdentifier();
-        var filter = (await FilterHelper.Parse(target, dictionary, entitySchemaSvc, entitySchemaSvc)).Ok();
-        var sorts = (await SortHelper.Parse(target, dictionary, entitySchemaSvc)).Ok();
-        var validPagination = PaginationHelper.ToValid(pagination, target.DefaultPageSize);
-
+        var (filters, sorts,validPagination) = await GetListArgs(target, args,pagination);
+        
         var pagedListQuery = exclude
-            ? ctx.Junction.GetNotRelatedItems(selectAttributes, filter, sorts, validPagination, [ctx.Id])
-            : ctx.Junction.GetRelatedItems(selectAttributes, filter, [..sorts], null, validPagination, [ctx.Id]);
+            ? junction.GetNotRelatedItems(selectAttributes, filters, sorts, validPagination, [id])
+            : junction.GetRelatedItems(selectAttributes, filters, [..sorts], null, validPagination, [id]);
 
         var countQuery = exclude
-            ? ctx.Junction.GetNotRelatedItemsCount(filter, [ctx.Id])
-            : ctx.Junction.GetRelatedItemsCount(filter, [ctx.Id]);
+            ? junction.GetNotRelatedItemsCount(filters, [id])
+            : junction.GetRelatedItemsCount(filters, [id]);
 
-        return new ListResponse(await queryExecutor.Many(pagedListQuery, ct),
-            await queryExecutor.Count(countQuery, ct));
+        return new ListResponse(await queryExecutor.Many(pagedListQuery, ct), await queryExecutor.Count(countQuery, ct));
     }
 
+    public async Task<Record> CollectionInsert(string name, string sid, string attr, JsonElement element, CancellationToken ct = default)
+    {
+        var (entity,collection,id) = await GetCollectionCtx(name, sid, attr, ct);
+        var item = collection.TargetEntity.Parse(element, entitySchemaSvc).Ok();
+        item[collection.LinkAttribute.Field] = id.Value;
+        return await InsertWithAction(new RecordContext(collection.TargetEntity, item), ct);
+    }
+
+    public async Task<Record> CollectionUpdate(string name, string sid, string attr, JsonElement element,
+        CancellationToken ct = default)
+    {
+        var (entity, collection, id) = await GetCollectionCtx(name, sid, attr, ct);
+        var item = collection.TargetEntity.Parse(element, entitySchemaSvc).Ok();
+        item[collection.LinkAttribute.Field] = id.Value;
+        return await UpdateWithAction(new RecordContext(collection.TargetEntity, item), ct);
+    }
+
+    public async Task<ListResponse> CollectionList(string name, string sid, string attr, Pagination pagination, StrArgs args, CancellationToken ct = default)
+    {
+        var (entity,collection,id) = await GetCollectionCtx(name, sid, attr, ct);
+        var (filters, sorts,validPagination) = await GetListArgs(collection.TargetEntity, args,pagination);
+
+        var attributes =
+            collection.TargetEntity.Attributes.GetLocalAttrs(collection.TargetEntity.PrimaryKey, InListOrDetail.InList);    
+        var listQuery = collection.List(filters,sorts,validPagination,null,attributes,[id]);
+        var countQuery = collection.Count(filters,[id]);
+        return new ListResponse(await queryExecutor.Many(listQuery,ct), await queryExecutor.Count(countQuery, ct));
+    }
+
+
+    
     private async Task<ListResponse?> ListWithAction(
+        
         LoadedEntity entity, 
         ListResponseMode mode,
-        ImmutableArray<ValidFilter> filters,
+        ValidFilter[] filters,
         ValidSort[] sorts, 
-        Pagination pagination, 
+        ValidPagination pagination, 
          CancellationToken token)
     {
-        var validPagination = PaginationHelper.ToValid(pagination, entity.DefaultPageSize);
         var args = new EntityPreGetListArgs(
             Entity: entity,
-            RefFilters: filters,
+            RefFilters: [..filters],
             RefSorts: [..sorts],
-            RefPagination: validPagination,
+            RefPagination: pagination,
             ListResponseMode: mode
         );
 
@@ -224,8 +246,9 @@ public sealed class EntityService(
             return;
         }
 
-        var lookupEntity = attr.Lookup ??
-                           throw new ResultException($"not find lookup entity from {attr.AddTableModifier()}");
+        var lookupEntity
+            = attr.Lookup ??
+              throw new ResultException($"not find lookup entity from {attr.AddTableModifier()}");
 
         var query = lookupEntity.ManyQuery(ids,
             [attr.Lookup!.PrimaryKeyAttribute, attr.Lookup!.LoadedTitleAttribute]);
@@ -241,7 +264,7 @@ public sealed class EntityService(
         }
     }
 
-    private async Task<Record> Update(RecordContext ctx, CancellationToken token)
+    private async Task<Record> UpdateWithAction(RecordContext ctx, CancellationToken token)
     {
         var (entity, record) = ctx;
         if (!record.TryGetValue(entity.PrimaryKey, out var id))
@@ -262,7 +285,7 @@ public sealed class EntityService(
         return record;
     }
 
-    private async Task<Record> Insert(RecordContext ctx, CancellationToken token)
+    private async Task<Record> InsertWithAction(RecordContext ctx, CancellationToken token)
     {
         var (entity, record) = ctx;
         entity.ValidateLocalAttributes(record).Ok();
@@ -313,26 +336,43 @@ public sealed class EntityService(
 
         return new IdContext(entity, idValue);
     }
+    
+    private record CollectionContext(LoadedEntity Entity, Collection Collection, ValidValue Id);
 
-    record JunctionContext(LoadedAttribute Attribute, Junction Junction, ValidValue Id);
-
-    private async Task<JunctionContext> GetJunctionCtx(string entityName, string strId, string attributeName,
-        CancellationToken token)
+    private async Task<CollectionContext> GetCollectionCtx(string entity, string sid, string attr, CancellationToken ct)
     {
-        var entity = (await entitySchemaSvc.GetLoadedEntity(entityName, token)).Ok();
-        var attribute = entity.Attributes.FindOneAttr(attributeName) ??
-                        throw new ResultException($"not find {attributeName} in {entityName}");
+        var loadedEntity = (await entitySchemaSvc.GetLoadedEntity(entity, ct)).Ok();
+        var attribute = loadedEntity.Attributes.FindOneAttr(attr) ??
+                        throw new ResultException($"not find {attr} in {entity}");
 
-        var junction = attribute.Junction ?? throw new ResultException($"not find Junction of {attributeName}");
-        if (!entitySchemaSvc.ResolveVal(junction.SourceAttribute, strId, out var id))
+        var collection = attribute.Collection ?? throw new ResultException($"not find Junction of {attr}");
+        if (!entitySchemaSvc.ResolveVal(loadedEntity.PrimaryKeyAttribute, sid, out var id))
         {
-            throw new ResultException($"Failed to cast {strId} to {junction.SourceAttribute.DataType}");
+            throw new ResultException($"Failed to cast {sid} to {loadedEntity.PrimaryKeyAttribute.DataType}");
+        }
+        return new CollectionContext(loadedEntity, collection, id);
+    }
+
+
+    private record JunctionContext(LoadedAttribute Attribute, Junction Junction, ValidValue Id);
+    
+
+    private async Task<JunctionContext> GetJunctionCtx(string entity, string sid, string attr, CancellationToken ct)
+    {
+        var loadedEntity = (await entitySchemaSvc.GetLoadedEntity(entity, ct)).Ok();
+        var attribute = loadedEntity.Attributes.FindOneAttr(attr) ??
+                        throw new ResultException($"not find {attr} in {entity}");
+
+        var junction = attribute.Junction ?? throw new ResultException($"not find Junction of {attr}");
+        if (!entitySchemaSvc.ResolveVal(junction.SourceAttribute, sid, out var id))
+        {
+            throw new ResultException($"Failed to cast {sid} to {junction.SourceAttribute.DataType}");
         }
 
         return new JunctionContext(attribute, junction, id);
     }
 
-    record RecordContext(LoadedEntity Entity, Record Record);
+    private record RecordContext(LoadedEntity Entity, Record Record);
     private async Task<RecordContext> GetRecordCtx(string name, JsonElement ele, CancellationToken token)
     {
         var entity = (await entitySchemaSvc.GetLoadedEntity(name, token)).Ok();
@@ -349,5 +389,15 @@ public sealed class EntityService(
         var validSort = (await SortHelper.ToValidSorts([sort], entity, entitySchemaSvc)).Ok();
         var pagination = PaginationHelper.ToValid(new Pagination(), entity.DefaultPageSize);
         return new LookupContext(entity, validSort, pagination,[entity.PrimaryKeyAttribute,entity.LoadedTitleAttribute]);
+    }
+
+    private record ListArgs(ValidFilter[] Filters, ValidSort[] Sorts, ValidPagination Pagination);
+    private async Task<ListArgs> GetListArgs(LoadedEntity entity,  StrArgs args,Pagination pagination)
+    {
+        var groupedArgs = args.GroupByFirstIdentifier();
+        var filters = (await FilterHelper.Parse(entity, groupedArgs, entitySchemaSvc, entitySchemaSvc)).Ok();
+        var sorts = (await SortHelper.Parse(entity, groupedArgs, entitySchemaSvc)).Ok();
+        var validPagination = PaginationHelper.ToValid(pagination, entity.DefaultPageSize);
+        return new ListArgs(filters, sorts, validPagination);
     }
 }

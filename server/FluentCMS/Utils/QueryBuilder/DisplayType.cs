@@ -23,4 +23,5 @@ public static class DisplayType
     public const string Multiselect = "multiselect";
 
     public const string Picklist = "picklist";
+    public const string EditTable = "edittable";
 }

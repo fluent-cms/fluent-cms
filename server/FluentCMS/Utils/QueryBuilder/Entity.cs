@@ -85,22 +85,42 @@ public static class EntityHelper
     }
 
     public static SqlKata.Query ListQuery(this LoadedEntity e,ValidFilter[] filters, ValidSort[] sorts, 
-        ValidPagination pagination, ValidSpan? cursor, IEnumerable<LoadedAttribute> attributes)
+        ValidPagination? pagination, ValidSpan? cursor, IEnumerable<LoadedAttribute> attributes)
     {
-        var query = e.Basic().Select(attributes.Select(x => x.AddTableModifier()));
-        
+        var query = e.GetCommonListQuery(filters,sorts,pagination,cursor,attributes);
         query.ApplyJoin([..filters.Select(x=>x.Vector),..sorts.Select(x=>x.Vector)]);
-        query.ApplyCursor(cursor, sorts);
-        query.ApplyPagination(pagination);
-        query.ApplySorts(cursor?.Span.IsForward() == false ? sorts.ReverseOrder() : sorts);
-        query.ApplyFilters(filters);
+        return query;
+    }
+    
+    internal static SqlKata.Query GetCommonListQuery(this LoadedEntity e, 
+        IEnumerable<ValidFilter> filters, 
+        ValidSort[] sorts, 
+        ValidPagination? pagination, 
+        ValidSpan? cursor, 
+        IEnumerable<LoadedAttribute> attributes)
+    {
+        var q = e.Basic().Select(attributes.Select(x => x.AddTableModifier()));
+        q.ApplyFilters(filters);
+        q.ApplySorts(cursor?.Span.IsForward()??false ? sorts.ReverseOrder() : sorts);
+        q.ApplyCursor(cursor,sorts);
+        if (pagination is not null)
+        {
+            q.ApplyPagination(pagination);
+        }
+        return q;
+    }
+    
+
+    public static SqlKata.Query CountQuery(this LoadedEntity e,ValidFilter[] filters)
+    {
+        var query = e.GetCommonCountQuery(filters);
+        query.ApplyJoin(filters.Select(x => x.Vector));
         return query;
     }
 
-    public static SqlKata.Query CountQuery(this LoadedEntity e,ImmutableArray<ValidFilter> filters)
+    internal static SqlKata.Query GetCommonCountQuery(this LoadedEntity e, IEnumerable<ValidFilter> filters)
     {
         var query = e.Basic();
-        query.ApplyJoin(filters.Select(x=>x.Vector));
         query.ApplyFilters(filters);
         return query;
     }
@@ -198,18 +218,15 @@ public static class EntityHelper
     {
         var interpreter = new Interpreter().Reference(typeof(Regex));
         var result = Result.Ok();
-        
-        
-        var errs = new List<IError>();
         foreach (var localAttribute in e.Attributes.Where(x=>x.IsLocal() && !string.IsNullOrWhiteSpace(x.Validation)))
         {
             if (!Validate(localAttribute).Try(out var err))
             {
-                errs.AddRange(err??[]);
+                result.WithErrors(err);
             }
         }
-        return errs.Count == 0 ? Result.Ok():Result.Fail(errs);
-
+        return result;
+        
         Result Validate(LoadedAttribute attribute)
         {
             record.TryGetValue(attribute.Field, out var value);

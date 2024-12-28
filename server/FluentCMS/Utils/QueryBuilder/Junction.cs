@@ -13,21 +13,6 @@ public record Junction(
 
 public static class JunctionHelper
 {
-    /*
-    public static Attribute[] GetAttributes(this Junction c)
-    {
-        return
-        [
-            new Column(DefaultFields.Id, DataType.Int),
-            new Column(c.SourceAttribute.Field, DataType.Int),
-            new Column(c.TargetAttribute.Field, DataType.Int),
-            new Column(DefaultFields.CreatedAt, DataType.Datetime),
-            new Column(DefaultFields.UpdatedAt, DataType.Datetime),
-            new Column(DefaultFields.Deleted, DataType.Int),
-        ];
-    }
-    */
-
     public static Junction Junction(LoadedEntity sourceEntity, LoadedEntity targetEntity,
         LoadedAttribute crossAttribute)
     {
@@ -132,7 +117,6 @@ public static class JunctionHelper
         return baseQuery;
     }
 
-
     public static SqlKata.Query GetRelatedItems(
         this Junction c,
         IEnumerable<LoadedAttribute> selectAttributes,
@@ -142,16 +126,9 @@ public static class JunctionHelper
         ValidPagination? pagination,
         IEnumerable<ValidValue> sourceIds)
     {
-        List<LoadedAttribute> attrs = [..selectAttributes, c.SourceAttribute];
-        var query = c.TargetEntity.Basic().Select(attrs.Select(x => x.AddTableModifier()));
-        c.ApplyRelatedFilter(query, sourceIds);
-        if (pagination is not null)
-        {
-            query.ApplyPagination(pagination);
-        }
-        query.ApplyFilters(filters);
-        query.ApplyCursor(span, sorts);
-        query.ApplySorts(span?.Span.IsForward() == false ? sorts.ReverseOrder() : sorts);
+        selectAttributes = [..selectAttributes, c.SourceAttribute];
+        var query = c.TargetEntity.GetCommonListQuery(filters,sorts,pagination,span,selectAttributes);
+        c.ApplyJunctionFilter(query, sourceIds);
         return query;
     }
 
@@ -168,16 +145,15 @@ public static class JunctionHelper
 
     public static SqlKata.Query GetRelatedItemsCount(
         this Junction c,
-        IEnumerable<ValidFilter> filters,
+        ValidFilter[] filters,
         IEnumerable<ValidValue> sourceIds)
     {
-        var query = c.TargetEntity.Basic();
-        c.ApplyRelatedFilter(query, sourceIds);
-        query.ApplyFilters(filters);
+        var query = c.TargetEntity.GetCommonCountQuery(filters);
+        c.ApplyJunctionFilter(query, sourceIds);
         return query;
     }
 
-    private static void ApplyRelatedFilter(
+    private static void ApplyJunctionFilter(
         this Junction c,
         SqlKata.Query baseQuery,
         IEnumerable<ValidValue> sourceIds)

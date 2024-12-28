@@ -69,7 +69,7 @@
         "multiselect",
 
         "picklist",
-        "datatable"
+        "edittable"
       ]
     },
     "validation": {
