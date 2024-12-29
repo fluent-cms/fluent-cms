@@ -29,35 +29,40 @@ public static class JunctionHelper
         (
             Field: $"{sourceEntity.Name}_id",
             TableName: tableName,
-            DataType: DataType.Int
+            DataType: DataType.Int,
+            DisplayType:DisplayType.Number
         );
 
         var targetAttribute = new LoadedAttribute
         (
             Field: $"{targetEntity.Name}_id",
             TableName: tableName,
-            DataType: DataType.Int
+            DataType: DataType.Int,
+            DisplayType:DisplayType.Number
         );
         
         var idAttr = new LoadedAttribute
         (
             Field: DefaultFields.Id,
             TableName: tableName,
-            DataType: DataType.Int
+            DataType: DataType.Int,
+            DisplayType:DisplayType.Number
         );
 
         var created = new LoadedAttribute
         (
             Field: DefaultFields.CreatedAt,
             TableName: tableName,
-            DataType: DataType.Datetime
+            DataType: DataType.Datetime,
+            DisplayType:DisplayType.Datetime
         );
 
         var updated = new LoadedAttribute
         (
             Field: DefaultFields.UpdatedAt,
             TableName: tableName,
-            DataType: DataType.Datetime
+            DataType: DataType.Datetime,
+            DisplayType:DisplayType.Datetime
         );
 
         var junctionEntity = new LoadedEntity

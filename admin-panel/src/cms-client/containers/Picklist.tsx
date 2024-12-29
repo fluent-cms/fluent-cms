@@ -14,7 +14,7 @@ export function Picklist({baseRouter,column, data, schema, getFullAssetsURL}: {
     getFullAssetsURL : (arg:string) =>string
     baseRouter:string
 }) {
-    const {visible, handleShow, handleHide} = useDialogState()
+    const {visible, showDialog, hideDialog} = useDialogState()
     const {
         id, targetSchema, listColumns,
         existingItems, setExistingItems,
@@ -38,8 +38,8 @@ export function Picklist({baseRouter,column, data, schema, getFullAssetsURL}: {
 
     const handleSave = async () => {
         await saveJunctionItems(schema.name, id, column.field, toAddItems)
-        handleHide()
         mutateDate()
+        hideDialog()
     }
 
     const onDelete = async () => {
@@ -57,7 +57,7 @@ export function Picklist({baseRouter,column, data, schema, getFullAssetsURL}: {
             {column.header}
         </label><br/>
         <Status/>
-        <Button outlined label={'Select ' + column.header} onClick={handleShow} size="small"/>
+        <Button outlined label={'Select ' + column.header} onClick={showDialog} size="small"/>
         {' '}
         <Button type={'button'} label={"Delete "} severity="danger" onClick={onDelete} outlined size="small"/>
         <SelectDataTable
@@ -75,7 +75,7 @@ export function Picklist({baseRouter,column, data, schema, getFullAssetsURL}: {
         />
         <SaveDialog
             visible={visible}
-            handleHide={handleHide}
+            handleHide={hideDialog}
             handleSave={handleSave}
             header={'Select ' + column.header}>
             <SelectDataTable

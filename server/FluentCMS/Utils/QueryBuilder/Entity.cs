@@ -188,7 +188,7 @@ public static class EntityHelper
             (
                 Field : DefaultFields.CreatedAt, Header : "Created At", 
                 InList : true, InDetail : false, IsDefault : true,
-                DataType : DataType.Datetime
+                DataType : DataType.Datetime, DisplayType:DisplayType.Datetime
             ));
         }
 
@@ -198,7 +198,7 @@ public static class EntityHelper
             (
                 Field : DefaultFields.UpdatedAt, Header : "Updated At", 
                 InList : true, InDetail : false, IsDefault : true,
-                DataType : DataType.Datetime
+                DataType : DataType.Datetime, DisplayType:DisplayType.Datetime
             ));
         }
 

@@ -369,6 +369,13 @@ HookRegistry hook,
 
     private async Task VerifyEntity(Entity entity, CancellationToken ct)
     {
+        foreach (var attr in entity.Attributes)
+        {
+            if (!DataTypeHelper.ValidTypeMap.Contains((attr.DataType,attr.DisplayType)))
+            {
+                throw new ResultException($"[{attr.Field}] Data type [{attr.DataType}] with Display Type [{attr.DisplayType}] is not supported .");
+            }
+        }
         if (string.IsNullOrEmpty(entity.TableName)) throw new ResultException("table name should not be empty");
         if (string.IsNullOrEmpty(entity.TitleAttribute)) throw new ResultException("title should not be empty");
         if (string.IsNullOrEmpty(entity.PrimaryKey)) throw new ResultException("primary key should not be empty");

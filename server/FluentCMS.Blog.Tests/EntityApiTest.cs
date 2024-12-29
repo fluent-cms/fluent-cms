@@ -168,24 +168,7 @@ public class EntityApiTest
         var listResponse = await _entityApiClient.CollectionList(_postEntityName, _attachmentEntityName, 1).Ok();
         Assert.Single(listResponse.Items);
 
-        await _entityApiClient.CollectionUpdate(
-            _postEntityName, 
-            _attachmentEntityName, 
-            1,
-            new Dictionary<string, object>
-            {
-                { "id", 1 },
-                { Name, "attachment2" }
-            }
-        );
-        
-        listResponse = await _entityApiClient.CollectionList(_postEntityName, _attachmentEntityName, 1).Ok();
-        var item = listResponse.Items[0];
-        Assert.True(item.TryGetValue(Name,out var val) && val is JsonElement element && element.GetString() == "attachment2");
-        
-
         await _entityApiClient.Delete(_attachmentEntityName, new { id = 1 });
-        
         listResponse = await _entityApiClient.CollectionList(_postEntityName, _attachmentEntityName, 1).Ok();
         Assert.Empty(listResponse.Items);
 

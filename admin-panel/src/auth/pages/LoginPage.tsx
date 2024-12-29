@@ -13,8 +13,7 @@ import {LoginRoute, RegisterRoute} from "../AccountRouter";
 
 export  const LoginPage: React.FC = () => {
     const location = useLocation();
-    const queryParams = new URLSearchParams(location.search);
-    const ref = queryParams.get('ref'); // Replace 'myParam' with your actual query parameter name
+    const ref = new URLSearchParams(location.search).get("ref");
 
     const [email, setEmail] = useState<string>('');
     const [password, setPassword] = useState<string>('');

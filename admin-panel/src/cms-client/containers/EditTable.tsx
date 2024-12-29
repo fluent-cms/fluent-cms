@@ -19,7 +19,7 @@ export function EditTable({baseRouter,column, data, schema, getFullAssetsURL}: {
     getFullAssetsURL : (arg:string) =>string
     baseRouter:string
 }) {
-    const {visible, handleShow, handleHide} = useDialogState()
+    const {visible, showDialog, hideDialog} = useDialogState()
     const {
         id, targetSchema, listColumns,
     } = useEditTable(data, schema, column)
@@ -33,7 +33,7 @@ export function EditTable({baseRouter,column, data, schema, getFullAssetsURL}: {
     const onSubmit =async (formData: any) => {
         const {error} = await addCollectionItem(schema.name,id,column.field,formData)
         if (!error){
-            handleHide();
+            hideDialog();
             toastRef.current.show({severity: 'info', summary:"success"})
             setError("");
             mutate();
@@ -47,14 +47,14 @@ export function EditTable({baseRouter,column, data, schema, getFullAssetsURL}: {
         <label id={column.field} className="font-bold">
             {column.header}
         </label><br/>
-        <Button outlined label={'Add ' + column.header} onClick={handleShow} size="small"/>
+        <Button outlined label={'Add ' + column.header} onClick={showDialog} size="small"/>
         {' '}
         <LazyDataTable columns={listColumns} schema={targetSchema} data={collectionData} {...{baseRouter,eventHandlers, lazyState,  getFullAssetsURL}}/>
 
         <SaveDialog
             formId={formId}
             visible={visible}
-            handleHide={handleHide}
+            handleHide={hideDialog}
             header={'Add ' + column.header}>
             <>
                 {error && error.split('\n').map(e => (<><Message severity={'error'} text={e}/>&nbsp;&nbsp;</>))}

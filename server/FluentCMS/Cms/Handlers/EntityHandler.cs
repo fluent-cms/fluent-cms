@@ -52,7 +52,7 @@ public static class EntityHandler
             CancellationToken ct
         ) => await entityService.DeleteWithAction(name, ele, ct));
 
-        app.MapPost("/{name}/{id}/{attributeName}/delete", async (
+        app.MapPost("/junction/{name}/{id}/{attributeName}/delete", async (
             IEntityService entityService,
             string name,
             string id,
@@ -109,15 +109,6 @@ public static class EntityHandler
             JsonElement element,
             CancellationToken ct
         ) => await entityService.CollectionInsert(name, id, attr, element, ct));
-
-        app.MapPost("/collection/{name}/{id}/{attr}/update", async (
-            IEntityService entityService,
-            string name,
-            string id,
-            string attr,
-            JsonElement element,
-            CancellationToken ct
-        ) => await entityService.CollectionUpdate(name, id, attr, element, ct));
 
         app.MapGet("/lookup/{name}", async (
             IEntityService entityService,

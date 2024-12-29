@@ -30,7 +30,7 @@ export function textColumn({primaryKey, column, titleAttribute, baseRouter, enti
         }
 
         if (column.field == titleAttribute){
-            return <Link to={`${baseRouter}/${entityName}/${item[primaryKey]}`}>{val}</Link>
+            return <Link to={`${baseRouter}/${entityName}/${item[primaryKey]}?ref=${encodeURIComponent(window.location.href)}`}>{val}</Link>
         }else {
             return <>{val}</>
         }

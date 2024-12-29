@@ -170,15 +170,6 @@ public sealed class EntityService(
         return await InsertWithAction(new RecordContext(collection.TargetEntity, item), ct);
     }
 
-    public async Task<Record> CollectionUpdate(string name, string sid, string attr, JsonElement element,
-        CancellationToken ct = default)
-    {
-        var (entity, collection, id) = await GetCollectionCtx(name, sid, attr, ct);
-        var item = collection.TargetEntity.Parse(element, entitySchemaSvc).Ok();
-        item[collection.LinkAttribute.Field] = id.Value;
-        return await UpdateWithAction(new RecordContext(collection.TargetEntity, item), ct);
-    }
-
     public async Task<ListResponse> CollectionList(string name, string sid, string attr, Pagination pagination, StrArgs args, CancellationToken ct = default)
     {
         var (entity,collection,id) = await GetCollectionCtx(name, sid, attr, ct);

@@ -5,10 +5,10 @@ export function useDialogState() {
     const [visible,setVisible ] = useState(false)
     return {
         visible,
-        handleHide: () => {
+        hideDialog: () => {
             setVisible(false)
         },
-        handleShow: () => {
+        showDialog: () => {
             setVisible(true)
         }
     }

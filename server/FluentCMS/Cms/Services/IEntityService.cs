@@ -17,7 +17,6 @@ public interface IEntityService
 
     Task<ListResponse> CollectionList(string name, string id, string attr, Pagination pagination,  StrArgs args, CancellationToken ct = default);
     Task<Record> CollectionInsert(string name, string id, string attr, JsonElement element, CancellationToken ct = default);
-    Task<Record> CollectionUpdate(string name, string id, string attr, JsonElement element, CancellationToken ct = default);
     
     Task<ListResponse> JunctionList(string name, string id, string attr, bool exclude, Pagination pagination,StrArgs args,  CancellationToken ct= default);
     Task<int> JunctionSave(string name, string id, string attr, JsonElement[] elements, CancellationToken ct = default);

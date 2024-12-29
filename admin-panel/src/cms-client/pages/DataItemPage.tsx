@@ -19,6 +19,7 @@ export function DataItemPageComponent({schema, baseRouter}:{schema:any, baseRout
     const {id} = useParams()
     const {data,error,isLoading}= useItemData(schema.name, id)
     const {checkError, Status, confirm} = useRequestStatus(schema.name + id)
+    const ref = new URLSearchParams(location.search).get("ref");
 
     const uploadUrl = fileUploadURL()
     const tables =  schema?.attributes?.filter((attr: any) => attr.displayType === 'picklist' || attr.displayType =="edittable") ?? []
@@ -37,7 +38,7 @@ export function DataItemPageComponent({schema, baseRouter}:{schema:any, baseRout
             checkError(error, 'Delete Succeed')
             if (!error){
                 await new Promise(r => setTimeout(r, 500));
-                window.location.href= `${baseRouter}/${schema.name}`;
+                window.location.href= ref ?? `${baseRouter}/${schema.name}`;
             }
         })
     }

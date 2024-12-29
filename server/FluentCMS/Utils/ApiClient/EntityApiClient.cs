@@ -76,9 +76,4 @@ public class EntityApiClient(HttpClient client)
      public Task<Result<JsonElement>> CollectionInsert(
             string entity, string attr, int sourceId, object payload
         ) => client.PostResult<JsonElement>($"/collection/{entity}/{sourceId}/{attr}/insert".ToEntityApi(), payload);
-     
-      public Task<Result<JsonElement>> CollectionUpdate(
-                 string entity, string attr, int sourceId, object payload
-             ) => client.PostResult<JsonElement>($"/collection/{entity}/{sourceId}/{attr}/update".ToEntityApi(), payload);
-          
 }
