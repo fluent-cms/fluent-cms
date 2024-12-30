@@ -1,6 +1,6 @@
 namespace FluentCMS.Utils.QueryBuilder;
 
-public record Collection(LoadedEntity TargetEntity, LoadedAttribute LinkAttribute);
+public record Collection(LoadedEntity SourceEntity, LoadedEntity TargetEntity, LoadedAttribute LinkAttribute);
 
 public static class CollectionHelper
 {

@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using FluentCMS.Utils.DictionaryExt;
 using FluentCMS.Utils.JsonElementExt;
 using FluentResults;
+using GraphQL.Introspection;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
@@ -96,31 +97,32 @@ public static class SpanHelper
         return items;
     }
 
-    public static void SetSpan(ImmutableArray<GraphAttribute> attrs, Record[] items,
+    public static bool SetSpan(ImmutableArray<GraphAttribute> attrs, Record[] items,
         IEnumerable<ValidSort> sorts, object? sourceId)
     {
         var arr = sorts.ToArray();
         if (HasPrevious(items)) SetCursor(sourceId, items.First(), arr);
         if (HasNext(items)) SetCursor(sourceId, items.Last(), arr);
 
-        foreach (var item in items)
+        foreach (var attr in attrs)
         {
-            foreach (var attribute in attrs.GetAttrByType(DataType.Lookup))
+            if (!attr.IsCompound()) continue;
+            foreach (var item in items)
             {
-                if (item.TryGetValue(attribute.Field, out var value) && value is Record record)
+                if (!item.TryGetValue(attr.Field, out var v))
+                    continue;
+                var desc = attr.GetEntityLinkDesc().Value;
+                _ = v switch
                 {
-                    SetSpan(attribute.Selection, [record], [], null);
-                }
-            }
-
-            foreach (var attribute in attrs.GetAttrByType(DataType.Junction))
-            {
-                if (!item.TryGetValue(attribute.Field, out var value) || value is not Record[] records ||
-                    records.Length <= 0) continue;
-                var nextSourceId = records.First()[attribute.Junction!.SourceAttribute.Field];
-                SetSpan(attribute.Selection, records, attribute.Sorts, nextSourceId);
+                    Record rec => SetSpan(attr.Selection, [rec], [], null),
+                    Record[] { Length: > 0 } records => SetSpan(attr.Selection, records, attr.Sorts,
+                        records.First()[desc.TargetAttribute.Field]),
+                    _ => true
+                };
             }
         }
+
+        return true;
     }
 
     private static void SetCursor(object? sourceId, Record item, IEnumerable<ValidSort> sorts)

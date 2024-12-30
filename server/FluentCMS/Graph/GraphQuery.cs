@@ -10,29 +10,29 @@ public sealed class GraphQuery : ObjectGraphType
     public GraphQuery(IEntitySchemaService entitySchemaService, IQueryService queryService)
     {
         var entities = entitySchemaService.AllEntities().GetAwaiter().GetResult();
-        var dict = new Dictionary<string, GraphInfo>();
+        var graphMap = new Dictionary<string, GraphInfo>();
         
         foreach (var entity in entities)
         {
             var t = FieldTypes.PlainType(entity);
-            dict[entity.Name] = new GraphInfo(entity, t, new ListGraphType(t));
+            graphMap[entity.Name] = new GraphInfo(entity, t, new ListGraphType(t));
         }
         
         foreach (var entity in entities)
         {
-            FieldTypes.SetCompoundType(entity,dict);
+            FieldTypes.SetCompoundType(entity,graphMap);
         }
 
         foreach (var entity in entities)
         {
-            var graphInfo = dict[entity.Name];
+            var graphInfo = graphMap[entity.Name];
             AddField(new FieldType
             {
                 Name = entity.Name,
                 ResolvedType = graphInfo.SingleType,
                 Resolver = Resolvers.GetSingleResolver(queryService, entity.Name),
                 Arguments = new QueryArguments([
-                    ..Args.FilterArgs(entity), 
+                    ..Args.FilterArgs(entity,graphMap), 
                     Args.FilterExprArg
                 ])
             });
@@ -46,7 +46,7 @@ public sealed class GraphQuery : ObjectGraphType
                     Args.OffsetArg,
                     Args.LimitArg,
                     Args.SortArg(entity),
-                    ..Args.FilterArgs(entity), 
+                    ..Args.FilterArgs(entity,graphMap), 
                     Args.SortExprArg,
                     Args.FilterExprArg
                 ])

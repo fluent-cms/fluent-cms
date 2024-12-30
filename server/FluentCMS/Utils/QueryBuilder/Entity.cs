@@ -76,11 +76,10 @@ public static class EntityHelper
         return query;
     }
 
-    public static SqlKata.Query ByIdQuery(this LoadedEntity e,ValidValue id, IEnumerable<LoadedAttribute> attributes, IEnumerable<ValidFilter> filters)
+    public static SqlKata.Query ByIdsQuery(this LoadedEntity e,IEnumerable<LoadedAttribute> attributes,IEnumerable<ValidValue> ids)
     {
-        var query = e.Basic().Where(e.PrimaryKey, id.Value)
+        var query = e.Basic().WhereIn(e.PrimaryKey, ids.GetValues())
             .Select(attributes.Select(x => x.AddTableModifier()));
-        query.ApplyFilters(filters);
         return query;
     }
 
@@ -123,14 +122,6 @@ public static class EntityHelper
         var query = e.Basic();
         query.ApplyFilters(filters);
         return query;
-    }
-
-
-    public static SqlKata.Query ManyQuery(this LoadedEntity e,IEnumerable<ValidValue> ids, IEnumerable<LoadedAttribute> attrs)
-    {
-        return e.Basic()
-            .Select(attrs.Select(x=>x.AddTableModifier()))
-            .WhereIn(e.PrimaryKey, ids.GetValues());
     }
 
     public static SqlKata.Query Insert(this LoadedEntity e, Record item)
@@ -268,7 +259,7 @@ public static class EntityHelper
             
             var res = attribute.DataType switch
             {
-                DataType.Lookup => SubElement(property.Value, attribute.Lookup!.PrimaryKey).Bind(x=>Convert(x, attribute)),
+                DataType.Lookup => SubElement(property.Value, attribute.Lookup!.TargetEntity.PrimaryKey).Bind(x=>Convert(x, attribute)),
                 _ => Convert(property.Value, attribute)
             };
             if (res.IsFailed)

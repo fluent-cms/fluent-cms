@@ -3,7 +3,7 @@ import {LookupInput} from "../../components/inputs/LookupInput";
 
 export function LookupContainer(props:any){
     const {column,data: item} = props;
-    const lookup = props.column.lookup;
+    const lookup = props.column.lookup.targetEntity;
     
     let val 
     if (item[column.field]){

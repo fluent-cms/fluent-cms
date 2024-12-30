@@ -75,7 +75,21 @@ public static class ResultExt
         return ok;
     }
     
-    
+     public static async Task<Result<TTarget[]>> ShortcutMap<TSource, TTarget>(this IEnumerable<TSource> items,Func<TSource,Task<Result<TTarget>> > mapper)
+     {
+         var ret = new List<TTarget>();
+         foreach (var s in items)
+         {
+             var res = await mapper(s);
+             if (res.IsFailed)
+             {
+                 return Result.Fail(res.Errors);
+             }
+             ret.Add(res.Value);
+         }
+         return ret.ToArray();
+     }
+     
     public static Result<TTarget[]> ShortcutMap<TSource, TTarget>(this IEnumerable<TSource> items,Func<TSource,Result<TTarget> > mapper)
     {
         var ret = new List<TTarget>();

@@ -7,11 +7,11 @@ namespace FluentCMS.Graph;
 
 public static class Args
 {
-    public static QueryArgument[] FilterArgs(Entity entity)
+    public static QueryArgument[] FilterArgs(Entity entity, Dictionary<string, GraphInfo> graphMap)
     {
         var args = new List<QueryArgument>();
         var arr = entity.Attributes.GetLocalAttrs();
-        args.AddRange(arr.Select(SimpleFilter));
+        args.AddRange(arr.Select(a=>SimpleFilter(a,graphMap)));
         args.AddRange(arr.Select(ComplexFilter));
         return args.ToArray();
     }
@@ -35,21 +35,26 @@ public static class Args
     }
 
 
-    private static QueryArgument SimpleFilter(Attribute attr)
+    private static QueryArgument SimpleFilter(Attribute attr, Dictionary<string, GraphInfo> graphMap)
     {
-        var arg = attr.DataType switch
+        var displayType = attr.DataType is not DataType.Lookup ? attr.DisplayType : GetLookupDisplayType(attr);
+        
+        var arg = displayType switch
         {
-            DataType.Int => new QueryArgument<ListGraphType<IntGraphType>>(),
-            DataType.Datetime => new QueryArgument<ListGraphType<DateGraphType>>(),
-            _ => attr.DataType switch
-            {
-                DataType.Lookup => new QueryArgument(new ListGraphType(GetAttributeOptionEnum(attr))),
-                _ => new QueryArgument<ListGraphType<StringGraphType>>()
-            }
+            DisplayType.Number => new QueryArgument<ListGraphType<IntGraphType>>(),
+            DisplayType.Datetime => new QueryArgument<ListGraphType<DateGraphType>>(),
+            DisplayType.Dropdown => new QueryArgument(new ListGraphType(GetAttributeOptionEnum(attr))),
+            DisplayType.Multiselect => new QueryArgument(new ListGraphType(GetAttributeOptionEnum(attr))),
+            _ => new QueryArgument<ListGraphType<StringGraphType>>()
         };
 
         arg.Name = attr.Field + FilterConstants.SetSuffix;
         return arg;
+
+        string GetLookupDisplayType(Attribute a) =>
+            a.GetLookupTarget(out var t) && graphMap.TryGetValue(t, out var info)
+                ? info.Entity.Attributes.FindOneAttr(info.Entity.PrimaryKey)?.DisplayType ?? DisplayType.Number
+                : DisplayType.Number;
     }
 
     private static EnumerationGraphType GetSortFieldEnumGraphType(Entity entity)

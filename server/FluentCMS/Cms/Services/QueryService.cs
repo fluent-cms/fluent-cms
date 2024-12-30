@@ -4,6 +4,7 @@ using FluentCMS.Utils.QueryBuilder;
 using FluentCMS.Utils.HookFactory;
 using FluentCMS.Utils.KateQueryExecutor;
 using FluentCMS.Utils.ResultExt;
+using FluentResults;
 
 namespace FluentCMS.Cms.Services;
 
@@ -48,10 +49,11 @@ public sealed class QueryService(
         var validSpan = span.ToValid(fields, resolver).Ok();
 
         var filters = FilterHelper.ReplaceVariables(attribute.Filters,args, resolver).Ok();
-        var sorts = (await SortHelper.ReplaceVariables(attribute.Sorts, args, cross.TargetEntity, resolver)).Ok(); 
+        var sorts = (await SortHelper.ReplaceVariables(attribute.Sorts, args, cross.TargetEntity, resolver)).Ok();
+
+        var desc = attribute.GetEntityLinkDesc().Ok();
         
-        var kateQuery = cross.GetRelatedItems(fields, filters, sorts, validSpan, pagination.PlusLimitOne(),
-            [validSpan.SourceId()]);
+        var kateQuery = desc.GetQuery(fields,[validSpan.SourceId()],new CollectionArgs(filters,sorts,pagination.PlusLimitOne(),validSpan) );
         var records = await executor.Many(kateQuery, token);
 
         records = span.ToPage(records, pagination.Limit);
@@ -116,67 +118,64 @@ public sealed class QueryService(
         return item;
     }
 
-    private async Task AttachRelated(ImmutableArray<GraphAttribute>? attrs, StrArgs strArgs, Record[] items,
-        CancellationToken ct)
+    private async Task AttachRelated(IEnumerable<GraphAttribute>? attrs, StrArgs args, Record[] items, CancellationToken ct)
     {
-        if (attrs is null) return;
-
-        foreach (var attribute in attrs.GetAttrByType<GraphAttribute>(DataType.Lookup))
+        foreach (var attr in (attrs??[]).Where(x=>x.IsCompound()))
         {
-            await AttachLookup(attribute, strArgs, items, ct);
-        }
-
-        foreach (var attribute in attrs.GetAttrByType<GraphAttribute>(DataType.Junction))
-        {
-            await AttachJunction(attribute, strArgs, items, ct);
+            await AttachJunction(attr, args, items, ct);
         }
     }
+    
 
     private async Task AttachJunction(GraphAttribute attr, StrArgs args, Record[] items, CancellationToken ct)
     {
-        var cross = attr.Junction ?? throw new ResultException($"not find junction of {attr.AddTableModifier()}");
-        var target = cross.TargetEntity;
-        //no need to attach, ignore
-        var ids = cross.SourceEntity.PrimaryKeyAttribute.GetUniq(items);
+        var desc = attr.GetEntityLinkDesc().Ok();
+        var ids = desc.SourceAttribute.GetUniq(items);
         if (ids.Length == 0) return;
 
-        var fields = attr.Selection.GetLocalAttrs();
-        var filters = FilterHelper.ReplaceVariables(attr.Filters,args, resolver).Ok();
-        var sorts = (await SortHelper.ReplaceVariables(attr.Sorts,args,target, resolver)).Ok();
+        CollectionArgs? collectionArgs = null;
+        if (desc.IsCollection)
+        {
+            var filters = FilterHelper.ReplaceVariables(attr.Filters, args, resolver).Ok();
+            var sorts = (await SortHelper.ReplaceVariables(attr.Sorts, args, desc.TargetEntity, resolver)).Ok();
+            var fly = PaginationHelper.ResolvePagination(attr, args) ?? attr.Pagination;
+            var validPagination = fly.IsEmpty()
+                ? null
+                : PaginationHelper.ToValid(fly, attr.Pagination, desc.TargetEntity.DefaultPageSize, false, args);
+            collectionArgs = new CollectionArgs(filters,sorts,validPagination,null);
+        }
 
-        var fly = PaginationHelper.ResolvePagination(attr, args) ?? attr.Pagination;
-        if (fly.IsEmpty())
+        if (collectionArgs is null || collectionArgs.Pagination is null)
         {
             //get all items and no pagination
-            var query = cross.GetRelatedItems(fields, filters, [..sorts], null, null, ids);
+            var query = desc.GetQuery(attr.Selection.GetLocalAttrs() ,ids, collectionArgs);
             var targetRecords = await executor.Many(query, ct);
             await AttachRelated(attr.Selection, args, targetRecords, ct);
-            var targetItemGroups = targetRecords.GroupBy(x => x[cross.SourceAttribute.Field], x => x);
+            
+            var targetItemGroups = targetRecords.GroupBy(x => x[desc.TargetAttribute.Field], x => x);
             foreach (var targetGroup in targetItemGroups)
             {
-                var parents = items.Where(local => local[cross.SourceEntity.PrimaryKey].Equals(targetGroup.Key));
-                foreach (var parent in parents)
+                var sourceItems = items.Where(x => x[desc.SourceAttribute.Field].Equals(targetGroup.Key));
+                foreach (var sourceItem in sourceItems)
                 {
-                    parent[attr.Field] = targetGroup.ToArray();
+                    sourceItem[attr.Field] = desc.IsCollection ? targetGroup.ToArray():targetGroup.FirstOrDefault();
                 }
             }
         }
         else
         {
-            var pagination = PaginationHelper.ToValid(fly, attr.Pagination, target.DefaultPageSize, false, args);
             foreach (var id in ids)
             {
-                var query = cross.GetRelatedItems(fields, filters, [..sorts], null, pagination.PlusLimitOne(), [id]);
+                var query = desc.GetQuery(attr.Selection.GetLocalAttrs(),ids, collectionArgs with { Pagination = collectionArgs.Pagination.PlusLimitOne() });
                 var targetRecords = await executor.Many(query, ct);
 
-                targetRecords = new Span().ToPage(targetRecords, pagination.Limit);
+                targetRecords = new Span().ToPage(targetRecords, collectionArgs.Pagination.Limit);
                 if (targetRecords.Length > 0)
                 {
-                    await AttachRelated(attr.Selection, args, targetRecords,
-                        ct);
+                    await AttachRelated(attr.Selection, args, targetRecords, ct);
                 }
-
-                foreach (var item in items.Where(x => x[cross.JunctionEntity.PrimaryKey].Equals(id.Value)))
+                var sourceItems = items.Where(x => x[desc.SourceAttribute.Field].Equals(id.Value));
+                foreach (var item in sourceItems)
                 {
                     item[attr.Field] = targetRecords;
                 }
@@ -184,37 +183,7 @@ public sealed class QueryService(
         }
     }
 
-    private async Task AttachLookup(GraphAttribute attr, StrArgs strArgs, Record[] items, CancellationToken ct)
-    {
-        var lookupEntity = attr.Lookup??throw new ResultException($"can not find lookup entity of{attr.Field}");
-
-        var selection = attr.Selection.GetLocalAttrs();
-        if (selection.FindOneAttr(lookupEntity.PrimaryKey) == null)
-        {
-            selection = [..selection, lookupEntity.PrimaryKeyAttribute.ToGraph()];
-        }
-
-        var ids = attr.GetUniq(items);
-        if (ids.Length == 0)
-        {
-            return;
-        }
-
-        var query = lookupEntity.ManyQuery(ids, selection);
-        var targetRecords = await executor.Many(query, ct);
-        await AttachRelated(attr.Selection, strArgs, targetRecords, ct);
-
-        foreach (var lookupRecord in targetRecords)
-        {
-            var lookupId = lookupRecord[lookupEntity.PrimaryKey];
-            foreach (var item in items.Where(local =>
-                         local[attr.Field] is not null && local[attr.Field].Equals(lookupId)))
-            {
-                item[attr.Field] = lookupRecord;
-            }
-        }
-    }
-
+    
     private record QueryContext(LoadedQuery Query, ValidFilter[] Filters, ValidSort[] Sorts, ValidPagination Pagination);
 
     private async Task<QueryContext> FromSavedQuery(

@@ -10,7 +10,7 @@ export function textColumn({primaryKey, column, titleAttribute, baseRouter, enti
 }){
     let field = column.field;
     if (column.displayType == "lookup"){
-        field = column.field + "." + column.lookup.titleAttribute;
+        field = column.field + "." + column.lookup.targetEntity.titleAttribute;
     }
     var dataType = 'text';
     switch (column.displayType){
@@ -26,7 +26,7 @@ export function textColumn({primaryKey, column, titleAttribute, baseRouter, enti
     const bodyTemplate = (item:any) => {
         let val = item[column.field]
         if (column.displayType === "lookup" && val){
-            val = val[column.lookup.titleAttribute]
+            val = val[column.lookup.targetEntity.titleAttribute]
         }
 
         if (column.field == titleAttribute){

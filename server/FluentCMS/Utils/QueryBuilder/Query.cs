@@ -64,7 +64,7 @@ public static class QueryHelper{
         return Result.Ok();
     }
     
-public static Result<(Sort[], Filter[], Pagination)> ParseArguments(IDataProvider[] args)
+public static Result<(Sort[] sorts, Filter[] filters, Pagination pagination)> ParseArguments(IDataProvider[] args)
     {
         HashSet<string> keys = [FilterConstants.FilterExprKey, SortConstant.SortExprKey];
         var simpleArgs = args.Where(x => !keys.Contains(x.Name()));
@@ -95,7 +95,7 @@ public static Result<(Sort[], Filter[], Pagination)> ParseArguments(IDataProvide
         return (sorts, filters, pagination);
     }
     
-    public static Result<(Sort[], Filter[], Pagination)> ParseSimpleArguments(IEnumerable<IDataProvider> args)
+    public static Result<(Sort[] sorts, Filter[] filters, Pagination pagination)> ParseSimpleArguments(IEnumerable<IDataProvider> args)
     {
         var sorts = new List<Sort>();
         var filters = new List<Filter>();

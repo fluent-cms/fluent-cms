@@ -21,7 +21,7 @@ public sealed class EntityService(
         StrArgs args, 
         CancellationToken ct)
     {
-        var entity = (await entitySchemaSvc.GetLoadedEntity(name, ct)).Ok();
+        var entity = (await entitySchemaSvc.LoadEntity(name, ct)).Ok();
         var (filters, sorts,validPagination) = await GetListArgs(entity, args,pagination);
         return await ListWithAction(entity,mode, [..filters], [..sorts], validPagination, ct);
     }
@@ -30,7 +30,7 @@ public sealed class EntityService(
         CancellationToken ct)
     {
         var ctx = await GetIdCtx(entityName, id, ct);
-        var query = ctx.Entity.ByIdQuery(ctx.Id, ctx.Entity.Attributes.GetLocalAttrs(attributes), []);
+        var query = ctx.Entity.ByIdsQuery( ctx.Entity.Attributes.GetLocalAttrs(attributes),[ctx.Id]);
         return await queryExecutor.One(query, ct) ??
                throw new ResultException($"not find record by [{id}]");
     }
@@ -45,8 +45,7 @@ public sealed class EntityService(
             return res.OutRecord;
         }
 
-        var query = ctx.Entity.ByIdQuery(ctx.Id,
-            ctx.Entity.Attributes.GetLocalAttrs(ctx.Entity.PrimaryKey, InListOrDetail.InDetail), []);
+        var query = ctx.Entity.ByIdsQuery( ctx.Entity.Attributes.GetLocalAttrs(ctx.Entity.PrimaryKey, InListOrDetail.InDetail), [ctx.Id]);
         var record = await queryExecutor.One(query, ct) ??
                      throw new ResultException($"not find record by [{id}]");
 
@@ -153,7 +152,7 @@ public sealed class EntityService(
         
         var pagedListQuery = exclude
             ? junction.GetNotRelatedItems(selectAttributes, filters, sorts, validPagination, [id])
-            : junction.GetRelatedItems(selectAttributes, filters, [..sorts], null, validPagination, [id]);
+            : junction.GetRelatedItems( filters, [..sorts], validPagination,null, selectAttributes,[id]);
 
         var countQuery = exclude
             ? junction.GetNotRelatedItemsCount(filters, [id])
@@ -164,7 +163,7 @@ public sealed class EntityService(
 
     public async Task<Record> CollectionInsert(string name, string sid, string attr, JsonElement element, CancellationToken ct = default)
     {
-        var (entity,collection,id) = await GetCollectionCtx(name, sid, attr, ct);
+        var (collection,id) = await GetCollectionCtx(name, sid, attr, ct);
         var item = collection.TargetEntity.Parse(element, entitySchemaSvc).Ok();
         item[collection.LinkAttribute.Field] = id.Value;
         return await InsertWithAction(new RecordContext(collection.TargetEntity, item), ct);
@@ -172,7 +171,7 @@ public sealed class EntityService(
 
     public async Task<ListResponse> CollectionList(string name, string sid, string attr, Pagination pagination, StrArgs args, CancellationToken ct = default)
     {
-        var (entity,collection,id) = await GetCollectionCtx(name, sid, attr, ct);
+        var (collection,id) = await GetCollectionCtx(name, sid, attr, ct);
         var (filters, sorts,validPagination) = await GetListArgs(collection.TargetEntity, args,pagination);
 
         var attributes =
@@ -232,21 +231,17 @@ public sealed class EntityService(
     private async Task LoadLookupData(LoadedAttribute attr, Record[] items, CancellationToken token)
     {
         var ids = attr.GetUniq(items);
-        if (ids.Length == 0)
-        {
-            return;
-        }
+        if (ids.Length == 0) return;
 
-        var lookupEntity
-            = attr.Lookup ??
+        var lookup = attr.Lookup ??
               throw new ResultException($"not find lookup entity from {attr.AddTableModifier()}");
 
-        var query = lookupEntity.ManyQuery(ids,
-            [attr.Lookup!.PrimaryKeyAttribute, attr.Lookup!.LoadedTitleAttribute]);
+        var query = lookup.LookupTitleQuery(ids);
+        
         var targetRecords = await queryExecutor.Many(query, token);
         foreach (var lookupRecord in targetRecords)
         {
-            var lookupId = lookupRecord[lookupEntity.PrimaryKey];
+            var lookupId = lookupRecord[lookup.TargetEntity.PrimaryKey];
             foreach (var item in items.Where(local =>
                          local[attr.Field] is not null && local[attr.Field].Equals(lookupId)))
             {
@@ -319,7 +314,7 @@ public sealed class EntityService(
 
     private async Task<IdContext> GetIdCtx(string entityName, string id, CancellationToken token)
     {
-        var entity = (await entitySchemaSvc.GetLoadedEntity(entityName, token)).Ok();
+        var entity = (await entitySchemaSvc.LoadEntity(entityName, token)).Ok();
         if (!entitySchemaSvc.ResolveVal(entity.PrimaryKeyAttribute, id, out var idValue))
         {
             throw new ResultException($"Failed to cast {id} to {entity.PrimaryKeyAttribute.DataType}");
@@ -328,11 +323,11 @@ public sealed class EntityService(
         return new IdContext(entity, idValue);
     }
     
-    private record CollectionContext(LoadedEntity Entity, Collection Collection, ValidValue Id);
+    private record CollectionContext(Collection Collection, ValidValue Id);
 
     private async Task<CollectionContext> GetCollectionCtx(string entity, string sid, string attr, CancellationToken ct)
     {
-        var loadedEntity = (await entitySchemaSvc.GetLoadedEntity(entity, ct)).Ok();
+        var loadedEntity = (await entitySchemaSvc.LoadEntity(entity, ct)).Ok();
         var attribute = loadedEntity.Attributes.FindOneAttr(attr) ??
                         throw new ResultException($"not find {attr} in {entity}");
 
@@ -341,7 +336,7 @@ public sealed class EntityService(
         {
             throw new ResultException($"Failed to cast {sid} to {loadedEntity.PrimaryKeyAttribute.DataType}");
         }
-        return new CollectionContext(loadedEntity, collection, id);
+        return new CollectionContext( collection, id);
     }
 
 
@@ -350,7 +345,7 @@ public sealed class EntityService(
 
     private async Task<JunctionContext> GetJunctionCtx(string entity, string sid, string attr, CancellationToken ct)
     {
-        var loadedEntity = (await entitySchemaSvc.GetLoadedEntity(entity, ct)).Ok();
+        var loadedEntity = (await entitySchemaSvc.LoadEntity(entity, ct)).Ok();
         var attribute = loadedEntity.Attributes.FindOneAttr(attr) ??
                         throw new ResultException($"not find {attr} in {entity}");
 
@@ -366,7 +361,7 @@ public sealed class EntityService(
     private record RecordContext(LoadedEntity Entity, Record Record);
     private async Task<RecordContext> GetRecordCtx(string name, JsonElement ele, CancellationToken token)
     {
-        var entity = (await entitySchemaSvc.GetLoadedEntity(name, token)).Ok();
+        var entity = (await entitySchemaSvc.LoadEntity(name, token)).Ok();
         var record = entity.Parse(ele, entitySchemaSvc).Ok();
         return new RecordContext(entity, record);
     }
@@ -375,7 +370,7 @@ public sealed class EntityService(
 
     private async Task<LookupContext> GetLookupContext(string name, CancellationToken ct = default)
     {
-        var entity = (await entitySchemaSvc.GetLoadedEntity(name, ct)).Ok();
+        var entity = (await entitySchemaSvc.LoadEntity(name, ct)).Ok();
         var sort = new Sort(entity.TitleAttribute, SortOrder.Asc);
         var validSort = (await SortHelper.ToValidSorts([sort], entity, entitySchemaSvc)).Ok();
         var pagination = PaginationHelper.ToValid(new Pagination(), entity.DefaultPageSize);

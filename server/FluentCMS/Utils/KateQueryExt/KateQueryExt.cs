@@ -8,9 +8,9 @@ public static class KateQueryExt
     public static void ApplyJoin(this SqlKata.Query query, IEnumerable<AttributeVector> vectors)
     {
         var root = AttributeTreeNode.Parse(vectors);
-        bool hasJunction = false;
+        bool hasCollection = false;
         Bfs(root, "");
-        if (hasJunction)
+        if (hasCollection)
         {
             query.Distinct();
         }
@@ -18,39 +18,23 @@ public static class KateQueryExt
         void Bfs(AttributeTreeNode node, string prefix)
         {
             var nextPrefix = prefix;
+
+            //root doesn't have attribute
             if (node.Attribute is not null)
             {
-                if (nextPrefix != "")
-                {
-                    nextPrefix += AttributeVectorConstants.Separator;
-                }
-                nextPrefix += node.Attribute.Field;
+                nextPrefix = prefix == ""
+                    ? node.Attribute.Field
+                    : AttributeVectorConstants.Separator + node.Attribute.Field;
 
-                switch (node.Attribute.DataType)
+                var desc = node.Attribute.GetEntityLinkDesc().Value;
+                if (desc.IsCollection) hasCollection = true;
+
+                _ = node.Attribute.DataType switch
                 {
-                    case DataType.Lookup:
-                        var lookup = node.Attribute.Lookup!;
-                        query
-                            .LeftJoin($"{lookup.TableName} as {nextPrefix}",
-                            node.Attribute.AddTableModifier(prefix),
-                            lookup.PrimaryKeyAttribute.AddTableModifier(nextPrefix))
-                            .Where(lookup.DeletedAttribute.AddTableModifier(nextPrefix), false);
-                        break;
-                    case DataType.Junction:
-                        hasJunction = true;
-                        var cross = node.Attribute.Junction;
-                        var crossAlias = $"{nextPrefix}_{cross!.JunctionEntity.TableName}";
-                        query
-                            .LeftJoin($"{cross.JunctionEntity.TableName} as {crossAlias}",
-                                cross.SourceEntity.PrimaryKeyAttribute.AddTableModifier(prefix),
-                                cross.SourceAttribute.AddTableModifier(crossAlias))
-                            .LeftJoin($"{cross.TargetEntity.TableName} as {nextPrefix}",
-                                cross.TargetAttribute.AddTableModifier(crossAlias),
-                                cross.TargetEntity.PrimaryKeyAttribute.AddTableModifier(nextPrefix))
-                            .Where(cross.JunctionEntity.DeletedAttribute.AddTableModifier(crossAlias),false)
-                            .Where(cross.TargetEntity.DeletedAttribute.AddTableModifier(nextPrefix),false);
-                    break;
-                }
+                    DataType.Junction => ApplyJunctionJoin(query, node.Attribute.Junction!, prefix, nextPrefix),
+                    DataType.Lookup or DataType.Collection => ApplyJoin(query, desc, prefix, nextPrefix),
+                    _ => query
+                };
             }
 
             foreach (var sub in node.Children)
@@ -59,6 +43,32 @@ public static class KateQueryExt
             }
         }
     }
+
+    private static SqlKata.Query ApplyJoin(SqlKata.Query query, EntityLinkDesc desc, string prefix, string nextPrefix)
+    {
+        query.LeftJoin($"{desc.TargetEntity.TableName} as {nextPrefix}",
+                desc.SourceAttribute.AddTableModifier(prefix),
+                desc.TargetAttribute.AddTableModifier(nextPrefix))
+            .Where(desc.TargetEntity.DeletedAttribute.AddTableModifier(nextPrefix), false); 
+        return query;
+    }
+
+    private static SqlKata.Query ApplyJunctionJoin(SqlKata.Query query, Junction junction, 
+        string prefix, string nextPrefix)
+    {
+        var crossAlias = $"{nextPrefix}_{junction.JunctionEntity.TableName}";
+        query
+            .LeftJoin($"{junction.JunctionEntity.TableName} as {crossAlias}",
+                junction.SourceEntity.PrimaryKeyAttribute.AddTableModifier(prefix),
+                junction.SourceAttribute.AddTableModifier(crossAlias))
+            .LeftJoin($"{junction.TargetEntity.TableName} as {nextPrefix}",
+                junction.TargetAttribute.AddTableModifier(crossAlias),
+                junction.TargetEntity.PrimaryKeyAttribute.AddTableModifier(nextPrefix))
+            .Where(junction.JunctionEntity.DeletedAttribute.AddTableModifier(crossAlias), false)
+            .Where(junction.TargetEntity.DeletedAttribute.AddTableModifier(nextPrefix), false);
+        return query;
+    }
+
 
     public static void ApplyPagination(this SqlKata.Query query, ValidPagination pagination)
     {

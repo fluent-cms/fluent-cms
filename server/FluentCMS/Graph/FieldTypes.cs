@@ -1,5 +1,4 @@
 using System.Globalization;
-using FluentCMS.Utils.RelationDbDao;
 using FluentCMS.Utils.QueryBuilder;
 using GraphQL.Types;
 using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
@@ -26,46 +25,28 @@ public static class FieldTypes
 
         return entityType;
     }
-    
-    public static void SetCompoundType(Entity entity, Dictionary<string, GraphInfo> dict)
+
+    public static void SetCompoundType(Entity entity, Dictionary<string, GraphInfo> graphMap)
     {
-        var current = dict[entity.Name].SingleType;
-        foreach (var attribute in entity.Attributes.Where(x=>x.IsCompound()))
+        var current = graphMap[entity.Name].SingleType;
+        foreach (var attribute in entity.Attributes.Where(x => x.IsCompound()))
         {
-            var t = new FieldType
+            if (!attribute.TryResolveTarget(out var entityName, out var isCollection) ||
+                !graphMap.TryGetValue(entityName, out var info)) continue;
+
+            current.AddField(new FieldType
             {
                 Name = attribute.Field,
                 Resolver = Resolvers.ValueResolver,
-                ResolvedType = attribute.DataType switch
-                {
-                    DataType.Junction when attribute.GetJunctionTarget(out var target) && dict.ContainsKey(target) => dict[target].ListType,
-                    DataType.Lookup when attribute.GetLookupTarget(out var target) && dict.ContainsKey(target) => dict[target].SingleType,
-                    _ => null
-                },
-                Arguments = attribute.DataType switch
-                {
-                    DataType.Junction when attribute.GetJunctionTarget(out var target) && dict.ContainsKey(target) => JunctionArgs(target),
-                    _ => null
-                }
-            };
-            
-            if (t.ResolvedType is not null)
-            {
-                current.AddField(t);
-            }
-        }
-
-        return;
-
-        QueryArguments JunctionArgs(string target)
-        {
-            var find = dict[target].Entity;
-            return new QueryArguments([
-                Args.OffsetArg,
-                Args.LimitArg,
-                Args.SortArg(find),
-                ..Args.FilterArgs(find)
-            ]);
+                ResolvedType = isCollection ? info.ListType : info.SingleType,
+                Arguments = isCollection
+                    ?
+                    [
+                        Args.OffsetArg, Args.LimitArg, Args.SortArg(info.Entity),
+                        ..Args.FilterArgs(info.Entity, graphMap)
+                    ]
+                    : null
+            });
         }
     }
 
@@ -78,6 +59,4 @@ public static class FieldTypes
             _ => new StringGraphType()
         };
     }
-    
-
 }

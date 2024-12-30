@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Globalization;
+using FluentResults;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
@@ -31,7 +32,7 @@ public record LoadedAttribute(
     string Validation = "",
     
     Junction? Junction = null,
-    LoadedEntity? Lookup = null,
+    Lookup? Lookup = null,
     Collection ? Collection = null
 ) : Attribute(
     Field: Field,
@@ -65,9 +66,10 @@ public sealed record GraphAttribute(
     string Options = "", 
     string Validation = "",
     
-    LoadedEntity? Lookup = null,
-        
+    Lookup? Lookup = null,
     Junction? Junction = null,
+    Collection? Collection = null,
+    
     Pagination? Pagination = null
     
 ) : LoadedAttribute(
@@ -86,12 +88,58 @@ public sealed record GraphAttribute(
     Validation : Validation,
     
     Junction:Junction,
-    Lookup :Lookup
+    Lookup :Lookup,
+    Collection:Collection
 );
+
+public record CollectionArgs(ValidFilter[] Filters, ValidSort[] Sorts,ValidPagination? Pagination,ValidSpan? Span);
+public record EntityLinkDesc(
+    LoadedAttribute SourceAttribute,
+    LoadedEntity TargetEntity,
+    LoadedAttribute TargetAttribute,
+    bool IsCollection,
+    Func<GraphAttribute[] , ValidValue[] , CollectionArgs? , SqlKata.Query> GetQuery);
+
 
 public static class AttributeHelper
 {
+    public static Result<EntityLinkDesc> GetEntityLinkDesc(
+        this LoadedAttribute attribute
+    ) => attribute.DataType switch
+    {
+        DataType.Lookup when attribute.Lookup is { } lookup =>
+            new EntityLinkDesc(
+                attribute, lookup.TargetEntity, lookup.TargetEntity.PrimaryKeyAttribute, false, 
+                (fields, ids, _) => lookup.TargetEntity.ByIdsQuery(fields,ids)
+                ),
+        DataType.Junction when attribute.Junction is { } junction =>
+            new EntityLinkDesc(
+                junction.SourceEntity.PrimaryKeyAttribute,
+                junction.TargetEntity, junction.SourceAttribute,
+                true, 
+                (fields,ids, args) => junction.GetRelatedItems(args!.Filters,args.Sorts,args.Pagination,args.Span,fields,ids)),
+        DataType.Collection when attribute.Collection is { } collection =>
+            new EntityLinkDesc(
+                collection.SourceEntity.PrimaryKeyAttribute,
+                collection.TargetEntity, collection.LinkAttribute,
+                true, 
+                (fields,ids,args) => collection.List(args!.Filters,args.Sorts,args.Pagination,args.Span, fields,ids)
+                ),
+        _ => Result.Fail($"Cannot get entity link desc for attribute [{attribute.Field}]")
+    };
 
+    public static bool TryResolveTarget(this Attribute attribute, out string entityName, out bool isCollection)
+    {
+        entityName = "";
+        isCollection = attribute.DataType is DataType.Collection or DataType.Junction;
+        return attribute.DataType switch
+        {
+            DataType.Lookup => attribute.GetLookupTarget(out entityName),
+            DataType.Junction => attribute.GetJunctionTarget(out entityName),
+            DataType.Collection => attribute.GetCollectionTarget(out entityName, out _),
+            _=> false
+        };
+    }
     public static LoadedAttribute ToLoaded(this Attribute a, string tableName)
     {
         return new LoadedAttribute(
@@ -118,6 +166,7 @@ public static class AttributeHelper
             Pagination:new Pagination(),
             Lookup: a.Lookup,
             Junction: a.Junction,
+            Collection: a.Collection,
             TableName: a.TableName,
             Field: a.Field,
             Header: a.Header,

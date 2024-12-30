@@ -29,27 +29,27 @@ export function LookupInput(props: {
                 className={'w-full'}
                 dropdown
                 id={field.name}
-                field={column.lookup.titleAttribute}
+                field={column.lookup.targetEntity.titleAttribute}
                 value={field.value}
                 suggestions={filteredItems}
                 completeMethod={searchItems}
                 onChange={(e) => {
-                    var selectedItem = typeof (e.value) === "object" ? e.value : {[column.lookup.titleAttribute]: e.value};
+                    var selectedItem = typeof (e.value) === "object" ? e.value : {[column.lookup.targetEntity.titleAttribute]: e.value};
                     field.onChange(selectedItem);
                 }}
             />
             :
             <Dropdown
                 id={field.name}
-                value={field.value ? field.value[column.lookup.primaryKey] : null}
+                value={field.value ? field.value[column.lookup.targetEntity.primaryKey] : null}
                 options={items}
                 focusInputRef={field.ref}
                 onChange={(e) => {
-                    field.onChange({[column.lookup.primaryKey]: e.value})
+                    field.onChange({[column.lookup.targetEntity.primaryKey]: e.value})
                 }}
                 className={'w-full'}
-                optionValue={column.lookup.primaryKey}
-                optionLabel={column.lookup.titleAttribute}
+                optionValue={column.lookup.targetEntity.primaryKey}
+                optionLabel={column.lookup.targetEntity.titleAttribute}
                 filter
             />
     }

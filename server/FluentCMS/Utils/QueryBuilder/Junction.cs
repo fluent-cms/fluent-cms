@@ -124,11 +124,11 @@ public static class JunctionHelper
 
     public static SqlKata.Query GetRelatedItems(
         this Junction c,
-        IEnumerable<LoadedAttribute> selectAttributes,
         IEnumerable<ValidFilter> filters,
         ValidSort[] sorts,
-        ValidSpan? span,
         ValidPagination? pagination,
+        ValidSpan? span,
+        IEnumerable<LoadedAttribute> selectAttributes,
         IEnumerable<ValidValue> sourceIds)
     {
         selectAttributes = [..selectAttributes, c.SourceAttribute];

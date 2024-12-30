@@ -59,7 +59,7 @@ public static class SchemaHandler
 
         app.MapGet("/entity/{name}", async (
             IEntitySchemaService service, string name, CancellationToken ct
-        ) => (await service.GetLoadedEntity(name, ct)).Ok());
+        ) => (await service.LoadEntity(name, ct)).Ok());
 
         app.MapPost("/entity/add_or_update", async (
             IEntitySchemaService svc,
