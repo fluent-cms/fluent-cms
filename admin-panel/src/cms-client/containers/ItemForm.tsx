@@ -1,8 +1,8 @@
 import {useForm} from "react-hook-form";
 import {createInput} from "./createInput";
 
-export function ItemForm({schema, data, id, onSubmit, formId, uploadUrl, getFullAssetsURL}: {
-    schema: any,
+export function ItemForm({columns, data, id, onSubmit, formId, uploadUrl, getFullAssetsURL}: {
+    columns: any,
     data: any,
     id?: any
     onSubmit: any
@@ -17,15 +17,10 @@ export function ItemForm({schema, data, id, onSubmit, formId, uploadUrl, getFull
         control
     } = useForm()
 
-    var inputColumns = schema.attributes?.filter((column:any) => 
-        column.inDetail && 
-        column.dataType !=="junction" && 
-        column.dataType !=="collection" && !column.isDefault )
-    
-    return inputColumns && <form onSubmit={handleSubmit(onSubmit)} id={formId}>
+    return columns && <form onSubmit={handleSubmit(onSubmit)} id={formId}>
         <div className="formgrid grid">
             {
-                inputColumns.map((column: any) => createInput({data, column, register, control, id, uploadUrl,getFullAssetsURL}))
+                columns.map((column: any) => createInput({data, column, register, control, id, uploadUrl,getFullAssetsURL}))
             }
         </div>
     </form>

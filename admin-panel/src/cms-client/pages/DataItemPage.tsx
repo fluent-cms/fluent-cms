@@ -25,6 +25,13 @@ export function DataItemPageComponent({schema, baseRouter}:{schema:any, baseRout
     const tables =  schema?.attributes?.filter((attr: any) => attr.displayType === 'picklist' || attr.displayType =="edittable") ?? []
     const formId = "editForm" + schema.name
 
+    const inputColumns = schema?.attributes?.filter(
+        (x: any) =>{
+            return x.inDetail &&!x.isDefault&& x.dataType != "junction" && x.dataType != "collection" ;
+        }
+    ) ??[];
+
+
     const onSubmit = async (formData: any) => {
         formData[schema.primaryKey] = id
         const {error} = await updateItem(schema.name,formData)
@@ -51,7 +58,7 @@ export function DataItemPageComponent({schema, baseRouter}:{schema:any, baseRout
         {' '}
         <Button type={'button'} label={"Delete " + schema.title} severity="danger" onClick={onDelete}/>
         <Status/>
-        <ItemForm {...{schema,data, id, onSubmit, formId,uploadUrl,  getFullAssetsURL}} />
+        <ItemForm columns={inputColumns} {...{schema,data, id, onSubmit, formId,uploadUrl,  getFullAssetsURL}} />
         {
             tables.map((column: any) => {
                 const props = {schema, data, column,  getFullAssetsURL,baseRouter}

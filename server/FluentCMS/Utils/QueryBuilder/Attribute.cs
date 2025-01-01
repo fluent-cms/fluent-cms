@@ -308,17 +308,17 @@ public static class AttributeHelper
         return arr?.Where(x => x.IsLocal() && attributes.Contains(x.Field)).ToArray() ?? [];
     }
 
-    public static T[] GetAttrByType<T>(this IEnumerable<T>? arr, string t)
+    public static T[] GetAttrByType<T>(this IEnumerable<T>? arr, string dataType)
         where T : Attribute
     {
-        return arr?.Where(x => x.DataType == t).ToArray() ?? [];
+        return arr?.Where(x => x.DataType == dataType).ToArray() ?? [];
     }
 
-    public static T[] GetAttrByType<T>(this IEnumerable<T>? arr, string type,
+    public static T[] GetAttrByType<T>(this IEnumerable<T>? arr, string dataType,
         InListOrDetail listOrDetail)
         where T : Attribute
     {
-        return arr?.Where(x => x.DataType == type && (listOrDetail == InListOrDetail.InList ? x.InList : x.InDetail))
+        return arr?.Where(x => x.DataType == dataType && (listOrDetail == InListOrDetail.InList ? x.InList : x.InDetail))
             .ToArray() ?? [];
     }
 

@@ -23,7 +23,6 @@ export function LookupInput(props: {
     }
 
     return <InputPanel  {...props} component={(field: any) => {
-        console.log("field.value", field.value);
         return hasMore ?
             <AutoComplete
                 className={'w-full'}

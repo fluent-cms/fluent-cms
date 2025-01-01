@@ -20,9 +20,7 @@ export function EditTable({baseRouter,column, data, schema, getFullAssetsURL}: {
     baseRouter:string
 }) {
     const {visible, showDialog, hideDialog} = useDialogState()
-    const {
-        id, targetSchema, listColumns,
-    } = useEditTable(data, schema, column)
+    const { id, targetSchema, listColumns, inputColumns} = useEditTable(data, schema, column)
     const formId = "edit-table" + column.field;
     const toastRef = useRef<any>(null);
     const [error, setError] = useState('')
@@ -41,6 +39,7 @@ export function EditTable({baseRouter,column, data, schema, getFullAssetsURL}: {
             setError(error);
         }
     }
+    
 
     return <div className={'card col-12'}>
         <Toast ref={toastRef} position="top-right" />
@@ -61,7 +60,7 @@ export function EditTable({baseRouter,column, data, schema, getFullAssetsURL}: {
                 <ItemForm
                     formId={formId}
                     uploadUrl={fileUploadURL()}
-                    schema={targetSchema}
+                    columns={inputColumns}
                     data={{}}
                     getFullAssetsURL={getFullAssetsURL}
                     onSubmit={onSubmit}/>

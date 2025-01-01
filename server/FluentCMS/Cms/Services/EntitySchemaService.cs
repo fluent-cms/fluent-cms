@@ -60,12 +60,13 @@ public sealed class EntitySchemaService(
     private async Task<Result<LoadedAttribute>> LoadSingleAttribute(
         LoadedEntity entity,
         LoadedAttribute attr,
+        bool loadInListLookup,
         CancellationToken ct = default
     ) => attr.DataType switch
     {
-        DataType.Junction => await LoadJunction(entity, attr, ct),
+        DataType.Junction => await LoadJunction(entity, attr, loadInListLookup,ct),
         DataType.Lookup => await LoadLookup(entity,attr, ct),
-        DataType.Collection => await LoadCollection(entity, attr, ct),
+        DataType.Collection => await LoadCollection(entity, attr,loadInListLookup, ct),
         _ => attr
     };
 
@@ -143,7 +144,7 @@ public sealed class EntitySchemaService(
         for (var i = 0; i < fields.Length; i++)
         {
             //check if fields[i] exists in entity
-            if (!(await LoadSingleAttrByName(entity, fields[i])).Try(out attr, out var e))
+            if (!(await LoadSingleAttrByName(entity, fields[i], false)).Try(out attr, out var e))
             {
                 return Result.Fail(e);
             }
@@ -163,14 +164,14 @@ public sealed class EntitySchemaService(
         return new AttributeVector(fieldName, prefix, [..attributes], attr!);
     }
 
-    public async Task<Result<LoadedAttribute>> LoadSingleAttrByName(LoadedEntity entity, string attrName,
+    public async Task<Result<LoadedAttribute>> LoadSingleAttrByName(LoadedEntity entity, string attrName,bool loadInListLookup,
         CancellationToken ct = default)
     {
         var loadedAttr = entity.Attributes.FindOneAttr(attrName);
         if (loadedAttr is null)
-            return Result.Fail($"Parsing `SectionSet` fail, can not find {attrName} in {entity.Name}");
+            return Result.Fail($"Load single attribute fail, cannot find [{attrName}] in [{entity.Name}]");
 
-        return await LoadSingleAttribute(entity, loadedAttr, ct);
+        return await LoadSingleAttribute(entity, loadedAttr,true, ct);
     }
 
 
@@ -261,8 +262,8 @@ public sealed class EntitySchemaService(
         _ => await GetLookupEntity(attr, ct).Map(x => attr with { Lookup = new Lookup(fromEntity, x.ToLoadedEntity())})
     };
 
-    private async Task<Result<LoadedAttribute>> LoadCollection(
-        LoadedEntity sourceEntity, LoadedAttribute attr, CancellationToken ct
+    private async Task<Result<LoadedAttribute>> LoadCollection( 
+        LoadedEntity sourceEntity, LoadedAttribute attr, bool loadInListLookup,CancellationToken ct
     )
     {
         if (attr.Collection is not null) return attr;
@@ -270,18 +271,32 @@ public sealed class EntitySchemaService(
         if (!attr.GetCollectionTarget(out var entityName, out var linkAttrName))
             return Result.Fail( $"Collection target was not set for attribute `{attr.Field}`");
 
-        return await GetEntity(entityName, ct).Bind(entity =>
+        return await GetEntity(entityName, ct).Bind(async entity =>
         {
             var loadAttribute = entity.Attributes.FindOneAttr(linkAttrName);
             if (loadAttribute is null) return Result.Fail($"Not found [{linkAttrName}] from entity [{entityName}]");
-            var collection = new Collection(sourceEntity, entity.ToLoadedEntity(),
+
+            var loadedEntity = entity.ToLoadedEntity();
+            if (loadInListLookup && !(await LoadInListLookups(loadedEntity, ct)).Try(out loadedEntity, out var err))
+            {
+                return Result.Fail(err);
+            }
+
+            var collection = new Collection(sourceEntity, loadedEntity,
                 loadAttribute.ToLoaded(entity.TableName));
             return Result.Ok(collection);
         }).Map(c => attr with{Collection = c});
     }
 
+    //for entity list api, need to attach lookup data to display
+    private Task<Result<LoadedEntity>> LoadInListLookups(LoadedEntity entity, CancellationToken ct = default)
+        => entity.Attributes
+            .ShortcutMap(async x =>
+                x is { DataType: DataType.Lookup, InList: true } ? await LoadLookup(entity, x, ct) : x)
+            .Map(x => entity with { Attributes = [..x] });
+
     private async Task<Result<LoadedAttribute>> LoadJunction(
-        LoadedEntity entity, LoadedAttribute attr, CancellationToken ct
+        LoadedEntity entity, LoadedAttribute attr, bool loadInListLookup,CancellationToken ct
     )
     {
         if (attr.Junction is not null) return attr;
@@ -291,6 +306,7 @@ public sealed class EntitySchemaService(
 
         return await GetEntity(targetName, ct)
             .Map(e => e.ToLoadedEntity())
+            .Bind(async e => loadInListLookup ? await LoadInListLookups(e, ct) : e)
             .Map(x => attr with { Junction = JunctionHelper.Junction(entity, x, attr) })
             .OnFail($"Failed to load Junction for attribute {attr.Field}");
     }
@@ -298,7 +314,7 @@ public sealed class EntitySchemaService(
     private Task<Result<LoadedEntity>> LoadAttributes(
         LoadedEntity entity, CancellationToken ct
     ) => entity.Attributes
-        .ShortcutMap(x => LoadSingleAttribute(entity, x, ct))
+        .ShortcutMap(x => LoadSingleAttribute(entity, x,true, ct))
         .Map(x => entity with { Attributes = [..x] });
 
     private async Task VerifyEntity(Entity entity, CancellationToken ct)

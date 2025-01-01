@@ -15,7 +15,11 @@ export function NewDataItemPageComponent({schema,baseRouter}:{schema:any, baseRo
     const {checkError, Status} = useRequestStatus(schema.name)
     const formId = "newForm" + schema.name
     const uploadUrl = fileUploadURL()
-
+    const inputColumns = schema?.attributes?.filter(
+        (x: any) =>{
+            return x.inDetail &&!x.isDefault&& x.dataType != "junction" && x.dataType != "collection" ;
+        }
+    ) ??[];
     const onSubmit = async (formData: any) => {
         const {data, error} = await addItem(schema.name, formData)
         checkError(error, 'saved')
@@ -28,6 +32,6 @@ export function NewDataItemPageComponent({schema,baseRouter}:{schema:any, baseRo
     return <>
         <Button label={'Save ' + schema.title} type="submit" form={formId}  icon="pi pi-check"/>
         <Status/>
-        <ItemForm {...{schema,data:{}, onSubmit,  formId,uploadUrl,  getFullAssetsURL}}/>
+        <ItemForm columns={inputColumns} {...{data:{}, onSubmit,  formId,uploadUrl,  getFullAssetsURL}}/>
     </>
 }

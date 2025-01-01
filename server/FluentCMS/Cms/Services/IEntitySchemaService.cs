@@ -12,7 +12,7 @@ public interface IEntitySchemaService: IEntityVectorResolver, IAttributeValueRes
     Task<Schema> SaveTableDefine(Schema schema, CancellationToken ct);
     Task<Schema> AddOrUpdateByName(Entity entity, CancellationToken ct =default);
 
-    Task<Result<LoadedAttribute>> LoadSingleAttrByName(LoadedEntity entity, string attrName, CancellationToken ct);
+    Task<Result<LoadedAttribute>> LoadSingleAttrByName(LoadedEntity entity, string attrName,bool loadInListLookup, CancellationToken ct);
     ValueTask<ImmutableArray<Entity>> AllEntities(CancellationToken ct = default);
     Task Delete(Schema schema, CancellationToken ct);
     Task<Schema> Save(Schema schema, CancellationToken ct);

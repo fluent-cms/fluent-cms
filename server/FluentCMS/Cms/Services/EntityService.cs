@@ -140,7 +140,8 @@ public sealed class EntityService(
         return ret;
     }
 
-    public async Task<ListResponse> JunctionList(string name, string sid, string attr, bool exclude,Pagination pagination, 
+    public async Task<ListResponse> JunctionList(string name, string sid, string attr, bool exclude,
+        Pagination pagination,
         StrArgs args, CancellationToken ct)
     {
         var (_, junction, id) = await GetJunctionCtx(name, sid, attr, ct);
@@ -148,17 +149,18 @@ public sealed class EntityService(
 
         var selectAttributes = target.Attributes.GetLocalAttrs(target.PrimaryKey, InListOrDetail.InList);
 
-        var (filters, sorts,validPagination) = await GetListArgs(target, args,pagination);
-        
-        var pagedListQuery = exclude
+        var (filters, sorts, validPagination) = await GetListArgs(target, args, pagination);
+
+        var listQuery = exclude
             ? junction.GetNotRelatedItems(selectAttributes, filters, sorts, validPagination, [id])
-            : junction.GetRelatedItems( filters, [..sorts], validPagination,null, selectAttributes,[id]);
+            : junction.GetRelatedItems(filters, [..sorts], validPagination, null, selectAttributes, [id]);
 
         var countQuery = exclude
             ? junction.GetNotRelatedItemsCount(filters, [id])
             : junction.GetRelatedItemsCount(filters, [id]);
 
-        return new ListResponse(await queryExecutor.Many(pagedListQuery, ct), await queryExecutor.Count(countQuery, ct));
+        return new ListResponse(await GetItemsAndRelatedLookup(junction.TargetEntity, listQuery, ct),
+            await queryExecutor.Count(countQuery, ct));
     }
 
     public async Task<Record> CollectionInsert(string name, string sid, string attr, JsonElement element, CancellationToken ct = default)
@@ -177,10 +179,12 @@ public sealed class EntityService(
         var attributes =
             collection.TargetEntity.Attributes.GetLocalAttrs(collection.TargetEntity.PrimaryKey, InListOrDetail.InList);    
         var listQuery = collection.List(filters,sorts,validPagination,null,attributes,[id]);
+      
         var countQuery = collection.Count(filters,[id]);
-        return new ListResponse(await queryExecutor.Many(listQuery,ct), await queryExecutor.Count(countQuery, ct));
+        return new ListResponse(
+            await GetItemsAndRelatedLookup(collection.TargetEntity, listQuery, ct),
+            await queryExecutor.Count(countQuery, ct));
     }
-
 
     
     private async Task<ListResponse?> ListWithAction(
@@ -190,7 +194,7 @@ public sealed class EntityService(
         ValidFilter[] filters,
         ValidSort[] sorts, 
         ValidPagination pagination, 
-         CancellationToken token)
+        CancellationToken ct)
     {
         var args = new EntityPreGetListArgs(
             Entity: entity,
@@ -203,30 +207,33 @@ public sealed class EntityService(
         var res = await hookRegistry.EntityPreGetList.Trigger(provider, args);
         var attributes = entity.Attributes.GetLocalAttrs(entity.PrimaryKey, InListOrDetail.InList);
 
-        var query = entity.ListQuery([..res.RefFilters], [..res.RefSorts], res.RefPagination, null, attributes);
+        var listQuery = entity.ListQuery([..res.RefFilters], [..res.RefSorts], res.RefPagination, null, attributes);
+        var countQuery = entity.CountQuery([..res.RefFilters]);
         var ret = mode switch
         {
-            ListResponseMode.count => new ListResponse([], await queryExecutor.Count(query, token)),
-            ListResponseMode.items => new ListResponse(await GetItems(), 0),
-            _ => new ListResponse(await GetItems(), await queryExecutor.Count(query, token))
+            ListResponseMode.count => new ListResponse([], await queryExecutor.Count(countQuery, ct)),
+            ListResponseMode.items => new ListResponse(await GetItemsAndRelatedLookup(entity, listQuery, ct), 0),
+            _ => new ListResponse(await GetItemsAndRelatedLookup(entity,listQuery,ct), await queryExecutor.Count(countQuery, ct))
         };
 
         var postArgs = new EntityPostGetListArgs(Entity: entity, RefListResponse: ret);
         var postRes = await hookRegistry.EntityPostGetList.Trigger(provider, postArgs);
         return postRes.RefListResponse;
 
-        async Task<Record[]> GetItems()
-        {
-            var items = await queryExecutor.Many(query, token);
-            if (items.Length == 0) return items;
-            foreach (var attribute in entity.Attributes.GetAttrByType(DataType.Lookup, InListOrDetail.InList))
-            {
-                await LoadLookupData(attribute, items, token);
-            }
-            return items;   
-        }
+
     }
 
+    async Task<Record[]> GetItemsAndRelatedLookup(LoadedEntity entity, SqlKata.Query query, CancellationToken ct)
+    {
+        var items = await queryExecutor.Many(query, ct);
+        if (items.Length == 0) return items;
+        foreach (var attribute in entity.Attributes.GetAttrByType(DataType.Lookup, InListOrDetail.InList))
+        {
+            await LoadLookupData(attribute, items, ct);
+        }
+
+        return items;
+    } 
 
     private async Task LoadLookupData(LoadedAttribute attr, Record[] items, CancellationToken token)
     {
