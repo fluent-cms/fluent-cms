@@ -27,11 +27,17 @@ public class SchemaApiClient (HttpClient client)
         =>  client.GetResult<Entity>($"/entity/{table}/define".ToSchemaApi());
 
     public Task<Result<Entity>> GetLoadedEntity(string entityName)
-        => client.GetResult<Entity>($"/api/schemas/entity/{entityName}");
+        => client.GetResult<Entity>($"/entity/{entityName}".ToSchemaApi());
+
+    public async Task<bool> ExistsEntity(string entityName)
+    {
+        var res = await client.GetAsync($"/name/{entityName}?type=entity".ToSchemaApi());
+        return res.IsSuccessStatusCode;
+    }
     
-    public Task<Result<Schema>> EnsureSimpleEntity(string entityName, string field, 
-        string lookup = "", 
-        string junction = "", 
+    public Task<Result<Schema>> EnsureSimpleEntity(string entityName, string field,
+        string lookup = "",
+        string junction = "",
         string collection = "", string linkAttribute = "")
     {
         var attr = new List<Attribute>([
@@ -92,7 +98,11 @@ public class SchemaApiClient (HttpClient client)
             TitleAttribute: field,
             Attributes: [..attr]
         );
+        return EnsureEntity(entity);
+    }
 
+    public Task<Result<Schema>> EnsureEntity(Entity entity)
+    {
         var url = $"/entity/add_or_update".ToSchemaApi();
         return client.PostResult<Schema>(url, entity);
     }

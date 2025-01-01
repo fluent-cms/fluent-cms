@@ -93,4 +93,14 @@ public class QueryApiClient(HttpClient client)
 
         return response.Data.First().Value;
     }
+    
+    public async Task<Result> SendGraphQuery(string query)
+    {
+        var response = await _graph.SendQueryAsync<JsonElement>(new GraphQLRequest(query));
+        if (response.Errors?.Length > 0)
+        {
+            return Result.Fail(string.Join(",", response.Errors.Select(x => x.Message)));
+        }
+        return Result.Ok();
+    }
 }

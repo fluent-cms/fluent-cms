@@ -95,13 +95,13 @@ public static class EntityHelper
         IEnumerable<ValidFilter> filters, 
         ValidSort[] sorts, 
         ValidPagination? pagination, 
-        ValidSpan? cursor, 
+        ValidSpan? span, 
         IEnumerable<LoadedAttribute> attributes)
     {
         var q = e.Basic().Select(attributes.Select(x => x.AddTableModifier()));
         q.ApplyFilters(filters);
-        q.ApplySorts(cursor?.Span.IsForward()??false ? sorts.ReverseOrder() : sorts);
-        q.ApplyCursor(cursor,sorts);
+        q.ApplySorts(SpanHelper.IsForward(span?.Span)?sorts: sorts.ReverseOrder());
+        q.ApplyCursor(span,sorts);
         if (pagination is not null)
         {
             q.ApplyPagination(pagination);

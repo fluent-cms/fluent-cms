@@ -1,6 +1,5 @@
 using FluentCMS.Cms.Services;
 using FluentCMS.Utils.QueryBuilder;
-using Microsoft.AspNetCore.Mvc;
 
 namespace FluentCMS.Cms.Handlers;
 
@@ -12,10 +11,10 @@ public static class QueryHandlers
             IQueryService svc,
             HttpContext ctx,
             string name,
-            [FromQuery] string? first,
-            [FromQuery] string? last,
-            [FromQuery] string? offset,
-            [FromQuery] string? limit,
+            string? first,
+            string? last,
+            string? offset,
+            string? limit,
             CancellationToken ct
         ) => await svc.ListWithAction(name, new Span(first, last), new Pagination(offset, limit), ctx.Args(), ct));
 
@@ -31,9 +30,9 @@ public static class QueryHandlers
             HttpContext ctx,
             string name,
             string attr,
-            [FromQuery] string? first,
-            [FromQuery] string? last,
-            [FromQuery] int limit,
+            string? first,
+            string? last,
+            int limit,
             CancellationToken token
         ) => await svc.Partial(name, attr, new Span(first, last), limit, ctx.Args(), token));
         return app;

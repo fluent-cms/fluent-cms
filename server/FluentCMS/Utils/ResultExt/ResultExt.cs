@@ -136,4 +136,13 @@ public static class ResultExt
             _ => result.Value
         }; 
     }
+    
+    public static async Task Ok(this Task<Result> t)
+    {
+        var result = await t;
+        if (result.IsFailed)
+        {
+            throw new ResultException($"{string.Join(";", result.Errors.Select(x => x.Message))}");
+        }
+    }
 }

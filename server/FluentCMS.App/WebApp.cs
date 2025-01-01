@@ -1,8 +1,7 @@
 using FluentCMS.Cms.Services;
-using FluentCMS.Utils.RelationDbDao;
 using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Utils.Test;
 using FluentCMS.WebAppBuilders;
-using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.App;
 
@@ -85,7 +84,7 @@ public static class WebApp
         await service.SaveQuery(query);
     }
 
-    private static async Task AddData(IEntityService service, string entity, string[] fields, int commitCount)
+    private static async Task AddData(IEntityService service, string tableName, string[] fields, int commitCount)
     {
 
         for (var i = 0; i < commitCount; i++)
@@ -93,11 +92,12 @@ public static class WebApp
             var vals = new List<IEnumerable<object>>();
             for (var j = 0; j < 1000; j++)
             {
-                var val = fields.Select(s => $"{entity}.{s}-{i}-{j}").Cast<object>().ToArray();
+                var idx = i % 1000 + j + 1;
+                var val = fields.Select(s => $"{s}-{idx}").Cast<object>().ToArray();
                 vals.Add(val);
             }
 
-            await service.BatchInsert(entity, fields, vals);
+            await service.BatchInsert(tableName, fields, vals);
         }
     }
 
@@ -114,8 +114,9 @@ public static class WebApp
             var vals = new List<IEnumerable<object>>();
             for (var j = 0; j < 1000; j++)
             {
+                var idx = i % 1000 + j + 1;
                 object[] val =
-                    [$"title-{i}-{j}", $"abstrct-{i}-{j}", $"body-{i}-{j}", $"imge-{i}-{j}", i * 1000 + j + 1];
+                    [$"title-{idx}", $"abstract-{idx}", $"body-{idx}", $"image-{idx}", idx];
                 vals.Add(val);
             }
 
@@ -140,71 +141,9 @@ public static class WebApp
     {
         using var scope = app.Services.CreateScope();
         var entitySchemaService = scope.ServiceProvider.GetRequiredService<IEntitySchemaService>();
-        await entitySchemaService.SaveTableDefine(
-            new Entity(
-                Attributes:
-                [
-                    new Attribute(Field: "name", Header: "Name"),
-                    new Attribute(Field: "description", Header: "Description"),
-                    new Attribute(Field: "image", Header: "Image", DisplayType: DisplayType.Image),
-                ],
-                DefaultPageSize: 50,
-                TitleAttribute: "name",
-                TableName: "tags",
-                Title: "Tag",
-                Name: "tag"
-            ));
-
-
-        await entitySchemaService.SaveTableDefine(
-            new Entity(
-                Attributes:
-                [
-                    new Attribute(Field: "name", Header: "Name"),
-                    new Attribute(Field: "description", Header: "Description"),
-                    new Attribute(Field: "image", Header: "Image", DisplayType: DisplayType.Image),
-                ],
-                TitleAttribute: "name",
-                TableName: "authors",
-                DefaultPageSize: 50,
-                Title: "Author",
-                Name: "author"
-            ));
-        await entitySchemaService.SaveTableDefine(
-            new Entity(
-                Attributes:
-                [
-                    new Attribute(Field: "name", Header: "Name"),
-                    new Attribute(Field: "description", Header: "Description"),
-                    new Attribute(Field: "image", Header: "Image", DisplayType: DisplayType.Image),
-                ],
-                TitleAttribute: "name",
-                TableName: "categories",
-                Title: "Category",
-                DefaultPageSize: 50,
-                Name: "category"
-            ));
-        await entitySchemaService.SaveTableDefine(
-            new Entity(
-                Attributes:
-                [
-                    new Attribute(Field: "title", Header: "Title"),
-                    new Attribute(Field: "abstract", Header: "Abstract"),
-                    new Attribute(Field: "body", Header: "Body"),
-                    new Attribute(Field: "image", Header: "Image", DisplayType: DisplayType.Image),
-
-                    new Attribute(Field: "tag", Header: "Tag", DataType: DataType.Junction, DisplayType: DisplayType.Picklist,
-                        Options: "tag"),
-                    new Attribute(Field: "author", Header: "Author", DataType: DataType.Junction, DisplayType: DisplayType.Picklist,
-                        Options: "author"),
-                    new Attribute(Field: "category", Header: "Category", DataType: DataType.Lookup,
-                        DisplayType: DisplayType.Lookup, Options: "category"),
-                ],
-                TitleAttribute: "title",
-                TableName: "posts",
-                Title: "Post",
-                DefaultPageSize: 50,
-                Name: "post"
-            ));
+        foreach (var entity in BlogsTestData.Entities)
+        {
+            await entitySchemaService.SaveTableDefine(entity);
+        }
     }
 }

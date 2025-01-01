@@ -90,7 +90,7 @@ public sealed class QuerySchemaService(
         CancellationToken ct = default)
     {
         var entity = (await entitySchemaSvc.LoadEntity(query.EntityName, ct)).Ok();
-        var selection = (await ParseGraphFields("", entity, fields, ct)).Ok();
+        var selection = (await ParseGraphFields("", entity, fields, null, ct)).Ok();
         var sorts = (await SortHelper.ToValidSorts(query.Sorts, entity, entitySchemaSvc)).Ok();
         var validFilter = (await query.Filters.ToValidFilters(entity, entitySchemaSvc, entitySchemaSvc)).Ok();
         return query.ToLoadedQuery(entity, selection, sorts, validFilter);
@@ -107,7 +107,7 @@ public sealed class QuerySchemaService(
         (await query.Filters.ToValidFilters(entity, entitySchemaSvc, entitySchemaSvc)).Ok();
 
         var fields = Converter.GetRootGraphQlFields(query.Source).Ok();
-        (await ParseGraphFields("", entity, fields, ct)).Ok();
+        (await ParseGraphFields("", entity, fields,null, ct)).Ok();
         (await SortHelper.ToValidSorts(query.Sorts, entity, entitySchemaSvc)).Ok();
     }
 
@@ -115,23 +115,33 @@ public sealed class QuerySchemaService(
         string prefix,
         LoadedEntity entity,
         IEnumerable<GraphQLField> fields,
+        EntityLinkDesc? parentLink,
         CancellationToken ct = default)
     {
         return fields.ShortcutMap(async field => await entitySchemaSvc
                 .LoadSingleAttrByName(entity, field.Name.StringValue, ct)
                 .Map(attr => attr.ToGraph())
                 .Map(attr => attr with { Prefix = prefix })
-                .Bind(async attr => attr.IsCompound()? await LoadChildren(attr.FullPathName(prefix), attr, field):attr)
-                .Bind(async attr => attr.DataType is DataType.Junction or DataType.Collection ? await LoadArgs(field, attr): attr))
-            .Bind(x => x.FindOneAttr(entity.PrimaryKey) is not null ? Result.Ok(x) : Result.Fail(""));
+                .Bind(async attr =>
+                    attr.IsCompound() ? await LoadChildren(attr.FullPathName(prefix), attr, field) : attr)
+                .Bind(async attr => attr.DataType is DataType.Junction or DataType.Collection
+                    ? await LoadArgs(field, attr)
+                    : attr))
+            .Bind(x =>
+            {
+                if (x.FindOneAttr(entity.PrimaryKey) is null) 
+                    return Result.Fail($"Primary key [{entity.PrimaryKey}] not in selection list for entity [{entity.Name}]");
+                if (parentLink is not null && x.FindOneAttr(parentLink.TargetAttribute.Field) is null)
+                    return Result.Fail($"Referencing field [{entity.PrimaryKey}] not in selection list for entity [{entity.Name}]");
+                return Result.Ok(x);
+            });
 
         async Task<Result<GraphAttribute>> LoadArgs(GraphQLField field, GraphAttribute graphAttr)
         {
-            if (!graphAttr.GetEntityLinkDesc().Try(out var desc, out var e))
-                return Result.Fail("Target Entity not found");
-                
+            if (!graphAttr.GetEntityLinkDesc().Try(out var desc, out var err))
+                return Result.Fail(err);
             var inputs = field.Arguments?.Select(x => new GraphQlArgumentDataProvider(x)) ?? [];
-            if (!QueryHelper.ParseSimpleArguments(inputs).Try( out var res, out var err)) 
+            if (!QueryHelper.ParseSimpleArguments(inputs).Try( out var res, out  err)) 
                 return Result.Fail(err);
             if (!(await SortHelper.ToValidSorts(res.sorts, desc.TargetEntity, entitySchemaSvc)).Try(out var sorts, out err))
                 return Result.Fail(err);
@@ -144,7 +154,7 @@ public sealed class QuerySchemaService(
         Task<Result<GraphAttribute>> LoadChildren(
             string newPrefix, GraphAttribute attr, GraphQLField field
         ) => attr.GetEntityLinkDesc()
-            .Bind(desc => ParseGraphFields(newPrefix, desc.TargetEntity, field.SelectionSet!.SubFields(), ct))
+            .Bind(desc => ParseGraphFields(newPrefix, desc.TargetEntity, field.SelectionSet!.SubFields(),desc, ct))
             .Map(sub => attr with { Selection = [..sub] });
     }
 }

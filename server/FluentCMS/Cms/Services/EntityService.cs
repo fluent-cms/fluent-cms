@@ -328,10 +328,9 @@ public sealed class EntityService(
     private async Task<CollectionContext> GetCollectionCtx(string entity, string sid, string attr, CancellationToken ct)
     {
         var loadedEntity = (await entitySchemaSvc.LoadEntity(entity, ct)).Ok();
-        var attribute = loadedEntity.Attributes.FindOneAttr(attr) ??
-                        throw new ResultException($"not find {attr} in {entity}");
+        var collection = loadedEntity.Attributes.FindOneAttr(attr)?.Collection ??
+                        throw new ResultException($"Failed to get Collection Context, cannot find [{attr}] in [{entity}]");
 
-        var collection = attribute.Collection ?? throw new ResultException($"not find Junction of {attr}");
         if (!entitySchemaSvc.ResolveVal(loadedEntity.PrimaryKeyAttribute, sid, out var id))
         {
             throw new ResultException($"Failed to cast {sid} to {loadedEntity.PrimaryKeyAttribute.DataType}");
@@ -346,10 +345,11 @@ public sealed class EntityService(
     private async Task<JunctionContext> GetJunctionCtx(string entity, string sid, string attr, CancellationToken ct)
     {
         var loadedEntity = (await entitySchemaSvc.LoadEntity(entity, ct)).Ok();
+        var errMessage = $"Failed to Get Junction Context, cannot find [{attr}] in [{entity}]";
         var attribute = loadedEntity.Attributes.FindOneAttr(attr) ??
-                        throw new ResultException($"not find {attr} in {entity}");
+                        throw new ResultException(errMessage);
 
-        var junction = attribute.Junction ?? throw new ResultException($"not find Junction of {attr}");
+        var junction = attribute.Junction ?? throw new ResultException(errMessage);
         if (!entitySchemaSvc.ResolveVal(junction.SourceAttribute, sid, out var id))
         {
             throw new ResultException($"Failed to cast {sid} to {junction.SourceAttribute.DataType}");

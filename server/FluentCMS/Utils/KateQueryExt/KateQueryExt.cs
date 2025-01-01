@@ -27,7 +27,7 @@ public static class KateQueryExt
                     : AttributeVectorConstants.Separator + node.Attribute.Field;
 
                 var desc = node.Attribute.GetEntityLinkDesc().Value;
-                if (desc.IsCollection) hasCollection = true;
+                if (desc.IsArray) hasCollection = true;
 
                 _ = node.Attribute.DataType switch
                 {

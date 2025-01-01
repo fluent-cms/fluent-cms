@@ -28,8 +28,8 @@ public class EntityApiClient(HttpClient client)
         { lookupField, new { id = lookupTargetId } }
     });
 
-    private Task<Result<JsonElement>> Insert(
-        string entity, Dictionary<string,object> payload
+    public Task<Result<JsonElement>> Insert(
+        string entity, object payload
     ) => client.PostResult<JsonElement>($"/{entity}/insert".ToEntityApi(), payload);
 
     public Task<Result> Update(
@@ -51,7 +51,7 @@ public class EntityApiClient(HttpClient client)
     public Task<Result> JunctionAdd(string entity, string attr, int sourceId, int id)
     {
         var payload = new object[] { new { id } };
-        return client.PostResult($"/{entity}/{sourceId}/{attr}/save".ToEntityApi(), payload);
+        return client.PostResult($"/junction/{entity}/{sourceId}/{attr}/save".ToEntityApi(), payload);
     }
 
     public Task<Result> JunctionDelete(string entity, string attr, int sourceId, int id)

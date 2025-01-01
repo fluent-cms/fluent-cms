@@ -1,7 +1,6 @@
 using System.Text.Json;
 using FluentCMS.Cms.Services;
 using FluentCMS.Utils.QueryBuilder;
-using Microsoft.AspNetCore.Mvc;
 
 namespace FluentCMS.Cms.Handlers;
 
@@ -13,9 +12,9 @@ public static class EntityHandler
             IEntityService entityService,
             HttpContext context,
             string name,
-            [FromQuery] string? offset,
-            [FromQuery] string? limit,
-            [FromQuery] ListResponseMode? mode,
+            string? offset,
+            string? limit,
+            ListResponseMode? mode,
             CancellationToken ct
         ) => await entityService.ListWithAction(
             name,
@@ -34,21 +33,21 @@ public static class EntityHandler
         app.MapPost("/{name}/insert", async (
             IEntityService entityService,
             string name,
-            [FromBody] JsonElement ele,
+            JsonElement ele,
             CancellationToken ct
         ) => await entityService.InsertWithAction(name, ele, ct));
 
         app.MapPost("/{name}/update", async (
             IEntityService entityService,
             string name,
-            [FromBody] JsonElement ele,
+            JsonElement ele,
             CancellationToken ct
         ) => await entityService.UpdateWithAction(name, ele, ct));
 
         app.MapPost("/{name}/delete", async (
             IEntityService entityService,
             string name,
-            [FromBody] JsonElement ele,
+            JsonElement ele,
             CancellationToken ct
         ) => await entityService.DeleteWithAction(name, ele, ct));
 
@@ -57,7 +56,7 @@ public static class EntityHandler
             string name,
             string id,
             string attributeName,
-            [FromBody] JsonElement[] items,
+            JsonElement[] items,
             CancellationToken ct
         ) => await entityService.JunctionDelete(name, id, attributeName, items, ct));
 
@@ -76,8 +75,8 @@ public static class EntityHandler
             string name,
             string id,
             string attr,
-            [FromQuery] string? offset,
-            [FromQuery] string? limit,
+            string? offset,
+            string? limit,
             bool exclude,
             CancellationToken ct
         ) => await entityService.JunctionList(
@@ -92,8 +91,8 @@ public static class EntityHandler
             string name,
             string id,
             string attr,
-            [FromQuery] string? offset,
-            [FromQuery] string? limit,
+            string? offset,
+            string? limit,
             CancellationToken ct
         ) => await entityService.CollectionList(
             name, id, attr,
@@ -113,7 +112,7 @@ public static class EntityHandler
         app.MapGet("/lookup/{name}", async (
             IEntityService entityService,
             string name,
-            [FromQuery] string? query,
+            string? query,
             CancellationToken ct
         ) => await entityService.LookupList(name, query ?? "", ct));
     }

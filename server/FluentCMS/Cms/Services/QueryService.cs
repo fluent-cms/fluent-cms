@@ -32,35 +32,30 @@ public sealed class QueryService(
     public async Task<Record[]> Partial(string name, string attr, Span span, int limit, StrArgs args,
         CancellationToken token)
     {
-        if (span.IsEmpty())
-        {
-            throw new ResultException("cursor is empty, can not partially execute query");
-        }
+        if (span.IsEmpty()) throw new ResultException("cursor is empty, can not partially execute query");
 
         var query = await schemaSvc.ByNameAndCache(name, token);
         var attribute = query.Selection.RecursiveFind(attr)?? throw new ResultException("can not find attribute");
-        var cross = attribute.Junction ?? throw new ResultException($"can not find Junction of {attribute.Field})");
-
+        var desc = attribute.GetEntityLinkDesc().Ok();
+        
         var flyPagination = new Pagination(null, limit.ToString());
         var pagination = PaginationHelper.ToValid(flyPagination, attribute.Pagination,
-            cross.TargetEntity.DefaultPageSize, true, args);
+            desc.TargetEntity.DefaultPageSize, true, args);
 
         var fields = attribute.Selection.GetLocalAttrs();
         var validSpan = span.ToValid(fields, resolver).Ok();
 
         var filters = FilterHelper.ReplaceVariables(attribute.Filters,args, resolver).Ok();
-        var sorts = (await SortHelper.ReplaceVariables(attribute.Sorts, args, cross.TargetEntity, resolver)).Ok();
-
-        var desc = attribute.GetEntityLinkDesc().Ok();
+        var sorts = (await SortHelper.ReplaceVariables(attribute.Sorts, args, desc.TargetEntity, resolver)).Ok();
         
-        var kateQuery = desc.GetQuery(fields,[validSpan.SourceId()],new CollectionArgs(filters,sorts,pagination.PlusLimitOne(),validSpan) );
+        var kateQuery = desc.GetQuery(fields,[validSpan.SourceId()],new QueryArrayArgs(filters,sorts,pagination.PlusLimitOne(),validSpan) );
         var records = await executor.Many(kateQuery, token);
 
         records = span.ToPage(records, pagination.Limit);
         if (records.Length <= 0) return records;
 
         await AttachRelated(attribute.Selection, args, records, token);
-        var sourceId = records.First()[cross.SourceAttribute.Field];
+        var sourceId = records[0][desc.TargetAttribute.Field];
         SpanHelper.SetSpan(attribute.Selection, records, attribute.Sorts, sourceId);
         return records;
     }
@@ -122,19 +117,19 @@ public sealed class QueryService(
     {
         foreach (var attr in (attrs??[]).Where(x=>x.IsCompound()))
         {
-            await AttachJunction(attr, args, items, ct);
+            await AttachRelated(attr, args, items, ct);
         }
     }
     
 
-    private async Task AttachJunction(GraphAttribute attr, StrArgs args, Record[] items, CancellationToken ct)
+    private async Task AttachRelated(GraphAttribute attr, StrArgs args, Record[] items, CancellationToken ct)
     {
         var desc = attr.GetEntityLinkDesc().Ok();
         var ids = desc.SourceAttribute.GetUniq(items);
         if (ids.Length == 0) return;
 
-        CollectionArgs? collectionArgs = null;
-        if (desc.IsCollection)
+        QueryArrayArgs? collectionArgs = null;
+        if (desc.IsArray)
         {
             var filters = FilterHelper.ReplaceVariables(attr.Filters, args, resolver).Ok();
             var sorts = (await SortHelper.ReplaceVariables(attr.Sorts, args, desc.TargetEntity, resolver)).Ok();
@@ -142,7 +137,7 @@ public sealed class QueryService(
             var validPagination = fly.IsEmpty()
                 ? null
                 : PaginationHelper.ToValid(fly, attr.Pagination, desc.TargetEntity.DefaultPageSize, false, args);
-            collectionArgs = new CollectionArgs(filters,sorts,validPagination,null);
+            collectionArgs = new QueryArrayArgs(filters,sorts,validPagination,null);
         }
 
         if (collectionArgs is null || collectionArgs.Pagination is null)
@@ -158,7 +153,7 @@ public sealed class QueryService(
                 var sourceItems = items.Where(x => x[desc.SourceAttribute.Field].Equals(targetGroup.Key));
                 foreach (var sourceItem in sourceItems)
                 {
-                    sourceItem[attr.Field] = desc.IsCollection ? targetGroup.ToArray():targetGroup.FirstOrDefault();
+                    sourceItem[attr.Field] = desc.IsArray ? targetGroup.ToArray():targetGroup.FirstOrDefault();
                 }
             }
         }

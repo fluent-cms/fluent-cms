@@ -13,7 +13,6 @@ public sealed record Filter(string FieldName, string MatchType, ImmutableArray<C
 
 public sealed record ValidFilter(AttributeVector Vector, string MatchType, ImmutableArray<ValidConstraint> Constraints);
 
-
 public static class FilterConstants
 {
     public const string MatchTypeKey = "matchType";

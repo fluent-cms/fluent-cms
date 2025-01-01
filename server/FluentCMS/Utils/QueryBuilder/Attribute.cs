@@ -92,13 +92,13 @@ public sealed record GraphAttribute(
     Collection:Collection
 );
 
-public record CollectionArgs(ValidFilter[] Filters, ValidSort[] Sorts,ValidPagination? Pagination,ValidSpan? Span);
+public record QueryArrayArgs(ValidFilter[] Filters, ValidSort[] Sorts,ValidPagination? Pagination,ValidSpan? Span);
 public record EntityLinkDesc(
     LoadedAttribute SourceAttribute,
     LoadedEntity TargetEntity,
     LoadedAttribute TargetAttribute,
-    bool IsCollection,
-    Func<GraphAttribute[] , ValidValue[] , CollectionArgs? , SqlKata.Query> GetQuery);
+    bool IsArray,
+    Func<GraphAttribute[] , ValidValue[] , QueryArrayArgs? , SqlKata.Query> GetQuery);
 
 
 public static class AttributeHelper
@@ -109,21 +109,26 @@ public static class AttributeHelper
     {
         DataType.Lookup when attribute.Lookup is { } lookup =>
             new EntityLinkDesc(
-                attribute, lookup.TargetEntity, lookup.TargetEntity.PrimaryKeyAttribute, false, 
-                (fields, ids, _) => lookup.TargetEntity.ByIdsQuery(fields,ids)
+                SourceAttribute:attribute, 
+                TargetEntity:lookup.TargetEntity,
+                TargetAttribute:lookup.TargetEntity.PrimaryKeyAttribute, 
+                IsArray:false, 
+                GetQuery:(fields, ids, _) => lookup.TargetEntity.ByIdsQuery(fields,ids)
                 ),
         DataType.Junction when attribute.Junction is { } junction =>
             new EntityLinkDesc(
-                junction.SourceEntity.PrimaryKeyAttribute,
-                junction.TargetEntity, junction.SourceAttribute,
-                true, 
-                (fields,ids, args) => junction.GetRelatedItems(args!.Filters,args.Sorts,args.Pagination,args.Span,fields,ids)),
+                SourceAttribute: junction.SourceEntity.PrimaryKeyAttribute,
+                TargetEntity: junction.TargetEntity,
+                TargetAttribute:junction.SourceAttribute,
+                IsArray:true, 
+                GetQuery:(fields,ids, args) => junction.GetRelatedItems(args!.Filters,args.Sorts,args.Pagination,args.Span,fields,ids)),
         DataType.Collection when attribute.Collection is { } collection =>
             new EntityLinkDesc(
-                collection.SourceEntity.PrimaryKeyAttribute,
-                collection.TargetEntity, collection.LinkAttribute,
-                true, 
-                (fields,ids,args) => collection.List(args!.Filters,args.Sorts,args.Pagination,args.Span, fields,ids)
+                SourceAttribute:collection.SourceEntity.PrimaryKeyAttribute,
+                TargetEntity:collection.TargetEntity, 
+                TargetAttribute:collection.LinkAttribute,
+                IsArray:true, 
+                GetQuery:(fields,ids,args) => collection.List(args!.Filters,args.Sorts,args.Pagination,args.Span, fields,ids)
                 ),
         _ => Result.Fail($"Cannot get entity link desc for attribute [{attribute.Field}]")
     };

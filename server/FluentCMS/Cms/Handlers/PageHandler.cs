@@ -1,5 +1,4 @@
 using FluentCMS.Cms.Services;
-using Microsoft.AspNetCore.Mvc;
 
 namespace FluentCMS.Cms.Handlers;
 
@@ -19,7 +18,7 @@ public static class PageHandler
         app.MapGet("/page_part", async (
             IPageService pageService,
             HttpContext context,
-            [FromQuery] string token,
+            string token,
             CancellationToken ct
         ) => await context.Html(await pageService.GetPart(token, ct), ct));
 

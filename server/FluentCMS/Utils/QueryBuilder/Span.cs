@@ -4,7 +4,6 @@ using Microsoft.IdentityModel.Tokens;
 using FluentCMS.Utils.DictionaryExt;
 using FluentCMS.Utils.JsonElementExt;
 using FluentResults;
-using GraphQL.Introspection;
 
 namespace FluentCMS.Utils.QueryBuilder;
 
@@ -58,11 +57,11 @@ public static class SpanHelper
 
     public static bool IsEmpty(this Span c) => string.IsNullOrWhiteSpace(c.First) && string.IsNullOrWhiteSpace(c.Last);
 
-    public static bool IsForward(this Span c) =>
-        !string.IsNullOrWhiteSpace(c.Last) || string.IsNullOrWhiteSpace(c.First);
+    public static bool IsForward(Span? c) =>
+        c is null ||!string.IsNullOrWhiteSpace(c.Last) || string.IsNullOrWhiteSpace(c.First);
 
     public static string GetCompareOperator(this Span c, string order)
-        => c.IsForward()
+        => IsForward(c)
             ? order == SortOrder.Asc ? ">" : "<"
             : order == SortOrder.Asc
                 ? "<"
@@ -78,7 +77,7 @@ public static class SpanHelper
             items = items[..^1]; // remove last item
         }
 
-        if (!c.IsForward())
+        if (!IsForward(c))
         {
             items = [..items.Reverse()];
         }
@@ -116,7 +115,7 @@ public static class SpanHelper
                 {
                     Record rec => SetSpan(attr.Selection, [rec], [], null),
                     Record[] { Length: > 0 } records => SetSpan(attr.Selection, records, attr.Sorts,
-                        records.First()[desc.TargetAttribute.Field]),
+                        records[0][desc.TargetAttribute.Field]),
                     _ => true
                 };
             }
@@ -149,7 +148,7 @@ public static class SpanHelper
         var arr = attrs.ToArray();
         try
         {
-            var recordStr = c.IsForward() ? c.Last : c.First;
+            var recordStr = IsForward(c) ? c.Last : c.First;
             recordStr = Base64UrlEncoder.Decode(recordStr);
             var item = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(recordStr);
             var dict = new Dictionary<string, object>();
