@@ -12,13 +12,7 @@ public class QueryTest
                 new HttpClient { BaseAddress = new Uri("http://localhost:5001") }
             ),
             "post_test");
-    [Fact]
-    public Task VerifyFilterExpression() => _blogsTest.VerifyFilterExpression();
 
     [Fact]
-    public Task VerifySortExpression() => _blogsTest.SortExpr();
-
-    [Fact]
-    public Task VerifyPagination() => _blogsTest.VerifyPagination();
-
+    public Task AllBlogTest() => _blogsTest.RunAll();
 }

@@ -83,9 +83,9 @@ public class QueryApiClient(HttpClient client)
           }
           """);
 
-    public async Task<Result<T>> SendGraphQuery<T>(string query)
+    public async Task<Result<T>> SendGraphQuery<T>(string query, object? variables = null)
     {
-        var response = await _graph.SendQueryAsync<Dictionary<string, T>>(new GraphQLRequest(query));
+        var response = await _graph.SendQueryAsync<Dictionary<string, T>>(new GraphQLRequest(query, variables));
         if (response.Errors?.Length > 0)
         {
             return Result.Fail(string.Join(",", response.Errors.Select(x => x.Message)));

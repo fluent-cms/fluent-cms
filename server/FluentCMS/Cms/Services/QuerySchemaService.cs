@@ -115,7 +115,7 @@ public sealed class QuerySchemaService(
         string prefix,
         LoadedEntity entity,
         IEnumerable<GraphQLField> fields,
-        EntityLinkDesc? parentLink,
+        GraphAttribute? parent,
         CancellationToken ct = default)
     {
         return fields.ShortcutMap(async field => await entitySchemaSvc
@@ -131,8 +131,8 @@ public sealed class QuerySchemaService(
             {
                 if (x.FindOneAttr(entity.PrimaryKey) is null) 
                     return Result.Fail($"Primary key [{entity.PrimaryKey}] not in selection list for entity [{entity.Name}]");
-                if (parentLink is not null && x.FindOneAttr(parentLink.TargetAttribute.Field) is null)
-                    return Result.Fail($"Referencing field [{entity.PrimaryKey}] not in selection list for entity [{entity.Name}]");
+                if (parent?.DataType == DataType.Collection && parent.GetEntityLinkDesc().Value.TargetAttribute.Field is { } field && x.FindOneAttr(field) is null)
+                    return Result.Fail($"Referencing Field [{field}] not in selection list for entity [{entity.Name}]");
                 return Result.Ok(x);
             });
 
@@ -154,7 +154,7 @@ public sealed class QuerySchemaService(
         Task<Result<GraphAttribute>> LoadChildren(
             string newPrefix, GraphAttribute attr, GraphQLField field
         ) => attr.GetEntityLinkDesc()
-            .Bind(desc => ParseGraphFields(newPrefix, desc.TargetEntity, field.SelectionSet!.SubFields(),desc, ct))
+            .Bind(desc => ParseGraphFields(newPrefix, desc.TargetEntity, field.SelectionSet!.SubFields(),attr, ct))
             .Map(sub => attr with { Selection = [..sub] });
     }
 }
