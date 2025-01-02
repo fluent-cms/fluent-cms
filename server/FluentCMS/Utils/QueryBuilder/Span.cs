@@ -97,11 +97,11 @@ public static class SpanHelper
     }
 
     public static bool SetSpan(ImmutableArray<GraphAttribute> attrs, Record[] items,
-        IEnumerable<ValidSort> sorts, object? sourceId)
+        IEnumerable<ValidSort> sortList, object? sourceId)
     {
-        var arr = sorts.ToArray();
-        if (HasPrevious(items)) SetCursor(sourceId, items.First(), arr);
-        if (HasNext(items)) SetCursor(sourceId, items.Last(), arr);
+        var sorts = sortList.ToArray();
+        if (HasPrevious(items)) SetCursor(sourceId, items.First(), sorts);
+        if (HasNext(items)) SetCursor(sourceId, items.Last(), sorts);
 
         foreach (var attr in attrs)
         {
@@ -110,12 +110,11 @@ public static class SpanHelper
             {
                 if (!item.TryGetValue(attr.Field, out var v))
                     continue;
-                var desc = attr.GetEntityLinkDesc().Value;
                 _ = v switch
                 {
                     Record rec => SetSpan(attr.Selection, [rec], [], null),
                     Record[] { Length: > 0 } records => SetSpan(attr.Selection, records, attr.Sorts,
-                        records[0][desc.TargetAttribute.Field]),
+                        attr.GetEntityLinkDesc().Value.TargetAttribute.GetValueOrLookup(records[0])),
                     _ => true
                 };
             }

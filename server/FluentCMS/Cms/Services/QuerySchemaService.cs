@@ -119,7 +119,7 @@ public sealed class QuerySchemaService(
         CancellationToken ct = default)
     {
         return fields.ShortcutMap(async field => await entitySchemaSvc
-                .LoadSingleAttrByName(entity, field.Name.StringValue,false, ct)
+                .LoadSingleAttrByName(entity, field.Name.StringValue,ct)
                 .Map(attr => attr.ToGraph())
                 .Map(attr => attr with { Prefix = prefix })
                 .Bind(async attr =>

@@ -55,7 +55,7 @@ public sealed class QueryService(
         if (records.Length <= 0) return records;
 
         await AttachRelated(attribute.Selection, args, records, token);
-        var sourceId = records[0][desc.TargetAttribute.Field];
+        var sourceId = desc.TargetAttribute.GetValueOrLookup(records[0]);
         SpanHelper.SetSpan(attribute.Selection, records, attribute.Sorts, sourceId);
         return records;
     }
@@ -145,16 +145,20 @@ public sealed class QueryService(
             //get all items and no pagination
             var query = desc.GetQuery(attr.Selection.GetLocalAttrs() ,ids, collectionArgs);
             var targetRecords = await executor.Many(query, ct);
-            await AttachRelated(attr.Selection, args, targetRecords, ct);
-            
-            var targetItemGroups = targetRecords.GroupBy(x => x[desc.TargetAttribute.Field], x => x);
-            foreach (var targetGroup in targetItemGroups)
+
+            if (targetRecords.Length > 0)
             {
-                var sourceItems = items.Where(x => x[desc.SourceAttribute.Field].Equals(targetGroup.Key));
-                foreach (var sourceItem in sourceItems)
+                var groups = targetRecords.GroupBy(x => desc.TargetAttribute.GetValueOrLookup(x), x => x);
+                foreach (var group in groups)
                 {
-                    sourceItem[attr.Field] = desc.IsArray ? targetGroup.ToArray():targetGroup.FirstOrDefault();
+                    var sourceItems = items.Where(x => x[desc.SourceAttribute.Field].Equals(group.Key));
+                    object? targetValues = desc.IsArray ? group.ToArray() : group.FirstOrDefault();
+                    foreach (var item in sourceItems)
+                    {
+                        item[attr.Field] = targetValues;
+                    }
                 }
+                await AttachRelated(attr.Selection, args, targetRecords, ct);
             }
         }
         else
@@ -167,12 +171,12 @@ public sealed class QueryService(
                 targetRecords = new Span().ToPage(targetRecords, collectionArgs.Pagination.Limit);
                 if (targetRecords.Length > 0)
                 {
+                    var sourceItems = items.Where(x => x[desc.SourceAttribute.Field].Equals(id.Value));
+                    foreach (var item in sourceItems)
+                    {
+                        item[attr.Field] = targetRecords;
+                    }
                     await AttachRelated(attr.Selection, args, targetRecords, ct);
-                }
-                var sourceItems = items.Where(x => x[desc.SourceAttribute.Field].Equals(id.Value));
-                foreach (var item in sourceItems)
-                {
-                    item[attr.Field] = targetRecords;
                 }
             }
         }

@@ -100,9 +100,17 @@ public record EntityLinkDesc(
     bool IsArray,
     Func<GraphAttribute[] , ValidValue[] , QueryArrayArgs? , SqlKata.Query> GetQuery);
 
-
 public static class AttributeHelper
 {
+
+    public static object GetValueOrLookup(this LoadedAttribute attribute, Record rec)
+        => attribute.DataType switch
+        {
+            DataType.Lookup when rec[attribute.Field] is Record sub => sub
+                [attribute.Lookup!.TargetEntity.PrimaryKey],
+            _ => rec[attribute.Field]
+        };
+
     public static Result<EntityLinkDesc> GetEntityLinkDesc(
         this LoadedAttribute attribute
     ) => attribute.DataType switch

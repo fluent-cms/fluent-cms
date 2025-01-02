@@ -84,7 +84,7 @@ public sealed class SchemaService(
     {
         (await NameNotTakenByOther(schema, ct)).Ok();
         schema = (await hook.SchemaPreSave.Trigger(provider, new SchemaPreSaveArgs(schema))).RefSchema;
-        await Save(schema, ct);
+        schema = await Save(schema, ct);
         await hook.SchemaPostSave.Trigger(provider, new SchemaPostSaveArgs(schema));
         return schema;
     }
