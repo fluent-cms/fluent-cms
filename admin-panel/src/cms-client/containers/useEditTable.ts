@@ -7,7 +7,8 @@ export function useEditTable(data :any, schema:any, column: {collection: any } )
     
     const listColumns = targetSchema?.attributes?.filter(
         (x: any) =>{
-            return x.inList 
+            return x.inList
+                && x.dataType != "Junction" && x.dataType != "Collection"
                 && x.field != column.collection.linkAttribute.field;
         }
     ) ?? [];
@@ -15,7 +16,7 @@ export function useEditTable(data :any, schema:any, column: {collection: any } )
     const inputColumns = targetSchema?.attributes?.filter(
         (x: any) =>{
             return x.inDetail && !x.isDefault
-                && x.dataType != "junction" && x.dataType != "collection" 
+                && x.dataType != "Junction" && x.dataType != "Collection" 
                 && x.field != column.collection.linkAttribute.field;
         }
     ) ??[];

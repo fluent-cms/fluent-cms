@@ -27,9 +27,10 @@ export function DataItemPageComponent({schema, baseRouter}:{schema:any, baseRout
 
     const inputColumns = schema?.attributes?.filter(
         (x: any) =>{
-            return x.inDetail &&!x.isDefault&& x.dataType != "junction" && x.dataType != "collection" ;
+            return x.inDetail &&!x.isDefault && x.dataType != "Collection" && x.dataType != "Junction" ;
         }
     ) ??[];
+    console.log({inputColumns});
 
 
     const onSubmit = async (formData: any) => {

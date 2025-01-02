@@ -17,7 +17,7 @@ export function NewDataItemPageComponent({schema,baseRouter}:{schema:any, baseRo
     const uploadUrl = fileUploadURL()
     const inputColumns = schema?.attributes?.filter(
         (x: any) =>{
-            return x.inDetail &&!x.isDefault&& x.dataType != "junction" && x.dataType != "collection" ;
+            return x.inDetail &&!x.isDefault&& x.dataType != "Junction" && x.dataType != "Collection" ;
         }
     ) ??[];
     const onSubmit = async (formData: any) => {
