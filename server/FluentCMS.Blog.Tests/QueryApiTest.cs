@@ -10,10 +10,7 @@ namespace FluentCMS.Blog.Tests;
 
 public class QueryApiTest
 {
-    private const string Name = "name";
     private readonly string _post = "post" + new IdGenerator(0).CreateId();
-    private readonly string _tag = "tag" + new IdGenerator(0).CreateId();
-
     private readonly QueryApiClient _query;
     private readonly BlogsTestCases _commonTestCases;
 

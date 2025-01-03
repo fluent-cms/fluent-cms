@@ -5,17 +5,81 @@ using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
 
 namespace FluentCMS.Utils.Test;
 
+public record EntityData(string EntityName, string TableName, Record[] Records);
+public record JunctionData(string EntityName,  string Attribute,string JunctionTableName, string SourceField, string TargetField, int SourceId, int[] TargetIds);
+
 /// a set of blog entities to test query
 public static class BlogsTestData
 {
     public static async Task EnsureBlogEntities(SchemaApiClient client)
     {
+        await EnsureBlogEntities(x => client.EnsureEntity(x).Ok());
+    }
+    public static async Task EnsureBlogEntities(Func<Entity, Task> action)
+    {
         foreach (var entity in Entities)
         {
-            await client.EnsureEntity(entity).Ok();
+            await  action(entity);
         }
     }
 
+    public static async Task PopulateData(EntityApiClient client)
+    {
+        await PopulateData(1, 100, async data =>
+        {
+            foreach (var dataRecord in data.Records)
+            {
+                await client.Insert(data.EntityName, dataRecord).Ok();
+            }
+        }, async data =>
+        {
+            //var items = data.TargetIds.Select(x => new { id = x });
+            foreach (var dataTargetId in data.TargetIds)
+            {
+                await client.JunctionAdd(data.EntityName, data.Attribute, data.SourceId, dataTargetId).Ok();
+            }
+        });
+    }
+
+    public static async Task PopulateData(int startId, int count, Func<EntityData,Task> insertEntity, Func<JunctionData,Task> insertJunction)
+    {
+        var tags = new List<Record>();
+        var authors = new List<Record>();
+        var categories = new List<Record>();
+        var posts = new List<Record>();
+        var tagsIds = new List<int>();
+        var authorsIds = new List<int>();
+        var attachments = new List<Record>();
+        
+        for (var i = startId; i < startId + count; i++)
+        {
+            tagsIds.Add(i);
+            authorsIds.Add(i);
+            
+            tags.Add(GetObject(["name", "description", "image"], i));
+            authors.Add(GetObject(["name", "description", "image"], i));
+            categories.Add(GetObject(["name", "description", "image"], i));
+            
+            var post = GetObject(["title", "abstract","body","image"], i);
+            post["category"] = i;
+            posts.Add(post);
+            
+            var attachment = GetObject(["name","description", "image"], i);
+            attachment["post"] = startId;
+            attachments.Add(attachment);
+        }
+
+        await insertEntity(new EntityData("tag", "tags", tags.ToArray()));
+        await insertEntity(new EntityData("author", "authors", authors.ToArray()));
+        await insertEntity(new EntityData("category", "categories", categories.ToArray()));
+        await insertEntity(new EntityData("post", "posts", posts.ToArray()));
+        await insertEntity(new EntityData("attachment", "attachments", attachments.ToArray()));
+
+        await insertJunction(new JunctionData("post", "tags", 
+            "post_tag", "post_id", "tag_id", startId, tagsIds.ToArray()));
+        await insertJunction(new JunctionData("post","authors",
+            "author_post","post_id","author_id",startId,authorsIds.ToArray()));
+    }
     private static Dictionary<string,object> GetObject(string[] fields, int i)
     {
         var returnValue = new Dictionary<string, object>();
@@ -27,34 +91,7 @@ public static class BlogsTestData
 
     }
 
-    public static async Task PopulateData(EntityApiClient client)
-    {
-        for (var i = 1; i <= 100; i++)
-        {
-            await client.Insert("tag", GetObject(["name", "description", "image"], i)).Ok();
-            await client.Insert("author", GetObject(["name", "description", "image"], i)).Ok();
-            await client.Insert("category", GetObject(["name", "description", "image"], i)).Ok();
-            
-            var post = GetObject(["title", "abstract","body","image"], i);
-            post["category"] = new { id = i};
-            await client.Insert("post", post).Ok();
-        }
-
-        for (var i = 1; i <= 10; i++)
-        {
-            for (var j = 1; j <= 100; j++)
-            {
-                await client.JunctionAdd("post", "tags", i , j ).Ok();
-                await client.JunctionAdd("post", "authors", i , j).Ok();
-                var attachment = GetObject(["name", "description", "image"], j);
-                attachment["post"] = i;
-                await client.Insert("attachment", attachment).Ok();
-            }
-        }
-    }
-
-
-    public static readonly Entity[] Entities =
+    private static readonly Entity[] Entities =
     [
         new(
             Attributes:

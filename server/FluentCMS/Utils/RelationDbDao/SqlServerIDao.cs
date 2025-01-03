@@ -17,10 +17,10 @@ public class SqlServerIDao(SqlConnection connection, ILogger<SqlServerIDao> logg
         return await queryFunc(db,_transaction);
     }
 
-    public async ValueTask<IDbTransaction?> BeginTransaction()
+    public async ValueTask<IDbTransaction> BeginTransaction()
     {
         _transaction= await connection.BeginTransactionAsync() as SqlTransaction;
-        return _transaction;
+        return _transaction!;
     }
 
     public void EndTransaction() => _transaction = null;

@@ -17,10 +17,10 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
         return await queryFunc(db, _transaction);
     }
 
-    public async ValueTask<IDbTransaction?> BeginTransaction()
+    public async ValueTask<IDbTransaction> BeginTransaction()
     {
         _transaction = await connection.BeginTransactionAsync() as SqliteTransaction;
-        return _transaction;
+        return _transaction!;
     }
     
     public void EndTransaction() => _transaction = null;

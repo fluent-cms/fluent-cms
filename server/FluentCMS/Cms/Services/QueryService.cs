@@ -153,6 +153,7 @@ public sealed class QueryService(
                 {
                     var sourceItems = items.Where(x => x[desc.SourceAttribute.Field].Equals(group.Key));
                     object? targetValues = desc.IsArray ? group.ToArray() : group.FirstOrDefault();
+                    if (targetValues is null) continue;
                     foreach (var item in sourceItems)
                     {
                         item[attr.Field] = targetValues;

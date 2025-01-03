@@ -10,10 +10,10 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
     private NpgsqlTransaction? _transaction;
     private readonly Compiler _compiler = new PostgresCompiler();
 
-    public async ValueTask<IDbTransaction?> BeginTransaction()
+    public async ValueTask<IDbTransaction> BeginTransaction()
     {
         _transaction = await connection.BeginTransactionAsync();   
-        return _transaction;
+        return _transaction!;
     }
 
     public void EndTransaction()=> _transaction = null;
@@ -30,7 +30,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
         return result != null;
     }
 
-    public Task<T> ExecuteKateQuery<T>(Func<QueryFactory, IDbTransaction, Task<T>> queryFunc)
+    public Task<T> ExecuteKateQuery<T>(Func<QueryFactory, IDbTransaction?, Task<T>> queryFunc)
     {
         var db = new QueryFactory(connection, _compiler);
         db.Logger = result => logger.LogInformation(result.ToString());

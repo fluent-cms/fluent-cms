@@ -11,13 +11,21 @@ public static class DocDbLinkerBuilder
         IServiceCollection services,
         ApiLinks[] apiLinksArray)
     {
-        
+
+        Console.WriteLine(
+            $"""
+            *********************************************************
+            Adding Nats Mongo Link 
+            apiLinksArray = {apiLinksArray}
+            *********************************************************
+            """);
         services.AddSingleton<IStringMessageConsumer, NatsConsumer>();
-        services.AddSingleton<IDocumentDbDao,MongoDao>();
+        services.AddSingleton<IDocumentDbDao, MongoDao>();
+
 
         services.AddSingleton(apiLinksArray);
-        services.AddHostedService<SyncWorker>(); 
-        services.AddHostedService<MigrateWorker>(); 
+        services.AddHostedService<SyncWorker>();
+        services.AddHostedService<MigrateWorker>();
         return services;
     }
 }

@@ -63,9 +63,11 @@ public sealed class EntityService(
         return await InsertWithAction(await GetRecordCtx(name, ele, ct), ct);
     }
 
-    public async Task BatchInsert(string tableName, IEnumerable<string> cols, IEnumerable<IEnumerable<object>> items)
+    public async Task BatchInsert(string tableName, Record[] items)
     {
-        var query = new SqlKata.Query(tableName).AsInsert(cols, items);
+        var cols = items[0].Select(x => x.Key);
+        var values = items.Select(item => item.Select(kv => kv.Value));
+        var query = new SqlKata.Query(tableName).AsInsert(cols, values);
         await queryExecutor.Exec(query);
     }
 

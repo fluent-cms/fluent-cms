@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using DynamicExpresso;
 
@@ -254,13 +255,20 @@ public static class EntityHelper
         Dictionary<string, object> ret = new();
         foreach (var property in jsonElement.EnumerateObject())
         {
-            var attribute = e.Attributes.FindOneAttr(property.Name);
-            if (attribute == null) continue;
+            var (name, value) = (property.Name, property.Value);
             
+            var attribute = e.Attributes.FindOneAttr(name);
+            if (attribute == null) continue;
+
             var res = attribute.DataType switch
             {
-                DataType.Lookup => SubElement(property.Value, attribute.Lookup!.TargetEntity.PrimaryKey).Bind(x=>Convert(x, attribute)),
-                _ => Convert(property.Value, attribute)
+                DataType.Lookup when value.ValueKind == JsonValueKind.Object
+                    => Convert(
+                        value.GetProperty(attribute.Lookup!.TargetEntity.PrimaryKey),
+                        attribute.Lookup.TargetEntity.PrimaryKeyAttribute
+                    ),
+                //SubElement(property.Value, attribute.Lookup!.TargetEntity.PrimaryKey).Bind(x=>Convert(x, attribute)),
+                _ => Convert(value, attribute)
             };
             if (res.IsFailed)
             {
@@ -271,6 +279,7 @@ public static class EntityHelper
         }
         return ret;
         
+        /*
         Result<JsonElement?> SubElement(JsonElement element, string key)
         {
             if (element.ValueKind == JsonValueKind.Object && element.TryGetProperty(key, out JsonElement subElement))
@@ -280,6 +289,7 @@ public static class EntityHelper
 
             return Result.Ok<JsonElement?>(null!);
         }
+        */
         
         Result<object> Convert(JsonElement? element, LoadedAttribute attribute)
         {

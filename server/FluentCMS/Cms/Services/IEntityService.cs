@@ -11,7 +11,7 @@ public interface IEntityService
     Task<Record> SingleByIdBasic(string entityName, string strId, string[]attributes, CancellationToken ct =default);
     
     Task<Record> InsertWithAction(string name, JsonElement item, CancellationToken ct = default);
-    Task BatchInsert(string name,IEnumerable<string> cols, IEnumerable<IEnumerable<object>> items);
+    Task BatchInsert(string tableName,Record[] items);
     Task<Record> UpdateWithAction(string name, JsonElement item, CancellationToken ct= default);
     Task<Record> DeleteWithAction(string name, JsonElement item, CancellationToken ct= default);
 

@@ -101,6 +101,7 @@ public sealed class EntitySchemaService(
         schema = (await hook.SchemaPreSave.Trigger(provider, new SchemaPreSaveArgs(schema))).RefSchema;
 
         using var tx = await dao.BeginTransaction();
+        
         try
         {
             schema = await schemaSvc.Save(schema, ct);

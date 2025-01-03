@@ -86,7 +86,7 @@ public sealed class PageService(ILogger<PageService> logger,ISchemaService schem
     private async Task<string> RenderPage(PageContext ctx, Record data, StrArgs args, CancellationToken token)
     {
         await LoadRelatedData(data, args, ctx.Nodes, token);
-        TagPagination(ctx, data,args).Ok();
+        TagPagination(ctx, data,args);
 
         foreach (var repeatNode in ctx.Nodes)
         {
@@ -120,20 +120,19 @@ public sealed class PageService(ILogger<PageService> logger,ISchemaService schem
         }
     }
 
-    private static Result TagPagination(PageContext ctx, Record data, StrArgs args)
+    private static void TagPagination(PageContext ctx, Record data, StrArgs args)
     {
         foreach (var node in ctx.Nodes.Where(x => x.DataSource.Offset > 0 || x.DataSource.Limit > 0))
         {
-            if (!data.GetValueByPath<Record[]>(node.DataSource.Field, out var value))
+            if (data.GetValueByPath<Record[]>(node.DataSource.Field, out var value))
             {
-                return Result.Fail($"Tag Pagination Fail, can not get value by path [{node.DataSource.Field}] ");
+                var nodeWithArg = node with
+                {
+                    DataSource = node.DataSource with { QueryString = node.MergeArgs(args).ToQueryString() }
+                };
+                TagPagination(data, value!, nodeWithArg.ToPagePart(ctx.Page.Name));
             }
-
-            var nodeWithArg = node with { DataSource = node.DataSource with { QueryString = node.MergeArgs(args).ToQueryString() } };
-            TagPagination(data, value!, nodeWithArg.ToPagePart(ctx.Page.Name));
         }
-
-        return Result.Ok();
     }
 
     private static void TagPagination(Record data, Record[] items, PagePart token)

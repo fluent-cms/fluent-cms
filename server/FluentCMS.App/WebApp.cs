@@ -71,12 +71,38 @@ public static class WebApp
             ReqVariables: [],
             Source:
             """
-            query post_sync($id:Int){
-              postList(idSet:[$id],sort:id){
-                id, title, body,abstract
-                tag{id,name}
-                category{id,name}
-                author{id,name}
+            query post_sync($id: Int) {
+              postList(idSet: [$id], sort: id) {
+                id
+                title
+                body
+                abstract
+                image
+                tags {
+                  id
+                  name
+                  image
+                  description
+                }
+                category {
+                  id
+                  name
+                  image
+                  description
+                }
+                authors {
+                  id
+                  name
+                  image
+                  description
+                }
+                attachments {
+                  id
+                  name
+                  post
+                  image
+                  description
+                }
               }
             }
             """
@@ -84,56 +110,25 @@ public static class WebApp
         await service.SaveQuery(query);
     }
 
-    private static async Task AddData(IEntityService service, string tableName, string[] fields, int commitCount)
-    {
-
-        for (var i = 0; i < commitCount; i++)
-        {
-            var vals = new List<IEnumerable<object>>();
-            for (var j = 0; j < 1000; j++)
-            {
-                var idx = i % 1000 + j + 1;
-                var val = fields.Select(s => $"{s}-{idx}").Cast<object>().ToArray();
-                vals.Add(val);
-            }
-
-            await service.BatchInsert(tableName, fields, vals);
-        }
-    }
-
     private static async Task AddData(this WebApplication app)
     {
         using var scope = app.Services.CreateScope();
         var service = scope.ServiceProvider.GetRequiredService<IEntityService>();
-        await AddData(service, "tags", ["name", "description", "image"], 1000);
-        await AddData(service, "authors", ["name", "description", "image"], 1000);
-        await AddData(service, "categories", ["name", "description", "image"], 1000);
-
-        for (var i = 0; i < 1000; i++)
+        for (var i = 0; i < 10000; i++)
         {
-            var vals = new List<IEnumerable<object>>();
-            for (var j = 0; j < 1000; j++)
+            await BlogsTestData.PopulateData(i * 100 + 1, 100, async data =>
             {
-                var idx = i % 1000 + j + 1;
-                object[] val =
-                    [$"title-{idx}", $"abstract-{idx}", $"body-{idx}", $"image-{idx}", idx];
-                vals.Add(val);
-            }
-
-            await service.BatchInsert("posts", ["title", "abstract", "body", "image", "category"], vals);
-        }
-
-        for (var i = 0; i < 1000; i++)
-        {
-            var vals = new List<IEnumerable<object>>();
-            for (var j = 0; j < 1000; j++)
+                await service.BatchInsert(data.TableName, data.Records);
+            }, async data =>
             {
-                var id = i * 1000 + j + 1;
-                vals.Add([id, id]);
-            }
-
-            await service.BatchInsert("author_post", ["post_id", "author_id"], vals);
-            await service.BatchInsert("post_tag", ["post_id", "tag_id"], vals);
+                string[] cols = [data.SourceField, data.TargetField];
+                var objs = data.TargetIds.Select(x => new Dictionary<string, object>
+                {
+                    {data.SourceField, data.SourceId },
+                    {data.TargetField,x}
+                });
+                await service.BatchInsert(data.JunctionTableName, [..objs]);
+            });
         }
     }
 
@@ -141,9 +136,6 @@ public static class WebApp
     {
         using var scope = app.Services.CreateScope();
         var entitySchemaService = scope.ServiceProvider.GetRequiredService<IEntitySchemaService>();
-        foreach (var entity in BlogsTestData.Entities)
-        {
-            await entitySchemaService.SaveTableDefine(entity);
-        }
+        await BlogsTestData.EnsureBlogEntities(x => entitySchemaService.SaveTableDefine(x));
     }
 }

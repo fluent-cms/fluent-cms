@@ -144,7 +144,7 @@ Enjoying FluentCMS? Don’t forget to give us a ⭐ and help us grow!     </p>
 <hr />
 <h2 id="online-course-system-demo">Online Course System Demo</h2>
 <h3 id="source-code">Source Code</h3>
-<p><a href="https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples">Example Blog Project on GitHub</a></p>
+<p><a href="https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples">Example Project on GitHub</a></p>
 <h3 id="live-demo">Live Demo</h3>
 <ul>
 <li><strong>Public Site:</strong> <a href="https://fluent-cms-admin.azurewebsites.net/">fluent-cms-admin.azurewebsites.net</a></li>
@@ -159,7 +159,7 @@ Enjoying FluentCMS? Don’t forget to give us a ⭐ and help us grow!     </p>
 </ul>
 <hr />
 <h2 id="online-course-system-backend">Online Course System Backend</h2>
-<p>This section provides detailed guidance on developing a foundational online course system, encompassing key entities: <code>teacher</code>, <code>course</code>, <code>skill</code>, and <code>material</code>.</p>
+<p>This section provides detailed guidance on developing a foundational online course system, encompassing key entities: <code>teacher</code>, <code>course</code>, <code>lesson</code>,<code>skill</code>, and <code>material</code>.</p>
 <h3 id="database-schema">Database Schema</h3>
 <h4 id="1-teachers-table">1. <strong>Teachers Table</strong></h4>
 <p>The <code>Teachers</code> table maintains information about instructors, including their personal and professional details.</p>
@@ -267,7 +267,55 @@ Enjoying FluentCMS? Don’t forget to give us a ⭐ and help us grow!     </p>
 </tr>
 </tbody>
 </table>
-<h4 id="3-skills-table">3. <strong>Skills Table</strong></h4>
+<h4 id="3-lessons-table">3. <strong>Lessons Table</strong></h4>
+<p>The <code>Lessons</code> table contains detailed information about the lessons within a course, including their title, content, and associated teacher.</p>
+<table>
+<thead>
+<tr>
+<th><strong>Field</strong></th>
+<th><strong>Header</strong></th>
+<th><strong>Data Type</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>ID</td>
+<td>Int</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>Lesson Name</td>
+<td>String</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>Text</td>
+</tr>
+<tr>
+<td><code>teacher</code></td>
+<td>Teacher</td>
+<td>Int (Foreign Key)</td>
+</tr>
+<tr>
+<td><code>course</code></td>
+<td>Course</td>
+<td>Int (Foreign Key)</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td>Created At</td>
+<td>Datetime</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td>Updated At</td>
+<td>Datetime</td>
+</tr>
+</tbody>
+</table>
+<h4 id="4-skills-table">4. <strong>Skills Table</strong></h4>
 <p>The <code>Skills</code> table records competencies attributed to teachers.</p>
 <table>
 <thead>
@@ -310,7 +358,7 @@ Enjoying FluentCMS? Don’t forget to give us a ⭐ and help us grow!     </p>
 </tr>
 </tbody>
 </table>
-<h4 id="4-materials-table">4. <strong>Materials Table</strong></h4>
+<h4 id="5-materials-table">5. <strong>Materials Table</strong></h4>
 <p>The <code>Materials</code> table inventories resources linked to courses.</p>
 <table>
 <thead>
@@ -356,9 +404,10 @@ Enjoying FluentCMS? Don’t forget to give us a ⭐ and help us grow!     </p>
 <hr />
 <h3 id="relationships">Relationships</h3>
 <ul>
-<li><strong>Teachers to Courses</strong>: One-to-Many (Each teacher can teach multiple courses; each course is assigned to one teacher).</li>
+<li><strong>Courses to Teachers</strong>: Man-to-One(Each teacher can teach multiple courses; each course is assigned to one teacher. A teacher can exist independently of a course).</li>
 <li><strong>Teachers to Skills</strong>: Many-to-Many (Multiple teachers can share skills, and one teacher may have multiple skills).</li>
 <li><strong>Courses to Materials</strong>: Many-to-Many (A course may include multiple materials, and the same material can be used in different courses).</li>
+<li><strong>Courses to Lessons</strong>: One-to-Many (Each course can have multiple lessons, but each lesson belongs to one course. A lesson cannot exist without a course, as it has no meaning on its own).</li>
 </ul>
 <hr />
 <h3 id="schema-creation-via-fluent-cms-schema-builder">Schema Creation via Fluent CMS Schema Builder</h3>
@@ -387,7 +436,11 @@ Enjoying FluentCMS? Don’t forget to give us a ⭐ and help us grow!     </p>
 <td><code>teacher</code></td>
 </tr>
 <tr>
-<td><strong>Type</strong></td>
+<td><strong>DataType</strong></td>
+<td>Lookup</td>
+</tr>
+<tr>
+<td><strong>DisplayType</strong></td>
 <td>Lookup</td>
 </tr>
 <tr>
@@ -397,7 +450,36 @@ Enjoying FluentCMS? Don’t forget to give us a ⭐ and help us grow!     </p>
 </tbody>
 </table>
 <p><strong>Description:</strong> When a course is created or modified, a teacher record can be looked up and linked to the course.</p>
-<h4 id="2-course-and-materials-many-to-many-relationship">2. <strong>Course and Materials (Many-to-Many Relationship)</strong></h4>
+<h4 id="2-course-and-lessonone-to-many-relationship">2 ** Course and Lesson(One-to-Many Relationship)**</h4>
+<p>To establish a one-to-many relationship between the <code>Course</code> and <code>Lesson</code> entities, use a <code>Collection</code> attribute in the <code>Course</code> entity. This enables associating multiple lessons with a single course.</p>
+<table>
+<thead>
+<tr>
+<th><strong>Attribute</strong></th>
+<th><strong>Value</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Field</strong></td>
+<td><code>lessons</code></td>
+</tr>
+<tr>
+<td><strong>DataType</strong></td>
+<td>Collection</td>
+</tr>
+<tr>
+<td><strong>DisplayType</strong></td>
+<td>EditTable</td>
+</tr>
+<tr>
+<td><strong>Options</strong></td>
+<td>Lesson</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Description:</strong> When managing a course , you can manage lessons of this course.</p>
+<h4 id="3-course-and-materials-many-to-many-relationship">3. <strong>Course and Materials (Many-to-Many Relationship)</strong></h4>
 <p>To establish a many-to-many relationship between the <code>Course</code> and <code>Material</code> entities, use a <code>Junction</code> attribute in the <code>Course</code> entity. This enables associating multiple materials with a single course.</p>
 <table>
 <thead>
@@ -412,8 +494,12 @@ Enjoying FluentCMS? Don’t forget to give us a ⭐ and help us grow!     </p>
 <td><code>materials</code></td>
 </tr>
 <tr>
-<td><strong>Type</strong></td>
+<td><strong>DataType</strong></td>
 <td>Junction</td>
+</tr>
+<tr>
+<td><strong>DisplayType</strong></td>
+<td>Picklist</td>
 </tr>
 <tr>
 <td><strong>Options</strong></td>
@@ -1463,5 +1549,5 @@ app.RegisterMessageProducerHook();
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2024-12-23 19:57:07.354881+00:00
+Build Date UTC : 2025-01-02 21:12:44.566591+00:00
 -->

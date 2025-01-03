@@ -4,7 +4,7 @@
 ## Online Course System Demo
 
 ### Source Code
-[Example Blog Project on GitHub](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples)
+[Example Project on GitHub](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples)
 
 ### Live Demo
 - **Public Site:** [fluent-cms-admin.azurewebsites.net](https://fluent-cms-admin.azurewebsites.net/)

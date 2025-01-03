@@ -42,7 +42,7 @@ await app.UseCmsAsync();
 
 app.MapDefaultEndpoints();
 app.UseOutputCache();
-app.UseCors(cors);
+if (app.Environment.IsDevelopment()) app.UseCors(cors);
 
 app.Run();
 return;
@@ -63,7 +63,9 @@ void AddHybridCache()
 {
     if (builder.Configuration.GetConnectionString(Constants.Redis) is null) return;
     builder.AddRedisDistributedCache(connectionName: Constants.Redis);
+#pragma warning disable EXTEXP0018
     builder.Services.AddHybridCache();
+#pragma warning restore EXTEXP0018
 }
 
 async Task EnsureDbCreatedAsync()
