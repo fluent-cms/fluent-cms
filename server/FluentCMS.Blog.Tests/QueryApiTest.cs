@@ -1,8 +1,8 @@
-using FluentCMS.Utils.ApiClient;
+using FluentCMS.CoreKit.ApiClient;
 using FluentCMS.Utils.JsonElementExt;
-using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Core.Descriptors;
 using FluentCMS.Utils.ResultExt;
-using FluentCMS.Utils.Test;
+using FluentCMS.CoreKit.Test;
 using IdGen;
 using Microsoft.Extensions.Primitives;
 

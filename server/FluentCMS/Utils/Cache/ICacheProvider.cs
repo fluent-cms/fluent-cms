@@ -1,4 +1,4 @@
-namespace FluentCMS.Utils.Cache;
+namespace FluentCMS.Core.Cache;
 
 public interface ICacheProvider
 {

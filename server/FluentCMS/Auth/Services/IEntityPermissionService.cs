@@ -1,5 +1,5 @@
 using System.Collections.Immutable;
-using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Core.Descriptors;
 
 namespace FluentCMS.Auth.Services;
 

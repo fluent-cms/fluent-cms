@@ -1,7 +1,6 @@
 using System.Collections.Immutable;
 using System.Security.Claims;
-using FluentCMS.Auth.models;
-using FluentCMS.Types;
+using FluentCMS.Auth.DTO;
 using FluentCMS.Utils.ResultExt;
 using Microsoft.AspNetCore.Identity;
 

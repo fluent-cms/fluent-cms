@@ -1,13 +1,12 @@
 using System.Collections.Immutable;
-using FluentCMS.Cms.Models;
-using FluentCMS.Utils.Cache;
-using FluentCMS.Utils.HookFactory;
+using FluentCMS.Core.Cache;
+using FluentCMS.Core.HookFactory;
 using FluentCMS.Utils.RelationDbDao;
-using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Core.Descriptors;
 using FluentCMS.Utils.ResultExt;
 using FluentResults;
 using FluentResults.Extensions;
-using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
+using Attribute = FluentCMS.Core.Descriptors.Attribute;
 
 namespace FluentCMS.Cms.Services;
 
@@ -167,7 +166,7 @@ public sealed class EntitySchemaService(
     public async Task<Result<LoadedAttribute>> LoadSingleAttrByName(LoadedEntity entity, string attrName,
         CancellationToken ct = default)
     {
-        var loadedAttr = entity.Attributes.FindOneAttr(attrName);
+        var loadedAttr = entity.Attributes.FirstOrDefault(x=>x.Field==attrName);
         if (loadedAttr is null)
             return Result.Fail($"Load single attribute fail, cannot find [{attrName}] in [{entity.Name}]");
 
@@ -198,7 +197,7 @@ public sealed class EntitySchemaService(
         if (columns.Length > 0) //if table exists, alter table add columns
         {
             var set = columns.Select(x => x.Name.ToLower()).ToHashSet();
-            var missing = entity.Attributes.GetLocalAttrs().Where(c => !set.Contains(c.Field)).ToArray();
+            var missing = entity.Attributes.Where(c => c.IsLocal()&& !set.Contains(c.Field)).ToArray();
             if (missing.Length > 0)
             {
                 var missingCols = await ToColumns(missing);
@@ -207,7 +206,7 @@ public sealed class EntitySchemaService(
         }
         else
         {
-            var newColumns = await ToColumns(entity.Attributes.GetLocalAttrs());
+            var newColumns = await ToColumns(entity.Attributes.Where(x=>x.IsLocal()));
             await dao.CreateTable(entity.TableName, newColumns.EnsureDeleted(), ct);
         }
     }
@@ -215,7 +214,7 @@ public sealed class EntitySchemaService(
     private async Task CreateJunctions(Schema schema, CancellationToken ct)
     {
         var entity = schema.Settings.Entity!;
-        foreach (var attribute in entity.Attributes.GetAttrByType(DataType.Junction))
+        foreach (var attribute in entity.Attributes.Where(x=>x.DataType ==DataType.Junction))
         {
             await CreateJunction(attribute.ToLoaded(entity.TableName));
         }
@@ -224,7 +223,7 @@ public sealed class EntitySchemaService(
         {
             if (!attr.GetJunctionTarget(out var name))
             {
-                throw new Exception($"Junction Option was not set for attribute `{entity.Name}.{attr.Field}`");
+                throw new ResultException($"Junction Option was not set for attribute [{entity.Name}.{attr.Field}]");
             }
 
             var targetEntity = (await LoadEntity(name, ct)).Ok();
@@ -259,7 +258,7 @@ public sealed class EntitySchemaService(
     ) => attr.Lookup switch
     {
         not null => attr,
-        _ => await GetLookupEntity(attr, ct).Map(x => attr with { Lookup = new Lookup(fromEntity, x.ToLoadedEntity())})
+        _ => await GetLookupEntity(attr, ct).Map(x => attr with { Lookup = new Lookup(x.ToLoadedEntity())})
     };
 
     private async Task<Result<LoadedAttribute>> LoadCollection( 
@@ -280,7 +279,7 @@ public sealed class EntitySchemaService(
                 return Result.Fail(err);
             }
 
-            var loadAttribute = loadedEntity.Attributes.FindOneAttr(linkAttrName);
+            var loadAttribute = loadedEntity.Attributes.FirstOrDefault(x=>x.Field ==linkAttrName);
             if (loadAttribute is null) return Result.Fail($"Not found [{linkAttrName}] from entity [{entityName}]");
             
             var collection = new Collection(sourceEntity, loadedEntity,loadAttribute );
@@ -333,10 +332,10 @@ public sealed class EntitySchemaService(
 
         if (entity.DefaultPageSize < 1) throw new ResultException("default page size should be greater than 0");
 
-        _ = entity.Attributes.FindOneAttr(entity.PrimaryKey) ??
+        _ = entity.Attributes.FirstOrDefault(x=>x.Field ==entity.PrimaryKey) ??
             throw new ResultException($"`{entity.PrimaryKey}` was not in attributes list");
 
-        _ = entity.Attributes.FindOneAttr(entity.TitleAttribute) ??
+        _ = entity.Attributes.FirstOrDefault(x=>x.Field==entity.TitleAttribute) ??
             throw new ResultException($"`{entity.TitleAttribute}` was not in attributes list");
 
         _ = await LoadAttributes(entity.ToLoadedEntity(), ct);
@@ -372,7 +371,7 @@ public sealed class EntitySchemaService(
             {
                 DataType.Junction or DataType.Collection=> throw new Exception("Junction/Collection don't need to map to database"),
                 DataType.Lookup => (await GetLookupEntity(attribute)
-                    .Map(x => x.Attributes.FindOneAttr(x.PrimaryKey)!.DataType)).Ok(),
+                    .Map(x => x.Attributes.FirstOrDefault(a=>a.Field == x.PrimaryKey)!.DataType)).Ok(),
                 _ => attribute.DataType
             };
             return new Column(attribute.Field, dataType);

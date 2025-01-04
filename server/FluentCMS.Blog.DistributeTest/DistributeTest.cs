@@ -1,4 +1,4 @@
-using FluentCMS.Utils.ApiClient;
+using FluentCMS.CoreKit.ApiClient;
 using FluentCMS.Utils.JsonElementExt;
 using FluentCMS.Utils.ResultExt;
 

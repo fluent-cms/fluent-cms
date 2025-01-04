@@ -1,6 +1,6 @@
 using System.Text.Json;
 using FluentCMS.DataLink.Types;
-using FluentCMS.Utils.DocumentDbDao;
+using FluentCMS.CoreKit.DocDbQuery;
 using FluentCMS.Utils.EventStreaming;
 using FluentCMS.Utils.HttpClientExt;
 using FluentCMS.Utils.JsonElementExt;

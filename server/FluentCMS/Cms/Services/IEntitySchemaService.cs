@@ -1,6 +1,5 @@
 using System.Collections.Immutable;
-using FluentCMS.Cms.Models;
-using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Core.Descriptors;
 using FluentResults;
 
 namespace FluentCMS.Cms.Services;

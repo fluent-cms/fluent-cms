@@ -1,6 +1,6 @@
-using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Core.Descriptors;
 using GraphQLParser.AST;
-using Schema = FluentCMS.Cms.Models.Schema;
+using Schema = FluentCMS.Core.Descriptors.Schema;
 
 namespace FluentCMS.Cms.Services;
 

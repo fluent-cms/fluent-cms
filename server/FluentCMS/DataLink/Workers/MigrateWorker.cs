@@ -1,9 +1,9 @@
 using System.Text.Json;
 using FluentCMS.DataLink.Types;
-using FluentCMS.Utils.DocumentDbDao;
+using FluentCMS.CoreKit.DocDbQuery;
 using FluentCMS.Utils.HttpClientExt;
 using FluentCMS.Utils.JsonElementExt;
-using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Core.Descriptors;
 using FluentCMS.Utils.ResultExt;
 using FluentResults;
 
@@ -20,12 +20,7 @@ public class MigrateWorker( IDocumentDbDao dao,
         const string coll = "Progress";
         while (stoppingToken.IsCancellationRequested == false)
         {
-            var pg = new ValidPagination(0, 1000);
-            if (!(await dao.Query(coll, [], [], pg)) .Try(out var progresses, out var err))
-            {
-                logger.LogError("Fail to get progress data, err={err}", err?.Select(x => x.Message));
-            }
-
+            var progresses = await dao.All(coll);
             foreach (var link in linksArray)
             {
                 if (progresses.FirstOrDefault(x => x["collection"] is string s && s == link.Collection) is not null)

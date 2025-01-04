@@ -1,6 +1,5 @@
-using FluentCMS.Graph;
-using FluentCMS.Utils.QueryBuilder;
-using GraphQL.Validation;
+using FluentCMS.Cms.Graph;
+using FluentCMS.Core.Descriptors;
 
 namespace FluentCMS.Cms.Services;
 

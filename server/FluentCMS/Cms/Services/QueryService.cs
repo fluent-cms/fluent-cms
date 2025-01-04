@@ -1,10 +1,11 @@
 using System.Collections.Immutable;
-using FluentCMS.Graph;
-using FluentCMS.Utils.QueryBuilder;
-using FluentCMS.Utils.HookFactory;
-using FluentCMS.Utils.KateQueryExecutor;
+using FluentCMS.Cms.Graph;
+using FluentCMS.Core.Descriptors;
+using FluentCMS.Core.HookFactory;
+using FluentCMS.Utils.RelationDbDao;
 using FluentCMS.Utils.ResultExt;
 using FluentResults;
+using MongoDB.Driver.Linq;
 
 namespace FluentCMS.Cms.Services;
 
@@ -42,13 +43,13 @@ public sealed class QueryService(
         var pagination = PaginationHelper.ToValid(flyPagination, attribute.Pagination,
             desc.TargetEntity.DefaultPageSize, true, args);
 
-        var fields = attribute.Selection.GetLocalAttrs();
+        var fields = attribute.Selection.Where(x => x.IsLocal()).ToArray();
         var validSpan = span.ToValid(fields, resolver).Ok();
 
         var filters = FilterHelper.ReplaceVariables(attribute.Filters,args, resolver).Ok();
         var sorts = (await SortHelper.ReplaceVariables(attribute.Sorts, args, desc.TargetEntity, resolver)).Ok();
         
-        var kateQuery = desc.GetQuery(fields,[validSpan.SourceId()],new QueryArrayArgs(filters,sorts,pagination.PlusLimitOne(),validSpan) );
+        var kateQuery = desc.GetQuery(fields,[validSpan.SourceId()],new CollectiveQueryArgs(filters,sorts,pagination.PlusLimitOne(),validSpan) );
         var records = await executor.Many(kateQuery, token);
 
         records = span.ToPage(records, pagination.Limit);
@@ -77,7 +78,7 @@ public sealed class QueryService(
         else
         {
             var kateQuery = query.Entity.ListQuery(
-                filters, sorts, pagination.PlusLimitOne(), validSpan, query.Selection.GetLocalAttrs());
+                filters, sorts, pagination.PlusLimitOne(), validSpan, query.Selection.Where(x=>x.IsLocal()));
             items = await executor.Many(kateQuery, ct);
             items = span.ToPage(items, pagination.Limit);
             if (items.Length > 0)
@@ -103,7 +104,7 @@ public sealed class QueryService(
         }
         else
         {
-            var kateQuery = query.Entity.OneQuery(filters, sorts, query.Selection.GetLocalAttrs()).Ok();
+            var kateQuery = query.Entity.OneQuery(filters, sorts, query.Selection.Where(x=>x.IsLocal())).Ok();
             item = await executor.One(kateQuery, ct);
             if (item is not null) await AttachRelated(query.Selection, args, [item], ct);
         }
@@ -128,8 +129,8 @@ public sealed class QueryService(
         var ids = desc.SourceAttribute.GetUniq(items);
         if (ids.Length == 0) return;
 
-        QueryArrayArgs? collectionArgs = null;
-        if (desc.IsArray)
+        CollectiveQueryArgs? collectionArgs = null;
+        if (desc.IsCollective)
         {
             var filters = FilterHelper.ReplaceVariables(attr.Filters, args, resolver).Ok();
             var sorts = (await SortHelper.ReplaceVariables(attr.Sorts, args, desc.TargetEntity, resolver)).Ok();
@@ -137,13 +138,13 @@ public sealed class QueryService(
             var validPagination = fly.IsEmpty()
                 ? null
                 : PaginationHelper.ToValid(fly, attr.Pagination, desc.TargetEntity.DefaultPageSize, false, args);
-            collectionArgs = new QueryArrayArgs(filters,sorts,validPagination,null);
+            collectionArgs = new CollectiveQueryArgs(filters,sorts,validPagination,null);
         }
 
         if (collectionArgs is null || collectionArgs.Pagination is null)
         {
             //get all items and no pagination
-            var query = desc.GetQuery(attr.Selection.GetLocalAttrs() ,ids, collectionArgs);
+            var query = desc.GetQuery(attr.Selection.Where(x=>x.IsLocal()) ,ids, collectionArgs);
             var targetRecords = await executor.Many(query, ct);
 
             if (targetRecords.Length > 0)
@@ -152,7 +153,7 @@ public sealed class QueryService(
                 foreach (var group in groups)
                 {
                     var sourceItems = items.Where(x => x[desc.SourceAttribute.Field].Equals(group.Key));
-                    object? targetValues = desc.IsArray ? group.ToArray() : group.FirstOrDefault();
+                    object? targetValues = desc.IsCollective ? group.ToArray() : group.FirstOrDefault();
                     if (targetValues is null) continue;
                     foreach (var item in sourceItems)
                     {
@@ -166,7 +167,8 @@ public sealed class QueryService(
         {
             foreach (var id in ids)
             {
-                var query = desc.GetQuery(attr.Selection.GetLocalAttrs(),ids, collectionArgs with { Pagination = collectionArgs.Pagination.PlusLimitOne() });
+                var query = desc.GetQuery(attr.Selection.Where(x => x.IsLocal()), ids,
+                    collectionArgs with { Pagination = collectionArgs.Pagination.PlusLimitOne() });
                 var targetRecords = await executor.Many(query, ct);
 
                 targetRecords = new Span().ToPage(targetRecords, collectionArgs.Pagination.Limit);

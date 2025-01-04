@@ -1,7 +1,7 @@
 using FluentCMS.Cms.Services;
-using FluentCMS.Utils.QueryBuilder;
-using FluentCMS.Utils.Test;
-using FluentCMS.WebAppBuilders;
+using FluentCMS.Core.Descriptors;
+using FluentCMS.CoreKit.Test;
+using FluentCMS.Cms.Builders;
 
 namespace FluentCMS.App;
 

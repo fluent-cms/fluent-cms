@@ -1,8 +1,8 @@
 using System.Text.Json;
 using FluentCMS.Utils.DictionaryExt;
-using FluentCMS.Utils.HookFactory;
-using FluentCMS.Utils.KateQueryExecutor;
-using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Core.HookFactory;
+using FluentCMS.Utils.RelationDbDao;
+using FluentCMS.Core.Descriptors;
 using FluentCMS.Utils.ResultExt;
 
 namespace FluentCMS.Cms.Services;
@@ -30,7 +30,7 @@ public sealed class EntityService(
         CancellationToken ct)
     {
         var ctx = await GetIdCtx(entityName, id, ct);
-        var query = ctx.Entity.ByIdsQuery( ctx.Entity.Attributes.GetLocalAttrs(attributes),[ctx.Id]);
+        var query = ctx.Entity.ByIdsQuery( ctx.Entity.Attributes.Where(x=>x.IsLocal() && attributes.Contains(x.Field)),[ctx.Id]);
         return await queryExecutor.One(query, ct) ??
                throw new ResultException($"not find record by [{id}]");
     }
@@ -45,11 +45,11 @@ public sealed class EntityService(
             return res.OutRecord;
         }
 
-        var query = ctx.Entity.ByIdsQuery( ctx.Entity.Attributes.GetLocalAttrs(ctx.Entity.PrimaryKey, InListOrDetail.InDetail), [ctx.Id]);
+        var query = ctx.Entity.ByIdsQuery(ctx.Entity.Attributes.Where(x=> x.Field == ctx.Entity.PrimaryKey || x.InDetail && x.IsLocal()), [ctx.Id]);
         var record = await queryExecutor.One(query, ct) ??
                      throw new ResultException($"not find record by [{id}]");
 
-        foreach (var attribute in ctx.Entity.Attributes.GetAttrByType(DataType.Lookup, InListOrDetail.InDetail))
+        foreach (var attribute in ctx.Entity.Attributes.Where(x=>x is { DataType: DataType.Lookup, InList: true }))
         {
             await LoadLookupData(attribute, [record], ct);
         }
@@ -149,7 +149,7 @@ public sealed class EntityService(
         var (_, junction, id) = await GetJunctionCtx(name, sid, attr, ct);
         var target = junction.TargetEntity;
 
-        var selectAttributes = target.Attributes.GetLocalAttrs(target.PrimaryKey, InListOrDetail.InList);
+        var selectAttributes = target.Attributes.Where(x=>x.Field == target.PrimaryKey || x.IsLocal() && x.InList);
 
         var (filters, sorts, validPagination) = await GetListArgs(target, args, pagination);
 
@@ -161,7 +161,7 @@ public sealed class EntityService(
             ? junction.GetNotRelatedItemsCount(filters, [id])
             : junction.GetRelatedItemsCount(filters, [id]);
 
-        return new ListResponse(await GetItemsAndRelatedLookup(junction.TargetEntity, listQuery, ct),
+        return new ListResponse(await GetItemsAndInListLookups(junction.TargetEntity, listQuery, ct),
             await queryExecutor.Count(countQuery, ct));
     }
 
@@ -179,12 +179,12 @@ public sealed class EntityService(
         var (filters, sorts,validPagination) = await GetListArgs(collection.TargetEntity, args,pagination);
 
         var attributes =
-            collection.TargetEntity.Attributes.GetLocalAttrs(collection.TargetEntity.PrimaryKey, InListOrDetail.InList);    
+            collection.TargetEntity.Attributes.Where(x=> x.Field == collection.TargetEntity.PrimaryKey || x.IsLocal() && x.InList);    
         var listQuery = collection.List(filters,sorts,validPagination,null,attributes,[id]);
       
         var countQuery = collection.Count(filters,[id]);
         return new ListResponse(
-            await GetItemsAndRelatedLookup(collection.TargetEntity, listQuery, ct),
+            await GetItemsAndInListLookups(collection.TargetEntity, listQuery, ct),
             await queryExecutor.Count(countQuery, ct));
     }
 
@@ -207,15 +207,15 @@ public sealed class EntityService(
         );
 
         var res = await hookRegistry.EntityPreGetList.Trigger(provider, args);
-        var attributes = entity.Attributes.GetLocalAttrs(entity.PrimaryKey, InListOrDetail.InList);
+        var attributes = entity.Attributes.Where(x=>x.Field ==entity.PrimaryKey || x.InList && x.IsLocal());
 
         var listQuery = entity.ListQuery([..res.RefFilters], [..res.RefSorts], res.RefPagination, null, attributes);
         var countQuery = entity.CountQuery([..res.RefFilters]);
         var ret = mode switch
         {
             ListResponseMode.count => new ListResponse([], await queryExecutor.Count(countQuery, ct)),
-            ListResponseMode.items => new ListResponse(await GetItemsAndRelatedLookup(entity, listQuery, ct), 0),
-            _ => new ListResponse(await GetItemsAndRelatedLookup(entity,listQuery,ct), await queryExecutor.Count(countQuery, ct))
+            ListResponseMode.items => new ListResponse(await GetItemsAndInListLookups(entity, listQuery, ct), 0),
+            _ => new ListResponse(await GetItemsAndInListLookups(entity,listQuery,ct), await queryExecutor.Count(countQuery, ct))
         };
 
         var postArgs = new EntityPostGetListArgs(Entity: entity, RefListResponse: ret);
@@ -225,11 +225,11 @@ public sealed class EntityService(
 
     }
 
-    async Task<Record[]> GetItemsAndRelatedLookup(LoadedEntity entity, SqlKata.Query query, CancellationToken ct)
+    async Task<Record[]> GetItemsAndInListLookups(LoadedEntity entity, SqlKata.Query query, CancellationToken ct)
     {
         var items = await queryExecutor.Many(query, ct);
         if (items.Length == 0) return items;
-        foreach (var attribute in entity.Attributes.GetAttrByType(DataType.Lookup, InListOrDetail.InList))
+        foreach (var attribute in entity.Attributes.Where(x=>x is { DataType: DataType.Lookup, InList: true }))
         {
             await LoadLookupData(attribute, items, ct);
         }
@@ -337,7 +337,7 @@ public sealed class EntityService(
     private async Task<CollectionContext> GetCollectionCtx(string entity, string sid, string attr, CancellationToken ct)
     {
         var loadedEntity = (await entitySchemaSvc.LoadEntity(entity, ct)).Ok();
-        var collection = loadedEntity.Attributes.FindOneAttr(attr)?.Collection ??
+        var collection = loadedEntity.Attributes.FirstOrDefault(x=>x.Field ==attr)?.Collection ??
                         throw new ResultException($"Failed to get Collection Context, cannot find [{attr}] in [{entity}]");
 
         if (!entitySchemaSvc.ResolveVal(loadedEntity.PrimaryKeyAttribute, sid, out var id))
@@ -355,7 +355,7 @@ public sealed class EntityService(
     {
         var loadedEntity = (await entitySchemaSvc.LoadEntity(entity, ct)).Ok();
         var errMessage = $"Failed to Get Junction Context, cannot find [{attr}] in [{entity}]";
-        var attribute = loadedEntity.Attributes.FindOneAttr(attr) ??
+        var attribute = loadedEntity.Attributes.FirstOrDefault(x=>x.Field == attr) ??
                         throw new ResultException(errMessage);
 
         var junction = attribute.Junction ?? throw new ResultException(errMessage);

@@ -1,5 +1,5 @@
 using FluentCMS.DataLink.Types;
-using FluentCMS.HostAppBuilders;
+using FluentCMS.DataLink.Builders;
 
 namespace FluentCMS.App;
 

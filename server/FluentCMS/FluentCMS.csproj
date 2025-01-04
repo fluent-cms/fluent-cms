@@ -7,7 +7,6 @@
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
         <UserSecretsId>a5afdf68-db24-42a3-bf96-6c4bf027de65</UserSecretsId>
         <IsPackable>true</IsPackable>
-        <OutputType>Library</OutputType>
         <AssemblyName>FluentCms</AssemblyName>
         <PackageReadmeFile>readme.md</PackageReadmeFile>
         <LangVersion>13</LangVersion>
@@ -32,13 +31,13 @@
         <PackageReference Include="Handlebars.Net" Version="2.1.6" />
         <PackageReference Include="HtmlAgilityPack" Version="1.11.71" />
         <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.0" />
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
         <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="9.0.0" />
         
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
         <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" Version="9.0.0-preview.9.24556.5" />
         <PackageReference Include="MongoDB.Driver" Version="2.30.0" />
+        <PackageReference Include="NJsonSchema.CodeGeneration.TypeScript" Version="11.1.0" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.2" />
         <PackageReference Include="SkiaSharp" Version="3.116.1" />
         <PackageReference Include="SqlKata" Version="2.4.0" />
@@ -49,6 +48,10 @@
 
     <ItemGroup>
         <None Include="../../doc/mkdoc/docs/index.md" Pack="true" PackagePath="\readme.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="CoreKit\" />
     </ItemGroup>
 
     <PropertyGroup>

@@ -1,5 +1,5 @@
 using System.Text.Json;
-using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Core.Descriptors;
 
 namespace FluentCMS.Cms.Services;
 

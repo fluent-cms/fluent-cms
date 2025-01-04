@@ -1,15 +1,14 @@
 using System.Collections.Immutable;
-using FluentCMS.Cms.Models;
-using FluentCMS.Types;
-using FluentCMS.Utils.Cache;
-using FluentCMS.Graph;
-using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Cms;
+using FluentCMS.Core.Cache;
+using FluentCMS.Cms.Graph;
+using FluentCMS.Core.Descriptors;
 using FluentCMS.Utils.ResultExt;
 using FluentResults;
 using FluentResults.Extensions;
 using GraphQLParser.AST;
-using Query = FluentCMS.Utils.QueryBuilder.Query;
-using Schema = FluentCMS.Cms.Models.Schema;
+using Query = FluentCMS.Core.Descriptors.Query;
+using Schema = FluentCMS.Core.Descriptors.Schema;
 
 namespace FluentCMS.Cms.Services;
 
@@ -17,7 +16,7 @@ public sealed class QuerySchemaService(
     ISchemaService schemaSvc,
     IEntitySchemaService entitySchemaSvc,
     KeyValueCache<LoadedQuery> queryCache,
-    CmsOptions cmsOptions
+    Options options
 ) : IQuerySchemaService
 {
     public async Task<LoadedQuery> ByGraphQlRequest(Query query, GraphQLField[] fields)
@@ -64,7 +63,7 @@ public sealed class QuerySchemaService(
         query = query with
         {
             IdeUrl =
-            $"{cmsOptions.GraphQlPath}?query={Uri.EscapeDataString(query.Source)}&operationName={query.Name}"
+            $"{options.GraphQlPath}?query={Uri.EscapeDataString(query.Source)}&operationName={query.Name}"
         };
         await VerifyQuery(query, ct);
         var schema = new Schema(query.Name, SchemaType.Query, new Settings(Query: query));
@@ -83,7 +82,7 @@ public sealed class QuerySchemaService(
 
     public string GraphQlClientUrl()
     {
-        return cmsOptions.GraphQlPath;
+        return options.GraphQlPath;
     }
 
     private async Task<LoadedQuery> ToLoadedQuery(Query query, IEnumerable<GraphQLField> fields,
@@ -119,19 +118,26 @@ public sealed class QuerySchemaService(
         CancellationToken ct = default)
     {
         return fields.ShortcutMap(async field => await entitySchemaSvc
-                .LoadSingleAttrByName(entity, field.Name.StringValue,ct)
+                .LoadSingleAttrByName(entity, field.Name.StringValue, ct)
                 .Map(attr => attr.ToGraph())
                 .Map(attr => attr with { Prefix = prefix })
                 .Bind(async attr =>
-                    attr.IsCompound() ? await LoadChildren(attr.FullPathName(prefix), attr, field) : attr)
+                    attr.IsCompound()
+                        ? await LoadChildren(
+                            string.IsNullOrEmpty(prefix) ? attr.Field : $"{prefix}.{attr.Field}", attr, field
+                        )
+                        : attr)
                 .Bind(async attr => attr.DataType is DataType.Junction or DataType.Collection
                     ? await LoadArgs(field, attr)
                     : attr))
             .Bind(x =>
             {
-                if (x.FindOneAttr(entity.PrimaryKey) is null) 
-                    return Result.Fail($"Primary key [{entity.PrimaryKey}] not in selection list for entity [{entity.Name}]");
-                if (parent?.DataType == DataType.Collection && parent.GetEntityLinkDesc().Value.TargetAttribute.Field is { } field && x.FindOneAttr(field) is null)
+                if (x.FirstOrDefault(x => x.Field == entity.PrimaryKey) is null)
+                    return Result.Fail(
+                        $"Primary key [{entity.PrimaryKey}] not in selection list for entity [{entity.Name}]");
+                if (parent?.DataType == DataType.Collection &&
+                    parent.GetEntityLinkDesc().Value.TargetAttribute.Field is { } field &&
+                    x.FirstOrDefault(x => x.Field == field) is null)
                     return Result.Fail($"Referencing Field [{field}] not in selection list for entity [{entity.Name}]");
                 return Result.Ok(x);
             });

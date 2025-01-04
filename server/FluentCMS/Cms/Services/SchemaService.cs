@@ -1,12 +1,10 @@
 using System.Text.Json;
-using FluentCMS.Cms.Models;
 using FluentResults;
+using FluentCMS.Core.HookFactory;
 using FluentCMS.Utils.RelationDbDao;
-using FluentCMS.Utils.HookFactory;
-using FluentCMS.Utils.KateQueryExecutor;
-using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Core.Descriptors;
 using FluentCMS.Utils.ResultExt;
-using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
+using Attribute = FluentCMS.Core.Descriptors.Attribute;
 namespace FluentCMS.Cms.Services;
 
 public sealed class SchemaService(

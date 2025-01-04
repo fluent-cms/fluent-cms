@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Confluent.Kafka;
 
 namespace FluentCMS.Utils.EventStreaming;

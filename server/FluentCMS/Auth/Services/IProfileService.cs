@@ -1,7 +1,6 @@
-using FluentCMS.Auth.models;
+using FluentCMS.Auth.DTO;
 
 namespace FluentCMS.Auth.Services;
-
 
 public interface IProfileService
 {

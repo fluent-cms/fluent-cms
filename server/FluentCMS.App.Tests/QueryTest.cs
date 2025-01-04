@@ -1,5 +1,5 @@
-using FluentCMS.Utils.ApiClient;
-using FluentCMS.Utils.Test;
+using FluentCMS.CoreKit.ApiClient;
+using FluentCMS.CoreKit.Test;
 
 namespace FluentCMS.App.Tests;
 

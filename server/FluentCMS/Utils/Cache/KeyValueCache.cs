@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace FluentCMS.Utils.Cache;
+namespace FluentCMS.Core.Cache;
 public sealed class KeyValueCache<T>
 {
     private string CacheKey(string key) => _prefix + key;

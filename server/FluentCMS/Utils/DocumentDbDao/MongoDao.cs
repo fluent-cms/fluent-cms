@@ -1,11 +1,8 @@
-using FluentCMS.Utils.QueryBuilder;
-using FluentCMS.Utils.ResultExt;
-using FluentResults;
+using FluentCMS.Utils.BsonDocumentExt;
 using MongoDB.Bson;
-using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 
-namespace FluentCMS.Utils.DocumentDbDao;
+namespace FluentCMS.CoreKit.DocDbQuery;
 
 public sealed class MongoDao(ILogger<MongoDao> logger, IMongoDatabase db):IDocumentDbDao 
 {
@@ -13,6 +10,7 @@ public sealed class MongoDao(ILogger<MongoDao> logger, IMongoDatabase db):IDocum
     private IMongoCollection<BsonDocument> GetCollection(string name) => db.GetCollection<BsonDocument>(name);
     public Task Upsert(string collection, string primaryKey, object primaryKeyValue, object document)
     {
+        logger.LogInformation("Upsert document {collection}.{primaryKey}",collection,primaryKey);
         var doc = document.ToBsonDocument();
         return GetCollection(collection).ReplaceOneAsync(
             Filter.Eq(primaryKey, primaryKeyValue),
@@ -23,6 +21,7 @@ public sealed class MongoDao(ILogger<MongoDao> logger, IMongoDatabase db):IDocum
 
     public Task Upsert(string collection, string primaryKey, Record record)
     {
+        logger.LogInformation("Upsert document {collection}.{primaryKey}",collection,primaryKey);
         var doc = new BsonDocument(record);
         return GetCollection(collection).ReplaceOneAsync(
             Filter.Eq(primaryKey, doc[primaryKey]),
@@ -30,45 +29,22 @@ public sealed class MongoDao(ILogger<MongoDao> logger, IMongoDatabase db):IDocum
             new ReplaceOptions { IsUpsert = true });
     }
 
-    public Task Delete(string collection, string id) 
-        => GetCollection(collection).DeleteOneAsync(Filter.Eq("id", id));
-    public Task BatchInsert(string collection, string rawJson)
+    public async Task<Record[]> All(string collection)
     {
-        var items = BsonSerializer.Deserialize<BsonArray>(rawJson).Select(x=> x as BsonDocument);
-        return GetCollection(collection).InsertManyAsync(items!);
+        logger.LogInformation("Querying collection {collection}",collection);
+        var records = await GetCollection(collection).Find(Filter.Empty).ToListAsync();
+        return records.Select(x=>x.ToRecord()).ToArray();
     }
+
+    public Task Delete(string collection, string id)
+    {
+        logger.LogInformation("Deleting collection {collection} with id {id}",collection,id);
+        return GetCollection(collection).DeleteOneAsync(Filter.Eq("id", id));  
+    } 
 
     public Task BatchInsert(string collection, IEnumerable<IDictionary<string,object>> records)
     {
+        logger.LogInformation("Batch insert for collection {collection}",collection);
         return GetCollection(collection).InsertManyAsync(records.Select(x=> new BsonDocument(x)));
-    }
-
-    public async Task<Result<Record[]>> Query(
-        string collection, 
-        IEnumerable<ValidFilter> validFilters, 
-        ValidSort[] validSorts, 
-        ValidPagination pagination,
-        ValidSpan? span)
-    {
-        logger.LogInformation("Querying {collection}, filters={filters}, sort by {sort}", collection, validFilters, validSorts);
-        if (!validFilters.ToFilter().Try(out var filters, out var err))
-            return Result.Fail(err);
-
-        if (span is not null && !span.Span.IsEmpty())
-        {
-            if (!span.GetFilters([..validSorts]).Try(out var spanFilters, out err))
-                return Result.Fail(err);
-            filters = [..filters, spanFilters];
-        }
-
-        var records = new List<Record>();
-        await GetCollection(collection)
-            .Find(filters.Length > 0 ? Filter.And(filters):Filter.Empty)
-            .Sort(validSorts.ToSort())
-            .Skip(pagination.Offset)
-            .Limit(pagination.Limit)
-            .ForEachAsync(x => records.Add(x.ToRecord()));
-        
-        return records.ToArray();
     }
 }

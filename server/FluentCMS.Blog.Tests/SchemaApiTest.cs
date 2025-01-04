@@ -1,12 +1,11 @@
-using FluentCMS.Cms.Models;
 using FluentCMS.Cms.Services;
-using FluentCMS.Utils.ApiClient;
+using FluentCMS.CoreKit.ApiClient;
 using FluentCMS.Utils.RelationDbDao;
-using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Core.Descriptors;
 using FluentCMS.Utils.ResultExt;
 using IdGen;
 
-using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
+using Attribute = FluentCMS.Core.Descriptors.Attribute;
 
 namespace FluentCMS.Blog.Tests;
 

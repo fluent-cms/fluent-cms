@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Caching.Memory;
 
-namespace FluentCMS.Utils.Cache;
+namespace FluentCMS.Core.Cache;
 
 public class MemoryCacheProvider(IMemoryCache memoryCache) : ICacheProvider
 {

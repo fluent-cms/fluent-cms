@@ -1,6 +1,5 @@
 namespace FluentCMS.Auth.Services;
 
-
 public static class AccessScope
 {
     public const string FullAccess = "FullAccess";

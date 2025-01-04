@@ -1,16 +1,7 @@
-using FluentCMS.Cms.Models;
 using FluentResults;
-using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Core.Descriptors;
 
 namespace FluentCMS.Cms.Services;
-public static class  SchemaType
-{
-    public const string Menu = "menu";
-    public const string Entity = "entity";
-    public const string Query = "query";
-    public const string Page = "page";
-}
-
 public static class SchemaName
 {
     public const string TopMenuBar = "top-menu-bar";
@@ -29,7 +20,7 @@ public interface ISchemaService
     Task<Schema?> GetByNamePrefixDefault(string name, string type, CancellationToken ct = default);
 
     Task<Schema> SaveWithAction(Schema schema, CancellationToken ct=default);
-    Task<Schema> Save(Schema dto,CancellationToken ct  = default);
+    Task<Schema> Save(Schema schema,CancellationToken ct  = default);
     
     Task<Schema> AddOrUpdateByNameWithAction(Schema schema, CancellationToken ct = default);
     Task Delete(int id, CancellationToken ct = default);

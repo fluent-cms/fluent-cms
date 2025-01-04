@@ -16,7 +16,7 @@ public static class DefaultFields{
 
 public record Column(string Name, string Type);
 
-public static class ColumnDefinitionHelper
+public static class ColumnHelper
 {
     public static Column[] EnsureDeleted(this Column[] columnDefinitions)
     {

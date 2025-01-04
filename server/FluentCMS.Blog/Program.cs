@@ -1,10 +1,12 @@
-using FluentCMS.Auth.models;
+using FluentCMS;
+using FluentCMS.Auth.DTO;
 using FluentCMS.Blog;
-using FluentCMS.Types;
-using FluentCMS.WebAppBuilders;
+using FluentCMS.Cms;
 using FluentCMS.Utils.ResultExt;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
+
 const string cors = "cors";
 
 
@@ -30,20 +32,29 @@ builder.Services.AddCmsAuth<IdentityUser,IdentityRole,CmsDbContext>();
 AddHybridCache();
 AddOutputCachePolicy();
 builder.AddServiceDefaults();
-if (builder.Environment.IsDevelopment()) AddCorsPolicy();
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddOpenApi();
+    AddCorsPolicy();
+}
 
 var app = builder.Build();
 
-await EnsureDbCreatedAsync();
-await app.UseCmsAsync();
 
 (await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [RoleConstants.Sa])).Ok();
 (await app.EnsureCmsUser("admin@cms.com", "Admin1!", [RoleConstants.Admin])).Ok();
 
 app.MapDefaultEndpoints();
 app.UseOutputCache();
-if (app.Environment.IsDevelopment()) app.UseCors(cors);
+if (app.Environment.IsDevelopment())
+{
+    app.MapScalarApiReference();
+    app.MapOpenApi();
+    app.UseCors(cors);
+}
 
+await EnsureDbCreatedAsync();
+await app.UseCmsAsync();
 app.Run();
 return;
 
@@ -52,9 +63,9 @@ void AddOutputCachePolicy()
     builder.Services.AddOutputCache(cacheOption =>
     {
         cacheOption.AddBasePolicy(policyBuilder => policyBuilder.Expire(TimeSpan.FromMinutes(1)));
-        cacheOption.AddPolicy(CmsOptions.DefaultPageCachePolicyName,
+        cacheOption.AddPolicy(Options.DefaultPageCachePolicyName,
             b => b.Expire(TimeSpan.FromMinutes(1)));
-        cacheOption.AddPolicy(CmsOptions.DefaultQueryCachePolicyName,
+        cacheOption.AddPolicy(Options.DefaultQueryCachePolicyName,
             b => b.Expire(TimeSpan.FromSeconds(1)));
     });
 }

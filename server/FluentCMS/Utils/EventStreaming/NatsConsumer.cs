@@ -1,4 +1,3 @@
-using System.Text.Json;
 using NATS.Client.Core;
 
 namespace FluentCMS.Utils.EventStreaming;

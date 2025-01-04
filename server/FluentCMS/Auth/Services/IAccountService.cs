@@ -1,4 +1,4 @@
-using FluentCMS.Auth.models;
+using FluentCMS.Auth.DTO;
 using FluentResults;
 
 namespace FluentCMS.Auth.Services;

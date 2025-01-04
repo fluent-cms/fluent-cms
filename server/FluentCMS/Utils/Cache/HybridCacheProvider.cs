@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Caching.Hybrid;
 
-namespace FluentCMS.Utils.Cache;
+namespace FluentCMS.Core.Cache;
 
 public sealed class HybridCacheProvider(HybridCache hybridCache):ICacheProvider
 {

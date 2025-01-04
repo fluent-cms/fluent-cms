@@ -1,6 +1,4 @@
-using FluentCMS.Cms.Models;
-using FluentCMS.Utils.HookFactory;
-using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Core.Descriptors;
 
 namespace FluentCMS.Auth.Services;
 

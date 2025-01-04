@@ -1,14 +1,13 @@
 using System.Collections.Immutable;
 using System.Security.Claims;
-using FluentCMS.Auth.models;
+using FluentCMS.Auth.DTO;
 using FluentCMS.Cms.Services;
-using FluentCMS.Cms.Models;
 using FluentCMS.Utils.IdentityExt;
-using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Core.Descriptors;
 using FluentCMS.Utils.ResultExt;
 using FluentResults;
 using Microsoft.AspNetCore.Identity;
-using Attribute = FluentCMS.Utils.QueryBuilder.Attribute;
+using Attribute = FluentCMS.Core.Descriptors.Attribute;
 
 namespace FluentCMS.Auth.Services;
 
@@ -117,7 +116,7 @@ public class SchemaPermissionService<TUser>(
     {
         var entity = schema.Settings.Entity;
         if (entity is null) return Result.Fail("can not ensure schema have created_by field, invalid Entity payload");
-        if (schema.Settings.Entity?.Attributes.FindOneAttr(Constants.CreatedBy) is not null) return schema;
+        if (schema.Settings.Entity?.Attributes.FirstOrDefault(x=>x.Field == Constants.CreatedBy) is not null) return schema;
 
         ImmutableArray<Attribute> attributes =
         [

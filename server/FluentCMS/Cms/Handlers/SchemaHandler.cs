@@ -1,7 +1,8 @@
-using FluentCMS.Cms.Models;
+using FluentCMS.Cms.DTO;
 using FluentCMS.Cms.Services;
-using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Core.Descriptors;
 using FluentCMS.Utils.ResultExt;
+using Entity = FluentCMS.Core.Descriptors.Entity;
 
 namespace FluentCMS.Cms.Handlers;
 
@@ -13,12 +14,12 @@ public static class SchemaHandler
             ISchemaService svc, string? type, CancellationToken ct
         ) => await svc.AllWithAction(type ?? "", ct));
 
-        app.MapPost("/", async (
+        app.MapPost("/",  (
             ISchemaService schemaSvc, IEntitySchemaService entitySchemaSvc, Schema dto, CancellationToken ct
         ) => dto.Type switch
         {
-            SchemaType.Entity => await entitySchemaSvc.Save(dto, ct),
-            _ => await schemaSvc.SaveWithAction(dto, ct)
+            SchemaType.Entity =>  entitySchemaSvc.Save(dto, ct),
+            _ =>  schemaSvc.SaveWithAction(dto, ct)
         });
 
         app.MapGet("/{id}", async (
@@ -30,7 +31,7 @@ public static class SchemaHandler
             ) => await svc.GetByNameDefault(name, type, ct) ??
                  throw new ResultException($"Cannot find schema {name} of type {type}"));
 
-        app.MapDelete("/{id}", async (
+        app.MapDelete("/{id:int}", async (
             ISchemaService schemaSvc,
             IEntitySchemaService entitySchemaSvc,
             IQuerySchemaService querySchemaSvc,
@@ -48,17 +49,21 @@ public static class SchemaHandler
             await task;
         });
 
-        app.MapPost("/entity/define", async (
+        app.MapPost("/entity/define",  (
             IEntitySchemaService svc, Schema dto, CancellationToken ct
-        ) => await svc.SaveTableDefine(dto, ct));
+        ) =>  svc.SaveTableDefine(dto, ct));
 
-        app.MapGet("/entity/{table}/define", async (
+        app.MapGet("/entity/{table}/define",  (
             IEntitySchemaService svc, string table, CancellationToken ct
-        ) => await svc.GetTableDefine(table, ct));
+        ) =>  svc.GetTableDefine(table, ct));
 
         app.MapGet("/entity/{name}", async (
             IEntitySchemaService service, string name, CancellationToken ct
-        ) => (await service.LoadEntity(name, ct)).Ok());
+        ) =>
+        {
+            var entity = await service.LoadEntity(name, ct).Ok();
+            return entity.ToXEntity();
+        });
 
         app.MapPost("/entity/add_or_update", async (
             IEntitySchemaService svc,

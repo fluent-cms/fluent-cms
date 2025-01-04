@@ -1,9 +1,8 @@
 using System.Collections.Immutable;
-using FluentCMS.Auth.models;
+using FluentCMS.Auth.DTO;
 using FluentCMS.Cms.Services;
-using FluentCMS.Types;
 using FluentCMS.Utils.IdentityExt;
-using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Core.Descriptors;
 using FluentCMS.Utils.ResultExt;
 
 namespace FluentCMS.Auth.Services;

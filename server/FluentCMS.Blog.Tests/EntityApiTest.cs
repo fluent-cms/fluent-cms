@@ -1,7 +1,7 @@
 using System.Text.Json;
-using FluentCMS.Utils.ApiClient;
+using FluentCMS.CoreKit.ApiClient;
 using FluentCMS.Utils.JsonElementExt;
-using FluentCMS.Utils.QueryBuilder;
+using FluentCMS.Core.Descriptors;
 using FluentCMS.Utils.ResultExt;
 using IdGen;
 

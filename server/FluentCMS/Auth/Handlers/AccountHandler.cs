@@ -1,6 +1,5 @@
-using FluentCMS.Auth.models;
+using FluentCMS.Auth.DTO;
 using FluentCMS.Auth.Services;
-using Microsoft.AspNetCore.Authorization;
 
 namespace FluentCMS.Auth.Handlers;
 
