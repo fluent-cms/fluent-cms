@@ -4,13 +4,13 @@ import {InputPanel} from "./InputPanel";
 
 export function TextInput(
     props: {
-    data: any,
-    column: { field: string, header: string },
-    register: any
-    className:any
-    control:any
-        id:any
-}) {
+        data: any,
+        column: { field: string, header: string },
+        register: any
+        className: any
+        control: any
+        id: any
+    }) {
     return <InputPanel  {...props} component={(field: any) =>
         <InputText
             id={field.name}

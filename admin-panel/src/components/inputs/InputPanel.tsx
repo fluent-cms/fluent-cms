@@ -1,12 +1,12 @@
 import {Controller} from "react-hook-form";
 
-export function InputPanel({data, column,control, className,id, component}: {
+export function InputPanel({data, column, control, className, id, component}: {
     data: any,
     column: { field: string, header: string },
     control: any
     className: any
     register: any
-    id:any
+    id: any
     component: any
 }) {
     const defaultValue = data[column.field]

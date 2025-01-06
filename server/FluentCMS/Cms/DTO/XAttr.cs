@@ -20,7 +20,7 @@ public record XAttr(
 public static class XAttrExtensions
 {
     public static XAttr ToXAttr(this LoadedAttribute attribute)
-        => new XAttr(
+        => new (
             Field: attribute.Field,
             Header: attribute.Header,
             DataType: attribute.DataType,

@@ -10,12 +10,13 @@ import {Message} from "primereact/message";
 import {Toast} from "primereact/toast";
 import {useRef, useState} from "react";
 import { LazyDataTable } from "../../components/dataTable/LazyDataTable";
+import { XAttr, XEntity } from "../types/schemaExt";
 
 
 export function EditTable({baseRouter,column, data, schema, getFullAssetsURL}: {
+    schema: XEntity,
+    column: XAttr,
     data: any,
-    column: { field: string, header: string, collection: any },
-    schema: any
     getFullAssetsURL : (arg:string) =>string
     baseRouter:string
 }) {
@@ -58,6 +59,7 @@ export function EditTable({baseRouter,column, data, schema, getFullAssetsURL}: {
             <>
                 {error && error.split('\n').map(e => (<><Message severity={'error'} text={e}/>&nbsp;&nbsp;</>))}
                 <ItemForm
+                    id={undefined}
                     formId={formId}
                     uploadUrl={fileUploadURL()}
                     columns={inputColumns}

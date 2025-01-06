@@ -9,13 +9,14 @@ import {LazyDataTable} from "../../components/dataTable/LazyDataTable";
 import {encodeLazyState} from "../services/lazyState";
 import {useEffect} from "react";
 import { useLocation } from 'react-router-dom';
+import {XEntity} from "../types/schemaExt";
 
 export function DataListPage({baseRouter}:{baseRouter:string}){
     const {schemaName} = useParams()
     return <PageLayout schemaName={schemaName??''} baseRouter={baseRouter} page={DataListPageComponent}/>
 }
 
-export function DataListPageComponent({schema,baseRouter}:{schema:any,baseRouter:string}) {
+export function DataListPageComponent({schema,baseRouter}:{schema:XEntity,baseRouter:string}) {
     const columns = schema?.attributes?.filter((column: any) => column.inList ) ?? [];
     let {lazyState, eventHandlers} = useLazyStateHandlers(schema.defaultPageSize,columns, useLocation().search.replace("?",""))
     const {data, error, isLoading}= useListData(schema.name,lazyState)

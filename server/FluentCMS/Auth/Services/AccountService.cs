@@ -1,10 +1,12 @@
 using System.Security.Claims;
 using FluentCMS.Auth.DTO;
+using FluentCMS.Core.Descriptors;
 using FluentResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using FluentCMS.Utils.IdentityExt;
+using FluentCMS.Utils.RelationDbDao;
 using FluentCMS.Utils.ResultExt;
 
 namespace FluentCMS.Auth.Services;
@@ -13,22 +15,30 @@ public class AccountService<TUser, TRole,TCtx>(
     UserManager<TUser> userManager,
     RoleManager<TRole> roleManager,
     IHttpContextAccessor accessor,
-    TCtx context
+    TCtx context,
+    KateQueryExecutor queryExecutor
 ) : IAccountService
     where TUser : IdentityUser, new()
     where TRole : IdentityRole, new()
     where TCtx : IdentityDbContext<TUser>
 
 {
-    public async Task<string[]> GetRoles(CancellationToken cancellationToken)
+    public async Task<string[]> GetResources(CancellationToken ct)
+    {
+        var query = SchemaHelper.BaseQuery([SchemaFields.Name]).Where(SchemaFields.Type , SchemaType.Entity);
+        var records= await queryExecutor.Many(query,ct);
+        return records.Select(x => (string)x[SchemaFields.Name]).ToArray();
+    }
+    
+    public async Task<string[]> GetRoles(CancellationToken ct)
     {
         if (!accessor.HttpContext.HasRole(RoleConstants.Admin) && !accessor.HttpContext.HasRole(RoleConstants.Sa))
             throw new UnauthorizedAccessException();
-        var roles = await context.Roles.Select(x => x.Name??"").ToArrayAsync(cancellationToken);
+        var roles = await context.Roles.Select(x => x.Name??"").ToArrayAsync(ct);
         return roles;
     }
 
-    public async Task<UserDto> GetOne(string id, CancellationToken cancellationToken)
+    public async Task<UserDto> GetSingle(string id, CancellationToken ct)
     {
         if (!accessor.HttpContext.HasRole(RoleConstants.Admin) && !accessor.HttpContext.HasRole(RoleConstants.Sa))
             throw new UnauthorizedAccessException();
@@ -48,7 +58,7 @@ public class AccountService<TUser, TRole,TCtx>(
             select new { userGroup.Key, Values = userGroup.ToArray() };
         
         // use client calculation to support Sqlite
-        var item = await query.FirstOrDefaultAsync(cancellationToken)
+        var item = await query.FirstOrDefaultAsync(ct)
             ?? throw new ResultException($"did not find user by id {id}");
         return new UserDto
         (
@@ -79,7 +89,7 @@ public class AccountService<TUser, TRole,TCtx>(
         );
     }
 
-    public async Task<UserDto[]> GetUsers(CancellationToken cancellationToken)
+    public async Task<UserDto[]> GetUsers(CancellationToken ct)
     {
         if (!accessor.HttpContext.HasRole(RoleConstants.Admin) && !accessor.HttpContext.HasRole(RoleConstants.Sa))
             throw new UnauthorizedAccessException();
@@ -94,7 +104,7 @@ public class AccountService<TUser, TRole,TCtx>(
             group new { role } by user
             into userGroup
             select new {userGroup.Key, Roles =userGroup.ToArray()};
-        var items = await query.ToArrayAsync(cancellationToken);
+        var items = await query.ToArrayAsync(ct);
         // use client calculation to support Sqlite
         return [..items.Select(x => new UserDto
         (
@@ -233,7 +243,7 @@ public class AccountService<TUser, TRole,TCtx>(
         return Result.Ok();
     }
 
-    public async Task<RoleDto> GetOneRole(string name)
+    public async Task<RoleDto> GetSingleRole(string name)
     {
         var role = await roleManager.FindByNameAsync(name) ?? throw new ResultException($"role {name} not found");
         var claims = await roleManager.GetClaimsAsync(role);
@@ -272,9 +282,9 @@ public class AccountService<TUser, TRole,TCtx>(
         (await AddClaimsToRole(role!, claims, AccessScope.RestrictedRead, roleDto.RestrictedReadonlyEntities)).Ok();
     }
 
-    private async Task<Result> AddClaimsToRole(TRole role,  IList<Claim> claims, string type, IEnumerable<string> list )
+    private async Task<Result> AddClaimsToRole(TRole role,  IList<Claim> claims, string type, string[] values )
     {
-        string[] values = [..list];
+        values ??= [];
         var currentValues = claims.Where(x => x.Type == type).Select(x => x.Value).ToArray();
         // Calculate roles to be removed and added
         var toRemove = currentValues.Except(values).ToArray();

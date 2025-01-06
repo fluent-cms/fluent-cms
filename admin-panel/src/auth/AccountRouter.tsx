@@ -16,12 +16,12 @@ export const UserRoute= "/users";
 export const RoleRoute= "/roles";
 export const ChangePasswordRoute= "/profile/password";
 
-export function AccountRouter() {
+export function AccountRouter({baseRouter}:{baseRouter:string}) {
     return <Routes>
         <Route path={UserRoute} element={<UserListPage/>}/>
-        <Route path={`${UserRoute}/:id`} element={<UserDetailPage/>}/>
+        <Route path={`${UserRoute}/:id`} element={<UserDetailPage baseRouter={baseRouter}/>}/>
         <Route path={RoleRoute} element={<RoleListPage/>}/>
-        <Route path={`${RoleRoute}/:name`} element={<RoleDetailPage/>}/>
+        <Route path={`${RoleRoute}/:name`} element={<RoleDetailPage baseRouter={baseRouter}/>}/>
         <Route path={ChangePasswordRoute} element={<ChangePasswordPage/>}/>
     </Routes>
 }

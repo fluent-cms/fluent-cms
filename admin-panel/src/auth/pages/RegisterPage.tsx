@@ -57,7 +57,7 @@ export const RegisterPage: React.FC = () => {
                     {success ? (
                         <div className="p-field">
                             <span className="p-message ">
-                                Registration succeeded. <Link to="/login">Click here to go to login</Link>
+                                Registration succeeded. <Link to={`${configs.authBaseRouter}${LoginRoute}`}>Click here to go to login</Link>
                             </span>
                         </div>
                     ) : (<>

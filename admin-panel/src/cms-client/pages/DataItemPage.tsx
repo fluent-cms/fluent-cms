@@ -4,21 +4,24 @@ import {deleteItem, updateItem, useItemData} from "../services/entity";
 import {Divider} from "primereact/divider";
 import {Button} from "primereact/button";
 import {Picklist} from "../containers/Picklist";
-import {useRequestStatus} from "../containers/useFormStatus";
+import {useCheckError} from "../../components/useCheckError";
+import {useConfirm} from "../../components/useConfirm";
 import {fileUploadURL, getFullAssetsURL} from "../services/configs";
 import {PageLayout} from "./PageLayout";
 import {FetchingStatus} from "../../components/FetchingStatus";
 import { EditTable } from "../containers/EditTable";
+import {XEntity} from "../types/schemaExt";
 
 export function DataItemPage({baseRouter}:{baseRouter:string}) {
     const {schemaName} = useParams()
     return <PageLayout schemaName={schemaName??''} baseRouter={baseRouter} page={DataItemPageComponent}/>
 }
 
-export function DataItemPageComponent({schema, baseRouter}:{schema:any, baseRouter:string}) {
+export function DataItemPageComponent({schema, baseRouter}:{schema: XEntity, baseRouter:string}) {
     const {id} = useParams()
     const {data,error,isLoading}= useItemData(schema.name, id)
-    const {checkError, Status, confirm} = useRequestStatus(schema.name + id)
+    const {checkError, CheckErrorStatus} = useCheckError();
+    const {confirm,Confirm} = useConfirm("dataItemPage" +schema.name);
     const ref = new URLSearchParams(location.search).get("ref");
 
     const uploadUrl = fileUploadURL()
@@ -30,8 +33,6 @@ export function DataItemPageComponent({schema, baseRouter}:{schema:any, baseRout
             return x.inDetail &&!x.isDefault && x.dataType != "Collection" && x.dataType != "Junction" ;
         }
     ) ??[];
-    console.log({inputColumns});
-
 
     const onSubmit = async (formData: any) => {
         formData[schema.primaryKey] = id
@@ -58,7 +59,8 @@ export function DataItemPageComponent({schema, baseRouter}:{schema:any, baseRout
         <Button type={'submit'} label={"Save " + schema.title} icon="pi pi-check" form={formId}/>
         {' '}
         <Button type={'button'} label={"Delete " + schema.title} severity="danger" onClick={onDelete}/>
-        <Status/>
+        <CheckErrorStatus/>
+        <Confirm/>
         <ItemForm columns={inputColumns} {...{schema,data, id, onSubmit, formId,uploadUrl,  getFullAssetsURL}} />
         {
             tables.map((column: any) => {

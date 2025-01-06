@@ -1,15 +1,17 @@
 import {deleteJunctionItems, saveJunctionItems, useJunctionData} from "../services/entity";
 import {Button} from "primereact/button";
-import {useRequestStatus} from "./useFormStatus";
+import {useCheckError} from "../../components/useCheckError";
+import {useConfirm} from "../../components/useConfirm";
 import {usePicklist} from "./usePicklist";
 import {useLazyStateHandlers} from "./useLazyStateHandlers";
 import {useDialogState} from "../../components/dialogs/useDialogState";
 import {SelectDataTable} from "../../components/dataTable/SelectDataTable";
 import {SaveDialog} from "../../components/dialogs/SaveDialog";
+import { XAttr } from "../types/schemaExt";
 
 export function Picklist({baseRouter,column, data, schema, getFullAssetsURL}: {
     data: any,
-    column: { field: string, header: string, junction: any },
+    column: XAttr,
     schema: any
     getFullAssetsURL : (arg:string) =>string
     baseRouter:string
@@ -26,8 +28,8 @@ export function Picklist({baseRouter,column, data, schema, getFullAssetsURL}: {
 
     const {lazyState :excludedLazyState,eventHandlers:excludedEventHandlers}= useLazyStateHandlers(10, listColumns,"");
     const {data: excludedSubgridData, mutate: execMutate} = useJunctionData(schema.name, id, column.field, true,excludedLazyState)
-    const {checkError, Status, confirm} = useRequestStatus(column.field)
-
+    const {checkError, CheckErrorStatus} = useCheckError();
+    const {confirm,Confirm} = useConfirm("picklist" +column.field);
     const mutateDate = () => {
         setExistingItems(null);
         setToAddItems(null)
@@ -56,21 +58,20 @@ export function Picklist({baseRouter,column, data, schema, getFullAssetsURL}: {
         <label id={column.field} className="font-bold">
             {column.header}
         </label><br/>
-        <Status/>
+        <CheckErrorStatus/>
+        <Confirm/>
         <Button outlined label={'Select ' + column.header} onClick={showDialog} size="small"/>
         {' '}
         <Button type={'button'} label={"Delete "} severity="danger" onClick={onDelete} outlined size="small"/>
         <SelectDataTable
             data={subgridData}
             columns={listColumns}
-            primaryKey={targetSchema.primaryKey}
-            titleAttribute={targetSchema.titleAttribute}
+            schema={targetSchema}
             selectedItems={existingItems}
             setSelectedItems={setExistingItems}
             lazyState={lazyState}
             eventHandlers={eventHandlers}
             getFullAssetsURL={getFullAssetsURL}
-            entityName={targetSchema.name}
             baseRouter={baseRouter}
         />
         <SaveDialog
@@ -79,12 +80,10 @@ export function Picklist({baseRouter,column, data, schema, getFullAssetsURL}: {
             handleSave={handleSave}
             header={'Select ' + column.header}>
             <SelectDataTable
-                entityName={targetSchema.name}
+                schema={targetSchema}
                 getFullAssetsURL={getFullAssetsURL}
                 data={excludedSubgridData}
                 columns={listColumns}
-                primaryKey={targetSchema.dataKey}
-                titleAttribute={targetSchema.titleAttribute}
                 selectedItems={toAddItems}
                 setSelectedItems={setToAddItems}
                 lazyState={excludedLazyState}

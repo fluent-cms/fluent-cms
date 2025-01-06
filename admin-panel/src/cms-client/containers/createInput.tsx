@@ -9,8 +9,15 @@ import {FileInput} from "../../components/inputs/FileInput";
 import {GalleryInput} from "../../components/inputs/GalleryInput";
 import {DropDownInput} from "../../components/inputs/DropDownInput";
 import {MultiSelectInput} from "../../components/inputs/MultiSelectInput";
+import { XAttr } from "../types/schemaExt";
 
-export function createInput(props :any) {
+export function createInput(props :{
+    column: XAttr,
+    data: any,id: any, 
+    control: any, register: any,
+    uploadUrl:string,
+    getFullAssetsURL : (arg:string) =>string
+}) {
     const {field, displayType} = props.column
     switch (displayType) {
         case 'text':

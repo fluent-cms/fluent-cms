@@ -1,16 +1,15 @@
 import {Column} from "primereact/column";
 import {Link} from "react-router-dom";
+import { XAttr, XEntity } from "../../../cms-client/types/schemaExt";
 
-export function textColumn({primaryKey, column, titleAttribute, baseRouter, entityName}:{
+export function textColumn({column, baseRouter, schema}:{
     baseRouter:string
-    primaryKey: string,
-    titleAttribute: string;
-    column:  {displayType :string, field:string, header:any, linkToEntity:string,lookup:any}
-    entityName:string
+    schema:XEntity
+    column: XAttr,
 }){
     let field = column.field;
     if (column.displayType == "lookup"){
-        field = column.field + "." + column.lookup.targetEntity.titleAttribute;
+        field = column.field + "." + column.lookup!.titleAttribute;
     }
     var dataType = 'text';
     switch (column.displayType){
@@ -26,11 +25,11 @@ export function textColumn({primaryKey, column, titleAttribute, baseRouter, enti
     const bodyTemplate = (item:any) => {
         let val = item[column.field]
         if (column.displayType === "lookup" && val){
-            val = val[column.lookup.targetEntity.titleAttribute]
+            val = val[column.lookup!.titleAttribute]
         }
 
-        if (column.field == titleAttribute){
-            return <Link to={`${baseRouter}/${entityName}/${item[primaryKey]}?ref=${encodeURIComponent(window.location.href)}`}>{val}</Link>
+        if (column.field == schema.titleAttribute){
+            return <Link to={`${baseRouter}/${schema.name}/${item[schema.primaryKey]}?ref=${encodeURIComponent(window.location.href)}`}>{val}</Link>
         }else {
             return <>{val}</>
         }

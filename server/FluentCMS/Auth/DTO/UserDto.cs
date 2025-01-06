@@ -1,16 +1,14 @@
-using System.Collections.Immutable;
-
 namespace FluentCMS.Auth.DTO;
 
 public sealed record UserDto(
     string Id ,
     string Email ,
-    ImmutableArray<string> Roles ,
-    ImmutableArray<string> ReadWriteEntities ,
-    ImmutableArray<string> RestrictedReadWriteEntities ,
-    ImmutableArray<string> ReadonlyEntities ,
-    ImmutableArray<string> RestrictedReadonlyEntities ,
-    ImmutableArray<string> AllowedMenus 
+    string[] Roles ,
+    string[] ReadWriteEntities ,
+    string[] RestrictedReadWriteEntities ,
+    string[] ReadonlyEntities ,
+    string[] RestrictedReadonlyEntities ,
+    string[] AllowedMenus 
 );
 
 

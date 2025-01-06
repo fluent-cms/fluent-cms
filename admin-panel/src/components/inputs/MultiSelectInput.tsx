@@ -5,7 +5,7 @@ import {MultiSelect} from "primereact/multiselect";
 export function MultiSelectInput(
     props: {
         data: any,
-        column: { field: string, header: string, options: string},
+        column: { field: string, header: string, options?: string},
         register: any
         className: any
         control: any

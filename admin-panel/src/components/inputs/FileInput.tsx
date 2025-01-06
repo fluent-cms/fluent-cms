@@ -11,8 +11,8 @@ export function FileInput(props: {
     control: any
     id: any
     uploadUrl: any
-    previewImage:boolean
-    download:boolean
+    previewImage?:boolean
+    download?:boolean
     getFullAssetsURL : (arg:string) =>string
 
 

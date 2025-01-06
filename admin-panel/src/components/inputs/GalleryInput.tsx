@@ -29,13 +29,13 @@ export function GalleryInput(props: {
     control: any
     id: any
     uploadUrl: any
-    getFileFullURL : (arg:string) =>string
+    getFullAssetsURL : (arg:string) =>string
 
 }) {
     return <InputPanel  {...props} component={(field: any) => {
         const urls = field.value?.split(',')??[]
         const items = urls.map((x:any) =>({
-            itemImageSrc:props.getFileFullURL(x), thumbnailImageSrc:props.getFileFullURL(x)
+            itemImageSrc:props.getFullAssetsURL(x), thumbnailImageSrc:props.getFullAssetsURL(x)
         }));
         return <>
             <InputText type={'hidden'} id={field.name} value={field.value} className={' w-full'}

@@ -1,13 +1,14 @@
 import {useForm} from "react-hook-form";
 import {createInput} from "./createInput";
+import {XAttr} from "../types/schemaExt";
 
 export function ItemForm({columns, data, id, onSubmit, formId, uploadUrl, getFullAssetsURL}: {
-    columns: any,
+    columns: XAttr[],
     data: any,
     id?: any
     onSubmit: any
-    formId: any
-    uploadUrl:any
+    formId: string
+    uploadUrl:string
     getFullAssetsURL : (arg:string) =>string
 
 }) {

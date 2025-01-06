@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using System.Security.Claims;
 using FluentCMS.Auth.DTO;
 using FluentCMS.Utils.ResultExt;
@@ -20,8 +19,8 @@ where TUser :IdentityUser, new()
         var claims = contextAccessor.HttpContext?.User;
         if (claims?.Identity?.IsAuthenticated != true) return null;
 
-        ImmutableArray<string> roles = [..claims.FindAll(ClaimTypes.Role).Select(x => x.Value)];
-        ImmutableArray<string> menus = roles.Contains(RoleConstants.Sa) || roles.Contains(RoleConstants.Admin)
+        string[] roles = [..claims.FindAll(ClaimTypes.Role).Select(x => x.Value)];
+        string[] menus = roles.Contains(RoleConstants.Sa) || roles.Contains(RoleConstants.Admin)
             ? [UserConstants.MenuUsers, UserConstants.MenuRoles, UserConstants.MenuSchemaBuilder]
             : [];
         return new UserDto

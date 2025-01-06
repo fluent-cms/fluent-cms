@@ -34,7 +34,7 @@ function App() {
             <Routes>
                 <Route path={`${configs.entityBaseRouter}/*`} element={<EntityRouter baseRouter={configs.entityBaseRouter}/>}/>
                 <Route path={configs.adminBaseRouter} element={<EntityRouter baseRouter={configs.entityBaseRouter} />} />
-                <Route path={`${configs.authBaseRouter}/*`} element={<AccountRouter/>}/>
+                <Route path={`${configs.authBaseRouter}/*`} element={<AccountRouter baseRouter={configs.authBaseRouter}/>}/>
             </Routes>
         </>:<>
             <Routes>

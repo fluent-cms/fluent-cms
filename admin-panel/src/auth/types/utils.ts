@@ -1,16 +1,3 @@
-export type Profile = {
-    id: string;
-    email: string;
-    roles: string[];
-    readWriteEntities: string[];
-    restrictedReadWriteEntities:string[] ;
-    readonlyEntities: string[];
-    restrictedReadonlyEntities: string[];
-    allowedMenus: string[];
-};
-
-
-
 export function getEntityPermissionColumns(entitiesOption :string){
     return [
         {field:'readWriteEntities',header:'Read Write Entities',options: entitiesOption},

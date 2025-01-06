@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, {AxiosResponse} from "axios";
 export const swrConfig = {
     revalidateOnFocus:false
 }
@@ -7,7 +7,7 @@ export const fetcher = async (url: string) => {
     return res.data;
 }
 
-export async function catchResponse(req: any) {
+export async function catchResponse<T>(req: ()=>Promise<AxiosResponse<T,any>> ) {
     try {
         const res  =await req()
         return {data:res.data}

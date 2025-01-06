@@ -2,9 +2,9 @@ import {Menubar} from 'primereact/menubar';
 import React from "react";
 import {useTopMenuBar} from "../auth/services/menu";
 import { useNavigate} from "react-router-dom";
-import {Profile} from "../auth/types/Profile";
 import {configs} from "../config";
 import {RoleRoute, UserRoute} from "../auth/AccountRouter";
+import { UserDto } from '../auth/types/userDto';
 
 
 const entityPrefix = '/entities'
@@ -12,7 +12,7 @@ export const  MenuSchemaBuilder = "menu_schema_builder";
 export const  MenuUsers = "menu_users";
 export const  MenuRoles = "menu_roles";
 
-export function TopMenuBar({start, end, profile}:{start:any, end:any, profile: Profile}) {
+export function TopMenuBar({start, end, profile}:{start:any, end:any, profile: UserDto}) {
     const navigate = useNavigate();
     const items = useTopMenuBar().filter(x=>{
         if (profile.roles.includes('sa')){

@@ -2,7 +2,7 @@ import {ItemForm} from "../containers/ItemForm";
 import {addItem} from "../services/entity";
 import {Button} from "primereact/button";
 import {fileUploadURL, getFullAssetsURL} from "../services/configs";
-import {useRequestStatus} from "../containers/useFormStatus";
+import {useCheckError} from "../../components/useCheckError";
 import {useParams} from "react-router-dom";
 import {PageLayout} from "./PageLayout";
 
@@ -12,7 +12,7 @@ export function NewDataItemPage({baseRouter}:{baseRouter:string}) {
 }
 
 export function NewDataItemPageComponent({schema,baseRouter}:{schema:any, baseRouter:string }) {
-    const {checkError, Status} = useRequestStatus(schema.name)
+    const {checkError, CheckErrorStatus} = useCheckError();
     const formId = "newForm" + schema.name
     const uploadUrl = fileUploadURL()
     const inputColumns = schema?.attributes?.filter(
@@ -31,7 +31,7 @@ export function NewDataItemPageComponent({schema,baseRouter}:{schema:any, baseRo
 
     return <>
         <Button label={'Save ' + schema.title} type="submit" form={formId}  icon="pi pi-check"/>
-        <Status/>
+        <CheckErrorStatus/>
         <ItemForm columns={inputColumns} {...{data:{}, onSubmit,  formId,uploadUrl,  getFullAssetsURL}}/>
     </>
 }

@@ -7,22 +7,22 @@ public static class AccountHandlers
 {
     public static void MapAccountHandlers(this RouteGroupBuilder app)
     {
-        app.MapGet($"/users", async (IAccountService svc, CancellationToken ct) => await svc.GetUsers(ct));
+        app.MapGet("/users", (IAccountService svc, CancellationToken ct) => svc.GetUsers(ct));
 
-        app.MapGet("/users/{id}", async (
-            IAccountService svc, string id, CancellationToken ct
-        ) => await svc.GetOne(id, ct));
+        app.MapGet("/users/{id}", (IAccountService svc, string id, CancellationToken ct) => svc.GetSingle(id, ct));
 
-        app.MapDelete("/users/{id}", async (IAccountService svc, string id) => await svc.DeleteUser(id));
+        app.MapDelete("/users/{id}", (IAccountService svc, string id) => svc.DeleteUser(id));
 
-        app.MapPost($"/users", async (IAccountService svc, UserDto dto) => await svc.SaveUser(dto));
+        app.MapPost("/users", (IAccountService svc, UserDto dto) => svc.SaveUser(dto));
 
-        app.MapGet($"/roles", async (IAccountService svc, CancellationToken ct) => await svc.GetRoles(ct));
+        app.MapGet("/roles", (IAccountService svc, CancellationToken ct) => svc.GetRoles(ct));
 
-        app.MapGet("/roles/{name}", async (IAccountService svc, string name) => await svc.GetOneRole(name));
+        app.MapGet("/roles/{name}", (IAccountService svc, string name) => svc.GetSingleRole(name));
 
-        app.MapPost("/roles", async (IAccountService svc, RoleDto dto) => await svc.SaveRole(dto));
+        app.MapPost("/roles", (IAccountService svc, RoleDto dto) => svc.SaveRole(dto));
 
-        app.MapDelete("/roles/{name}", async (IAccountService svc, string name) => await svc.DeleteRole(name));
+        app.MapDelete("/roles/{name}", (IAccountService svc, string name) => svc.DeleteRole(name));
+        
+        app.MapGet("/resources",(IAccountService svc, CancellationToken ct) => svc.GetResources(ct));
     }
 }

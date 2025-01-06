@@ -1,30 +1,26 @@
 import {DataTable} from "primereact/datatable";
 import {createColumn} from "./columns/createColumn";
+import {XAttr, XEntity} from "../../cms-client/types/schemaExt";
+import {ListResponse} from "../../cms-client/types/listResponse";
 
-export function LazyDataTable({baseRouter,schema,columns, data, lazyState, eventHandlers, getFullAssetsURL}: {
-    schema:{
-        name:string,
-        primaryKey:string
-        titleAttribute:string
-        attributes:any[]
-    },
-    columns:any[],
+export function LazyDataTable({baseRouter, schema, columns, data, lazyState, eventHandlers, getFullAssetsURL}: {
+    schema: XEntity|undefined,
+    columns: XAttr[],
     baseRouter: string
-    data: { items: any[], totalRecords: number }
+    data: ListResponse | undefined
     lazyState: any
     eventHandlers: any
-    getFullAssetsURL : (arg:string) =>string
+    getFullAssetsURL: (arg: string) => string
 }) {
-    
-    const {items, totalRecords} = data ?? {}
-    const {primaryKey,titleAttribute,name} = schema;
-    
-    return columns && data && <DataTable
+
+
+
+    return columns && data && schema && <DataTable
         sortMode="multiple"
-        dataKey={primaryKey}
-        value={items}
+        dataKey={schema.primaryKey}
+        value={data.items}
         paginator
-        totalRecords={totalRecords}
+        totalRecords={data.totalRecords}
         rows={lazyState.rows}
         lazy
         first={lazyState.first}
@@ -34,6 +30,6 @@ export function LazyDataTable({baseRouter,schema,columns, data, lazyState, event
         sortOrder={lazyState.sortOrder}
         {...eventHandlers}
     >
-        {columns.map((column: any, i: number) => createColumn({column, primaryKey,titleAttribute,getFullAssetsURL, baseRouter, entityName:name}))}
+        {columns.map((column: any) => createColumn({column, schema, getFullAssetsURL, baseRouter,}))}
     </DataTable>
 }

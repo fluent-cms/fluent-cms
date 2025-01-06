@@ -13,7 +13,7 @@ export function RoleListPage() {
         return <Link to={record.name}>{record.name}</Link>
     }
     return <>
-        <h2>User list</h2>
+        <h2>Role list</h2>
         <Link to={NewUser}><Button>Create New Role</Button></Link>
         <div className="card"></div>
         <DataTable loading={isLoading} dataKey={"name"} value={data} paginator rows={100} >

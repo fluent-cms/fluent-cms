@@ -1,13 +1,11 @@
-using System.Collections.Immutable;
-
 namespace FluentCMS.Auth.DTO;
 
 public record RoleDto(
     string Name,
-    ImmutableArray<string> ReadWriteEntities,
-    ImmutableArray<string> RestrictedReadWriteEntities,
-    ImmutableArray<string> ReadonlyEntities,
-    ImmutableArray<string> RestrictedReadonlyEntities
+    string[] ReadWriteEntities,
+    string[] RestrictedReadWriteEntities,
+    string[] ReadonlyEntities,
+    string[] RestrictedReadonlyEntities
 );
 
 public static class RoleConstants

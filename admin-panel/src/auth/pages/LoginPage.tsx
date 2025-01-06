@@ -9,7 +9,7 @@ import 'primeicons/primeicons.css';
 import {Link, useLocation} from "react-router-dom";
 import {login, useUserInfo} from "../services/auth";
 import {configs} from "../../config";
-import {LoginRoute, RegisterRoute} from "../AccountRouter";
+import {RegisterRoute} from "../AccountRouter";
 
 export  const LoginPage: React.FC = () => {
     const location = useLocation();

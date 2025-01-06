@@ -1,8 +1,9 @@
 import {useReducer} from "react";
 import {FilterMatchMode} from "primereact/api";
 import {decodeLazyState} from "../services/lazyState";
+import { XAttr } from "../types/schemaExt";
 
-function createDefaultState(rows:any, cols:any[],qs: string) {
+function createDefaultState(rows:any, cols:XAttr[],qs: string) {
     const defaultState :any= {
         first: 0,
         rows,
@@ -22,8 +23,8 @@ function createDefaultState(rows:any, cols:any[],qs: string) {
     return defaultState
 }
 
-function createDefaultFilter(cols:any[]) {
-    const getMathMode = (col:any) =>{
+function createDefaultFilter(cols:XAttr[]) {
+    const getMathMode = (col:XAttr) =>{
         switch (col.displayType){
             case 'number': return FilterMatchMode.EQUALS
             case 'datetime': return FilterMatchMode.DATE_IS
@@ -34,8 +35,7 @@ function createDefaultFilter(cols:any[]) {
 
     cols.forEach(col =>{
         if (col.displayType == "lookup"){
-            filters[col.field + "." + col.lookup.targetEntity.titleAttribute] = {operator: 'and', constraints: [{ value: null, matchMode: getMathMode(col) }]}
-
+            filters[col.field + "." + col.lookup!.titleAttribute] = {operator: 'and', constraints: [{ value: null, matchMode: getMathMode(col) }]}
         }else {
             filters[col.field] = {operator: 'and', constraints: [{ value: null, matchMode: getMathMode(col) }]}
         }
@@ -56,7 +56,7 @@ function reducer(state: any, action: any) {
     return state
 }
 
-export function useLazyStateHandlers(rows:number, cols: any[], qs: string) {
+export function useLazyStateHandlers(rows:number, cols: XAttr[], qs: string) {
     const defaultState:any = createDefaultState(rows,cols,qs);
     const [lazyState, dispatch] = useReducer(reducer, defaultState)
     return {
