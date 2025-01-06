@@ -23,7 +23,7 @@ public sealed class EntityService(
     {
         var entity = (await entitySchemaSvc.LoadEntity(name, ct)).Ok();
         var (filters, sorts,validPagination) = await GetListArgs(entity, args,pagination);
-        return await ListWithAction(entity,mode, [..filters], [..sorts], validPagination, ct);
+        return await ListWithAction(entity,mode, filters, sorts, validPagination, ct);
     }
     
     public async Task<Record> SingleByIdBasic(string entityName, string id, string[] attributes,
@@ -390,7 +390,7 @@ public sealed class EntityService(
     private async Task<ListArgs> GetListArgs(LoadedEntity entity,  StrArgs args,Pagination pagination)
     {
         var groupedArgs = args.GroupByFirstIdentifier();
-        var filters = (await FilterHelper.Parse(entity, groupedArgs, entitySchemaSvc, entitySchemaSvc)).Ok();
+        var filters = (await FilterHelper.FromQueryString(entity, groupedArgs, entitySchemaSvc, entitySchemaSvc)).Ok();
         var sorts = (await SortHelper.Parse(entity, groupedArgs, entitySchemaSvc)).Ok();
         var validPagination = PaginationHelper.ToValid(pagination, entity.DefaultPageSize);
         return new ListArgs(filters, sorts, validPagination);

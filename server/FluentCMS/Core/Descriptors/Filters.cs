@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using FluentCMS.Utils.ResultExt;
 using FluentResults;
+using FluentResults.Extensions;
 
 namespace FluentCMS.Core.Descriptors;
 public static class MatchTypes
@@ -16,6 +17,7 @@ public sealed record ValidFilter(AttributeVector Vector, string MatchType, Immut
 public static class FilterConstants
 {
     public const string MatchTypeKey = "matchType";
+    public const string Operator = "operator"; // to be compatible with PrimeReact Data Table
     public const string SetSuffix = "Set";
     public const string FilterExprKey = "filterExpr";
     public const string FieldKey = "field";
@@ -30,11 +32,11 @@ public static class FilterHelper
         {
             return Result.Fail("Unable to parse filter expression of field.");
         }
-        
+
         var ret = new List<Filter>();
         foreach (var node in nodes)
         {
-            if (!node.TryGetVal(FilterConstants.FieldKey,out var fieldName))
+            if (!node.TryGetVal(FilterConstants.FieldKey, out var fieldName))
             {
                 return Result.Fail("Unable to parse filter expression, field is not set");
             }
@@ -43,13 +45,15 @@ public static class FilterHelper
             {
                 return Result.Fail($"Unable to parse filter expression, failed to find clause of `{fieldName}` ");
             }
+
             ret.Add(ParseComplexFilter(fieldName, clauses));
         }
+
         return ret.ToArray();
     }
 
     public static Result<Filter> ParseFilter<T>(T valueProvider)
-    where T: IDataProvider
+        where T : IDataProvider
     {
         return valueProvider.Name().EndsWith(FilterConstants.SetSuffix)
             ? ParseSimpleFilter(valueProvider)
@@ -61,15 +65,16 @@ public static class FilterHelper
             {
                 return Result.Fail($"Fail to parse filter {valueProvider.Name()}.");
             }
+
             return ParseComplexFilter(valueProvider.Name(), pairs);
         }
     }
 
     private static Result<Filter> ParseSimpleFilter<T>(T valueProvider)
-    where T: IDataProvider
+        where T : IDataProvider
     {
         var name = valueProvider.Name()[..^FilterConstants.SetSuffix.Length];
-        if (!valueProvider.TryGetVals(out var arr)) 
+        if (!valueProvider.TryGetVals(out var arr))
             return Result.Fail($"Fail to parse simple filter, Invalid value provided of `{name}`");
         var constraint = new Constraint(Matches.In, [..arr]);
         return new Filter(name, MatchTypes.MatchAll, [constraint]);
@@ -90,6 +95,7 @@ public static class FilterHelper
                 constraints.Add(new Constraint(match, [..val]));
             }
         }
+
         return new Filter(field, matchType, [..constraints]);
     }
 
@@ -110,9 +116,10 @@ public static class FilterHelper
 
             if (constraints.Length > 0)
             {
-                ret.Add(filter with{Constraints = [..constraints]});
+                ret.Add(filter with { Constraints = [..constraints] });
             }
         }
+
         return ret.ToArray();
     }
 
@@ -147,10 +154,10 @@ public static class FilterHelper
         return ret.ToArray();
     }
 
-    public static async Task<Result<ValidFilter[]>> Parse(
+    public static async Task<Result<ValidFilter[]>> FromQueryString(
         LoadedEntity entity,
         Dictionary<string, StrArgs> dictionary,
-        IEntityVectorResolver vectorResolver, 
+        IEntityVectorResolver vectorResolver,
         IAttributeValueResolver valueResolver
     )
     {
@@ -162,7 +169,8 @@ public static class FilterHelper
                 continue;
             }
 
-            var (_, _, filter, errors) = await Parse(entity, key, value, vectorResolver, valueResolver);
+            var (_, _, filter, errors) =
+                await SingleFilterFromQueryString(entity, key, value, vectorResolver, valueResolver);
             if (errors is not null)
             {
                 return Result.Fail(errors);
@@ -175,7 +183,7 @@ public static class FilterHelper
         return ret.ToArray();
     }
 
-    private static async Task<Result<ValidFilter>> Parse(
+    private static async Task<Result<ValidFilter>> SingleFilterFromQueryString(
         LoadedEntity entity,
         string field,
         StrArgs strArgs,
@@ -189,24 +197,46 @@ public static class FilterHelper
             return Result.Fail($"Fail to parse filter, not found {entity.Name}.{field}, errors: {errors}");
         }
 
-        var op = strArgs.TryGetValue(FilterConstants.MatchTypeKey, out var value) ? value.ToString() : "and";
+        var op = strArgs.TryGetValue(FilterConstants.Operator, out var value) ? value.ToString() : "and";
+        op = op == "and" ? MatchTypes.MatchAll : MatchTypes.MatchAny;
+
         var constraints = new List<ValidConstraint>();
-        foreach (var (match, values) in strArgs.Where(x => x.Key != "operator"))
+        foreach (var (match, values) in strArgs.Where(x => x.Key != FilterConstants.Operator))
         {
-            var list = new List<ValidValue>();
-            foreach (var s in values)
+            if (!ToValidValues(values).Try(out var validValues, out var e))
+            {
+                return Result.Fail(e);
+            }
+
+            if (match == Matches.Between || match == Matches.In || match == Matches.NotIn)
+            {
+                constraints.Add(new ValidConstraint(match, [..validValues]));
+            }
+            else
+            {
+                constraints.AddRange(validValues.Select(x => new ValidConstraint(match, [x])));
+            }
+        }
+;
+
+        return new ValidFilter(vector, op, [..constraints]);
+
+        Result<List<ValidValue>> ToValidValues(IEnumerable<string?> strings)
+        {
+            var ret = new List<ValidValue>();
+            foreach (var s in strings)
             {
                 if (s is not null && valueResolver.ResolveVal(vector.Attribute, s, out var v))
                 {
-                    list.Add(v);
+                    ret.Add(v);
                 }
                 else
                 {
-                    return Result.Fail($"Failed to case {values.ToString()} to {vector.Attribute.DataType}");
+                    return Result.Fail($"Failed to cast {s} to {vector.Attribute.DataType}");
                 }
             }
-            constraints.Add(new ValidConstraint(match, [..list]));
+
+            return ret;
         }
-        return new ValidFilter(vector, op, [..constraints]);
     }
 }

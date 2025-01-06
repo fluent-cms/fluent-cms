@@ -138,14 +138,5 @@ To establish a many-to-many relationship between the `Course` and `Material` ent
 
 ---
 
-### Admin Panel: Data Management Features
-
-#### 1. **List Page**
-[Example Course List Page](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&limit=20)  
-The **List Page** displays entities in a tabular format, enabling sorting, searching, and pagination. Users can efficiently browse or locate specific records.
-
-#### 2. **Detail Page**
-[Example Course Detail Page](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course/22)  
-The **Detail Page** provides an interface for viewing and managing detailed attributes. Related data such as teachers and materials can be selected or modified.
 
 </details>
