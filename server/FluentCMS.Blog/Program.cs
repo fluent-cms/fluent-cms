@@ -41,8 +41,6 @@ if (builder.Environment.IsDevelopment())
 var app = builder.Build();
 
 
-(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [RoleConstants.Sa])).Ok();
-(await app.EnsureCmsUser("admin@cms.com", "Admin1!", [RoleConstants.Admin])).Ok();
 
 app.MapDefaultEndpoints();
 app.UseOutputCache();
@@ -55,6 +53,11 @@ if (app.Environment.IsDevelopment())
 
 await EnsureDbCreatedAsync();
 await app.UseCmsAsync();
+
+
+(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [RoleConstants.Sa])).Ok();
+(await app.EnsureCmsUser("admin@cms.com", "Admin1!", [RoleConstants.Admin])).Ok();
+
 app.Run();
 return;
 

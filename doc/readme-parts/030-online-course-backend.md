@@ -136,7 +136,5 @@ To establish a many-to-many relationship between the `Course` and `Material` ent
 
 **Description:** When managing a course, you can select multiple material records from the `Material` table to associate with the course.
 
----
-
 
 </details>
