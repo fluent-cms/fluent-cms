@@ -6,12 +6,9 @@
         <LangVersion>13</LangVersion>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="FluentCMS" Version="0.3.2" />
+        <PackageReference Include="FluentCMS" Version="0.3.4" />
         <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.0" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0"/>
         <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0"/>
-    </ItemGroup>
-    <ItemGroup>
-      <ProjectReference Include="..\..\server\FluentCMS\FluentCMS.csproj" />
     </ItemGroup>
 </Project>

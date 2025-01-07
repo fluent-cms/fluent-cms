@@ -50,15 +50,12 @@
         <None Include="../../doc/mkdoc/docs/index.md" Pack="true" PackagePath="\readme.md" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="CoreKit\" />
-    </ItemGroup>
 
     <PropertyGroup>
         <PackageReadmeFile>readme.md</PackageReadmeFile>
         <TargetFramework>net9.0</TargetFramework>
         <PackageId>FluentCMS</PackageId>
-        <Version>0.3.3</Version>
+        <Version>0.3.4</Version>
         <Authors>Jason C</Authors>
         <Company>fluent-cms</Company>
         <Description>A headless CMS with GraphQL API and drag-and-drop page designer.</Description>

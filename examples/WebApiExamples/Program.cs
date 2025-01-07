@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using FluentCMS;
 using FluentCMS.Auth.DTO;
 using FluentCMS.Utils.ResultExt;
 using Microsoft.AspNetCore.Identity;
