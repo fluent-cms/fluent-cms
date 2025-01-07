@@ -41,7 +41,7 @@ export function GalleryInput(props: {
             <InputText type={'hidden'} id={field.name} value={field.value} className={' w-full'}
                        onChange={(e) => field.onChange(e.target.value)}/>
 
-            <Galleria showIndicators responsiveOptions={responsiveOptions} numVisible={5}
+            <Galleria showIndicators responsiveOptions={responsiveOptions} numVisible={5} style={{ maxWidth: '50%'}}
                       item={itemTemplate}
                       showThumbnails={false}
                       value={items}/>

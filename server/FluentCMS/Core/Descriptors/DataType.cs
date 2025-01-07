@@ -22,6 +22,10 @@ public static class DataTypeHelper
         (DataType.Datetime, DisplayType.Datetime),
         (DataType.Datetime, DisplayType.Date),
         
+        (DataType.String, DisplayType.Number),
+        (DataType.String, DisplayType.Datetime),
+        (DataType.String, DisplayType.Date),
+        
         (DataType.String, DisplayType.Text),
         (DataType.String, DisplayType.Textarea),
         (DataType.String, DisplayType.Image),

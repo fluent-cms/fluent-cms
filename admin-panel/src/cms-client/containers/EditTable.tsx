@@ -57,7 +57,6 @@ export function EditTable({baseRouter,column, data, schema, getFullAssetsURL}: {
             handleHide={hideDialog}
             header={'Add ' + column.header}>
             <>
-                {error && error.split('\n').map(e => (<><Message severity={'error'} text={e}/>&nbsp;&nbsp;</>))}
                 <ItemForm
                     id={undefined}
                     formId={formId}
@@ -66,6 +65,7 @@ export function EditTable({baseRouter,column, data, schema, getFullAssetsURL}: {
                     data={{}}
                     getFullAssetsURL={getFullAssetsURL}
                     onSubmit={onSubmit}/>
+                {error && error.split('\n').map(e => (<><Message severity={'error'} text={e}/>&nbsp;&nbsp;</>))}
             </>
         </SaveDialog>
     </div>

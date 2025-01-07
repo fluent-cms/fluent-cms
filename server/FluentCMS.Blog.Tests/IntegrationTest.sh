@@ -17,15 +17,10 @@ remove_container(){
 
 test_postgres_container() {
   local container_name="fluent-cms-db-postgres"
-  local init_sql_path=$1
   
   remove_container $container_name
   local docker_run_command="docker run -d --name $container_name -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=mysecretpassword -e POSTGRES_DB=fluent-cms -p 5432:5432"
-  
-  # Add volume mapping if init_sql_path is not empty
-  if [ -n "$init_sql_path" ]; then
-    docker_run_command+=" -v $init_sql_path:/docker-entrypoint-initdb.d/init.sql"
-  fi
+
   docker_run_command+=" postgres:latest"
   eval "$docker_run_command"
   
@@ -59,7 +54,7 @@ db_path=$(pwd)/default.db && rm -f $db_path && cp ../FluentCMS.Blog/cms.db "$db_
 # Sqlite With Empty Data 
 db_path=$(pwd)/temp.db && rm -f "$db_path" && test_sqlite "$db_path"
 
-test_postgres_container ""
+test_postgres_container 
 
 test_sqlserver_container
 

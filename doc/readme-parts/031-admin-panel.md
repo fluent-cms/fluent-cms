@@ -1,73 +1,93 @@
 
 
+
+
 ---
-## Admin Panel
-<details> 
-<summary> 
-This section introduce Admin Panel Data Management Features
-</summary>
 
+## **Admin Panel**
+<details>  
+<summary>  
+The last chapter introduced how to model entities, this chapter introduction how to use Admin-Panel to manage data of those entities.
+</summary>  
 
-### DisplayType
- Admin Panel can display attribute as different UI Controls
+### **Display Types**
+The Admin Panel supports various UI controls to display attributes:
 
-- `"text"`:  a single line text input
-- `"textarea"`: multiple line text input
-- `"editor"`: rich text input
+- `"text"`: Single-line text input.
+- `"textarea"`: Multi-line text input.
+- `"editor"`: Rich text input.
 
-- `"number"`: single line text input allow only number
-- `"datatime"`: datetime picker, allow input date and time
-- `"data"`: datetime picker, only allow input data
+- `"number"`: Single-line text input for numeric values only.
+- `"datetime"`: Datetime picker for date and time inputs.
+- `"date"`: Date picker for date-only inputs.
 
-- `"image"`: allow upload single image, save the image URL 
-- `"gallery"`:allow upload multiple image, save the image URLs
-- `"file"`: allow upload file, save the file Url
+- `"image"`: Upload a single image, storing the image URL.
+- `"gallery"`: Upload multiple images, storing their URLs.
+- `"file"`: Upload a file, storing the file URL.
 
-- `"dropdown"`:  select item from pre-defined list
-- `"multiselect"`: select multiple items from pre-defined list
-- `"lookup"`: select item from another many-to-one entity, require `Lookup` (many-to-one) dataType
+- `"dropdown"`: Select an item from a predefined list.
+- `"multiselect"`: Select multiple items from a predefined list.
+- `"lookup"`: Select an item from another entity with a many-to-one relationship (requires `Lookup` data type).
 
-- `"picklist"`: select multiples item from another many-to-many entity, require `Junction` dataType
-- `"edittable"`: manage items of another one-to-many sub entity , require `Collection` dataType
+- `"picklist"`: Select multiple items from another entity with a many-to-many relationship (requires `Junction` data type).
+- `"edittable"`: Manage items of a one-to-many sub-entity (requires `Collection` data type).
 
-### DataType to DisplayType Mapping Table
+---
 
-Below is a mapping table of valid `DataType` and `DisplayType` combinations:
+### **DataType to DisplayType Mapping Table**
+Below is a mapping of valid `DataType` and `DisplayType` combinations:
 
-| **DataType**   | **DisplayType**          | **Description**                                  |
-|-----------------|--------------------------|--------------------------------------------------|
-| Int            | Number                   | Input for integers.                             |
-| Datetime       | Datetime                 | Datetime picker for date and time input.        |
-| Datetime       | Date                     | Date picker for date-only input.               |
-| String         | Text                     | Single-line text input.                        |
-| String         | Textarea                 | Multi-line text input.                         |
-| String         | Image                    | Single image upload.                           |
-| String         | Gallery                  | Multiple image uploads.                        |
-| String         | File                     | File upload.                                   |
-| String         | Dropdown                 | Select an item from a predefined list.         |
-| String         | Multiselect              | Select multiple items from a predefined list.  |
-| Text           | Multiselect              | Select multiple items from a predefined list.  |
-| Text           | Gallery                  | Multiple image uploads.                        |
-| Text           | Textarea                 | Multi-line text input.                         |
-| Text           | Editor                   | Rich text editor.                              |
-| Lookup         | Lookup                   | Select an item from another entity.            |
-| Junction       | Picklist                 | Select multiple items from another entity.     |
-| Collection     | EditTable                | Manage items of a sub-entity.                  |
+| **DataType**  | **DisplayType** | **Description**                             |
+|---------------|-----------------|---------------------------------------------|
+| Int           | Number          | Input for integers.                         |
+| Datetime      | Datetime        | Datetime picker for date and time inputs.   |
+| Datetime      | Date            | Date picker for date-only inputs.           |
+| String        | Number          | Input for numeric values.                   |
+| String        | Datetime        | Datetime picker for date and time inputs.   |
+| String        | Date            | Date picker for date-only inputs.           |
+| String        | Text            | Single-line text input.                     |
+| String        | Textarea        | Multi-line text input.                      |
+| String        | Image           | Single image upload.                        |
+| String        | Gallery         | Multiple image uploads.                     |
+| String        | File            | File upload.                                |
+| String        | Dropdown        | Select an item from a predefined list.      |
+| String        | Multiselect     | Select multiple items from a predefined list.|
+| Text          | Multiselect     | Select multiple items from a predefined list.|
+| Text          | Gallery         | Multiple image uploads.                     |
+| Text          | Textarea        | Multi-line text input.                      |
+| Text          | Editor          | Rich text editor.                           |
+| Lookup        | Lookup          | Select an item from another entity.         |
+| Junction      | Picklist        | Select multiple items from another entity.  |
+| Collection    | EditTable       | Manage items of a sub-entity.               |  
 
-### **List Page**  
-[Example Course List Page](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&limit=20)    
-The **List Page** displays entities in a tabular format, enabling sorting, searching, and pagination. Users can efficiently browse or locate specific records.  
-#### Sorting  
-You can apply sort by click the `↑` or `↓` icon on the table header.  
-[Order by Created At Example](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&limit=20&sort[created_at]=-1)  
-[Order by Name Example](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&limit=20&sort[name]=1)  
-#### Filtering  
-You can apply Filter by click the Funnel icon on the table header.  
+---
 
-[Here is example filter by `Created At` is on 2024-08-07] (https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&limit=20&created_at[dateIs]=2024-09-07&sort[created_at]=1)  
-[Here is Example filter by `Course Name` starts with A or `Course Name` starts with C](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&limit=20&name[operator]=or&name[startsWith]=A&name[startsWith]=C&sort[created_at]=1)  
-### **Detail Page**
-[Example Course Detail Page](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course/22)  
-The **Detail Page** provides an interface for viewing and managing detailed attributes. Related data such as teachers and materials can be selected or modified.
+### **List Page**
+[Example Course List Page](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&limit=20)
 
-</details>
+The **List Page** displays entities in a tabular format, supporting sorting, searching, and pagination for efficient browsing or locating of specific records.
+
+#### **Sorting**
+Sort records by clicking the `↑` or `↓` icon in the table header.
+- [Order by Created At Example](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&limit=20&sort[created_at]=-1)
+- [Order by Name Example](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&limit=20&sort[name]=1)
+
+#### **Filtering**
+Apply filters by clicking the Funnel icon in the table header.
+
+- [Filter by Created At (2024-09-07)](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&limit=20&created_at[dateIs]=2024-09-07&sort[created_at]=1)
+- [Filter by Course Name (Starts with A or C)](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&limit=20&name[operator]=or&name[startsWith]=A&name[startsWith]=C&sort[created_at]=1)
+
+---
+
+### **Detail Page**  
+Detail page provides an interface to manage single record.  
+
+#### Example of display types `date`,`image`, `gallery`, `muliselect`, `dropdown`,
+[Lesson Detail Page](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/lesson/6?ref=https%3A%2F%2Ffluent-cms-admin.azurewebsites.net%2F_content%2FFluentCMS%2Fadmin%2Fentities%2Fcourse%2F27%3Fref%3Dhttps%253A%252F%252Ffluent-cms-admin.azurewebsites.net%252F_content%252FFluentCMS%252Fadmin%252Fentities%252Fcourse%253Foffset%253D0%2526limit%253D20).
+
+#### Example of `lookup`,`picklist`,`edittable`
+[Course Detail Page](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course/22)
+
+</details>  
+

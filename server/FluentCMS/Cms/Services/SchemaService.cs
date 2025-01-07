@@ -148,7 +148,6 @@ public sealed class SchemaService(
             new Column(SchemaFields.Settings, ColumnType.Text),
             new Column(SchemaFields.Deleted, ColumnType.Int),
             new Column(SchemaFields.CreatedBy, ColumnType.String),
-            new Column(SchemaFields.CreatedBy, ColumnType.String),
             new Column(FluentCMS.Core.Descriptors.DefaultFields.CreatedAt, ColumnType.Datetime),
             new Column(FluentCMS.Core.Descriptors.DefaultFields.UpdatedAt, ColumnType.Datetime),
         ];
