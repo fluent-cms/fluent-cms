@@ -75,6 +75,25 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
         var sql = string.Join(";", parts.ToArray());
         await ExecuteQuery(sql, cmd => cmd.ExecuteNonQueryAsync(ct));
     }
+
+    public async Task CreateForeignKey(string table, string col, string refTable, string refCol, CancellationToken ct)
+    {
+        var sql = $"""
+                   DO $$
+                        BEGIN
+                            IF NOT EXISTS (
+                               SELECT 1
+                                FROM information_schema.table_constraints
+                                WHERE constraint_name = 'fk_{table}_{col}'
+                                AND table_name = '{table}'
+                            ) THEN
+                               ALTER TABLE {table} ADD CONSTRAINT fk_{table}_{col} FOREIGN KEY ("{col}") REFERENCES {refTable} ("{refCol}");
+                           END IF;
+                        END 
+                   $$
+                   """;
+        await ExecuteQuery(sql, cmd => cmd.ExecuteNonQueryAsync(ct));
+    }
     
     public async Task<Column[]> GetColumnDefinitions(string table, CancellationToken ct)
     {

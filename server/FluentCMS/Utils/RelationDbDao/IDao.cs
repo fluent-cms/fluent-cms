@@ -20,5 +20,8 @@ public interface IDao
     
     Task CreateTable(string table, IEnumerable<Column> cols, CancellationToken ct = default);
     Task AddColumns(string table, IEnumerable<Column> cols, CancellationToken ct = default);
+
+    Task CreateForeignKey(string table, string col, string refTable, string refCol, CancellationToken ct);
+    
     Task<Column[]> GetColumnDefinitions(string table, CancellationToken ct);
 }

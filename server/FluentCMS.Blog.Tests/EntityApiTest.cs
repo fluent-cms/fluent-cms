@@ -112,6 +112,8 @@ public class EntityApiTest
         (await _entityApiClient.Insert(_tagEntityName, Name, "tag1")).Ok();
 
         (await _schemaApiClient.EnsureSimpleEntity(_postEntityName, Name, junction: _tagEntityName)).Ok();
+        (await _entityApiClient.Insert(_postEntityName, Name, "post1")).Ok();
+        
 
         (await _entityApiClient.JunctionAdd(_postEntityName, _tagEntityName, 1, 1)).Ok();
         var res = (await _entityApiClient.JunctionList(_postEntityName, _tagEntityName, 1, true)).Ok();

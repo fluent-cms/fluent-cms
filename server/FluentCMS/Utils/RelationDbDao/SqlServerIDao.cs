@@ -75,7 +75,19 @@ public class SqlServerIDao(SqlConnection connection, ILogger<SqlServerIDao> logg
         var sql = string.Join(";", parts);
         await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(ct));
     }
-
+    public async Task CreateForeignKey(string table, string col, string refTable, string refCol, CancellationToken ct)
+    {
+        var sql = $"""
+                   IF NOT EXISTS (
+                           SELECT 1 FROM sys.foreign_keys
+                           WHERE name = 'fk_{table}_{col}' AND parent_object_id = OBJECT_ID('{table}')
+                               )
+                           BEGIN
+                               ALTER TABLE {table} ADD CONSTRAINT fk_{table}_{col} FOREIGN KEY ([{col}]) REFERENCES {refTable} ([{refCol}]);
+                           END
+                   """;
+        await ExecuteQuery(sql, cmd => cmd.ExecuteNonQueryAsync(ct));
+    }
     public async Task<Column[]> GetColumnDefinitions(string table, CancellationToken ct)
     {
         var sql = @"

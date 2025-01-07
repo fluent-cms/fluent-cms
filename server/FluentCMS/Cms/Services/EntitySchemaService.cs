@@ -84,29 +84,28 @@ public sealed class EntitySchemaService(
 
     public async Task<Schema> SaveTableDefine(Schema schema, CancellationToken ct = default)
     {
+        
+        //hook function might change the schema
+        schema = (await hook.SchemaPreSave.Trigger(provider, new SchemaPreSaveArgs(schema))).RefSchema;
+        schema = WithDefaultAttr(schema);
+        VerifyEntity(schema.Settings.Entity!, ct);
+        
         (await schemaSvc.NameNotTakenByOther(schema, ct)).Ok();
-
-        schema = schema with
-        {
-            Settings = new Settings(
-                (schema.Settings.Entity ?? throw new ResultException("invalid payload")).WithDefaultAttr()
-            )
-        };
-        await VerifyEntity(schema.Settings.Entity!, ct);
-
         var cols = await dao.GetColumnDefinitions(schema.Settings.Entity!.TableName, ct);
         EnsureTableNotExist(schema, cols).Ok();
-
-        schema = (await hook.SchemaPreSave.Trigger(provider, new SchemaPreSaveArgs(schema))).RefSchema;
 
         using var tx = await dao.BeginTransaction();
         
         try
         {
             schema = await schemaSvc.Save(schema, ct);
-            await CreateJunctions(schema, ct);
-            await CreateMainTable(schema, cols, ct);
+            await CreateMainTable(schema.Settings.Entity!, cols, ct);
             await schemaSvc.EnsureEntityInTopMenuBar(schema.Settings.Entity!, ct);
+            
+            var loadedEntity = await LoadAttributes(schema.Settings.Entity!.ToLoadedEntity(), ct).Ok();
+            await CreateLookupForeignKey(loadedEntity, ct);
+            await CreateCollectionForeignKey(loadedEntity, ct);
+            await CreateJunctions(loadedEntity, ct);
             tx.Commit();
             return schema;
         }
@@ -120,6 +119,17 @@ public sealed class EntitySchemaService(
             dao.EndTransaction();
             await entityCache.Remove("", ct);
             await hook.SchemaPostSave.Trigger(provider, new SchemaPostSaveArgs(schema));
+        }
+
+        Schema WithDefaultAttr(Schema s)
+        {
+            var e = s.Settings.Entity ?? throw new ResultException("invalid entity payload");
+            return s with
+            {
+                Settings = new Settings(
+                    Entity: e.WithDefaultAttr()
+                )
+            };
         }
     }
 
@@ -191,9 +201,8 @@ public sealed class EntitySchemaService(
         return entity;
     }
 
-    private async Task CreateMainTable(Schema schema, Column[] columns, CancellationToken ct)
+    private async Task CreateMainTable(Entity entity, Column[] columns, CancellationToken ct)
     {
-        var entity = schema.Settings.Entity!;
         if (columns.Length > 0) //if table exists, alter table add columns
         {
             var set = columns.Select(x => x.Name.ToLower()).ToHashSet();
@@ -211,29 +220,46 @@ public sealed class EntitySchemaService(
         }
     }
 
-    private async Task CreateJunctions(Schema schema, CancellationToken ct)
+    private async Task CreateLookupForeignKey(LoadedEntity entity,CancellationToken ct)
     {
-        var entity = schema.Settings.Entity!;
-        foreach (var attribute in entity.Attributes.Where(x=>x.DataType ==DataType.Junction))
+        foreach (var attr in entity.Attributes.Where(attr=>attr.DataType == DataType.Lookup))
         {
-            await CreateJunction(attribute.ToLoaded(entity.TableName));
+            var targetEntity = attr.Lookup!.TargetEntity;
+            await dao.CreateForeignKey(entity.TableName, attr.Field, targetEntity.TableName, targetEntity.PrimaryKey, ct);
         }
-        
-        async Task CreateJunction(LoadedAttribute attr)
+    }
+    private async Task CreateCollectionForeignKey(LoadedEntity entity,CancellationToken ct)
+    {
+        foreach (var attr in entity.Attributes.Where(attr=>attr.DataType == DataType.Collection))
         {
-            if (!attr.GetJunctionTarget(out var name))
-            {
-                throw new ResultException($"Junction Option was not set for attribute [{entity.Name}.{attr.Field}]");
-            }
+            var collection = attr.Collection!;
+            await dao.CreateForeignKey(collection.TargetEntity.TableName, collection.LinkAttribute.Field, entity.TableName, entity.PrimaryKey, ct);
+        }
+    }
 
-            var targetEntity = (await LoadEntity(name, ct)).Ok();
-            var junction = JunctionHelper.Junction(entity.ToLoadedEntity(), targetEntity, attr);
-            var columns =
-                await dao.GetColumnDefinitions(junction.JunctionEntity.TableName, ct);
+    private async Task CreateJunctions(LoadedEntity entity, CancellationToken ct)
+    {
+        foreach (var attribute in entity.Attributes.Where(x => x.DataType == DataType.Junction))
+        {
+            var junction = attribute.Junction!;
+            var columns = await dao.GetColumnDefinitions(junction.JunctionEntity.TableName, ct);
             if (columns.Length == 0)
             {
                 var cols = await ToColumns(junction.JunctionEntity.Attributes);
                 await dao.CreateTable(junction.JunctionEntity.TableName, cols.EnsureDeleted(), ct);
+                await dao.CreateForeignKey(
+                    table: junction.JunctionEntity.TableName,
+                    col: junction.SourceAttribute.Field,
+                    refTable: junction.SourceEntity.TableName,
+                    refCol: junction.SourceEntity.PrimaryKey,
+                    ct);
+
+                await dao.CreateForeignKey(
+                    table: junction.JunctionEntity.TableName,
+                    col: junction.TargetAttribute.Field,
+                    refTable: junction.TargetEntity.TableName,
+                    refCol: junction.TargetEntity.PrimaryKey,
+                    ct);
             }
         }
     }
@@ -251,7 +277,7 @@ public sealed class EntitySchemaService(
     private async Task<Result<Entity>> GetLookupEntity(Attribute attribute, CancellationToken ct = default)
         => attribute.GetLookupTarget(out var entity)
             ? await GetEntity(entity, ct)
-            : Result.Fail($"Lookup target was not set to {attribute.Field}");
+            : Result.Fail($"Lookup target was not set to Attribute [{attribute.Field}]");
 
     private async Task<Result<LoadedAttribute>> LoadLookup(
         LoadedEntity fromEntity,LoadedAttribute attr, CancellationToken ct
@@ -268,7 +294,7 @@ public sealed class EntitySchemaService(
         if (attr.Collection is not null) return attr;
         
         if (!attr.GetCollectionTarget(out var entityName, out var linkAttrName))
-            return Result.Fail( $"Collection target was not set for attribute `{attr.Field}`");
+            return Result.Fail( $"Target of Collection attribute [{attr.Field}] not set.");
 
         return await GetEntity(entityName, ct).Bind(async entity =>
         {
@@ -315,7 +341,7 @@ public sealed class EntitySchemaService(
         .ShortcutMap(x => LoadSingleAttribute(entity, x,ct))
         .Map(x => entity with { Attributes = [..x] });
 
-    private async Task VerifyEntity(Entity entity, CancellationToken ct)
+    private void VerifyEntity(Entity entity, CancellationToken ct)
     {
         foreach (var attr in entity.Attributes)
         {
@@ -338,7 +364,6 @@ public sealed class EntitySchemaService(
         _ = entity.Attributes.FirstOrDefault(x=>x.Field==entity.TitleAttribute) ??
             throw new ResultException($"`{entity.TitleAttribute}` was not in attributes list");
 
-        _ = await LoadAttributes(entity.ToLoadedEntity(), ct);
     }
 
 

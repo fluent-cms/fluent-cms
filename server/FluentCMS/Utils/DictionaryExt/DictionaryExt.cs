@@ -17,7 +17,7 @@ public static class DictionaryExt
             if (string.IsNullOrEmpty(kvp.Key) || string.IsNullOrEmpty(kvp.Value)) continue;
             if (queryString.Length > 0)
             {
-                queryString.Append("&");
+                queryString.Append('&');
             }
 
             queryString.Append(Uri.EscapeDataString(kvp.Key))
@@ -27,22 +27,24 @@ public static class DictionaryExt
 
         return queryString.ToString();
         
-    } 
+    }
 
-    public static StringValues GetVariableStr(this StrArgs dictionary, string? key, string variablePrefix)
+    public static StringValues ResolveVariable(this StrArgs dictionary, string? key, string variablePrefix)
     {
-        if (key is null) return StringValues.Empty;
-        if (!key.StartsWith(variablePrefix)) return key;
-        return dictionary.TryGetValue(key[variablePrefix.Length..], out var val) 
+        if (key is null || !key.StartsWith(variablePrefix))
+            return key ?? StringValues.Empty;
+
+        key = key[variablePrefix.Length..];
+        return dictionary.TryGetValue(key, out var val)
             ? val
             : StringValues.Empty;
     }
 
-    public static Dictionary<Tk, Tv> MergeByOverwriting<Tk, Tv>(this Dictionary<Tk, Tv> a, Dictionary<Tk, Tv> b)
+    public static Dictionary<Tk, Tv> OverwrittenBy<Tk, Tv>(this Dictionary<Tk, Tv> baseDict, Dictionary<Tk, Tv> overWriteDict)
         where Tk : notnull
     {
-        var ret = new Dictionary<Tk, Tv>(a);
-        foreach (var (k, v) in b)
+        var ret = new Dictionary<Tk, Tv>(baseDict);
+        foreach (var (k, v) in overWriteDict)
         {
             ret[k] = v;
         }

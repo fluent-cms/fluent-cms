@@ -28,8 +28,8 @@ public static class PaginationHelper
     private static Pagination ReplaceVariable(this Pagination pagination, StrArgs args)
     {
         return new Pagination(
-            Offset: args.GetVariableStr(pagination.Offset, QueryConstants.VariablePrefix).ToString(),
-            Limit: args.GetVariableStr(pagination.Limit, QueryConstants.VariablePrefix).ToString());
+            Offset: args.ResolveVariable(pagination.Offset, QueryConstants.VariablePrefix).ToString(),
+            Limit: args.ResolveVariable(pagination.Limit, QueryConstants.VariablePrefix).ToString());
     }
 
     public static ValidPagination ToValid(Pagination? fly, int defaultPageSize) =>

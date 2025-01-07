@@ -113,15 +113,15 @@ public static class ConstraintsHelper
                     return Result.Fail($"can not resolve {fromValue} when replace filter");
                 }
                 
-                foreach (var se in args.GetVariableStr(s, QueryConstants.VariablePrefix))
+                foreach (var str in args.ResolveVariable(s, QueryConstants.VariablePrefix))
                 {
-                    if (se is not null && resolver.ResolveVal(attribute, se, out var obj))
+                    if (str is not null && resolver.ResolveVal(attribute, str, out var obj))
                     {
                         list.Add(obj);
                     }
                     else
                     {
-                        return Result.Fail($"can not cast value {se} to {attribute.DataType}");
+                        return Result.Fail($"can not cast value {str} to {attribute.DataType}");
                     }
                 }
             }

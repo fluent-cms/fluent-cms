@@ -46,8 +46,6 @@ public static class EntityConstants
 
 public static class EntityHelper
 {
-   
-    
     public static LoadedEntity ToLoadedEntity(this Entity entity)
     {
         var primaryKey = entity.Attributes.FirstOrDefault(x=>x.Field ==entity.PrimaryKey)!.ToLoaded(entity.TableName);

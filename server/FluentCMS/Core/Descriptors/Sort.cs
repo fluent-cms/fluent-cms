@@ -87,7 +87,7 @@ public static class SortHelper
                 var current = sort;
                 if (current.Field.StartsWith(QueryConstants.VariablePrefix))
                 {
-                    var vals = args.GetVariableStr(current.Field, QueryConstants.VariablePrefix);
+                    var vals = args.ResolveVariable(current.Field, QueryConstants.VariablePrefix);
                     if (vals ==StringValues.Empty) return Result.Fail($"Failed to resolve sort field {current.Field}");
 
                     var field = vals.ToString();
@@ -115,7 +115,7 @@ public static class SortHelper
 
                 if (sort.Order.StartsWith(QueryConstants.VariablePrefix))
                 {
-                    var order = args.GetVariableStr(sort.Order, QueryConstants.VariablePrefix);
+                    var order = args.ResolveVariable(sort.Order, QueryConstants.VariablePrefix);
                     if (order ==StringValues.Empty )
                     {
                         return Result.Fail($"Failed to resolve order of {sort.Field}");

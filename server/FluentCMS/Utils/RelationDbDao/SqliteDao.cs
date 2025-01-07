@@ -66,7 +66,12 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
        var sql = string.Join(";", parts.ToArray());
        await ExecuteQuery(sql,async cmd => await cmd.ExecuteNonQueryAsync(ct));
    }
-
+   public  Task CreateForeignKey(string table, string col, string refTable, string refCol, CancellationToken ct)
+   {
+       //Sqlite doesn't support alter table add constraint, since we are just using sqlite do demo or dev,
+       //we just ignore this request
+       return Task.CompletedTask;
+   }
    public async Task<Column[]> GetColumnDefinitions(string table,CancellationToken ct)
    {
       var sql = $"PRAGMA table_info({table})";
