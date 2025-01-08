@@ -5,6 +5,7 @@ using FluentResults;
 
 namespace FluentCMS.Core.Descriptors;
 
+
 public static class Matches
 {
     public const string Between = "between";
@@ -46,7 +47,7 @@ public static class Matches
     ];
 }
 
-public sealed record Constraint(string Match, ImmutableArray<string> Value);
+public sealed record Constraint(string Match, ImmutableArray<string?> Value);
 public sealed record ValidConstraint(string Match, ImmutableArray<ValidValue> Values);
 
 public static class ConstraintsHelper
@@ -72,6 +73,29 @@ public static class ConstraintsHelper
         }
 
         return ret.ToArray();
+    }
+    
+    private static Result<ValidValue[]> ResolveValues(IEnumerable<string?> fromValues, LoadedAttribute attribute, IAttributeValueResolver resolver)
+    {
+        var list = new List<ValidValue>();
+
+        foreach (var fromValue in fromValues)
+        {
+            if (fromValue?.StartsWith(QueryConstants.VariablePrefix)??false)
+            {
+                list.Add(new ValidValue(fromValue));
+            }
+            else
+            {
+                if (!ValidValueHelper.Resolve(attribute, fromValue, resolver).Try(out var val, out var err))
+                {
+                    return Result.Fail(
+                        $"Resolve constraint value fail: can not cast value [{fromValue}] to [{attribute.DataType}]");
+                }
+                list.Add(val);
+            }
+        }
+        return list.ToArray();
     }
 
     public static Result<ValidConstraint[]> ReplaceVariables(
@@ -117,11 +141,11 @@ public static class ConstraintsHelper
                 {
                     if (str is not null && resolver.ResolveVal(attribute, str, out var obj))
                     {
-                        list.Add(obj);
+                        list.Add(obj!.Value);
                     }
                     else
                     {
-                        return Result.Fail($"can not cast value {str} to {attribute.DataType}");
+                        return Result.Fail($"Replace Variable Fail, Can not cast value [{str}] to [{attribute.DataType}]");
                     }
                 }
             }
@@ -131,26 +155,6 @@ public static class ConstraintsHelper
             }
         }
 
-        return list.ToArray();
-    }
-
-    private static Result<ValidValue[]> ResolveValues(IEnumerable<string> fromValues, LoadedAttribute attribute, IAttributeValueResolver resolver)
-    {
-        var list = new List<ValidValue>();
-
-        foreach (var fromValue in fromValues)
-        {
-            if (fromValue.StartsWith(QueryConstants.VariablePrefix))
-            {
-                list.Add(new ValidValue(fromValue));
-                continue;
-            }
-            if (!resolver.ResolveVal(attribute, fromValue, out var dbTypeValue))
-            {
-                return Result.Fail("can not cast value " + fromValue + " to " + attribute.DataType);
-            }
-            list.Add(dbTypeValue);
-        }
         return list.ToArray();
     }
 }

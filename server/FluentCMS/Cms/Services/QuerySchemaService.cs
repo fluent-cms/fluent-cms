@@ -3,6 +3,7 @@ using FluentCMS.Cms;
 using FluentCMS.Core.Cache;
 using FluentCMS.Cms.Graph;
 using FluentCMS.Core.Descriptors;
+using FluentCMS.Utils.GraphTypeConverter;
 using FluentCMS.Utils.ResultExt;
 using FluentResults;
 using FluentResults.Extensions;
@@ -146,7 +147,7 @@ public sealed class QuerySchemaService(
         {
             if (!graphAttr.GetEntityLinkDesc().Try(out var desc, out var err))
                 return Result.Fail(err);
-            var inputs = field.Arguments?.Select(x => new GraphQlArgumentDataProvider(x)) ?? [];
+            var inputs = field.Arguments?.Select(x => new GraphArgument(x)) ?? [];
             if (!QueryHelper.ParseSimpleArguments(inputs).Try( out var res, out  err)) 
                 return Result.Fail(err);
             if (!(await SortHelper.ToValidSorts(res.sorts, desc.TargetEntity, entitySchemaSvc)).Try(out var sorts, out err))
@@ -160,7 +161,7 @@ public sealed class QuerySchemaService(
         Task<Result<GraphAttribute>> LoadChildren(
             string newPrefix, GraphAttribute attr, GraphQLField field
         ) => attr.GetEntityLinkDesc()
-            .Bind(desc => ParseGraphFields(newPrefix, desc.TargetEntity, field.SelectionSet!.SubFields(),attr, ct))
+            .Bind(desc => ParseGraphFields(newPrefix, desc.TargetEntity, field.SelectionSet!.Selections.OfType<GraphQLField>(),attr, ct))
             .Map(sub => attr with { Selection = [..sub] });
     }
 }

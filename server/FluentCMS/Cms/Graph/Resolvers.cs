@@ -1,5 +1,6 @@
 using FluentCMS.Cms.Services;
 using FluentCMS.Core.Descriptors;
+using FluentCMS.Utils.GraphTypeConverter;
 using FluentCMS.Utils.ResultExt;
 using GraphQL;
 using GraphQL.Resolvers;
@@ -19,7 +20,8 @@ public static class Resolvers
         return new FuncFieldResolver<Record>(async context =>
         {
             var dto = GetRequestDto(context, entityName);
-            return await ResultException.Try(()=>queryService.SingleWithAction(dto));
+            return await queryService.SingleWithAction(dto);
+            //return await ResultException.Try(()=>queryService.SingleWithAction(dto));
         });
     }
 
@@ -28,7 +30,8 @@ public static class Resolvers
         return new FuncFieldResolver<Record[]>(async context =>
         {
             var dto = GetRequestDto(context, entityName);
-            return await ResultException.Try(() => queryService.ListWithAction(dto));
+            return await queryService.ListWithAction(dto);
+            //return await ResultException.Try(() => queryService.ListWithAction(dto));
         });
     }
 
@@ -38,9 +41,9 @@ public static class Resolvers
             ? ""
             : context.ExecutionContext.Operation.Name.StringValue;
 
-        IDataProvider[] args = context.FieldAst.Arguments
-            ?.Select(x => new GraphQlArgumentDataProvider(x))
-            .ToArray<IDataProvider>() ?? [];
+        IArgument[] args = context.FieldAst.Arguments
+            ?.Select(x => new GraphArgument(x))
+            .ToArray<IArgument>() ?? [];
         var res = QueryHelper.ParseArguments(args);
         if (res.IsFailed)
         {
@@ -54,7 +57,7 @@ public static class Resolvers
             Filters: [..filters], Sorts: [..sorts], ReqVariables: [..context.Variables.GetRequiredNames()]
         );
         return new GraphQlRequestDto(query, 
-            context.FieldAst.SelectionSet?.SubFields() ?? [],
-            context.Variables.ToQueryStrArgs());
+            context.FieldAst.SelectionSet?.Selections.OfType<GraphQLField>().ToArray()??[],
+            context.Variables.ToDict());
     }
 }

@@ -169,7 +169,7 @@ public sealed class EntityService(
     {
         var (collection,id) = await GetCollectionCtx(name, sid, attr, ct);
         var item = collection.TargetEntity.Parse(element, entitySchemaSvc).Ok();
-        item[collection.LinkAttribute.Field] = id.Value;
+        item[collection.LinkAttribute.Field] = id.Value!;
         return await InsertWithAction(new RecordContext(collection.TargetEntity, item), ct);
     }
 
@@ -329,7 +329,7 @@ public sealed class EntityService(
             throw new ResultException($"Failed to cast {id} to {entity.PrimaryKeyAttribute.DataType}");
         }
 
-        return new IdContext(entity, idValue);
+        return new IdContext(entity, idValue!.Value);
     }
     
     private record CollectionContext(Collection Collection, ValidValue Id);
@@ -344,7 +344,7 @@ public sealed class EntityService(
         {
             throw new ResultException($"Failed to cast {sid} to {loadedEntity.PrimaryKeyAttribute.DataType}");
         }
-        return new CollectionContext( collection, id);
+        return new CollectionContext( collection, id!.Value);
     }
 
 
@@ -364,7 +364,7 @@ public sealed class EntityService(
             throw new ResultException($"Failed to cast {sid} to {junction.SourceAttribute.DataType}");
         }
 
-        return new JunctionContext(attribute, junction, id);
+        return new JunctionContext(attribute, junction, id!.Value);
     }
 
     private record RecordContext(LoadedEntity Entity, Record Record);
@@ -390,7 +390,7 @@ public sealed class EntityService(
     private async Task<ListArgs> GetListArgs(LoadedEntity entity,  StrArgs args,Pagination pagination)
     {
         var groupedArgs = args.GroupByFirstIdentifier();
-        var filters = (await FilterHelper.FromQueryString(entity, groupedArgs, entitySchemaSvc, entitySchemaSvc)).Ok();
+        var filters = (await QueryStringFilterResolver.Resolve(entity, groupedArgs, entitySchemaSvc, entitySchemaSvc)).Ok();
         var sorts = (await SortHelper.Parse(entity, groupedArgs, entitySchemaSvc)).Ok();
         var validPagination = PaginationHelper.ToValid(pagination, entity.DefaultPageSize);
         return new ListArgs(filters, sorts, validPagination);

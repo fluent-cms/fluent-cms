@@ -32,9 +32,9 @@ public static class SortHelper
     }
     
    
-    public static Result<Sort[]> ParseSortExpr(IDataProvider provider)
+    public static Result<Sort[]> ParseSortExpr(IArgument provider)
     {
-        if (!provider.TryGetNodes(out var nodes))
+        if (!provider.TryGetObjects(out var nodes))
         {
             return Result.Fail($"Failed to get sort expression for {provider.Name()}");
         }
@@ -43,9 +43,9 @@ public static class SortHelper
         //[{field:"course.teacher.name", sortOrder:Asc}]
         foreach (var node in nodes)
         {
-            if (node.TryGetVal(SortConstant.FieldKey, out var field ) )
+            if (node.TryGetString(SortConstant.FieldKey, out var field ) )
             {
-                var order = node.TryGetVal(SortConstant.OrderKey, out var val) ? val : SortOrder.Asc;
+                var order = node.TryGetString(SortConstant.OrderKey, out var val) ? val : SortOrder.Asc;
                 sorts.Add(new Sort(field,order));
             }
             else
@@ -57,9 +57,9 @@ public static class SortHelper
         return sorts.ToArray();
     }
     
-    public static Result<Sort[]> ParseSorts( IDataProvider dataProvider)
+    public static Result<Sort[]> ParseSorts( IArgument argument)
     {
-        return dataProvider.TryGetVals(out var array)
+        return argument.TryGetStringArray(out var array)
             ? array.Select(ToSort).ToArray()
             : Result.Fail("Fail to parse sort");
 

@@ -91,10 +91,10 @@ public static class DictionaryExt
      * }
      */
     public static Dictionary<string, StrArgs> GroupByFirstIdentifier(
-        this StrArgs dictionary, string startDelimiter = "[", string endDelimiter = "]")
+        this StrArgs strArgs, string startDelimiter = "[", string endDelimiter = "]")
     {
         var result = new Dictionary<string, StrArgs>();
-        foreach (var (key,value) in dictionary)
+        foreach (var (key,value) in strArgs)
         {
             var parts = key.Split(startDelimiter);
             if (parts.Length != 2)

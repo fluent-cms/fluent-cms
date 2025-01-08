@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using FluentCMS.Core.Descriptors;
 using FluentCMS.Utils.ResultExt;
 using FluentResults;
@@ -71,7 +70,7 @@ internal static class MongoDbExt
                 : Builders<BsonDocument>.Filter.And(x));
 
     private static Result<FilterDefinition<BsonDocument>> GetConstraintDefinition(
-        string fieldName, string match, ImmutableArray<object> values
+        string fieldName, string match, object?[] values
     ) => match switch
     {
         Matches.Between => values.Length == 2
@@ -80,14 +79,14 @@ internal static class MongoDbExt
 
         Matches.StartsWith => Filter.Regex(fieldName, new BsonRegularExpression($"^{values[0]}")),
 
-        Matches.Contains => Filter.Regex(fieldName, new BsonRegularExpression((string)values[0], "i")),
+        Matches.Contains => Filter.Regex(fieldName, new BsonRegularExpression((string)(values[0]??""), "i")),
 
         Matches.NotContains => Filter.Not(Filter.Regex("fieldName",
-            new BsonRegularExpression((string)values[0], "i"))),
+            new BsonRegularExpression((string)(values[0]??""), "i"))),
 
         Matches.EndsWith => Filter.Regex(fieldName, new BsonRegularExpression($"{values[0]}$")),
 
-        Matches.EqualsTo => Filter.Eq(fieldName, values[0]),
+        Matches.EqualsTo =>Filter.Eq(fieldName, values[0]),
 
         Matches.NotEquals => Filter.Ne(fieldName, values[0]),
 

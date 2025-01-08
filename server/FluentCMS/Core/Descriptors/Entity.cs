@@ -301,7 +301,7 @@ public static class EntityHelper
             }
             return element.Value.ValueKind switch
             {
-                JsonValueKind.String when resolver.ResolveVal(attribute, element.Value.GetString()!,out var caseVal) => caseVal.Value, 
+                JsonValueKind.String when resolver.ResolveVal(attribute, element.Value.GetString()!,out var caseVal) => caseVal!.Value, 
                 JsonValueKind.Number when element.Value.TryGetInt32(out var intValue) => intValue,
                 JsonValueKind.Number when element.Value.TryGetInt64(out var longValue) => longValue,
                 JsonValueKind.Number when element.Value.TryGetDouble(out var doubleValue) => doubleValue,

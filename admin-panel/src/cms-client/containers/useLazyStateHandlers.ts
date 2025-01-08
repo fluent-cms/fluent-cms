@@ -12,7 +12,10 @@ function createDefaultState(rows:any, cols:XAttr[],qs: string) {
     if (qs){
         const s = decodeLazyState(qs);
         defaultState.first = s.first;
-        defaultState.rows = s.rows;
+        if (s.rows > 0){
+            defaultState.rows = s.rows;
+        }
+        
         defaultState.multiSortMeta = s.multiSortMeta;
         Object.keys(defaultState.filters).forEach(k =>{
            if (s.filters[k]){

@@ -65,7 +65,7 @@ public static class QueryHelper
         return Result.Ok();
     }
 
-    public static Result<(Sort[] sorts, Filter[] filters, Pagination pagination)> ParseArguments(IDataProvider[] args)
+    public static Result<(Sort[] sorts, Filter[] filters, Pagination pagination)> ParseArguments(IArgument[] args)
     {
         HashSet<string> keys = [FilterConstants.FilterExprKey, SortConstant.SortExprKey];
         var simpleArgs = args.Where(x => !keys.Contains(x.Name()));
@@ -80,7 +80,7 @@ public static class QueryHelper
         {
             var res = input.Name() switch
             {
-                FilterConstants.FilterExprKey => FilterHelper.ParseFilterExpr(input)
+                FilterConstants.FilterExprKey => GraphFilterResolver.ResolveExpr(input)
                     .PipeAction(f => filters = [..filters, ..f]),
 
                 SortConstant.SortExprKey => SortHelper.ParseSortExpr(input)
@@ -98,7 +98,7 @@ public static class QueryHelper
     }
 
     public static Result<(Sort[] sorts, Filter[] filters, Pagination pagination)> ParseSimpleArguments(
-        IEnumerable<IDataProvider> args)
+        IEnumerable<IArgument> args)
     {
         var sorts = new List<Sort>();
         var filters = new List<Filter>();
@@ -112,7 +112,7 @@ public static class QueryHelper
                 PaginationConstants.OffsetKey => Val(input).PipeAction(v => offset = v),
                 PaginationConstants.LimitKey => Val(input).PipeAction(v => limit = v),
                 SortConstant.SortKey => SortHelper.ParseSorts(input).PipeAction(s => sorts.AddRange(s)),
-                _ => FilterHelper.ParseFilter(input).PipeAction(f => filters.Add(f)),
+                _ => GraphFilterResolver.Resolve(input).PipeAction(f => filters.Add(f)),
             };
             if (res.IsFailed)
             {
@@ -122,7 +122,7 @@ public static class QueryHelper
 
         return (sorts.ToArray(), filters.ToArray(), new Pagination(offset, limit));
 
-        Result<string> Val(IDataProvider input) => input.TryGetVal(out var val) && !string.IsNullOrWhiteSpace(val)
+        Result<string> Val(IArgument input) => input.TryGetString(out var val) && !string.IsNullOrWhiteSpace(val)
             ? val
             : Result.Fail($"Fail to parse value of {input.Name()}");
     }

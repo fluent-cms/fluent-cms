@@ -164,7 +164,7 @@ public static class SpanHelper
                             return Result.Fail($"Fail to cast s to {field.DataType}");
                         }
 
-                        val = result.Value;
+                        val = result!.Value;
                     }
                 }
 

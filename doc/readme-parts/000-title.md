@@ -1,4 +1,4 @@
-# FluentCMS - A Headless CMS with GraphQL and Drag-and-Drop Page Designer
+# FluentCMS - A headless CMS built with Asp.net Core(c#) and React, featuring Rest APIs, GraphQL and drag-and-drop page designer.
 
 Welcome to [FluentCMS](https://github.com/fluent-cms/fluent-cms)! 🚀  
 [![GitHub stars](https://img.shields.io/github/stars/fluent-cms/fluent-cms.svg?style=social&label=Star)](https://github.com/fluent-cms/fluent-cms/stargazers)

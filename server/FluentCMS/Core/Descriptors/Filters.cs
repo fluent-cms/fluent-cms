@@ -1,7 +1,6 @@
 using System.Collections.Immutable;
 using FluentCMS.Utils.ResultExt;
 using FluentResults;
-using FluentResults.Extensions;
 
 namespace FluentCMS.Core.Descriptors;
 public static class MatchTypes
@@ -24,81 +23,128 @@ public static class FilterConstants
     public const string ClauseKey = "clause";
 }
 
-public static class FilterHelper
+public static class GraphFilterResolver
+{ public static Result<Filter[]> ResolveExpr(IArgument provider)
+     {
+         if (!provider.TryGetObjects(out var nodes))
+         {
+             return Result.Fail("Unable to parse filter expression of field.");
+         }
+ 
+         var ret = new List<Filter>();
+         foreach (var node in nodes)
+         {
+             if (!node.TryGetString(FilterConstants.FieldKey, out var fieldName))
+             {
+                 return Result.Fail("Unable to parse filter expression, field is not set");
+             }
+ 
+             if (!node.TryGetDict(FilterConstants.ClauseKey, out var clauses))
+             {
+                 return Result.Fail($"Unable to parse filter expression, failed to find clause of `{fieldName}` ");
+             }
+ 
+             ret.Add(ResolveCustomMatch(fieldName, clauses));
+         }
+ 
+         return ret.ToArray();
+     }
+ 
+     public static Result<Filter> Resolve<T>(T valueProvider)
+         where T : IArgument
+         => valueProvider.Name().EndsWith(FilterConstants.SetSuffix)
+             ? ResolveInMatch(valueProvider)
+             : valueProvider.TryGetDict(out var pairs)
+                 ? ResolveCustomMatch(valueProvider.Name(), pairs)
+                 : Result.Fail($"Fail to parse complex filter [{valueProvider.Name()}].");
+ 
+ 
+     private static Result<Filter> ResolveInMatch<T>(T valueProvider)
+         where T : IArgument
+     {
+         var name = valueProvider.Name()[..^FilterConstants.SetSuffix.Length];
+         if (!valueProvider.TryGetStringArray(out var arr))
+             return Result.Fail($"Fail to parse simple filter, Invalid value provided of `{name}`");
+         var constraint = new Constraint(arr.Length == 1 ? Matches.EqualsTo:Matches.In, [..arr]);
+         return new Filter(name, MatchTypes.MatchAll, [constraint]);
+     }
+ 
+     private static Filter ResolveCustomMatch(string field, StrArgs clauses)
+     {
+         var matchType = MatchTypes.MatchAll;
+         var constraints = new List<Constraint>();
+         foreach (var (match, val) in clauses)
+         {
+             if (match == FilterConstants.MatchTypeKey)
+             {
+                 matchType = val.First() ?? MatchTypes.MatchAll;
+             }
+             else
+             {
+                 var m = string.IsNullOrEmpty(match) ? Matches.EqualsTo : match;
+                 constraints.Add(new Constraint(m, [..val]));
+             }
+         }
+ 
+         return new Filter(field, matchType, [..constraints]);
+     }
+}
+
+public static class QueryStringFilterResolver
 {
-    public static Result<Filter[]> ParseFilterExpr(IDataProvider provider)
+    public static Task<Result<ValidFilter[]>> Resolve(
+        LoadedEntity entity,
+        Dictionary<string, StrArgs> dictionary,
+        IEntityVectorResolver vectorResolver,
+        IAttributeValueResolver valueResolver
+    ) => dictionary
+        .Where(x => x.Key != SortConstant.SortKey)
+        .ShortcutMap(x 
+            => ResolveSingle(entity, x.Key, x.Value, vectorResolver, valueResolver)
+        );
+
+    private static async Task<Result<ValidFilter>> ResolveSingle(
+        LoadedEntity entity,
+        string field,
+        StrArgs strArgs,
+        IEntityVectorResolver vectorResolver,
+        IAttributeValueResolver valueResolver
+    )
     {
-        if (!provider.TryGetNodes(out var nodes))
+        var (_, _, vector, errors) = await vectorResolver.ResolveVector(entity, field);
+        if (errors is not null)
         {
-            return Result.Fail("Unable to parse filter expression of field.");
+            return Result.Fail($"Fail to parse filter, not found {entity.Name}.{field}, errors: {errors}");
         }
 
-        var ret = new List<Filter>();
-        foreach (var node in nodes)
+        var op = strArgs.TryGetValue(FilterConstants.Operator, out var value) ? value.ToString() : "and";
+        op = op == "and" ? MatchTypes.MatchAll : MatchTypes.MatchAny;
+
+        var constraints = new List<ValidConstraint>();
+        foreach (var (match, values) in strArgs.Where(x => x.Key != FilterConstants.Operator))
         {
-            if (!node.TryGetVal(FilterConstants.FieldKey, out var fieldName))
+            if (!values.ShortcutMap(s 
+                        => ValidValueHelper.Resolve(vector.Attribute, s, valueResolver))
+                    .Try(out var validValues, out var e))
             {
-                return Result.Fail("Unable to parse filter expression, field is not set");
+                return Result.Fail(e);
             }
 
-            if (!node.TryGetPairs(FilterConstants.ClauseKey, out var clauses))
+            if (match == Matches.Between || match == Matches.In || match == Matches.NotIn)
             {
-                return Result.Fail($"Unable to parse filter expression, failed to find clause of `{fieldName}` ");
-            }
-
-            ret.Add(ParseComplexFilter(fieldName, clauses));
-        }
-
-        return ret.ToArray();
-    }
-
-    public static Result<Filter> ParseFilter<T>(T valueProvider)
-        where T : IDataProvider
-    {
-        return valueProvider.Name().EndsWith(FilterConstants.SetSuffix)
-            ? ParseSimpleFilter(valueProvider)
-            : Complex();
-
-        Result<Filter> Complex()
-        {
-            if (!valueProvider.TryGetPairs(out var pairs))
-            {
-                return Result.Fail($"Fail to parse filter {valueProvider.Name()}.");
-            }
-
-            return ParseComplexFilter(valueProvider.Name(), pairs);
-        }
-    }
-
-    private static Result<Filter> ParseSimpleFilter<T>(T valueProvider)
-        where T : IDataProvider
-    {
-        var name = valueProvider.Name()[..^FilterConstants.SetSuffix.Length];
-        if (!valueProvider.TryGetVals(out var arr))
-            return Result.Fail($"Fail to parse simple filter, Invalid value provided of `{name}`");
-        var constraint = new Constraint(Matches.In, [..arr]);
-        return new Filter(name, MatchTypes.MatchAll, [constraint]);
-    }
-
-    private static Filter ParseComplexFilter(string field, IEnumerable<StrPair> clauses)
-    {
-        var matchType = MatchTypes.MatchAll;
-        var constraints = new List<Constraint>();
-        foreach (var (match, val) in clauses)
-        {
-            if (match == FilterConstants.MatchTypeKey)
-            {
-                matchType = val.First();
+                constraints.Add(new ValidConstraint(match, [..validValues]));
             }
             else
             {
-                constraints.Add(new Constraint(match, [..val]));
+                constraints.AddRange(validValues.Select(x => new ValidConstraint(match, [x])));
             }
         }
 
-        return new Filter(field, matchType, [..constraints]);
+        return new ValidFilter(vector, op, [..constraints]);
     }
-
+}
+public static class FilterHelper
+{
     public static Result<ValidFilter[]> ReplaceVariables(
         IEnumerable<ValidFilter> filters,
         StrArgs? args,
@@ -154,89 +200,5 @@ public static class FilterHelper
         return ret.ToArray();
     }
 
-    public static async Task<Result<ValidFilter[]>> FromQueryString(
-        LoadedEntity entity,
-        Dictionary<string, StrArgs> dictionary,
-        IEntityVectorResolver vectorResolver,
-        IAttributeValueResolver valueResolver
-    )
-    {
-        var ret = new List<ValidFilter>();
-        foreach (var (key, value) in dictionary)
-        {
-            if (key == SortConstant.SortKey)
-            {
-                continue;
-            }
-
-            var (_, _, filter, errors) =
-                await SingleFilterFromQueryString(entity, key, value, vectorResolver, valueResolver);
-            if (errors is not null)
-            {
-                return Result.Fail(errors);
-            }
-
-            ret.Add(filter);
-
-        }
-
-        return ret.ToArray();
-    }
-
-    private static async Task<Result<ValidFilter>> SingleFilterFromQueryString(
-        LoadedEntity entity,
-        string field,
-        StrArgs strArgs,
-        IEntityVectorResolver vectorResolver,
-        IAttributeValueResolver valueResolver
-    )
-    {
-        var (_, _, vector, errors) = await vectorResolver.ResolveVector(entity, field);
-        if (errors is not null)
-        {
-            return Result.Fail($"Fail to parse filter, not found {entity.Name}.{field}, errors: {errors}");
-        }
-
-        var op = strArgs.TryGetValue(FilterConstants.Operator, out var value) ? value.ToString() : "and";
-        op = op == "and" ? MatchTypes.MatchAll : MatchTypes.MatchAny;
-
-        var constraints = new List<ValidConstraint>();
-        foreach (var (match, values) in strArgs.Where(x => x.Key != FilterConstants.Operator))
-        {
-            if (!ToValidValues(values).Try(out var validValues, out var e))
-            {
-                return Result.Fail(e);
-            }
-
-            if (match == Matches.Between || match == Matches.In || match == Matches.NotIn)
-            {
-                constraints.Add(new ValidConstraint(match, [..validValues]));
-            }
-            else
-            {
-                constraints.AddRange(validValues.Select(x => new ValidConstraint(match, [x])));
-            }
-        }
-;
-
-        return new ValidFilter(vector, op, [..constraints]);
-
-        Result<List<ValidValue>> ToValidValues(IEnumerable<string?> strings)
-        {
-            var ret = new List<ValidValue>();
-            foreach (var s in strings)
-            {
-                if (s is not null && valueResolver.ResolveVal(vector.Attribute, s, out var v))
-                {
-                    ret.Add(v);
-                }
-                else
-                {
-                    return Result.Fail($"Failed to cast {s} to {vector.Attribute.DataType}");
-                }
-            }
-
-            return ret;
-        }
-    }
+  
 }

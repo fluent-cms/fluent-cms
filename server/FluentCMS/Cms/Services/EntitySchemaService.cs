@@ -63,7 +63,7 @@ public sealed class EntitySchemaService(
     ) => attr.DataType switch
     {
         DataType.Junction => await LoadJunction(entity, attr, ct),
-        DataType.Lookup => await LoadLookup(entity,attr, ct),
+        DataType.Lookup => await LoadLookup(attr, ct),
         DataType.Collection => await LoadCollection(entity, attr,ct),
         _ => attr
     };
@@ -88,7 +88,7 @@ public sealed class EntitySchemaService(
         //hook function might change the schema
         schema = (await hook.SchemaPreSave.Trigger(provider, new SchemaPreSaveArgs(schema))).RefSchema;
         schema = WithDefaultAttr(schema);
-        VerifyEntity(schema.Settings.Entity!, ct);
+        VerifyEntity(schema.Settings.Entity!);
         
         (await schemaSvc.NameNotTakenByOther(schema, ct)).Ok();
         var cols = await dao.GetColumnDefinitions(schema.Settings.Entity!.TableName, ct);
@@ -133,15 +133,15 @@ public sealed class EntitySchemaService(
         }
     }
 
-    public bool ResolveVal(LoadedAttribute attr, string v, out ValidValue result)
+    public bool ResolveVal(LoadedAttribute attr, string v, out ValidValue? result)
     {
         var colType = attr.DataType == DataType.Lookup ? attr.Lookup!.TargetEntity.PrimaryKeyAttribute.DataType : attr.DataType;
         result = dao.TryParseDataType(v, colType, out var val) switch
         {
             true => new ValidValue(S: val!.S, I: val.I, D: val.D),
-            _ => ValidValue.EmptyValue
+            _ => null
         };
-        return result != ValidValue.EmptyValue;
+        return result != null;
     }
 
     public async Task<Result<AttributeVector>> ResolveVector(LoadedEntity entity, string fieldName)
@@ -280,7 +280,7 @@ public sealed class EntitySchemaService(
             : Result.Fail($"Lookup target was not set to Attribute [{attribute.Field}]");
 
     private async Task<Result<LoadedAttribute>> LoadLookup(
-        LoadedEntity fromEntity,LoadedAttribute attr, CancellationToken ct
+        LoadedAttribute attr, CancellationToken ct
     ) => attr.Lookup switch
     {
         not null => attr,
@@ -315,8 +315,8 @@ public sealed class EntitySchemaService(
 
     private Task<Result<LoadedEntity>> LoadLookups(LoadedEntity entity, CancellationToken ct = default)
         => entity.Attributes
-            .ShortcutMap(async x =>
-                x is { DataType: DataType.Lookup} ? await LoadLookup(entity, x, ct) : x)
+            .ShortcutMap(async attr =>
+                attr is { DataType: DataType.Lookup} ? await LoadLookup(attr, ct) : attr)
             .Map(x => entity with { Attributes = [..x] });
 
     private async Task<Result<LoadedAttribute>> LoadJunction(
@@ -341,7 +341,7 @@ public sealed class EntitySchemaService(
         .ShortcutMap(x => LoadSingleAttribute(entity, x,ct))
         .Map(x => entity with { Attributes = [..x] });
 
-    private void VerifyEntity(Entity entity, CancellationToken ct)
+    private void VerifyEntity(Entity entity)
     {
         foreach (var attr in entity.Attributes)
         {

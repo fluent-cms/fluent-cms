@@ -18,7 +18,7 @@ export function DataListPage({baseRouter}:{baseRouter:string}){
 
 export function DataListPageComponent({schema,baseRouter}:{schema:XEntity,baseRouter:string}) {
     const columns = schema?.attributes?.filter((column: any) => column.inList ) ?? [];
-    let {lazyState, eventHandlers} = useLazyStateHandlers(schema.defaultPageSize,columns, useLocation().search.replace("?",""))
+    let {lazyState, eventHandlers} = useLazyStateHandlers(schema.defaultPageSize, columns, useLocation().search.replace("?",""))
     const {data, error, isLoading}= useListData(schema.name,lazyState)
 
     useEffect(()=>{

@@ -117,7 +117,7 @@ public static class KateQueryExt
         return result;
     }
 
-    private static Result<SqlKata.Query> ApplyAndConstraint(this SqlKata.Query query, string field, string match, object[] values)
+    private static Result<SqlKata.Query> ApplyAndConstraint(this SqlKata.Query query, string field, string match, object?[] values)
     {
         return match switch
         {
@@ -125,8 +125,8 @@ public static class KateQueryExt
             Matches.Contains => query.WhereContains(field, values[0]),
             Matches.NotContains => query.WhereNotContains(field, values[0]),
             Matches.EndsWith => query.WhereEnds(field, values[0]),
-            Matches.EqualsTo => query.Where(field, values[0]),
-            Matches.NotEquals => query.WhereNot(field, values[0]),
+            Matches.EqualsTo =>  query.Where(field, values[0]),
+            Matches.NotEquals => query.WhereNot(field, values[0] ),
             Matches.NotIn => query.WhereNotIn(field, values),
             Matches.In => query.WhereIn(field, values),
             Matches.Lt => query.Where(field, "<", values[0]),
@@ -140,11 +140,11 @@ public static class KateQueryExt
             Matches.Between => values.Length == 2
                 ? query.WhereBetween(field, values[0], values[1])
                 : Result.Fail("show provide two values for between"),
-            _ => Result.Fail($"{match} is not support ")
+            _ => Result.Fail($"Kate Query Ext: Failed to apply and constraint, Match [{match}] is not support ")
         };
     }
 
-    private static Result<SqlKata.Query> ApplyOrConstraint(this SqlKata.Query query, string field, string match, object[] values)
+    private static Result<SqlKata.Query> ApplyOrConstraint(this SqlKata.Query query, string field, string match, object?[] values)
     {
         return match switch
         {
@@ -167,7 +167,7 @@ public static class KateQueryExt
             Matches.Between => values.Length == 2
                 ? query.OrWhereBetween(field, values[0], values[1])
                 : Result.Fail("show provide two values for between"),
-            _ => Result.Fail($"{match} is not support ")
+            _ => Result.Fail($"Kate Query Ext: Failed to apply or constraint, Match [{match}] is not support ")
         };
     }
 
