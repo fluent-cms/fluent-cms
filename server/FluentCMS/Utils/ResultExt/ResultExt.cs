@@ -5,7 +5,7 @@ namespace FluentCMS.Utils.ResultExt;
 /// <summary>
 /// Represents an exception that is deliberately thrown to notify a client about a specific error.
 /// </summary>
-public class ResultException(string message) : Exception(message)
+public class ResultException(string message, Exception? inner = null) : Exception(message, inner)
 {
     public static async Task<T> Try<T>(Func<Task<T>> func)
     {
@@ -15,7 +15,7 @@ public class ResultException(string message) : Exception(message)
         }
         catch(Exception ex)
         {
-            throw new ResultException(ex.Message);  
+            throw new ResultException(ex.Message,ex);
         }
     }
 
@@ -27,7 +27,7 @@ public class ResultException(string message) : Exception(message)
         }
         catch (Exception ex)
         {
-            throw new ResultException(ex.Message);
+            throw new ResultException(ex.Message,ex);
         }
     }
 }
