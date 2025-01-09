@@ -7,6 +7,9 @@ public interface IEntityService
 {
     Task<ListResponse?> ListWithAction(string name,ListResponseMode mode, Pagination pagination,  StrArgs args,
         CancellationToken ct= default);
+
+    Task<Record[]> ListAsTree(string name, CancellationToken ct);
+    
     Task<Record> SingleWithAction(string entityName, string strId, CancellationToken ct = default);
     Task<Record> SingleByIdBasic(string entityName, string strId, string[]attributes, CancellationToken ct =default);
     

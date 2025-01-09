@@ -12,7 +12,7 @@ public record GraphArgument(GraphQLArgument Argument) : IArgument
         return Argument.Name.StringValue;
     }
 
-    public bool TryGetStringArray(out string?[] array)
+    public bool GetStringArray(out string?[] array)
     {
         array = Argument.Value switch
         {
@@ -22,18 +22,22 @@ public record GraphArgument(GraphQLArgument Argument) : IArgument
         return array.Length > 0;
     }
 
-    public bool TryGetString(out string? value)
+    public bool GetString(out string? value)
     {
         return Converter.ToPrimitiveString(Argument.Value,QueryConstants.VariablePrefix,out value);
     }
 
-    public bool TryGetDict(out StrArgs dict)
+    public bool GetPairArray(out KeyValuePair<string,StringValues>[] arr)
     {
-        dict = Argument.Value is GraphQLNullValue
-            ? new StrArgs{{"",new StringValues([null])}}
-            : Converter.ToDict(Argument.Value,QueryConstants.VariablePrefix);
-        
-        return dict.Count > 0;
+        if (Argument.Value is GraphQLNullValue)
+        {
+            arr = [new KeyValuePair<string,StringValues>("", new StringValues([null]))];
+        }
+        else
+        {
+            arr = Converter.ToPairArray(Argument.Value,QueryConstants.VariablePrefix);
+        }
+        return arr.Length > 0;
     }
 
     public bool TryGetObjects(out IObject[] nodes)
@@ -55,22 +59,22 @@ public record GraphArgument(GraphQLArgument Argument) : IArgument
 
 public record GraphObject(GraphQLObjectValue ObjectValue) : IObject
 {
-    public bool TryGetString(string fieldName, out string value)
+    public bool GetString(string fieldName, out string value)
     {
         value = "";
         var field = ObjectValue.Field(fieldName);
         return field is not null && Converter.ToPrimitiveString(field.Value,QueryConstants.VariablePrefix ,out value);
     }
 
-    public bool TryGetDict(string fieldName, out StrArgs dict)
+    public bool GetPairArray(string fieldName, out KeyValuePair<string,StringValues>[] dict)
     {
         dict = [];
         var field = ObjectValue.Field(fieldName);
         if (field is not null)
         {
-            dict = Converter.ToDict(field.Value, QueryConstants.VariablePrefix);
+            dict = Converter.ToPairArray(field.Value, QueryConstants.VariablePrefix);
         }
 
-        return dict.Count > 0;
+        return dict.Length > 0;
     }
 }

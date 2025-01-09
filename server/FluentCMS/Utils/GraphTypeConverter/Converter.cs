@@ -2,6 +2,7 @@ using FluentCMS.Utils.DictionaryExt;
 using GraphQLParser.AST;
 using FluentResults;
 using GraphQL.Validation;
+using Microsoft.Extensions.Primitives;
 
 namespace FluentCMS.Utils.GraphTypeConverter;
 
@@ -25,7 +26,7 @@ public static class Converter
         }
         return ret.ToArray();
     }
-    public static StrArgs ToDict(this Variables? variables)
+    public static StrArgs ToPairArray(this Variables? variables)
     {
         var dictionary = new StrArgs();
         if (variables is null)
@@ -94,32 +95,32 @@ public static class Converter
         return b;
     }
 
-    public static StrArgs ToDict(GraphQLValue? v,string variablePrefix)
+    public static KeyValuePair<string,StringValues>[] ToPairArray(GraphQLValue? v,string variablePrefix)
         => v switch
         {
-            GraphQLObjectValue objectValue => ToDict(objectValue,variablePrefix),
-            GraphQLListValue listValue => ToDict(listValue,variablePrefix),
+            GraphQLObjectValue objectValue => ToPairArray(objectValue,variablePrefix),
+            GraphQLListValue listValue => ToPairArray(listValue,variablePrefix),
             _ => []
         };
 
-    private static StrArgs ToDict(this GraphQLListValue pairs, string variablePrefix)
+    private static KeyValuePair<string,StringValues>[] ToPairArray(this GraphQLListValue pairs, string variablePrefix)
     {
-        var ret = new StrArgs();
+        var ret = new List<KeyValuePair<string,StringValues>>();
         foreach (var val in pairs.Values??[])
         {
             var list = val switch
             {
-                GraphQLObjectValue obj => ToDict(obj, variablePrefix),
+                GraphQLObjectValue obj => ToPairArray(obj, variablePrefix),
                 _ => []
             };
-            ret.OverwrittenBy(list);
+            ret.AddRange(list);
         }
-        return ret;
+        return ret.ToArray();
     }
 
-    private static StrArgs ToDict(GraphQLObjectValue objectValue,string variablePrefix)
+    private static KeyValuePair<string,StringValues>[] ToPairArray(GraphQLObjectValue objectValue,string variablePrefix)
     {
-        var result = new StrArgs();
+        var result = new List<KeyValuePair<string, StringValues>>();
         foreach (var field in objectValue.Fields ?? [])
         {
             var arr = field.Value switch
@@ -131,9 +132,9 @@ public static class Converter
                 _ =>  ToPrimitiveString(field.Value,variablePrefix,out var v)?[v]:[]   
             };
             
-            result.Add(field.Name.StringValue, arr??[]);
+            result.Add(new (field.Name.StringValue, arr??[]));
         }
 
-        return result;
+        return result.ToArray();
     }
 }

@@ -174,7 +174,7 @@ public sealed class QueryService(
                 targetRecords = new Span().ToPage(targetRecords, collectionArgs.Pagination.Limit);
                 if (targetRecords.Length > 0)
                 {
-                    var sourceItems = items.Where(x => x[desc.SourceAttribute.Field].Equals(id.Value));
+                    var sourceItems = items.Where(x => x[desc.SourceAttribute.Field].Equals(id.ObjectValue));
                     foreach (var item in sourceItems)
                     {
                         item[attr.Field] = targetRecords;

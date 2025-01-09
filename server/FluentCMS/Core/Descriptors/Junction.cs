@@ -94,14 +94,14 @@ public static class JunctionHelper
     public static SqlKata.Query Delete(this Junction c, ValidValue id, Record[] targetItems)
     {
         var vals = targetItems.Select(x => x[c.TargetEntity.PrimaryKey]);
-        return new SqlKata.Query(c.JunctionEntity.TableName).Where(c.SourceAttribute.Field, id.Value)
+        return new SqlKata.Query(c.JunctionEntity.TableName).Where(c.SourceAttribute.Field, id.ObjectValue)
             .WhereIn(c.TargetAttribute.Field, vals).AsUpdate([c.JunctionEntity.DeletedAttribute.Field], [true]);
     }
 
     public static SqlKata.Query Insert(this Junction c, ValidValue id, Record[] targetItems)
     {
         string[] cols = [c.SourceAttribute.Field, c.TargetAttribute.Field];
-        var vals = targetItems.Select(x => { return new[] { id.Value, x[c.TargetEntity.PrimaryKey] }; });
+        var vals = targetItems.Select(x => { return new[] { id.ObjectValue, x[c.TargetEntity.PrimaryKey] }; });
 
         return new SqlKata.Query(c.JunctionEntity.TableName).AsInsert(cols, vals);
     }

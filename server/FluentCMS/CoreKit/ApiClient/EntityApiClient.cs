@@ -12,6 +12,10 @@ public class EntityApiClient(HttpClient client)
         string entity, int offset, int limit
     ) => client.GetResult<ListResponse>($"/{entity}?offset={offset}&limit={limit}".ToEntityApi());
 
+    public Task<Result<JsonElement[]>> ListAsTree(
+        string entity
+    ) => client.GetResult<JsonElement[]>($"/tree/{entity}".ToEntityApi());
+    
     public Task<Result<JsonElement>> One(
         string entity, int id
     ) => client.GetResult<JsonElement>($"/{entity}/{id}".ToEntityApi());

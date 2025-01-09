@@ -130,7 +130,7 @@ public static class ConstraintsHelper
 
         foreach (var fromValue in fromValues)
         {
-            if (fromValue.Value is string s && s.StartsWith(QueryConstants.VariablePrefix))
+            if (fromValue.ObjectValue is string s && s.StartsWith(QueryConstants.VariablePrefix))
             {
                 if (args is null)
                 {

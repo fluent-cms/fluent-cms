@@ -5,6 +5,32 @@ namespace FluentCMS.Utils.DictionaryExt;
 
 public static class DictionaryExt
 {
+    public static Record[] ToTree(this Record[] records,string idField, string parentField)
+    {
+        var parentIdField = parentField;
+        var lookup = records.ToDictionary(r => r[idField]);
+        var roots = new List<IDictionary<string, object>>();
+
+        foreach (var record in records)
+        {
+            if (record.TryGetValue(parentIdField, out var parentId) && parentId != null && lookup.TryGetValue(parentId, out var parentRecord))
+            {
+                if (!parentRecord.ContainsKey("children"))
+                {
+                    parentRecord["children"] = new List<IDictionary<string, object>>();
+                }
+
+                ((List<Record>)parentRecord["children"]).Add(record);
+            }
+            else
+            {
+                roots.Add(record);
+            }
+        }
+        
+        return roots.ToArray();
+    }
+    
     public static string ToQueryString(this StrArgs? args)
     {
         if (args == null || args.Count == 0)

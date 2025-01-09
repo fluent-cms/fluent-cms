@@ -86,6 +86,8 @@ public static class EntityHelper
         return query;
     }
 
+    public static SqlKata.Query AllQuery(this LoadedEntity e, IEnumerable<LoadedAttribute> attributes)
+        => e.Basic().Select(attributes.Select(x => x.Field));
     public static SqlKata.Query ListQuery(this LoadedEntity e,ValidFilter[] filters, ValidSort[] sorts, 
         ValidPagination? pagination, ValidSpan? cursor, IEnumerable<LoadedAttribute> attributes)
     {
@@ -269,7 +271,6 @@ public static class EntityHelper
                         value.GetProperty(attribute.Lookup!.TargetEntity.PrimaryKey),
                         attribute.Lookup.TargetEntity.PrimaryKeyAttribute
                     ),
-                //SubElement(property.Value, attribute.Lookup!.TargetEntity.PrimaryKey).Bind(x=>Convert(x, attribute)),
                 _ => Convert(value, attribute)
             };
             if (res.IsFailed)
@@ -281,18 +282,6 @@ public static class EntityHelper
         }
         return ret;
         
-        /*
-        Result<JsonElement?> SubElement(JsonElement element, string key)
-        {
-            if (element.ValueKind == JsonValueKind.Object && element.TryGetProperty(key, out JsonElement subElement))
-            {
-                return subElement;
-            }
-
-            return Result.Ok<JsonElement?>(null!);
-        }
-        */
-        
         Result<object> Convert(JsonElement? element, LoadedAttribute attribute)
         {
             if (element is null)
@@ -301,7 +290,7 @@ public static class EntityHelper
             }
             return element.Value.ValueKind switch
             {
-                JsonValueKind.String when resolver.ResolveVal(attribute, element.Value.GetString()!,out var caseVal) => caseVal!.Value, 
+                JsonValueKind.String when resolver.ResolveVal(attribute, element.Value.GetString()!,out var caseVal) => caseVal!.Value.ObjectValue!, 
                 JsonValueKind.Number when element.Value.TryGetInt32(out var intValue) => intValue,
                 JsonValueKind.Number when element.Value.TryGetInt64(out var longValue) => longValue,
                 JsonValueKind.Number when element.Value.TryGetDouble(out var doubleValue) => doubleValue,

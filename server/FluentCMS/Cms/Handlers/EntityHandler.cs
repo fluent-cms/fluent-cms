@@ -22,6 +22,13 @@ public static class EntityHandler
             new Pagination(offset, limit),
             context.Args(),
             ct));
+        
+        app.MapGet("/tree/{name}",  (
+            IEntityService entityService,
+            string name,
+            CancellationToken ct
+        ) =>  entityService.ListAsTree( name, ct));
+        
 
         app.MapGet("/{name}/{id}",  (
             IEntityService entityService,

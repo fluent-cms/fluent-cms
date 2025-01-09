@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using FluentCMS.Utils.ResultExt;
 using FluentResults;
+using Microsoft.Extensions.Primitives;
 
 namespace FluentCMS.Core.Descriptors;
 public static class MatchTypes
@@ -26,22 +27,23 @@ public static class FilterConstants
 public static class GraphFilterResolver
 { public static Result<Filter[]> ResolveExpr(IArgument provider)
      {
-         if (!provider.TryGetObjects(out var nodes))
+         var errMsg = $"Cannot resolve filter expression for field [{provider.Name()}]";
+         if (!provider.TryGetObjects(out var objects))
          {
-             return Result.Fail("Unable to parse filter expression of field.");
+             return Result.Fail(errMsg);
          }
  
          var ret = new List<Filter>();
-         foreach (var node in nodes)
+         foreach (var node in objects)
          {
-             if (!node.TryGetString(FilterConstants.FieldKey, out var fieldName))
+             if (!node.GetString(FilterConstants.FieldKey, out var fieldName))
              {
-                 return Result.Fail("Unable to parse filter expression, field is not set");
+                 return Result.Fail($"{errMsg}: query attribute is not set");
              }
  
-             if (!node.TryGetDict(FilterConstants.ClauseKey, out var clauses))
+             if (!node.GetPairArray(FilterConstants.ClauseKey, out var clauses))
              {
-                 return Result.Fail($"Unable to parse filter expression, failed to find clause of `{fieldName}` ");
+                 return Result.Fail($"{errMsg}: query clause of `{fieldName}` ");
              }
  
              ret.Add(ResolveCustomMatch(fieldName, clauses));
@@ -54,7 +56,7 @@ public static class GraphFilterResolver
          where T : IArgument
          => valueProvider.Name().EndsWith(FilterConstants.SetSuffix)
              ? ResolveInMatch(valueProvider)
-             : valueProvider.TryGetDict(out var pairs)
+             : valueProvider.GetPairArray(out var pairs)
                  ? ResolveCustomMatch(valueProvider.Name(), pairs)
                  : Result.Fail($"Fail to parse complex filter [{valueProvider.Name()}].");
  
@@ -63,13 +65,13 @@ public static class GraphFilterResolver
          where T : IArgument
      {
          var name = valueProvider.Name()[..^FilterConstants.SetSuffix.Length];
-         if (!valueProvider.TryGetStringArray(out var arr))
+         if (!valueProvider.GetStringArray(out var arr))
              return Result.Fail($"Fail to parse simple filter, Invalid value provided of `{name}`");
-         var constraint = new Constraint(arr.Length == 1 ? Matches.EqualsTo:Matches.In, [..arr]);
+         var constraint = new Constraint(Matches.In, [..arr]);
          return new Filter(name, MatchTypes.MatchAll, [constraint]);
      }
  
-     private static Filter ResolveCustomMatch(string field, StrArgs clauses)
+     private static Filter ResolveCustomMatch(string field, IEnumerable<KeyValuePair<string,StringValues>> clauses)
      {
          var matchType = MatchTypes.MatchAll;
          var constraints = new List<Constraint>();

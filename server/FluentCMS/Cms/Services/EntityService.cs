@@ -25,6 +25,19 @@ public sealed class EntityService(
         var (filters, sorts,validPagination) = await GetListArgs(entity, args,pagination);
         return await ListWithAction(entity,mode, filters, sorts, validPagination, ct);
     }
+
+    public async Task<Record[]> ListAsTree(string name, CancellationToken ct)
+    {
+        var entity = await entitySchemaSvc.LoadEntity(name, ct).Ok();
+        var parentField = entity.Attributes.FirstOrDefault(x =>
+            x.DataType == DataType.Collection && x.GetCollectionTarget(out var entityName, out _) && entityName == name
+        )?? throw new ResultException("Can not compose list result as tree, not find an collection attribute whose target is the entity.");
+        
+        parentField.GetCollectionTarget(out _, out var linkField);
+        var attributes = entity.Attributes.Where(x=>x.Field ==entity.PrimaryKey || x.InList && x.IsLocal());
+        var items = await queryExecutor.Many(entity.AllQuery(attributes),ct);
+        return items.ToTree(entity.PrimaryKey, linkField);
+    }
     
     public async Task<Record> SingleByIdBasic(string entityName, string id, string[] attributes,
         CancellationToken ct)
@@ -169,7 +182,7 @@ public sealed class EntityService(
     {
         var (collection,id) = await GetCollectionCtx(name, sid, attr, ct);
         var item = collection.TargetEntity.Parse(element, entitySchemaSvc).Ok();
-        item[collection.LinkAttribute.Field] = id.Value!;
+        item[collection.LinkAttribute.Field] = id.ObjectValue!;
         return await InsertWithAction(new RecordContext(collection.TargetEntity, item), ct);
     }
 

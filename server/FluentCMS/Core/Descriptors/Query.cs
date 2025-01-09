@@ -122,7 +122,7 @@ public static class QueryHelper
 
         return (sorts.ToArray(), filters.ToArray(), new Pagination(offset, limit));
 
-        Result<string> Val(IArgument input) => input.TryGetString(out var val) && !string.IsNullOrWhiteSpace(val)
+        Result<string> Val(IArgument input) => input.GetString(out var val) && !string.IsNullOrWhiteSpace(val)
             ? val
             : Result.Fail($"Fail to parse value of {input.Name()}");
     }

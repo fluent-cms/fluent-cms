@@ -4,6 +4,7 @@ using FluentCMS.Utils.JsonElementExt;
 using FluentCMS.Core.Descriptors;
 using FluentCMS.Utils.ResultExt;
 using IdGen;
+using Attribute = FluentCMS.Core.Descriptors.Attribute;
 
 namespace FluentCMS.Blog.Tests;
 
@@ -14,6 +15,7 @@ public class EntityApiTest
     private readonly string _authorEntityName = "entity_api_test_author" + new IdGenerator(0).CreateId();
     private readonly string _tagEntityName = "entity_api_test_tag" + new IdGenerator(0).CreateId();
     private readonly string _attachmentEntityName = "entity_api_test_attachment" + new IdGenerator(0).CreateId();
+    private readonly string _category = "entity_api_test_category" + new IdGenerator(0).CreateId();
 
     private readonly AccountApiClient _accountApiClient;
     private readonly EntityApiClient _entityApiClient;
@@ -27,22 +29,50 @@ public class EntityApiTest
         _entityApiClient = new EntityApiClient(webAppClient.GetHttpClient());
         _schemaApiClient = new SchemaApiClient(webAppClient.GetHttpClient());
         _accountApiClient = new AccountApiClient(webAppClient.GetHttpClient());
+        _accountApiClient.EnsureLogin().Wait();
     }
 
+    [Fact]
+    public async Task GetResultAsTree()
+    {
+        await _schemaApiClient.EnsureEntity(new Entity(
+            Attributes:[
+                new Attribute("name", "Name"),
+                new Attribute("parent", "Parent",DataType: DataType.Int, DisplayType: DisplayType.Number),
+                new Attribute("children", "Children",
+                    DataType: DataType.Collection, 
+                    DisplayType: DisplayType.EditTable,
+                    Options: $"{_category}.parent"),
+            ],
+            Name:_category,
+            TableName:_category,
+            Title:"name",
+            TitleAttribute:"name",
+            DefaultPageSize:EntityConstants.DefaultPageSize
+        )).Ok();
+        await _entityApiClient.Insert(_category, new { name = "cat1", }).Ok();
+        await _entityApiClient.Insert(_category, new { name = "cat2", }).Ok();
+        await _entityApiClient.Insert(_category, new { name = "cat3", }).Ok();
+        await _entityApiClient.CollectionInsert(_category, "children", 1, new { name= "cat1-1" }).Ok();
+        await _entityApiClient.CollectionInsert(_category, "children", 1, new { name= "cat1-2" }).Ok();
+        var items = await _entityApiClient.ListAsTree(_category).Ok();
+        var children = items[0].GetProperty("children");
+        Assert.True(children.ValueKind == JsonValueKind.Array);
+        Assert.Equal(2, children.GetArrayLength());
+    }
 
 
     [Fact]
     public async Task InsertListDeleteOk()
     {
-        (await _accountApiClient.EnsureLogin()).Ok();
-        (await _schemaApiClient.EnsureSimpleEntity(_postEntityName, Name)).Ok();
-        var item = (await _entityApiClient.Insert(_postEntityName, Name, "post1")).Ok();
+        await _schemaApiClient.EnsureSimpleEntity(_postEntityName, Name).Ok();
+        var item = await _entityApiClient.Insert(_postEntityName, Name, "post1").Ok();
 
-        var res = (await _entityApiClient.List(_postEntityName, 0, 10)).Ok();
+        var res = await _entityApiClient.List(_postEntityName, 0, 10).Ok();
         Assert.Single(res.Items);
 
-        (await _entityApiClient.Delete(_postEntityName, item)).Ok();
-        res = (await _entityApiClient.List(_postEntityName, 0, 10)).Ok();
+        await _entityApiClient.Delete(_postEntityName, item).Ok();
+        res = await _entityApiClient.List(_postEntityName, 0, 10).Ok();
         Assert.Empty(res.Items);
     }
 

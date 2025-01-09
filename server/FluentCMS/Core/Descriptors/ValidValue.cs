@@ -7,7 +7,7 @@ namespace FluentCMS.Core.Descriptors;
 //2. after json serialize deserialize, object was changed to JsonElement
 public readonly record struct ValidValue(string? S = null, int? I = null, long? L = null, DateTime? D = null)
 {
-    public object? Value => I as object ?? D as object ?? L as object ?? S;
+    public object? ObjectValue => I as object ?? D as object ?? L as object ?? S;
 
     //null object
     public static ValidValue NullValue = new();
@@ -37,5 +37,5 @@ public static class ValidValueHelper
         _ => new ValidValue(o.ToString() ?? "")
     };
 
-    public static object?[] GetValues(this IEnumerable<ValidValue> values) => [..values.Select(v => v.Value)];
+    public static object?[] GetValues(this IEnumerable<ValidValue> values) => [..values.Select(v => v.ObjectValue)];
 }

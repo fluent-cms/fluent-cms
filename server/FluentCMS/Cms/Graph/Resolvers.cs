@@ -45,7 +45,7 @@ public static class Resolvers
         var res = QueryHelper.ParseArguments(args);
         if (res.IsFailed)
         {
-            throw new Exception(string.Join(";", res.Errors.Select(x=>x.Message)));
+            throw new ResultException(string.Join(";", res.Errors.Select(x=>x.Message)));
         }
         var (sorts,filters,pagination) = res.Value;
         
@@ -56,6 +56,6 @@ public static class Resolvers
         );
         return new GraphQlRequestDto(query, 
             context.FieldAst.SelectionSet?.Selections.OfType<GraphQLField>().ToArray()??[],
-            context.Variables.ToDict());
+            context.Variables.ToPairArray());
     }
 }

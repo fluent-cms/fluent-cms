@@ -1,19 +1,21 @@
+using Microsoft.Extensions.Primitives;
+
 namespace FluentCMS.Core.Descriptors;
 
 public interface IObject
 {
     //e.g. get field from {field:'', clauses:[{},{}]}
-    bool TryGetString(string fieldName, out string value); 
+    bool GetString(string fieldName, out string value); 
     
     //e.g. get clauses from {field:'', clauses:[{},{}]}
-    bool TryGetDict(string fieldName, out StrArgs args);
+    bool GetPairArray(string fieldName, out KeyValuePair<string,StringValues>[] args);
 }
 
 public interface IArgument
 {
     string Name();
-    bool TryGetString(out string? value); // {idSet: 1}
-    bool TryGetStringArray(out string?[] values); // {idSet:[1]}
-    bool TryGetDict(out StrArgs args); // {id :{gt: 1}}
+    bool GetString(out string? value); // {idSet: 1}
+    bool GetStringArray(out string?[] values); // {idSet:[1]}
+    bool GetPairArray(out KeyValuePair<string,StringValues>[] arr); // {id :{equals: 1}}, allows duplicated key
     bool TryGetObjects (out IObject[] nodes); // {expr : {field:'', clauses:[]}}
 }

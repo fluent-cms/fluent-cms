@@ -45,9 +45,6 @@ public class QueryApiTest
     [Fact]
     public Task VerifyFilterExpression() => _commonTestCases.Filter.VerifyFilterExpression();
 
-
-
-
     [Fact]
     public Task VerifyRecordCount() => _commonTestCases.SavedQuery.VerifyRecordCount();
 
