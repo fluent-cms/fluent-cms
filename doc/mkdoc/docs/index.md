@@ -1,11 +1,11 @@
 
-Welcome to [FluentCMS](https://github.com/fluent-cms/fluent-cms)! 🚀  
+Welcome to [FormCMS](https://github.com/fluent-cms/fluent-cms)! 🚀  
 [![GitHub stars](https://img.shields.io/github/stars/fluent-cms/fluent-cms.svg?style=social&label=Star)](https://github.com/fluent-cms/fluent-cms/stargazers)
 
-FluentCMS makes content management seamless with its powerful GraphQL API and intuitive drag-and-drop page design features.
+FormCMS makes content management seamless with its powerful GraphQL API and intuitive drag-and-drop page design features.
 
 If you'd like to contribute, please check out our [CONTRIBUTING guide](https://github.com/fluent-cms/fluent-cms/blob/main/CONTRIBUTING.md).  
-Enjoying FluentCMS? Don’t forget to give us a ⭐ and help us grow!     
+Enjoying FormCMS? Don’t forget to give us a ⭐ and help us grow!     
 
 
 
@@ -128,13 +128,13 @@ The `Materials` table inventories resources linked to courses.
 After launching the web application, locate the **Schema Builder** menu on the homepage to start defining your schema.
 
 #### Adding Entities
-[Example Configuration](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/schema-ui/list.html?schema=entity)  
+[Example Configuration](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/list.html?schema=entity)  
 1. Navigate to the **Entities** section of the Schema Builder.
 2. Create entities such as "Teacher" and "Course."
 3. For the `Course` entity, add attributes such as `name`, `status`, `level`, and `description`.
 ---
 ### Defining Relationships
-[Example Configuration](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/schema-ui/edit.html?schema=entity&id=27)  
+[Example Configuration](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/edit.html?schema=entity&id=27)  
 
 #### 1. **Course and Teacher (Many-to-One Relationship)**
 To establish a many-to-one relationship between the `Course` and `Teacher` entities, you can include a `Lookup` attribute in the `Course` entity. This allows selecting a single `Teacher` record when adding or updating a `Course`.
@@ -235,20 +235,20 @@ Below is a mapping of valid `DataType` and `DisplayType` combinations:
 ---
 
 ### **List Page**
-[Example Course List Page](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&limit=20)
+[Example Course List Page](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&limit=20)
 
 The **List Page** displays entities in a tabular format, supporting sorting, searching, and pagination for efficient browsing or locating of specific records.
 
 #### **Sorting**
 Sort records by clicking the `↑` or `↓` icon in the table header.
-- [Order by Created At Example](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&limit=20&sort[created_at]=-1)
-- [Order by Name Example](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&limit=20&sort[name]=1)
+- [Order by Created At Example](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&limit=20&sort[created_at]=-1)
+- [Order by Name Example](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&limit=20&sort[name]=1)
 
 #### **Filtering**
 Apply filters by clicking the Funnel icon in the table header.
 
-- [Filter by Created At (2024-09-07)](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&limit=20&created_at[dateIs]=2024-09-07&sort[created_at]=1)
-- [Filter by Course Name (Starts with A or C)](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&limit=20&name[operator]=or&name[startsWith]=A&name[startsWith]=C&sort[created_at]=1)
+- [Filter by Created At (2024-09-07)](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&limit=20&created_at[dateIs]=2024-09-07&sort[created_at]=1)
+- [Filter by Course Name (Starts with A or C)](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&limit=20&name[operator]=or&name[startsWith]=A&name[startsWith]=C&sort[created_at]=1)
 
 ---
 
@@ -256,10 +256,10 @@ Apply filters by clicking the Funnel icon in the table header.
 Detail page provides an interface to manage single record.  
 
 #### Example of display types `date`,`image`, `gallery`, `muliselect`, `dropdown`,
-[Lesson Detail Page](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/lesson/6?ref=https%3A%2F%2Ffluent-cms-admin.azurewebsites.net%2F_content%2FFluentCMS%2Fadmin%2Fentities%2Fcourse%2F27%3Fref%3Dhttps%253A%252F%252Ffluent-cms-admin.azurewebsites.net%252F_content%252FFluentCMS%252Fadmin%252Fentities%252Fcourse%253Foffset%253D0%2526limit%253D20).
+[Lesson Detail Page](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/lesson/6?ref=https%3A%2F%2Ffluent-cms-admin.azurewebsites.net%2F_content%2FFormCMS%2Fadmin%2Fentities%2Fcourse%2F27%3Fref%3Dhttps%253A%252F%252Ffluent-cms-admin.azurewebsites.net%252F_content%252FFormCMS%252Fadmin%252Fentities%252Fcourse%253Foffset%253D0%2526limit%253D20).
 
 #### Example of `lookup`,`picklist`,`edittable`
-[Course Detail Page](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course/22)
+[Course Detail Page](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course/22)
 
 
 
@@ -267,7 +267,7 @@ Detail page provides an interface to manage single record.
 ---
 ## **GraphQL Query**
 
-FluentCMS simplifies frontend development by offering robust GraphQL support.
+FormCMS simplifies frontend development by offering robust GraphQL support.
 
 ### Getting Started
 #### Accessing the GraphQL IDE
@@ -275,7 +275,7 @@ To get started, launch the web application and navigate to `/graph`. You can als
 
 ---
 #### Singular vs. List Response
-For each entity in FluentCMS, two GraphQL fields are automatically generated:  
+For each entity in FormCMS, two GraphQL fields are automatically generated:  
 - `<entityName>`: Returns a record.
 - `<entityNameList>`: Returns a list of records.  
 
@@ -329,9 +329,9 @@ You can query specific fields for both the current entity and its related entiti
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%20%20teacher%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20firstname%0A%20%20%20%20%20%20lastname%0A%20%20%20%20%20%20skills%7B%0A%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20name%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%20%20materials%7B%0A%20%20%20%20%20%20id%2C%0A%20%20%20%20%20%20name%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D%0A)
 
 ---
-#### Filtering with `Value Match` in FluentCMS
+#### Filtering with `Value Match` in FormCMS
 
-FluentCMS provides flexible filtering capabilities using the `idSet` field (or any other field), enabling precise data queries by matching either a single value or a list of values.
+FormCMS provides flexible filtering capabilities using the `idSet` field (or any other field), enabling precise data queries by matching either a single value or a list of values.
 
 **Filter by a Single Value Example:**
 ```graphql
@@ -356,9 +356,9 @@ FluentCMS provides flexible filtering capabilities using the `idSet` field (or a
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(idSet%3A%5B5%2C7%5D)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A)
 
 ---
-#### Advanced Filtering with `Operator Match` in FluentCMS
+#### Advanced Filtering with `Operator Match` in FormCMS
 
-FluentCMS supports advanced filtering options with `Operator Match`, allowing users to combine various conditions for precise queries.
+FormCMS supports advanced filtering options with `Operator Match`, allowing users to combine various conditions for precise queries.
 
 ##### `matchAll` Example:
 Filters where all specified conditions must be true.  
@@ -391,7 +391,7 @@ In this example: `name starts with "A"` or `name starts with "I"`.
 
 ---
 
-#### `Filter Expressions` in FluentCMS
+#### `Filter Expressions` in FormCMS
 
 Filter Expressions allow precise filtering by specifying a field, including nested fields using JSON path syntax. This enables filtering on subfields for complex data structures.
 
@@ -440,7 +440,7 @@ Sorting by multiple fields
 
 ---
 
-#### Sort Expressions in FluentCMS
+#### Sort Expressions in FormCMS
 
 
 Sort Expressions allow sorting by nested fields using JSON path syntax. 
@@ -590,7 +590,7 @@ query ($id: Int!) {
 ```
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24id%3A%20Int!)%20%7B%0A%20%20teacherList(id%3A%7Bequals%3A%24id%7D)%7B%0A%20%20%20%20id%0A%20%20%20%20firstname%0A%20%20%20%20lastname%0A%20%20%7D%0A%7D)
 
-Explore the power of FluentCMS GraphQL and streamline your development workflow!
+Explore the power of FormCMS GraphQL and streamline your development workflow!
 ***
 ***
 ### Saved Query
@@ -604,7 +604,7 @@ Explore the power of FluentCMS GraphQL and streamline your development workflow!
 #### Transitioning from **Real-Time Queries** to **Saved Queries**
 
 ##### Using `OperationName` as the Saved Query Identifier
-In FluentCMS, the **Operation Name** in a GraphQL query serves as a unique identifier for saved queries. For instance, executing the following query automatically saves it as `TeacherQuery`:
+In FormCMS, the **Operation Name** in a GraphQL query serves as a unique identifier for saved queries. For instance, executing the following query automatically saves it as `TeacherQuery`:
 
 ```graphql
 query TeacherQuery($id: Int) {
@@ -625,7 +625,7 @@ query TeacherQuery($id: Int) {
 ---
 
 ##### Saved Query Endpoints
-FluentCMS generates two API endpoints for each saved query:
+FormCMS generates two API endpoints for each saved query:
 
 1. **List Records:**  
    [https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery)
@@ -726,7 +726,7 @@ To fetch the next two skills, use the cursor:
 
 ---
 ## Drag and Drop Page Designer
-The page designer utilizes the open-source GrapesJS and Handlebars, enabling seamless binding of `GrapesJS Components` with `FluentCMS Queries` for dynamic content rendering. 
+The page designer utilizes the open-source GrapesJS and Handlebars, enabling seamless binding of `GrapesJS Components` with `FormCMS Queries` for dynamic content rendering. 
 
 ---
 ### Page Types: Landing Page, Detail Page, and Home Page
@@ -747,7 +747,7 @@ This page fetches data from:
 #### **Detail Page**
 A detail page provides specific information about an item.  
 - **URL format**: `/page/<pagename>/<router parameter>`  
-- **Data Retrieval**: FluentCMS fetches data by passing the router parameter to a `query`.  
+- **Data Retrieval**: FormCMS fetches data by passing the router parameter to a `query`.  
 
 **Example**:  
 [Course Detail Page](https://fluent-cms-admin.azurewebsites.net/pages/course/22)  
@@ -759,7 +759,7 @@ This page fetches data from:
 #### **Home Page**
 The homepage is a special type of landing page named `home`.  
 - **URL format**: `/pages/home`   
-- **Special Behavior**: If no other route matches the path `/`, FluentCMS renders `/pages/home` by default.  
+- **Special Behavior**: If no other route matches the path `/`, FormCMS renders `/pages/home` by default.  
 
 **Example**:    
 The URL `/` will be resolved to `/pages/home` unless explicitly overridden.  
@@ -767,21 +767,21 @@ The URL `/` will be resolved to `/pages/home` unless explicitly overridden.
 ---
 ### Introduction to GrapesJS Panels
 
-Understanding the panels in GrapesJS is crucial for leveraging FluentCMS's customization capabilities in the Page Designer UI. This section explains the purpose of each panel and highlights how FluentCMS enhances specific areas to streamline content management and page design. 
+Understanding the panels in GrapesJS is crucial for leveraging FormCMS's customization capabilities in the Page Designer UI. This section explains the purpose of each panel and highlights how FormCMS enhances specific areas to streamline content management and page design. 
 
 ![GrapesJS Toolbox](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/grapes-toolbox.png)
 
 1. **Style Manager**:
     - Used to customize CSS properties of elements selected on the canvas.
-    - *FluentCMS Integration*: This panel is left unchanged by FluentCMS, as it already provides powerful styling options.
+    - *FormCMS Integration*: This panel is left unchanged by FormCMS, as it already provides powerful styling options.
 
 2. **Traits Panel**:
     - Allows modification of attributes for selected elements.
-    - *FluentCMS Integration*: Custom traits are added to this panel, enabling users to bind data to components dynamically.
+    - *FormCMS Integration*: Custom traits are added to this panel, enabling users to bind data to components dynamically.
 
 3. **Layers Panel**:
     - Displays a hierarchical view of elements on the page, resembling a DOM tree.
-    - *FluentCMS Integration*: While FluentCMS does not alter this panel, it’s helpful for locating and managing FluentCMS blocks within complex page designs.
+    - *FormCMS Integration*: While FluentCMS does not alter this panel, it’s helpful for locating and managing FluentCMS blocks within complex page designs.
 
 4. **Blocks Panel**:
     - Contains pre-made components that can be dragged and dropped onto the page.

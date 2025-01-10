@@ -1,0 +1,31 @@
+using FormCMS.CoreKit.DocDbQuery;
+using FormCMS.DataLink.Types;
+using FormCMS.DataLink.Workers;
+using FormCMS.Utils.EventStreaming;
+
+namespace FormCMS.DataLink.Builders;
+
+public static class DocDbLinkerBuilder
+{
+    public static IServiceCollection AddNatsMongoLink(
+        IServiceCollection services,
+        ApiLinks[] apiLinksArray)
+    {
+
+        Console.WriteLine(
+            $"""
+            *********************************************************
+            Adding Nats Mongo Link 
+            apiLinksArray = {apiLinksArray}
+            *********************************************************
+            """);
+        services.AddSingleton<IStringMessageConsumer, NatsConsumer>();
+        services.AddSingleton<IDocumentDbDao, MongoDao>();
+
+
+        services.AddSingleton(apiLinksArray);
+        services.AddHostedService<SyncWorker>();
+        services.AddHostedService<MigrateWorker>();
+        return services;
+    }
+}

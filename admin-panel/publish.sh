@@ -5,8 +5,8 @@ export VITE_REACT_APP_VERSION_API_URL='/api/versions'
 export VITE_REACT_APP_AUTH_API_URL='/api'
 pnpm build
 
-rm -rf ../server/FluentCMS/wwwroot/admin
-rsync -azv --progress dist/* ../server/FluentCMS/wwwroot/admin
-pushd ../server/FluentCMS/wwwroot/admin
+rm -rf ../server/FormCMS/wwwroot/admin
+rsync -azv --progress dist/* ../server/FormCMS/wwwroot/admin
+pushd ../server/FormCMS/wwwroot/admin
 git add .
 popd
