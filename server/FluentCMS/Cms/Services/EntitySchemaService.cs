@@ -67,13 +67,35 @@ public sealed class EntitySchemaService(
         DataType.Collection => await LoadCollection(entity, attr,ct),
         _ => attr
     };
-
+    private ColumnType DataTypeToColumnType(DataType t)
+        => t switch
+        {
+            DataType.Int => ColumnType.Int,
+            DataType.String => ColumnType.String,
+            DataType.Text => ColumnType.Text,
+            DataType.Datetime => ColumnType.Datetime,
+            _ => throw new ArgumentOutOfRangeException()
+        };
+   
+    private DataType ColumnTypeToDataType(ColumnType columnType)
+        => columnType switch
+        {
+            ColumnType.Int => DataType.Int,
+            ColumnType.String => DataType.String,
+            ColumnType.Text => DataType.Text,
+            ColumnType.Datetime => DataType.Datetime,
+            _ => throw new ArgumentOutOfRangeException()
+        };
+    
     public async Task<Entity?> GetTableDefine(string table, CancellationToken token)
     {
         var cols = await dao.GetColumnDefinitions(table, token);
         return new Entity
         (
-            Attributes: [..cols.Select(x => AttributeHelper.ToAttribute(x.Name, x.Type))]
+            Attributes:
+            [
+                ..cols.Select(x => AttributeHelper.ToAttribute( x.Name, ColumnTypeToDataType(x.Type) ))
+            ]
         );
     }
 
@@ -135,8 +157,9 @@ public sealed class EntitySchemaService(
 
     public bool ResolveVal(LoadedAttribute attr, string v, out ValidValue? result)
     {
-        var colType = attr.DataType == DataType.Lookup ? attr.Lookup!.TargetEntity.PrimaryKeyAttribute.DataType : attr.DataType;
-        result = dao.TryParseDataType(v, colType, out var val) switch
+        var dataType = attr.DataType == DataType.Lookup ? attr.Lookup!.TargetEntity.PrimaryKeyAttribute.DataType : attr.DataType;
+        
+        result = dao.TryParseDataType(v, DataTypeToColumnType(dataType), out var val) switch
         {
             true => new ValidValue(S: val!.S, I: val.I, D: val.D),
             _ => null
@@ -399,7 +422,7 @@ public sealed class EntitySchemaService(
                     .Map(x => x.Attributes.FirstOrDefault(a=>a.Field == x.PrimaryKey)!.DataType)).Ok(),
                 _ => attribute.DataType
             };
-            return new Column(attribute.Field, dataType);
+            return new Column(attribute.Field, DataTypeToColumnType(dataType));
         }
     }
 }

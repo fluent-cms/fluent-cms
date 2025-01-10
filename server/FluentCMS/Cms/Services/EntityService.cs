@@ -226,16 +226,14 @@ public sealed class EntityService(
         var countQuery = entity.CountQuery([..res.RefFilters]);
         var ret = mode switch
         {
-            ListResponseMode.count => new ListResponse([], await queryExecutor.Count(countQuery, ct)),
-            ListResponseMode.items => new ListResponse(await GetItemsAndInListLookups(entity, listQuery, ct), 0),
+            ListResponseMode.Count => new ListResponse([], await queryExecutor.Count(countQuery, ct)),
+            ListResponseMode.Items => new ListResponse(await GetItemsAndInListLookups(entity, listQuery, ct), 0),
             _ => new ListResponse(await GetItemsAndInListLookups(entity,listQuery,ct), await queryExecutor.Count(countQuery, ct))
         };
 
         var postArgs = new EntityPostGetListArgs(Entity: entity, RefListResponse: ret);
         var postRes = await hookRegistry.EntityPostGetList.Trigger(provider, postArgs);
         return postRes.RefListResponse;
-
-
     }
 
     async Task<Record[]> GetItemsAndInListLookups(LoadedEntity entity, SqlKata.Query query, CancellationToken ct)

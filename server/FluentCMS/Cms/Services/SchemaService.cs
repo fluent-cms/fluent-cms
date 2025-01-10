@@ -13,20 +13,20 @@ public sealed class SchemaService(
     IServiceProvider provider
 ) : ISchemaService
 {
-    public async Task<Schema[]> AllWithAction(string type, CancellationToken ct = default)
+    public async Task<Schema[]> AllWithAction(SchemaType? type, CancellationToken ct = default)
     {
         var res = await hook.SchemaPreGetAll.Trigger(provider, new SchemaPreGetAllArgs(null));
         IEnumerable<string>? names = res.OutSchemaNames?.Length > 0 ? res.OutSchemaNames : null;
         return await All(type, names, ct);
     }
 
-    public async Task<Schema[]> All(string type, IEnumerable<string>? names,
+    public async Task<Schema[]> All(SchemaType? type, IEnumerable<string>? names,
         CancellationToken ct = default)
     {
         var query = SchemaHelper.BaseQuery();
-        if (!string.IsNullOrWhiteSpace(type))
+        if (type is not null)
         {
-            query = query.Where(SchemaFields.Type, type);
+            query = query.Where(SchemaFields.Type, type.Value.ToCamelCase());
         }
 
         if (names is not null)
@@ -35,7 +35,7 @@ public sealed class SchemaService(
         }
 
         var items = await queryExecutor.Many(query, ct);
-        return items.Select(x => SchemaHelper.ParseSchema(x).Ok()).ToArray();
+        return items.Select(x => SchemaHelper.RecordToSchema(x).Ok()).ToArray();
     }
 
     public async Task<Schema?> ByIdWithAction(int id, CancellationToken ct = default)
@@ -54,19 +54,19 @@ public sealed class SchemaService(
     {
         var query = SchemaHelper.BaseQuery().Where(SchemaFields.Id, id);
         var item = await queryExecutor.One(query, ct);
-        var res = SchemaHelper.ParseSchema(item);
+        var res = SchemaHelper.RecordToSchema(item);
         return res.IsSuccess ? res.Value : null;
     }
 
-    public async Task<Schema?> GetByNameDefault(string name, string type, CancellationToken ct = default)
+    public async Task<Schema?> GetByNameDefault(string name, SchemaType type, CancellationToken ct = default)
     {
-        var query = SchemaHelper.BaseQuery().Where(SchemaFields.Name, name).Where(SchemaFields.Type, type);
+        var query = SchemaHelper.BaseQuery().Where(SchemaFields.Name, name).Where(SchemaFields.Type, type.ToCamelCase());
         var item = await queryExecutor.One(query, ct);
-        var res = SchemaHelper.ParseSchema(item);
+        var res = SchemaHelper.RecordToSchema(item);
         return res.IsSuccess ? res.Value : null;
     }
 
-    public async Task<Schema?> GetByNamePrefixDefault(string name, string type,
+    public async Task<Schema?> GetByNamePrefixDefault(string name, SchemaType type,
         CancellationToken ct = default)
     {
         var query = SchemaHelper.BaseQuery()
@@ -74,7 +74,7 @@ public sealed class SchemaService(
             .Where(SchemaFields.Type, type);
         var item = await queryExecutor.One(query, ct);
 
-        var res = SchemaHelper.ParseSchema(item);
+        var res = SchemaHelper.RecordToSchema(item);
 
         return res.IsSuccess ? res.Value : null;
     }
@@ -108,7 +108,7 @@ public sealed class SchemaService(
 
     public async Task EnsureTopMenuBar(CancellationToken ct)
     {
-        var query = SchemaHelper.BaseQuery().Where(SchemaFields.Name, SchemaName.TopMenuBar);
+        var query = SchemaHelper.BaseQuery().Where(SchemaFields.Name, SchemaName.TopMenuBar).Where(SchemaFields.Type, SchemaType.Menu.ToCamelCase());
         var item = await queryExecutor.One(query, ct);
         if (item is not null)
         {
@@ -157,7 +157,7 @@ public sealed class SchemaService(
     public async Task RemoveEntityInTopMenuBar(Entity entity, CancellationToken ct)
     {
         var menuBarSchema = await GetByNameDefault(SchemaName.TopMenuBar, SchemaType.Menu, ct) ??
-                            throw new ResultException("not find top menu bar");
+                            throw new ResultException("Cannot find top menu bar");
         var menuBar = menuBarSchema.Settings.Menu;
         if (menuBar is null)
         {
@@ -175,7 +175,7 @@ public sealed class SchemaService(
     public async Task EnsureEntityInTopMenuBar(Entity entity, CancellationToken ct)
     {
         var menuBarSchema = await GetByNameDefault(SchemaName.TopMenuBar, SchemaType.Menu, ct) ??
-                            throw new ResultException("not find top menu bar");
+                            throw new ResultException("cannot find top menu bar");
         var menuBar = menuBarSchema.Settings.Menu;
         if (menuBar is not null)
         {

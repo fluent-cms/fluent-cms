@@ -10,6 +10,13 @@
 
 
 
+export enum SchemaType {
+    Menu = "menu",
+    Entity = "entity",
+    Query = "query",
+    Page = "page",
+}
+
 export interface Settings {
     entity: Entity | undefined;
     query: Query | undefined;
@@ -30,13 +37,42 @@ export interface Entity {
 export interface Attribute {
     field: string;
     header: string;
-    dataType: string;
-    displayType: string;
+    dataType: DataType;
+    displayType: DisplayType;
     inList: boolean;
     inDetail: boolean;
     isDefault: boolean;
     options: string;
     validation: string;
+}
+
+export enum DataType {
+    Int = "int",
+    Datetime = "datetime",
+    Text = "text",
+    String = "string",
+    Lookup = "lookup",
+    Junction = "junction",
+    Collection = "collection",
+}
+
+export enum DisplayType {
+    Text = "text",
+    Textarea = "textarea",
+    Editor = "editor",
+    Number = "number",
+    Datetime = "datetime",
+    Date = "date",
+    Image = "image",
+    Gallery = "gallery",
+    File = "file",
+    Dropdown = "dropdown",
+    Multiselect = "multiselect",
+    Lookup = "lookup",
+    SelectTree = "selectTree",
+    Picklist = "picklist",
+    MultiSelectTree = "multiSelectTree",
+    EditTable = "editTable",
 }
 
 export interface Query {
@@ -58,7 +94,7 @@ export interface Filter {
 
 export interface Constraint {
     match: string;
-    value: string[];
+    value: (string | undefined)[];
 }
 
 export interface Sort {
@@ -95,7 +131,7 @@ export interface Page {
 
 export interface Schema {
     name: string;
-    type: string;
+    type: SchemaType;
     settings: Settings;
     id: number;
     createdBy: string;

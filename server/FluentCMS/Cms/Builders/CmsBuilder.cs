@@ -50,6 +50,12 @@ public sealed class CmsBuilder(
         var cmsOptions = new Options();
         optionsAction?.Invoke(cmsOptions);
 
+        //only set options to FluentCMS enum types.
+        services.ConfigureHttpJsonOptions(JsonOptions.AddCamelEnumConverter<DataType>);
+        services.ConfigureHttpJsonOptions(JsonOptions.AddCamelEnumConverter<DisplayType>);
+        services.ConfigureHttpJsonOptions(JsonOptions.AddCamelEnumConverter<ListResponseMode>);
+        services.ConfigureHttpJsonOptions(JsonOptions.AddCamelEnumConverter<SchemaType>);
+        
         services.AddSingleton(cmsOptions);
         services.AddSingleton(new DbOption(databaseProvider, connectionString));
         services.AddSingleton<CmsBuilder>();
@@ -212,10 +218,10 @@ public sealed class CmsBuilder(
 
         void UserRedirects()
         {
-            var options = new RewriteOptions();
-            options.AddRedirect(@"^admin$", $"{FluentCmsContentRoot}/admin");
-            options.AddRedirect(@"^schema$", $"{FluentCmsContentRoot}/schema-ui/list.html");
-            app.UseRewriter(options);
+            var rewriteOptions = new RewriteOptions();
+            rewriteOptions.AddRedirect(@"^admin$", $"{FluentCmsContentRoot}/admin");
+            rewriteOptions.AddRedirect(@"^schema$", $"{FluentCmsContentRoot}/schema-ui/list.html");
+            app.UseRewriter(rewriteOptions);
         }
 
         void UseGraphql()

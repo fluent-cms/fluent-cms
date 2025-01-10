@@ -7,8 +7,8 @@ namespace FluentCMS.Core.Descriptors;
 public record Attribute(
     string Field,
     string Header = "",
-    string DataType = DataType.String,
-    string DisplayType = DisplayType.Text,
+    DataType DataType = DataType.String,
+    DisplayType DisplayType = DisplayType.Text,
     bool InList = true,
     bool InDetail = true,
     bool IsDefault = false,
@@ -21,8 +21,8 @@ public record LoadedAttribute(
     string Field,
 
     string Header = "",
-    string DataType = DataType.String,
-    string DisplayType = DisplayType.Text,
+    DataType DataType = DataType.String,
+    DisplayType DisplayType = DisplayType.Text,
 
     bool InList = true,
     bool InDetail = true,
@@ -56,8 +56,8 @@ public sealed record GraphAttribute(
     string Field,
 
     string Header = "",
-    string DataType = DataType.String,
-    string DisplayType = DisplayType.Text,
+    DataType DataType = DataType.String,
+    DisplayType DisplayType = DisplayType.Text,
 
     bool InList = true,
     bool InDetail = true,
@@ -235,7 +235,7 @@ public static class AttributeHelper
         return a.DataType != DataType.Junction && a.DataType != DataType.Collection;
     }
 
-    public static Attribute ToAttribute(string name, string colType)
+    public static Attribute ToAttribute(string name, DataType colType)
     {
         return new Attribute(
             Field: name,

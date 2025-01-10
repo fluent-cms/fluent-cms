@@ -25,7 +25,7 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
     
     public void EndTransaction() => _transaction = null;
 
-    public bool TryParseDataType(string s, string type, out DatabaseTypeValue? result)
+    public bool TryParseDataType(string s, ColumnType type, out DatabaseTypeValue? result)
     {
         result = type switch
         {
@@ -85,14 +85,14 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
             columnDefinitions.Add(new Column
            ( 
                 Name : reader.GetString(1),
-                Type : StringToDataType(reader.GetString(2))
+                Type : StringToColType(reader.GetString(2))
             ));
          }
          return columnDefinitions.ToArray();
       });
    }
    
-    private string DataTypeToString(string dataType)
+    private string DataTypeToString(ColumnType dataType)
     {
         return dataType switch
         {
@@ -104,7 +104,7 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
         };
     }
 
-    private string StringToDataType(string s)
+    private ColumnType StringToColType(string s)
     {
         s = s.ToLower();
         return s switch

@@ -47,13 +47,13 @@ internal static class MongoDbExt
         
         FilterDefinition<BsonDocument> GetEq(ValidSort sort)
         {
-            var (f, v) = (sort.Vector.FullPath, Value: span.Edge(sort.Vector.FullPath).ObjectValue);
+            var (f, v) = (sort.Vector.FullPath, span.Edge(sort.Vector.FullPath).ObjectValue);
             return Filter.Eq(f, v);
         }
   
         FilterDefinition<BsonDocument> GetCompare(ValidSort sort)
         {
-            var (f, v) = (sort.Vector.FullPath, Value: span.Edge(sort.Vector.FullPath).ObjectValue);
+            var (f, v) = (sort.Vector.FullPath, span.Edge(sort.Vector.FullPath).ObjectValue);
             return span.Span.GetCompareOperator(sort.Order) == ">" ? Filter.Gt(f, v) : Filter.Lt(f, v);
         } 
     }

@@ -1,3 +1,4 @@
+using FluentCMS.Core.Descriptors;
 using FluentCMS.Utils.HttpClientExt;
 using FluentResults;
 
@@ -12,7 +13,7 @@ public class AccountApiClient(HttpClient client)
             email = "sadmin@cms.com",
             password = "Admin1!"
         };
-        await client.PostResult("/api/register", loginData);
-        return await client.PostAndSaveCookie("/api/login?useCookies=true", loginData);
+        await client.PostResult("/api/register", loginData,JsonOptions.IgnoreCase);
+        return await client.PostAndSaveCookie("/api/login?useCookies=true", loginData,JsonOptions.IgnoreCase);
     } 
 }

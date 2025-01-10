@@ -27,7 +27,7 @@ public class SchemaApiTest
     }
 
     [Fact]
-    public async Task AnonymousGetAll() => Assert.True((await _schema.All("")).IsFailed);
+    public async Task AnonymousGetAll() => Assert.True((await _schema.All(null)).IsFailed);
 
     [Fact]
     public async Task AnonymousSave() => Assert.True((await _schema.SaveEntityDefine(TestSchema())).IsFailed);
@@ -36,11 +36,11 @@ public class SchemaApiTest
     public async Task GetAll_NUllType()
     {
         (await _account.EnsureLogin()).Ok();
-        var items = (await _schema.All("")).Ok();
+        var items = await _schema.All(null).Ok();
         var len = items.Length;
         var schema = TestSchema();
         await _schema.SaveEntityDefine(schema);
-        items = (await _schema.All("")).Ok();
+        items = (await _schema.All(null)).Ok();
         Assert.Equal(len + 1, items.Length);
     }
 

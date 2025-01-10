@@ -2,7 +2,7 @@ using System.Collections.Immutable;
 using System.Text.Json;
 using Microsoft.IdentityModel.Tokens;
 using FluentCMS.Utils.DictionaryExt;
-using FluentCMS.Utils.JsonElementExt;
+using FluentCMS.Utils.JsonUtil;
 using FluentResults;
 
 namespace FluentCMS.Core.Descriptors;

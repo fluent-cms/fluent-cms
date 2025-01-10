@@ -1,6 +1,6 @@
 using System.Text.Json;
 using FluentCMS.CoreKit.ApiClient;
-using FluentCMS.Utils.JsonElementExt;
+using FluentCMS.Utils.JsonUtil;
 using FluentCMS.Core.Descriptors;
 using FluentCMS.Utils.ResultExt;
 using IdGen;
@@ -32,6 +32,20 @@ public class EntityApiTest
         _accountApiClient.EnsureLogin().Wait();
     }
 
+    
+    
+    [Fact]
+    public async Task TestResponseMode()
+    {
+        await _schemaApiClient.EnsureSimpleEntity(_postEntityName, Name).Ok();
+        await _entityApiClient.Insert(_postEntityName, Name, "post1").Ok();
+        var response = await _entityApiClient.List(_postEntityName, 0, 1, "count").Ok();
+        Assert.True(response.Items.Length == 0);
+
+        response = await _entityApiClient.List(_postEntityName, 0, 1, "items").Ok();
+        Assert.True(response.TotalRecords == 0);
+    }
+    
     [Fact]
     public async Task GetResultAsTree()
     {

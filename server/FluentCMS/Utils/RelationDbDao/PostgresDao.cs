@@ -18,7 +18,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
 
     public void EndTransaction()=> _transaction = null;
 
-    public bool TryParseDataType(string s, string type, out DatabaseTypeValue? result)
+    public bool TryParseDataType(string s, ColumnType type, out DatabaseTypeValue? result)
     {
         result = type switch
         {
@@ -46,7 +46,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
             "deleted" => "deleted BOOLEAN DEFAULT FALSE",
             "created_at" => "created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
             "updated_at" => "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
-            _ => $"\"{column.Name}\" {DataTypeToString(column.Type)}"
+            _ => $"\"{column.Name}\" {ColTypeToString(column.Type)}"
         });
         
         var sql= $"CREATE TABLE {table} ({string.Join(", ", parts)});";
@@ -70,7 +70,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
     public async Task AddColumns(string table, IEnumerable<Column> cols, CancellationToken ct)
     {
         var parts = cols.Select(x =>
-            $"Alter Table {table} ADD COLUMN \"{x.Name}\" {DataTypeToString(x.Type)}"
+            $"Alter Table {table} ADD COLUMN \"{x.Name}\" {ColTypeToString(x.Type)}"
         );
         var sql = string.Join(";", parts.ToArray());
         await ExecuteQuery(sql, cmd => cmd.ExecuteNonQueryAsync(ct));
@@ -107,21 +107,33 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
             var columnDefinitions = new List<Column>();
             while (await reader.ReadAsync(ct))
             {
-                columnDefinitions.Add(new Column(reader.GetString(0),reader.GetString(1)));
+                columnDefinitions.Add(new Column(reader.GetString(0),StringToColType(reader.GetString(1))));
             }
             return columnDefinitions.ToArray();
         }, ("tableName", table));
     }
 
-    private string DataTypeToString(string dataType)
+    private string ColTypeToString(ColumnType t)
     {
-        return dataType switch
+        return t switch
         {
             ColumnType.Int => "INTEGER",
             ColumnType.Text => "TEXT",
             ColumnType.Datetime => "TIMESTAMP",
             ColumnType.String => "varchar(255)",
-            _ => throw new NotSupportedException($"Type {dataType} is not supported")
+            _ => throw new NotSupportedException($"Type {t} is not supported")
+        };
+    }
+    
+    private ColumnType StringToColType(string s)
+    {
+        s = s.ToLower();
+        return s switch
+        {
+            "integer" => ColumnType.Int,
+            "text" => ColumnType.Text,
+            "timestamp" => ColumnType.Datetime,
+            _ => ColumnType.String
         };
     }
 

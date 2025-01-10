@@ -5,6 +5,9 @@ namespace FluentCMS.Utils.DictionaryExt;
 
 public static class DictionaryExt
 {
+    public static Record ToLowerKeyRecord(this Record record)
+        => record.ToDictionary(pair => pair.Key.ToLower(), pair => pair.Value);
+ 
     public static Record[] ToTree(this Record[] records,string idField, string parentField)
     {
         var parentIdField = parentField;

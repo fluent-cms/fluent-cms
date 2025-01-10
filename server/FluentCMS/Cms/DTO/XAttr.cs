@@ -6,8 +6,8 @@ namespace FluentCMS.Cms.DTO;
 public record XAttr(
     string Field,
     string Header ,
-    string DataType ,
-    string DisplayType ,
+    DataType DataType ,
+    DisplayType DisplayType ,
     bool InList ,
     bool InDetail ,
     bool IsDefault ,

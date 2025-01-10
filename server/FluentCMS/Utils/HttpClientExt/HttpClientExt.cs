@@ -12,31 +12,31 @@ public static class HttpClientExt
         return await res.ParseString();
     }
 
-    public static async Task<Result<T>> GetResult<T>(this HttpClient client, string uri)
+    public static async Task<Result<T>> GetResult<T>(this HttpClient client, string uri, JsonSerializerOptions? options)
     {
         var res = await client.GetAsync(uri);
-        return await res.ParseResult<T>();
+        return await res.ParseResult<T>(options);
     }
     public static async Task<Result> GetResult(this HttpClient client, string uri)
     {
         var res = await client.GetAsync(uri);
         return await res.ParseResult();
     }
-    public static async Task<Result<T>> PostResult<T>(this HttpClient client, string url, object payload)
+    public static async Task<Result<T>> PostResult<T>(this HttpClient client, string url, object payload, JsonSerializerOptions? options)
     {
-        var res = await client.PostAsync(url, Content(payload));
-        return await res.ParseResult<T>();
+        var res = await client.PostAsync(url, Content(payload,options));
+        return await res.ParseResult<T>(options);
     }
 
-    public static async Task<Result> PostResult( this HttpClient client, string url, object payload )
+    public static async Task<Result> PostResult( this HttpClient client, string url, object payload, JsonSerializerOptions? options )
     {
-        var res= await client.PostAsync(url, Content(payload));
+        var res= await client.PostAsync(url, Content(payload,options));
         return await res.ParseResult();
     }
 
-    public static async Task<Result> PostAndSaveCookie(this HttpClient client, string url, object payload)
+    public static async Task<Result> PostAndSaveCookie(this HttpClient client, string url, object payload,JsonSerializerOptions? options)
     {
-        var response = await client.PostAsync(url, Content(payload));
+        var response = await client.PostAsync(url, Content(payload,options));
         client.DefaultRequestHeaders.Add("Cookie", response.Headers.GetValues("Set-Cookie"));
         return await response.ParseResult();
     }
@@ -69,7 +69,7 @@ public static class HttpClientExt
         return Result.Ok(str);
     }
 
-    private static async Task<Result<T>> ParseResult<T>(this HttpResponseMessage msg)
+    private static async Task<Result<T>> ParseResult<T>(this HttpResponseMessage msg, JsonSerializerOptions? options)
     {
         var str = await msg.Content.ReadAsStringAsync();
         if (!msg.IsSuccessStatusCode)
@@ -78,12 +78,11 @@ public static class HttpClientExt
                 $"fail to request {msg.RequestMessage?.RequestUri}, message= {str}");
         }
 
-        var item = JsonSerializer.Deserialize<T>(str, CaseInsensitiveOption);
+        var item = JsonSerializer.Deserialize<T>(str,options);
         return item is null ? Result.Fail("Fail to Deserialize") : item;
     }
 
-    private static StringContent Content(object payload) =>
-        new(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+    private static StringContent Content(object payload, JsonSerializerOptions?options) =>
+        new(JsonSerializer.Serialize(payload, options), Encoding.UTF8, "application/json");
 
-    private static JsonSerializerOptions CaseInsensitiveOption => new() { PropertyNameCaseInsensitive = true };
 }

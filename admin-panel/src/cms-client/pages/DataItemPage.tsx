@@ -10,7 +10,7 @@ import {fileUploadURL, getFullAssetsURL} from "../services/configs";
 import {PageLayout} from "./PageLayout";
 import {FetchingStatus} from "../../components/FetchingStatus";
 import { EditTable } from "../containers/EditTable";
-import {XEntity} from "../types/schemaExt";
+import {DisplayType, XEntity} from "../types/schemaExt";
 
 export function DataItemPage({baseRouter}:{baseRouter:string}) {
     const {schemaName} = useParams()
@@ -25,7 +25,7 @@ export function DataItemPageComponent({schema, baseRouter}:{schema: XEntity, bas
     const ref = new URLSearchParams(location.search).get("ref");
 
     const uploadUrl = fileUploadURL()
-    const tables =  schema?.attributes?.filter((attr: any) => attr.displayType === 'picklist' || attr.displayType =="edittable") ?? []
+    const tables =  schema?.attributes?.filter(attr => attr.displayType === DisplayType.Picklist || attr.displayType == DisplayType.EditTable) ?? []
     const formId = "editForm" + schema.name
 
     const inputColumns = schema?.attributes?.filter(
@@ -63,12 +63,12 @@ export function DataItemPageComponent({schema, baseRouter}:{schema: XEntity, bas
         <Confirm/>
         <ItemForm columns={inputColumns} {...{schema,data, id, onSubmit, formId,uploadUrl,  getFullAssetsURL}} />
         {
-            tables.map((column: any) => {
+            tables.map((column) => {
                 const props = {schema, data, column,  getFullAssetsURL,baseRouter}
                 return <div key={column.field}>
                     <Divider/>
                     { column.displayType === 'picklist' && <Picklist key={column.field} {...props}/> }
-                    { column.displayType === 'edittable' && <EditTable key={column.field} {...props}/> }
+                    { column.displayType === 'editTable' && <EditTable key={column.field} {...props}/> }
                 </div>
             })
         }

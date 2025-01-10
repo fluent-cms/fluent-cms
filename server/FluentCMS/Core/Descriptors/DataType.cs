@@ -1,21 +1,21 @@
 namespace FluentCMS.Core.Descriptors;
 
-public static class DataType
+public enum DataType
 {
-    public const string Int = "Int";
-    public const string Datetime = "Datetime";
+    Int,
+    Datetime,
 
-    public const string Text = "Text"; //slow performance compare to string
-    public const string String = "String"; //has length limit 255 
+    Text,
+    String,
 
-    public const string Lookup = "Lookup";
-    public const string Junction = "Junction";
-    public const string Collection = "Collection";
+    Lookup,
+    Junction,
+    Collection,
 }
 
 public static class DataTypeHelper
 {
-    public static readonly HashSet<(string,string)> ValidTypeMap =
+    public static readonly HashSet<(DataType,DisplayType)> ValidTypeMap =
     [
         (DataType.Int, DisplayType.Number),
         
@@ -40,6 +40,7 @@ public static class DataTypeHelper
         (DataType.Text, DisplayType.Editor),
         
         (DataType.Lookup, DisplayType.Lookup),
+        (DataType.Lookup, DisplayType.Multiselect),
         (DataType.Junction, DisplayType.Picklist),
         (DataType.Collection, DisplayType.EditTable),
     ];

@@ -1,18 +1,45 @@
 using System.Text.Json;
+using FluentCMS.Utils.DictionaryExt;
 using FluentResults;
 
 namespace FluentCMS.Core.Descriptors;
-public static class  SchemaType
+
+public enum SchemaType
 {
-    public const string Menu = "menu";
-    public const string Entity = "entity";
-    public const string Query = "query";
-    public const string Page = "page";
+    Menu,
+    Entity,
+    Query,
+    Page
+}
+
+public static class SchemaTypeHelper
+{
+    public static string ToCamelCase(this SchemaType schemaType)
+    {
+        var stringValue = schemaType.ToString();
+        if (string.IsNullOrEmpty(stringValue)) return stringValue;
+
+        return char.ToLowerInvariant(stringValue[0]) + stringValue.Substring(1);
+    }
 }
 
 
 public sealed record Settings(Entity? Entity = null, Query? Query =null, Menu? Menu =null, Page? Page = null);
-public record Schema(string Name, string Type, Settings Settings, int Id = 0, string CreatedBy ="");
+
+public static class SettingsHelper
+{
+    public static string Serialize(this Settings settings)
+    {
+        return JsonSerializer.Serialize(settings,JsonOptions.IgnoreCase);
+    }
+
+    public static Settings Deserialize(string json)
+    {
+        return JsonSerializer.Deserialize<Settings>(json,JsonOptions.IgnoreCase)!;
+    }
+}
+
+public record Schema(string Name, SchemaType Type, Settings Settings, int Id = 0, string CreatedBy ="");
 
 public static class SchemaFields
 {
@@ -29,7 +56,7 @@ public static class SchemaHelper
 {
     public const string TableName = "__schemas";
 
-    public static SqlKata.Query BaseQuery(string[]fields)
+    public static SqlKata.Query BaseQuery(string[] fields)
     {
         return new SqlKata.Query(TableName)
             .Select(fields)
@@ -45,8 +72,8 @@ public static class SchemaHelper
     {
         return new SqlKata.Query(TableName)
             .Where(SchemaFields.Id, id).AsUpdate([SchemaFields.Deleted], [true]);
-    } 
-    
+    }
+
     public static SqlKata.Query Save(this Schema dto)
     {
         if (dto.Id == 0)
@@ -54,8 +81,8 @@ public static class SchemaHelper
             var record = new Dictionary<string, object>
             {
                 { SchemaFields.Name, dto.Name },
-                { SchemaFields.Type, dto.Type },
-                { SchemaFields.Settings, JsonSerializer.Serialize(dto.Settings) },
+                { SchemaFields.Type, dto.Type.ToCamelCase() },
+                { SchemaFields.Settings, dto.Settings.Serialize()},
                 { SchemaFields.CreatedBy, dto.CreatedBy }
             };
 
@@ -66,36 +93,37 @@ public static class SchemaHelper
             .Where(SchemaFields.Id, dto.Id)
             .AsUpdate(
                 [SchemaFields.Name, SchemaFields.Type, SchemaFields.Settings],
-                [dto.Name, dto.Type, JsonSerializer.Serialize(dto.Settings)]
+                [dto.Name, dto.Type.ToCamelCase(), dto.Settings.Serialize()]
             );
         return query;
 
     }
     
-    public static Result<Schema> ParseSchema(Record? record)
+    public static Result<Schema> RecordToSchema(Record? record)
     {
         if (record is null)
-        {
             return Result.Fail("Can not parse schema, input record is null");
+
+        record = record.ToLowerKeyRecord();
+
+        var sType = record[SchemaFields.Type].ToString();
+        if (!Enum.TryParse<SchemaType>(sType,true, out var t))
+        {
+            return Result.Fail($"Can not parse schema, invalid type {sType}");
         }
 
-        return Result.Try(() =>
-        {
-            record = record.ToDictionary(pair => pair.Key.ToLower(), pair => pair.Value);
-            var s = JsonSerializer.Deserialize<Settings>((string)record[SchemaFields.Settings]);
-            return new Schema
-            (
-                Name: (string)record[SchemaFields.Name],
-                Type: (string)record[SchemaFields.Type],
-                Settings: s!,
-                CreatedBy: (string)record[SchemaFields.CreatedBy],
-                Id: record[SchemaFields.Id] switch
-                {
-                    int val => val,
-                    long val => (int)val,
-                    _ => 0
-                }
-            );
-        });
+        return new Schema
+        (
+            Name: (string)record[SchemaFields.Name],
+            Type: t,
+            Settings: SettingsHelper.Deserialize(record[SchemaFields.Settings].ToString()!),
+            CreatedBy: (string)record[SchemaFields.CreatedBy],
+            Id: record[SchemaFields.Id] switch
+            {
+                int val => val,
+                long val => (int)val,
+                _ => 0
+            }
+        );
     }
 }

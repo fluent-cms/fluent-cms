@@ -14,11 +14,11 @@ public static class EntityHandler
             string name,
             string? offset,
             string? limit,
-            ListResponseMode? mode,
+            string? mode,
             CancellationToken ct
         ) =>  entityService.ListWithAction(
             name,
-            mode ?? ListResponseMode.all,
+            mode?.ToEnum<ListResponseMode>()??ListResponseMode.All, 
             new Pagination(offset, limit),
             context.Args(),
             ct));

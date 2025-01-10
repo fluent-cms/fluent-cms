@@ -51,7 +51,7 @@ public static class Args
         arg.Name = attr.Field + FilterConstants.SetSuffix;
         return arg;
 
-        string GetLookupDisplayType(Attribute a) =>
+        DisplayType GetLookupDisplayType(Attribute a) =>
             a.GetLookupTarget(out var t) && graphMap.TryGetValue(t, out var info)
                 ? info.Entity.Attributes.FirstOrDefault(x=>x.Field==info.Entity.PrimaryKey)?.DisplayType ?? DisplayType.Number
                 : DisplayType.Number;

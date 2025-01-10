@@ -50,6 +50,10 @@
         <None Include="../../doc/mkdoc/docs/index.md" Pack="true" PackagePath="\readme.md" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="CoreKit\JsonSerialization\" />
+    </ItemGroup>
+
 
     <PropertyGroup>
         <PackageReadmeFile>readme.md</PackageReadmeFile>

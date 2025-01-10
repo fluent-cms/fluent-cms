@@ -11,8 +11,8 @@ public static class SchemaHandler
     public static void MapSchemaHandlers(this RouteGroupBuilder app)
     {
         app.MapGet("/", async (
-            ISchemaService svc, string? type, CancellationToken ct
-        ) => await svc.AllWithAction(type ?? "", ct));
+            ISchemaService svc, string type, CancellationToken ct
+        ) => await svc.AllWithAction(type.ToEnum<SchemaType>() , ct));
 
         app.MapPost("/",  (
             ISchemaService schemaSvc, IEntitySchemaService entitySchemaSvc, Schema dto, CancellationToken ct
@@ -28,7 +28,7 @@ public static class SchemaHandler
 
         app.MapGet("/name/{name}", async (
                 ISchemaService svc, string name, string type, CancellationToken ct
-            ) => await svc.GetByNameDefault(name, type, ct) ??
+            ) => await svc.GetByNameDefault(name, type.MustToEnum<SchemaType>(), ct) ??
                  throw new ResultException($"Cannot find schema {name} of type {type}"));
 
         app.MapDelete("/{id:int}", async (

@@ -63,9 +63,9 @@ public static class SortHelper
             ? array.Select(ToSort).ToArray()
             : Result.Fail("Fail to parse sort");
 
-        Sort ToSort(string s)
+        Sort ToSort(string? s)
         {
-            if (s.StartsWith(QueryConstants.VariablePrefix))
+            if (s != null && s.StartsWith(QueryConstants.VariablePrefix))
             {
                 //sort : [$field], not know order yet, keep it empty
                 return new Sort(s,"");

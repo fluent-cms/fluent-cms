@@ -15,7 +15,7 @@ public interface IDao
     //the client should dispose transaction object and let dao know transaction has ended
     void EndTransaction();
     
-    bool TryParseDataType(string s, string type, out DatabaseTypeValue? data);
+    bool TryParseDataType(string s, ColumnType type, out DatabaseTypeValue? data);
     Task<T> ExecuteKateQuery<T>(Func<QueryFactory,IDbTransaction?, Task<T>> queryFunc);
     
     Task CreateTable(string table, IEnumerable<Column> cols, CancellationToken ct = default);

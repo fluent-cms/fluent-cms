@@ -163,7 +163,7 @@ public sealed class PageService(ILogger<PageService> logger,ISchemaService schem
             ? await schemaSvc.GetByNamePrefixDefault(name, SchemaType.Page, token)
             : await schemaSvc.GetByNameDefault(name, SchemaType.Page, token);
         
-        if (schema == null) { return Result.Fail("Can not find schema"); }
+        if (schema == null) { return Result.Fail($"Cannot find schema [{name}], matching prefix= {matchPrefix}"); }
 
         var page = schema.Settings.Page!;
         var doc = new HtmlDocument();

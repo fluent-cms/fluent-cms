@@ -2,9 +2,9 @@ namespace FluentCMS.Core.Descriptors;
 
 public enum ListResponseMode
 {
-    count,
-    items,
-    all
+    Count,
+    Items,
+    All
 }
 
 public record ListResponse(Record[] Items, int TotalRecords);

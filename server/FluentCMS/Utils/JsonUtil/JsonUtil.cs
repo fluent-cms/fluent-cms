@@ -1,8 +1,10 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Http.Json;
 
-namespace FluentCMS.Utils.JsonElementExt;
+namespace FluentCMS.Utils.JsonUtil;
 
-public static class JsonElementExt
+public static class JsonUtil
 {
    public static Dictionary<string, object> ToDictionary(this JsonElement element)
    {

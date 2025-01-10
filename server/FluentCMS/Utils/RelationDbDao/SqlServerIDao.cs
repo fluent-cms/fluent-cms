@@ -25,7 +25,7 @@ public class SqlServerIDao(SqlConnection connection, ILogger<SqlServerIDao> logg
 
     public void EndTransaction() => _transaction = null;
 
-    public bool TryParseDataType(string s, string type, out DatabaseTypeValue? result)
+    public bool TryParseDataType(string s, ColumnType type, out DatabaseTypeValue? result)
     {
         result = type switch
         {
@@ -112,7 +112,7 @@ public class SqlServerIDao(SqlConnection connection, ILogger<SqlServerIDao> logg
         }, ("tableName", table));
     }
 
-    private string DataTypeToString(string dataType)
+    private string DataTypeToString(ColumnType dataType)
     {
         return dataType switch
         {
@@ -124,7 +124,7 @@ public class SqlServerIDao(SqlConnection connection, ILogger<SqlServerIDao> logg
         };
     }
 
-    private string StringToDataType(string s)
+    private ColumnType StringToDataType(string s)
     {
         s = s.ToLower();
         return s switch

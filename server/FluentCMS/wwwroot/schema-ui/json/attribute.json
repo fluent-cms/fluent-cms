@@ -43,7 +43,14 @@
         "Datetime",
         "Lookup",
         "Junction",
-        "Collection"
+        "Collection",
+        "string",
+        "text",
+        "int",
+        "datetime",
+        "lookup",
+        "junction",
+        "collection"
       ]
     },
     "displayType": {

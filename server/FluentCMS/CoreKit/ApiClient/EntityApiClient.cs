@@ -9,16 +9,16 @@ namespace FluentCMS.CoreKit.ApiClient;
 public class EntityApiClient(HttpClient client)
 {
     public Task<Result<ListResponse>> List(
-        string entity, int offset, int limit
-    ) => client.GetResult<ListResponse>($"/{entity}?offset={offset}&limit={limit}".ToEntityApi());
+        string entity, int offset, int limit, string listMode="all"
+    ) => client.GetResult<ListResponse>($"/{entity}?offset={offset}&limit={limit}&mode={listMode}".ToEntityApi(),JsonOptions.IgnoreCase);
 
     public Task<Result<JsonElement[]>> ListAsTree(
         string entity
-    ) => client.GetResult<JsonElement[]>($"/tree/{entity}".ToEntityApi());
+    ) => client.GetResult<JsonElement[]>($"/tree/{entity}".ToEntityApi(),JsonOptions.IgnoreCase);
     
     public Task<Result<JsonElement>> One(
         string entity, int id
-    ) => client.GetResult<JsonElement>($"/{entity}/{id}".ToEntityApi());
+    ) => client.GetResult<JsonElement>($"/{entity}/{id}".ToEntityApi(),JsonOptions.IgnoreCase);
 
     public Task<Result<JsonElement>> Insert(
         string entity, string field, string val
@@ -34,7 +34,7 @@ public class EntityApiClient(HttpClient client)
 
     public Task<Result<JsonElement>> Insert(
         string entity, object payload
-    ) => client.PostResult<JsonElement>($"/{entity}/insert".ToEntityApi(), payload);
+    ) => client.PostResult<JsonElement>($"/{entity}/insert".ToEntityApi(), payload,JsonOptions.IgnoreCase);
 
     public Task<Result> Update(
         string entity, int id, string field, string val
@@ -46,38 +46,38 @@ public class EntityApiClient(HttpClient client)
 
     private Task<Result> Update(
         string entity, Dictionary<string,object> payload
-    ) => client.PostResult($"/{entity}/update".ToEntityApi(), payload);
+    ) => client.PostResult($"/{entity}/update".ToEntityApi(), payload,JsonOptions.IgnoreCase);
 
     public Task<Result> Delete(
         string entity, object payload
-    ) => client.PostResult($"/{entity}/delete".ToEntityApi(), payload);
+    ) => client.PostResult($"/{entity}/delete".ToEntityApi(), payload,JsonOptions.IgnoreCase);
 
     public Task<Result> JunctionAdd(string entity, string attr, int sourceId, int id)
     {
         var payload = new object[] { new { id } };
-        return client.PostResult($"/junction/{entity}/{sourceId}/{attr}/save".ToEntityApi(), payload);
+        return client.PostResult($"/junction/{entity}/{sourceId}/{attr}/save".ToEntityApi(), payload,JsonOptions.IgnoreCase);
     }
 
     public Task<Result> JunctionDelete(string entity, string attr, int sourceId, int id)
     {
         var payload = new object[] { new { id } };
-        return client.PostResult($"/junction/{entity}/{sourceId}/{attr}/delete".ToEntityApi(), payload);
+        return client.PostResult($"/junction/{entity}/{sourceId}/{attr}/delete".ToEntityApi(), payload,JsonOptions.IgnoreCase);
     }
 
     public Task<Result<ListResponse>> JunctionList(
         string entity, string attr, int sourceId, bool exclude
-    ) => client.GetResult<ListResponse>($"/junction/{entity}/{sourceId}/{attr}?exclude={exclude}".ToEntityApi());
+    ) => client.GetResult<ListResponse>($"/junction/{entity}/{sourceId}/{attr}?exclude={exclude}".ToEntityApi(),JsonOptions.IgnoreCase);
 
     public Task<Result<JsonElement>> LookupList(
         string entity,  string query
-        ) =>client.GetResult<JsonElement>($"/lookup/{entity}/?query={Uri.EscapeDataString(query)}".ToEntityApi());
+        ) =>client.GetResult<JsonElement>($"/lookup/{entity}/?query={Uri.EscapeDataString(query)}".ToEntityApi(),JsonOptions.IgnoreCase);
     
      public Task<Result<ListResponse>> CollectionList(
             string entity, string attr, int sourceId
-        ) => client.GetResult<ListResponse>($"/collection/{entity}/{sourceId}/{attr}".ToEntityApi());
+        ) => client.GetResult<ListResponse>($"/collection/{entity}/{sourceId}/{attr}".ToEntityApi(),JsonOptions.IgnoreCase);
 
     
      public Task<Result<JsonElement>> CollectionInsert(
             string entity, string attr, int sourceId, object payload
-        ) => client.PostResult<JsonElement>($"/collection/{entity}/{sourceId}/{attr}/insert".ToEntityApi(), payload);
+        ) => client.PostResult<JsonElement>($"/collection/{entity}/{sourceId}/{attr}/insert".ToEntityApi(), payload,JsonOptions.IgnoreCase);
 }

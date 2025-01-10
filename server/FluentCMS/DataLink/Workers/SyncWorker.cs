@@ -1,9 +1,10 @@
 using System.Text.Json;
+using FluentCMS.Core.Descriptors;
 using FluentCMS.DataLink.Types;
 using FluentCMS.CoreKit.DocDbQuery;
 using FluentCMS.Utils.EventStreaming;
 using FluentCMS.Utils.HttpClientExt;
-using FluentCMS.Utils.JsonElementExt;
+using FluentCMS.Utils.JsonUtil;
 using FluentCMS.Utils.ResultExt;
 using FluentResults;
 
@@ -69,7 +70,7 @@ public sealed class SyncWorker(
 
     private async Task<Result> FetchSaveSingle(ApiLinks links, string id )
     {
-        if (!(await _httpClient.GetResult<JsonElement>($"{links.Api}/single?{links.PrimaryKey}={id}"))
+        if (!(await _httpClient.GetResult<JsonElement>($"{links.Api}/single?{links.PrimaryKey}={id}",null))
             .Try(out var s, out var e))
         {
             return Result.Fail(e).WithError("Failed to fetch single data");
