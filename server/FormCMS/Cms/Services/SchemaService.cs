@@ -72,7 +72,7 @@ public sealed class SchemaService(
     {
         var query = SchemaHelper.BaseQuery()
             .WhereStarts(SchemaFields.Name, name)
-            .Where(SchemaFields.Type, type);
+            .Where(SchemaFields.Type, type.ToCamelCase());
         var item = await queryExecutor.One(query, ct);
 
         var res = SchemaHelper.RecordToSchema(item);

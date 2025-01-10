@@ -14,7 +14,7 @@ public sealed class PageService(ILogger<PageService> logger,ISchemaService schem
     public async Task<string> GetDetail(string name, string param, StrArgs strArgs, CancellationToken token)
     {
         //detail page format <pageName>/{<routerName>}, not know the exact page name now, match with prefix '/{'. 
-        var ctx = ((await GetContext(name+ "/{" , true,token))).Ok().ToPageContext();
+        var ctx = (await GetContext(name+ "/{" , true,token)).Ok().ToPageContext();
         strArgs = GetLocalPaginationArgs(ctx, strArgs); 
         
         var routerName =ctx.Page.Name.Split("/").Last()[1..^1]; // remove '{' and '}'

@@ -56,13 +56,13 @@
         <PackageReadmeFile>readme.md</PackageReadmeFile>
         <TargetFramework>net9.0</TargetFramework>
         <PackageId>FormCMS</PackageId>
-        <Version>0.3.4</Version>
+        <Version>0.3.4.1</Version>
         <Authors>Jason C</Authors>
         <Company>FormCMS</Company>
         <Description>A headless CMS with GraphQL API and drag-and-drop page designer.</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageProjectUrl>https://github.com/formcms/formcms/tree/main/server/FormCMS</PackageProjectUrl>
-        <RepositoryUrl>https://github.com/formcms/fluent-cms</RepositoryUrl>
+        <RepositoryUrl>https://github.com/formcms/formcms</RepositoryUrl>
         
         <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
         <!-- Add metadata to assembly -->
