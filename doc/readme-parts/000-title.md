@@ -1,11 +1,11 @@
-# FluentCMS - A headless CMS built with Asp.net Core(c#) and React, featuring Rest APIs, GraphQL and drag-and-drop page designer.
+# FormCMS - A headless CMS built with Asp.net Core(c#) and React, featuring Rest APIs, GraphQL and drag-and-drop page designer.
 
-Welcome to [FluentCMS](https://github.com/fluent-cms/fluent-cms)! 🚀  
-[![GitHub stars](https://img.shields.io/github/stars/fluent-cms/fluent-cms.svg?style=social&label=Star)](https://github.com/fluent-cms/fluent-cms/stargazers)
+Welcome to [FormCMS](https://github.com/formcms/formcms)! 🚀  
+[![GitHub stars](https://img.shields.io/github/stars/formcms/formcms.svg?style=social&label=Star)](https://github.com/formcms/formcms/stargazers)
 
-FluentCMS makes content management seamless with its powerful GraphQL API and intuitive drag-and-drop page design features.
+Its mission is to simplify data modeling, backend development, and frontend development, making them as effortless as filling out a FORM📋.
 
-If you'd like to contribute, please check out our [CONTRIBUTING guide](https://github.com/fluent-cms/fluent-cms/blob/main/CONTRIBUTING.md).  
-Enjoying FluentCMS? Don’t forget to give us a ⭐ and help us grow!     
+If you'd like to contribute, please check out our [CONTRIBUTING guide](https://github.com/formcms/formcms/blob/main/CONTRIBUTING.md).  
+Enjoying FormCMS? Don’t forget to give us a ⭐ and help us grow!     
 
 

@@ -7,5 +7,5 @@ done
 mkdocs build
 rm site/sitemap.xml
 rm site/sitemap.xml.gz
-rm -rf ../../server/fluentcms.blog/wwwroot/doc
-cp -r site ../../server/fluentcms.blog/wwwroot/doc
+rm -rf ../../server/formcms.course/wwwroot/doc
+cp -r site ../../server/formcms.course/wwwroot/doc

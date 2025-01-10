@@ -86,7 +86,7 @@ The `Materials` table inventories resources linked to courses.
 
 ---
 
-### Schema Creation via Fluent CMS Schema Builder
+### Schema Creation via FormCMS Schema Builder
 
 #### Accessing Schema Builder
 After launching the web application, locate the **Schema Builder** menu on the homepage to start defining your schema.

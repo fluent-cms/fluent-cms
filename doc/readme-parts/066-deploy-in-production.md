@@ -4,13 +4,13 @@
 ## Aspire Integration
 <details> 
 <summary> 
-Fluent CMS leverages Aspire to simplify deployment.
+FormCMS leverages Aspire to simplify deployment.
 </summary>
 
 
 ### Architecture Overview
 
-A scalable deployment of Fluent CMS involves multiple web application nodes, a Redis server for distributed caching, and a database server, all behind a load balancer.
+A scalable deployment of  FormCMS involves multiple web application nodes, a Redis server for distributed caching, and a database server, all behind a load balancer.
 
 
 ```
@@ -38,10 +38,10 @@ A scalable deployment of Fluent CMS involves multiple web application nodes, a R
 
 ### Local Emulation with Aspire and Service Discovery
 
-[Example Web project on GitHub](https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS.Blog)  
-[Example Aspire project on GitHub](https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS.Blog.AppHost)  
+[Example Web project on GitHub](https://github.com/formcms/formcms/tree/main/server/FormCMS.Course)  
+[Example Aspire project on GitHub](https://github.com/formcms/formcms/tree/main/server/FormCMS.Course.AppHost)  
 
-To emulate the production environment locally, Fluent CMS leverages Aspire. Here's an example setup:
+To emulate the production environment locally,  FormCMS leverages Aspire. Here's an example setup:
 
 ```csharp
 var builder = DistributedApplication.CreateBuilder(args);
@@ -51,7 +51,7 @@ var redis = builder.AddRedis(name: CmsConstants.Redis);
 var db = builder.AddPostgres(CmsConstants.Postgres);
 
 // Configuring the web project with replicas and references
-builder.AddProject<Projects.FluentCMS_Blog>(name: "web")
+builder.AddProject<Projects.FormCMS_Course>(name: "web")
     .WithEnvironment(CmsConstants.DatabaseProvider, CmsConstants.Postgres)
     .WithReference(redis)
     .WithReference(db)
@@ -70,5 +70,5 @@ builder.Build().Run();
 2. **Realistic Testing**:  
    The local environment mirrors the production architecture, ensuring seamless transitions during deployment.
 
-By adopting these caching and deployment strategies, Fluent CMS ensures improved performance, scalability, and ease of configuration.
+By adopting these caching and deployment strategies,  FormCMS ensures improved performance, scalability, and ease of configuration.
 </details>

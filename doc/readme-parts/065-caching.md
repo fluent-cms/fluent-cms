@@ -5,14 +5,14 @@
 
 <details>
 <summary>
-Fluent CMS employs advanced caching strategies to boost performance.  
+FormCMS employs advanced caching strategies to boost performance.  
 </summary>
 
 For detailed information on ASP.NET Core caching, visit the official documentation: [ASP.NET Core Caching Overview](https://learn.microsoft.com/en-us/aspnet/core/performance/caching/overview?view=aspnetcore-9.0).
 
 ### Cache Schema
 
-Fluent CMS automatically invalidates schema caches whenever schema changes are made. The schema cache consists of two types:
+FormCMS automatically invalidates schema caches whenever schema changes are made. The schema cache consists of two types:
 
 1. **Entity Schema Cache**  
    Caches all entity definitions required to dynamically generate GraphQL types.
@@ -35,8 +35,8 @@ By default, schema caching is implemented using `IMemoryCache`. However, you can
     - **Stampede Resolution**: Effectively handles cache stampede scenarios, as verified by its developers.
 - **Limitations**:  
   The current implementation lacks "Backend-Assisted Local Cache Invalidation," meaning invalidation on one node does not instantly propagate to others.
-- **Fluent CMS Strategy**:  
-  Fluent CMS mitigates this limitation by setting the local cache expiration to 20 seconds (one-third of the distributed cache expiration, which is set to 60 seconds). This ensures cache consistency across nodes within 20 seconds, significantly improving upon the typical 60-second delay in memory caching.
+- ** FormCMS Strategy**:  
+  FormCMS mitigates this limitation by setting the local cache expiration to 20 seconds (one-third of the distributed cache expiration, which is set to 60 seconds). This ensures cache consistency across nodes within 20 seconds, significantly improving upon the typical 60-second delay in memory caching.
 
 To implement a `HybridCache`, use the following code:
 
@@ -47,7 +47,7 @@ builder.Services.AddHybridCache();
 
 ### Cache Data
 
-Fluent CMS does not automatically invalidate data caches. Instead, it leverages ASP.NET Core's output caching for a straightforward implementation. Data caching consists of two types:
+FormCMS does not automatically invalidate data caches. Instead, it leverages ASP.NET Core's output caching for a straightforward implementation. Data caching consists of two types:
 
 1. **Query Data Cache**  
    Caches the results of queries for faster access.
@@ -55,7 +55,7 @@ Fluent CMS does not automatically invalidate data caches. Instead, it leverages 
 2. **Page Cache**  
    Caches the output of rendered pages for quick delivery.
 
-By default, output caching is disabled in Fluent CMS. To enable it, configure and inject the output cache as shown below:
+By default, output caching is disabled in FormCMS. To enable it, configure and inject the output cache as shown below:
 
 ```csharp
 builder.Services.AddOutputCache(cacheOption =>

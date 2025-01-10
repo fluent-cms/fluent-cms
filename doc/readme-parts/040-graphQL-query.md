@@ -5,7 +5,7 @@
 
 <details>
 <summary>
-FluentCMS simplifies frontend development by offering robust GraphQL support.
+FormCMS simplifies frontend development by offering robust GraphQL support.
 </summary>
 
 ### Getting Started
@@ -14,7 +14,7 @@ To get started, launch the web application and navigate to `/graph`. You can als
 
 ---
 #### Singular vs. List Response
-For each entity in FluentCMS, two GraphQL fields are automatically generated:  
+For each entity in FormCMS, two GraphQL fields are automatically generated:  
 - `<entityName>`: Returns a record.
 - `<entityNameList>`: Returns a list of records.  
 
@@ -68,9 +68,9 @@ You can query specific fields for both the current entity and its related entiti
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%20%20teacher%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20firstname%0A%20%20%20%20%20%20lastname%0A%20%20%20%20%20%20skills%7B%0A%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20name%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%20%20materials%7B%0A%20%20%20%20%20%20id%2C%0A%20%20%20%20%20%20name%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D%0A)
 
 ---
-#### Filtering with `Value Match` in FluentCMS
+#### Filtering with `Value Match` in FormCMS
 
-FluentCMS provides flexible filtering capabilities using the `idSet` field (or any other field), enabling precise data queries by matching either a single value or a list of values.
+FormCMS provides flexible filtering capabilities using the `idSet` field (or any other field), enabling precise data queries by matching either a single value or a list of values.
 
 **Filter by a Single Value Example:**
 ```graphql
@@ -95,9 +95,9 @@ FluentCMS provides flexible filtering capabilities using the `idSet` field (or a
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(idSet%3A%5B5%2C7%5D)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A)
 
 ---
-#### Advanced Filtering with `Operator Match` in FluentCMS
+#### Advanced Filtering with `Operator Match` in FormCMS
 
-FluentCMS supports advanced filtering options with `Operator Match`, allowing users to combine various conditions for precise queries.
+FormCMS supports advanced filtering options with `Operator Match`, allowing users to combine various conditions for precise queries.
 
 ##### `matchAll` Example:
 Filters where all specified conditions must be true.  
@@ -130,7 +130,7 @@ In this example: `name starts with "A"` or `name starts with "I"`.
 
 ---
 
-#### `Filter Expressions` in FluentCMS
+#### `Filter Expressions` in FormCMS
 
 Filter Expressions allow precise filtering by specifying a field, including nested fields using JSON path syntax. This enables filtering on subfields for complex data structures.
 
@@ -179,7 +179,7 @@ Sorting by multiple fields
 
 ---
 
-#### Sort Expressions in FluentCMS
+#### Sort Expressions in FormCMS
 
 
 Sort Expressions allow sorting by nested fields using JSON path syntax. 
@@ -329,7 +329,7 @@ query ($id: Int!) {
 ```
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24id%3A%20Int!)%20%7B%0A%20%20teacherList(id%3A%7Bequals%3A%24id%7D)%7B%0A%20%20%20%20id%0A%20%20%20%20firstname%0A%20%20%20%20lastname%0A%20%20%7D%0A%7D)
 
-Explore the power of FluentCMS GraphQL and streamline your development workflow!
+Explore the power of FormCMS GraphQL and streamline your development workflow!
 ***
 ***
 ### Saved Query
@@ -343,7 +343,7 @@ Explore the power of FluentCMS GraphQL and streamline your development workflow!
 #### Transitioning from **Real-Time Queries** to **Saved Queries**
 
 ##### Using `OperationName` as the Saved Query Identifier
-In FluentCMS, the **Operation Name** in a GraphQL query serves as a unique identifier for saved queries. For instance, executing the following query automatically saves it as `TeacherQuery`:
+In FormCMS, the **Operation Name** in a GraphQL query serves as a unique identifier for saved queries. For instance, executing the following query automatically saves it as `TeacherQuery`:
 
 ```graphql
 query TeacherQuery($id: Int) {
@@ -364,7 +364,7 @@ query TeacherQuery($id: Int) {
 ---
 
 ##### Saved Query Endpoints
-FluentCMS generates two API endpoints for each saved query:
+FormCMS generates two API endpoints for each saved query:
 
 1. **List Records:**  
    [https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery)

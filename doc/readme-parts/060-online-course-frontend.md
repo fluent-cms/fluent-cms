@@ -4,7 +4,7 @@
 ## Online Course System Frontend
 <details> 
 <summary> 
-Having established our understanding of Fluent CMS essentials like Entity, Query, and Page, we're ready to build a frontend for an online course website.
+Having established our understanding of FormCMS essentials like Entity, Query, and Page, we're ready to build a frontend for an online course website.
 </summary>
 
 ---
@@ -33,11 +33,11 @@ Course Details <-------> Teacher Details
 
 ### Designing the Home Page
 
-1. **Drag and Drop Components**: Use the Fluent CMS page designer to drag a `Content-B` component.
+1. **Drag and Drop Components**: Use the  FormCMS page designer to drag a `Content-B` component.
 2. **Set Data Source**: Assign the component's data source to the `course` query.
 3. **Link Course Items**: Configure the link for each course to `/pages/course/{{id}}`. The Handlebars expression `{{id}}` is dynamically replaced with the actual course ID during rendering.
 
-![Link Example](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-link.png)
+![Link Example](https://raw.githubusercontent.com/formcms/formcms/doc/doc/screenshots/designer-link.png)
 
 ---
 
@@ -59,7 +59,7 @@ Course Details <-------> Teacher Details
 - Drag a `ECommerce A` component onto the page.
 - Set its data source to the `course` query, filtered by the teacher’s ID (`WHERE teacher IN (3)`).
 
-![Teacher Page Designer](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-teacher.png)
+![Teacher Page Designer](https://raw.githubusercontent.com/formcms/formcms/doc/doc/screenshots/designer-teacher.png)
 
 When rendering the page, the `PageService` automatically passes the `teacher_id` (e.g., `{teacher_id: 3}`) to the query.
 </details>  

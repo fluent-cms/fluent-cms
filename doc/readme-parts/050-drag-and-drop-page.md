@@ -4,7 +4,7 @@
 ## Drag and Drop Page Designer
 <details> 
 <summary> 
-The page designer utilizes the open-source GrapesJS and Handlebars, enabling seamless binding of `GrapesJS Components` with `FluentCMS Queries` for dynamic content rendering. 
+The page designer utilizes the open-source GrapesJS and Handlebars, enabling seamless binding of `GrapesJS Components` with `FormCMS Queries` for dynamic content rendering. 
 </summary>
 
 ---
@@ -26,7 +26,7 @@ This page fetches data from:
 #### **Detail Page**
 A detail page provides specific information about an item.  
 - **URL format**: `/page/<pagename>/<router parameter>`  
-- **Data Retrieval**: FluentCMS fetches data by passing the router parameter to a `query`.  
+- **Data Retrieval**: FormCMS fetches data by passing the router parameter to a `query`.  
 
 **Example**:  
 [Course Detail Page](https://fluent-cms-admin.azurewebsites.net/pages/course/22)  
@@ -38,7 +38,7 @@ This page fetches data from:
 #### **Home Page**
 The homepage is a special type of landing page named `home`.  
 - **URL format**: `/pages/home`   
-- **Special Behavior**: If no other route matches the path `/`, FluentCMS renders `/pages/home` by default.  
+- **Special Behavior**: If no other route matches the path `/`, FormCMS renders `/pages/home` by default.  
 
 **Example**:    
 The URL `/` will be resolved to `/pages/home` unless explicitly overridden.  
@@ -46,32 +46,32 @@ The URL `/` will be resolved to `/pages/home` unless explicitly overridden.
 ---
 ### Introduction to GrapesJS Panels
 
-Understanding the panels in GrapesJS is crucial for leveraging FluentCMS's customization capabilities in the Page Designer UI. This section explains the purpose of each panel and highlights how FluentCMS enhances specific areas to streamline content management and page design. 
+Understanding the panels in GrapesJS is crucial for leveraging FormCMS's customization capabilities in the Page Designer UI. This section explains the purpose of each panel and highlights how FormCMS enhances specific areas to streamline content management and page design. 
 
-![GrapesJS Toolbox](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/grapes-toolbox.png)
+![GrapesJS Toolbox](https://raw.githubusercontent.com/formcms/formcms/doc/doc/screenshots/grapes-toolbox.png)
 
 1. **Style Manager**:
     - Used to customize CSS properties of elements selected on the canvas.
-    - *FluentCMS Integration*: This panel is left unchanged by FluentCMS, as it already provides powerful styling options.
+    - *FormCMS Integration*: This panel is left unchanged by FormCMS, as it already provides powerful styling options.
 
 2. **Traits Panel**:
     - Allows modification of attributes for selected elements.
-    - *FluentCMS Integration*: Custom traits are added to this panel, enabling users to bind data to components dynamically.
+    - *FormCMS Integration*: Custom traits are added to this panel, enabling users to bind data to components dynamically.
 
 3. **Layers Panel**:
     - Displays a hierarchical view of elements on the page, resembling a DOM tree.
-    - *FluentCMS Integration*: While FluentCMS does not alter this panel, it’s helpful for locating and managing FluentCMS blocks within complex page designs.
+    - *FormCMS Integration*: While FormCMS does not alter this panel, it’s helpful for locating and managing FormCMS blocks within complex page designs.
 
 4. **Blocks Panel**:
     - Contains pre-made components that can be dragged and dropped onto the page.
-    - *FluentCMS Integration*: FluentCMS enhances this panel by adding custom-designed blocks tailored for its CMS functionality.
+    - *FormCMS Integration*: FormCMS enhances this panel by adding custom-designed blocks tailored for its CMS functionality.
 
-By familiarizing users with these panels and their integration points, this chapter ensures a smoother workflow and better utilization of FluentCMS's advanced page-building tools.
+By familiarizing users with these panels and their integration points, this chapter ensures a smoother workflow and better utilization of FormCMS's advanced page-building tools.
 
 ---
 ### Data Binding: Singleton or List
 
-FluentCMS leverages [Handlebars expressions](https://github.com/Handlebars-Net/Handlebars.Net) for dynamic data binding in pages and components.
+FormCMS leverages [Handlebars expressions](https://github.com/Handlebars-Net/Handlebars.Net) for dynamic data binding in pages and components.
 
 ---
 
@@ -95,7 +95,7 @@ Singleton fields are enclosed within `{{ }}` to dynamically bind individual valu
 {{/each}}
 ```
 
-In FluentCMS, you won’t explicitly see the `{{#each}}` statement in the Page Designer. If a block's data source is set to `data-list`, FluentCMS automatically generates the loop.
+In FormCMS, you won’t explicitly see the `{{#each}}` statement in the Page Designer. If a block's data source is set to `data-list`, the system automatically generates the loop.
 
 - **Example Page Settings:** [Page Schema Settings](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/schema-ui/page.html?schema=page&id=32)
 - **Example Rendered Page:** [Rendered List Page](https://fluent-cms-admin.azurewebsites.net/)

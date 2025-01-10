@@ -15,7 +15,7 @@ ASP.NET Core's output caching reduces database access when repeated queries are 
 
 ### Using Document Databases to Improve Query Performance
 
-For the query below, FluentCMS joins the `post`, `tag`, `category`, and `author` tables:
+For the query below, FormCMS joins the `post`, `tag`, `category`, and `author` tables:
 ```graphql
 query post_sync($id: Int) {
   postList(idSet: [$id], sort: id) {
@@ -65,7 +65,7 @@ PostgreSQL:
 ### Synchronizing Query Data to Document DB
 
 #### Architecture Overview
-![Architecture Overview](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/mongo-sync.png)
+![Architecture Overview](https://raw.githubusercontent.com/formcms/formcms/doc/doc/diagrams/mongo-sync.png)
 
 #### Enabling Message Publishing in WebApp
 To enable publishing messages to the Message Broker, use Aspire to add a NATS resource. Detailed documentation is available in [Microsoft Docs](https://learn.microsoft.com/en-us/dotnet/aspire/messaging/nats-integration?tabs=dotnet-cli).
@@ -80,7 +80,7 @@ builder.AddNatsClient(AppConstants.Nats);
 var entities = builder.Configuration.GetRequiredSection("TrackingEntities").Get<string[]>()!;
 builder.Services.AddNatsMessageProducer(entities);
 ```
-FluentCMS publishes events for changes made to entities listed in `appsettings.json`:
+FormCMS publishes events for changes made to entities listed in `appsettings.json`:
 ```json
 {
   "TrackingEntities": [
@@ -122,7 +122,7 @@ After adding a new entry to `ApiLinksArray`, the Worker App will perform a migra
 ### Replacing Queries with Document DB
 
 #### Architecture Overview
-![Architecture Overview](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/mongo-query.png)   
+![Architecture Overview](https://raw.githubusercontent.com/formcms/formcms/doc/doc/diagrams/mongo-query.png)   
 
 To enable MongoDB queries in your WebApp, use the Aspire MongoDB integration. Details are available in [Microsoft Docs](https://learn.microsoft.com/en-us/dotnet/aspire/database/mongodb-integration?tabs=dotnet-cli).
 

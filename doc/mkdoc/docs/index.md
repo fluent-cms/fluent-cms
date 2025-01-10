@@ -1,21 +1,21 @@
 
-Welcome to [FormCMS](https://github.com/fluent-cms/fluent-cms)! 🚀  
-[![GitHub stars](https://img.shields.io/github/stars/fluent-cms/fluent-cms.svg?style=social&label=Star)](https://github.com/fluent-cms/fluent-cms/stargazers)
+Welcome to [FormCMS](https://github.com/formcms/formcms)! 🚀  
+[![GitHub stars](https://img.shields.io/github/stars/formcms/formcms.svg?style=social&label=Star)](https://github.com/formcms/formcms/stargazers)
 
-FormCMS makes content management seamless with its powerful GraphQL API and intuitive drag-and-drop page design features.
+Its mission is to simplify data modeling, backend development, and frontend development, making them as effortless as filling out a FORM📋.
 
-If you'd like to contribute, please check out our [CONTRIBUTING guide](https://github.com/fluent-cms/fluent-cms/blob/main/CONTRIBUTING.md).  
+If you'd like to contribute, please check out our [CONTRIBUTING guide](https://github.com/formcms/formcms/blob/main/CONTRIBUTING.md).  
 Enjoying FormCMS? Don’t forget to give us a ⭐ and help us grow!     
 
 
 
 
 ---
-## What is Fluent CMS?
+## What is  FormCMS?
 
-**Fluent CMS** is an open-source Content Management System designed to simplify and accelerate web development workflows. While it's particularly suited for CMS projects, it is also highly beneficial for general web applications, reducing the need for repetitive REST/GraphQL API development.
+** FormCMS** is an open-source Content Management System designed to simplify and accelerate web development workflows. While it's particularly suited for CMS projects, it is also highly beneficial for general web applications, reducing the need for repetitive REST/GraphQL API development.
 
-- **Effortless CRUD Operations:** Fluent CMS includes built-in RESTful APIs for Create, Read, Update, and Delete (CRUD) operations, complemented by a React-based admin panel for efficient data management.
+- **Effortless CRUD Operations:**  FormCMS includes built-in RESTful APIs for Create, Read, Update, and Delete (CRUD) operations, complemented by a React-based admin panel for efficient data management.
 
 - **Powerful GraphQL Queries:** Access multiple related entities in a single query, enhancing client-side performance, security, and flexibility.
 
@@ -26,7 +26,7 @@ Enjoying FormCMS? Don’t forget to give us a ⭐ and help us grow!
 ## Online Course System Demo
 
 ### Source Code
-[Example Project on GitHub](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples)
+[Example Project on GitHub](https://github.com/formcms/formcms/tree/main/examples/WebApiExamples)
 
 ### Live Demo
 - **Public Site:** [fluent-cms-admin.azurewebsites.net](https://fluent-cms-admin.azurewebsites.net/)
@@ -122,19 +122,19 @@ The `Materials` table inventories resources linked to courses.
 
 ---
 
-### Schema Creation via Fluent CMS Schema Builder
+### Schema Creation via FormCMS Schema Builder
 
 #### Accessing Schema Builder
 After launching the web application, locate the **Schema Builder** menu on the homepage to start defining your schema.
 
 #### Adding Entities
-[Example Configuration](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/list.html?schema=entity)  
+[Example Configuration](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/schema-ui/list.html?schema=entity)  
 1. Navigate to the **Entities** section of the Schema Builder.
 2. Create entities such as "Teacher" and "Course."
 3. For the `Course` entity, add attributes such as `name`, `status`, `level`, and `description`.
 ---
 ### Defining Relationships
-[Example Configuration](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/edit.html?schema=entity&id=27)  
+[Example Configuration](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/schema-ui/edit.html?schema=entity&id=27)  
 
 #### 1. **Course and Teacher (Many-to-One Relationship)**
 To establish a many-to-one relationship between the `Course` and `Teacher` entities, you can include a `Lookup` attribute in the `Course` entity. This allows selecting a single `Teacher` record when adding or updating a `Course`.
@@ -235,20 +235,20 @@ Below is a mapping of valid `DataType` and `DisplayType` combinations:
 ---
 
 ### **List Page**
-[Example Course List Page](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&limit=20)
+[Example Course List Page](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&limit=20)
 
 The **List Page** displays entities in a tabular format, supporting sorting, searching, and pagination for efficient browsing or locating of specific records.
 
 #### **Sorting**
 Sort records by clicking the `↑` or `↓` icon in the table header.
-- [Order by Created At Example](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&limit=20&sort[created_at]=-1)
-- [Order by Name Example](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&limit=20&sort[name]=1)
+- [Order by Created At Example](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&limit=20&sort[created_at]=-1)
+- [Order by Name Example](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&limit=20&sort[name]=1)
 
 #### **Filtering**
 Apply filters by clicking the Funnel icon in the table header.
 
-- [Filter by Created At (2024-09-07)](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&limit=20&created_at[dateIs]=2024-09-07&sort[created_at]=1)
-- [Filter by Course Name (Starts with A or C)](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&limit=20&name[operator]=or&name[startsWith]=A&name[startsWith]=C&sort[created_at]=1)
+- [Filter by Created At (2024-09-07)](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&limit=20&created_at[dateIs]=2024-09-07&sort[created_at]=1)
+- [Filter by Course Name (Starts with A or C)](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&limit=20&name[operator]=or&name[startsWith]=A&name[startsWith]=C&sort[created_at]=1)
 
 ---
 
@@ -256,10 +256,10 @@ Apply filters by clicking the Funnel icon in the table header.
 Detail page provides an interface to manage single record.  
 
 #### Example of display types `date`,`image`, `gallery`, `muliselect`, `dropdown`,
-[Lesson Detail Page](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/lesson/6?ref=https%3A%2F%2Ffluent-cms-admin.azurewebsites.net%2F_content%2FFormCMS%2Fadmin%2Fentities%2Fcourse%2F27%3Fref%3Dhttps%253A%252F%252Ffluent-cms-admin.azurewebsites.net%252F_content%252FFormCMS%252Fadmin%252Fentities%252Fcourse%253Foffset%253D0%2526limit%253D20).
+[Lesson Detail Page](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/lesson/6?ref=https%3A%2F%2Ffluent-cms-admin.azurewebsites.net%2F_content%2FFluentCMS%2Fadmin%2Fentities%2Fcourse%2F27%3Fref%3Dhttps%253A%252F%252Ffluent-cms-admin.azurewebsites.net%252F_content%252FFluentCMS%252Fadmin%252Fentities%252Fcourse%253Foffset%253D0%2526limit%253D20).
 
 #### Example of `lookup`,`picklist`,`edittable`
-[Course Detail Page](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course/22)
+[Course Detail Page](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course/22)
 
 
 
@@ -769,7 +769,7 @@ The URL `/` will be resolved to `/pages/home` unless explicitly overridden.
 
 Understanding the panels in GrapesJS is crucial for leveraging FormCMS's customization capabilities in the Page Designer UI. This section explains the purpose of each panel and highlights how FormCMS enhances specific areas to streamline content management and page design. 
 
-![GrapesJS Toolbox](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/grapes-toolbox.png)
+![GrapesJS Toolbox](https://raw.githubusercontent.com/formcms/formcms/doc/doc/screenshots/grapes-toolbox.png)
 
 1. **Style Manager**:
     - Used to customize CSS properties of elements selected on the canvas.
@@ -781,18 +781,18 @@ Understanding the panels in GrapesJS is crucial for leveraging FormCMS's customi
 
 3. **Layers Panel**:
     - Displays a hierarchical view of elements on the page, resembling a DOM tree.
-    - *FormCMS Integration*: While FluentCMS does not alter this panel, it’s helpful for locating and managing FluentCMS blocks within complex page designs.
+    - *FormCMS Integration*: While FormCMS does not alter this panel, it’s helpful for locating and managing FormCMS blocks within complex page designs.
 
 4. **Blocks Panel**:
     - Contains pre-made components that can be dragged and dropped onto the page.
-    - *FluentCMS Integration*: FluentCMS enhances this panel by adding custom-designed blocks tailored for its CMS functionality.
+    - *FormCMS Integration*: FormCMS enhances this panel by adding custom-designed blocks tailored for its CMS functionality.
 
-By familiarizing users with these panels and their integration points, this chapter ensures a smoother workflow and better utilization of FluentCMS's advanced page-building tools.
+By familiarizing users with these panels and their integration points, this chapter ensures a smoother workflow and better utilization of FormCMS's advanced page-building tools.
 
 ---
 ### Data Binding: Singleton or List
 
-FluentCMS leverages [Handlebars expressions](https://github.com/Handlebars-Net/Handlebars.Net) for dynamic data binding in pages and components.
+FormCMS leverages [Handlebars expressions](https://github.com/Handlebars-Net/Handlebars.Net) for dynamic data binding in pages and components.
 
 ---
 
@@ -816,7 +816,7 @@ Singleton fields are enclosed within `{{ }}` to dynamically bind individual valu
 {{/each}}
 ```
 
-In FluentCMS, you won’t explicitly see the `{{#each}}` statement in the Page Designer. If a block's data source is set to `data-list`, FluentCMS automatically generates the loop.
+In FormCMS, you won’t explicitly see the `{{#each}}` statement in the Page Designer. If a block's data source is set to `data-list`, the system automatically generates the loop.
 
 - **Example Page Settings:** [Page Schema Settings](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/schema-ui/page.html?schema=page&id=32)
 - **Example Rendered Page:** [Rendered List Page](https://fluent-cms-admin.azurewebsites.net/)
@@ -849,7 +849,7 @@ To bind a `Data List` to a component, follow these steps:
 
 ---
 ## Online Course System Frontend
-Having established our understanding of Fluent CMS essentials like Entity, Query, and Page, we're ready to build a frontend for an online course website.
+Having established our understanding of FormCMS essentials like Entity, Query, and Page, we're ready to build a frontend for an online course website.
 
 ---
 ### Key Pages
@@ -877,11 +877,11 @@ Course Details <-------> Teacher Details
 
 ### Designing the Home Page
 
-1. **Drag and Drop Components**: Use the Fluent CMS page designer to drag a `Content-B` component.
+1. **Drag and Drop Components**: Use the  FormCMS page designer to drag a `Content-B` component.
 2. **Set Data Source**: Assign the component's data source to the `course` query.
 3. **Link Course Items**: Configure the link for each course to `/pages/course/{{id}}`. The Handlebars expression `{{id}}` is dynamically replaced with the actual course ID during rendering.
 
-![Link Example](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-link.png)
+![Link Example](https://raw.githubusercontent.com/formcms/formcms/doc/doc/screenshots/designer-link.png)
 
 ---
 
@@ -903,7 +903,7 @@ Course Details <-------> Teacher Details
 - Drag a `ECommerce A` component onto the page.
 - Set its data source to the `course` query, filtered by the teacher’s ID (`WHERE teacher IN (3)`).
 
-![Teacher Page Designer](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/screenshots/designer-teacher.png)
+![Teacher Page Designer](https://raw.githubusercontent.com/formcms/formcms/doc/doc/screenshots/designer-teacher.png)
 
 When rendering the page, the `PageService` automatically passes the `teacher_id` (e.g., `{teacher_id: 3}`) to the query.
 
@@ -911,13 +911,13 @@ When rendering the page, the `PageService` automatically passes the `teacher_id`
 ---
 ## Optimizing Caching
 
-Fluent CMS employs advanced caching strategies to boost performance.  
+FormCMS employs advanced caching strategies to boost performance.  
 
 For detailed information on ASP.NET Core caching, visit the official documentation: [ASP.NET Core Caching Overview](https://learn.microsoft.com/en-us/aspnet/core/performance/caching/overview?view=aspnetcore-9.0).
 
 ### Cache Schema
 
-Fluent CMS automatically invalidates schema caches whenever schema changes are made. The schema cache consists of two types:
+FormCMS automatically invalidates schema caches whenever schema changes are made. The schema cache consists of two types:
 
 1. **Entity Schema Cache**  
    Caches all entity definitions required to dynamically generate GraphQL types.
@@ -940,8 +940,8 @@ By default, schema caching is implemented using `IMemoryCache`. However, you can
     - **Stampede Resolution**: Effectively handles cache stampede scenarios, as verified by its developers.
 - **Limitations**:  
   The current implementation lacks "Backend-Assisted Local Cache Invalidation," meaning invalidation on one node does not instantly propagate to others.
-- **Fluent CMS Strategy**:  
-  Fluent CMS mitigates this limitation by setting the local cache expiration to 20 seconds (one-third of the distributed cache expiration, which is set to 60 seconds). This ensures cache consistency across nodes within 20 seconds, significantly improving upon the typical 60-second delay in memory caching.
+- ** FormCMS Strategy**:  
+  FormCMS mitigates this limitation by setting the local cache expiration to 20 seconds (one-third of the distributed cache expiration, which is set to 60 seconds). This ensures cache consistency across nodes within 20 seconds, significantly improving upon the typical 60-second delay in memory caching.
 
 To implement a `HybridCache`, use the following code:
 
@@ -952,7 +952,7 @@ builder.Services.AddHybridCache();
 
 ### Cache Data
 
-Fluent CMS does not automatically invalidate data caches. Instead, it leverages ASP.NET Core's output caching for a straightforward implementation. Data caching consists of two types:
+FormCMS does not automatically invalidate data caches. Instead, it leverages ASP.NET Core's output caching for a straightforward implementation. Data caching consists of two types:
 
 1. **Query Data Cache**  
    Caches the results of queries for faster access.
@@ -960,7 +960,7 @@ Fluent CMS does not automatically invalidate data caches. Instead, it leverages 
 2. **Page Cache**  
    Caches the output of rendered pages for quick delivery.
 
-By default, output caching is disabled in Fluent CMS. To enable it, configure and inject the output cache as shown below:
+By default, output caching is disabled in FormCMS. To enable it, configure and inject the output cache as shown below:
 
 ```csharp
 builder.Services.AddOutputCache(cacheOption =>
@@ -980,12 +980,12 @@ app.UseOutputCache();
 
 ---
 ## Aspire Integration
-Fluent CMS leverages Aspire to simplify deployment.
+FormCMS leverages Aspire to simplify deployment.
 
 
 ### Architecture Overview
 
-A scalable deployment of Fluent CMS involves multiple web application nodes, a Redis server for distributed caching, and a database server, all behind a load balancer.
+A scalable deployment of  FormCMS involves multiple web application nodes, a Redis server for distributed caching, and a database server, all behind a load balancer.
 
 
 ```
@@ -1013,10 +1013,10 @@ A scalable deployment of Fluent CMS involves multiple web application nodes, a R
 
 ### Local Emulation with Aspire and Service Discovery
 
-[Example Web project on GitHub](https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS.Blog)  
-[Example Aspire project on GitHub](https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS.Blog.AppHost)  
+[Example Web project on GitHub](https://github.com/formcms/formcms/tree/main/server/FormCMS.Course)  
+[Example Aspire project on GitHub](https://github.com/formcms/formcms/tree/main/server/FormCMS.Course.AppHost)  
 
-To emulate the production environment locally, Fluent CMS leverages Aspire. Here's an example setup:
+To emulate the production environment locally,  FormCMS leverages Aspire. Here's an example setup:
 
 ```csharp
 var builder = DistributedApplication.CreateBuilder(args);
@@ -1026,7 +1026,7 @@ var redis = builder.AddRedis(name: CmsConstants.Redis);
 var db = builder.AddPostgres(CmsConstants.Postgres);
 
 // Configuring the web project with replicas and references
-builder.AddProject<Projects.FluentCMS_Blog>(name: "web")
+builder.AddProject<Projects.FormCMS_Course>(name: "web")
     .WithEnvironment(CmsConstants.DatabaseProvider, CmsConstants.Postgres)
     .WithReference(redis)
     .WithReference(db)
@@ -1045,7 +1045,7 @@ builder.Build().Run();
 2. **Realistic Testing**:  
    The local environment mirrors the production architecture, ensuring seamless transitions during deployment.
 
-By adopting these caching and deployment strategies, Fluent CMS ensures improved performance, scalability, and ease of configuration.
+By adopting these caching and deployment strategies,  FormCMS ensures improved performance, scalability, and ease of configuration.
 
 
 ---
@@ -1060,7 +1060,7 @@ ASP.NET Core's output caching reduces database access when repeated queries are 
 
 ### Using Document Databases to Improve Query Performance
 
-For the query below, FluentCMS joins the `post`, `tag`, `category`, and `author` tables:
+For the query below, FormCMS joins the `post`, `tag`, `category`, and `author` tables:
 ```graphql
 query post_sync($id: Int) {
   postList(idSet: [$id], sort: id) {
@@ -1110,7 +1110,7 @@ PostgreSQL:
 ### Synchronizing Query Data to Document DB
 
 #### Architecture Overview
-![Architecture Overview](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/mongo-sync.png)
+![Architecture Overview](https://raw.githubusercontent.com/formcms/formcms/doc/doc/diagrams/mongo-sync.png)
 
 #### Enabling Message Publishing in WebApp
 To enable publishing messages to the Message Broker, use Aspire to add a NATS resource. Detailed documentation is available in [Microsoft Docs](https://learn.microsoft.com/en-us/dotnet/aspire/messaging/nats-integration?tabs=dotnet-cli).
@@ -1125,7 +1125,7 @@ builder.AddNatsClient(AppConstants.Nats);
 var entities = builder.Configuration.GetRequiredSection("TrackingEntities").Get<string[]>()!;
 builder.Services.AddNatsMessageProducer(entities);
 ```
-FluentCMS publishes events for changes made to entities listed in `appsettings.json`:
+FormCMS publishes events for changes made to entities listed in `appsettings.json`:
 ```json
 {
   "TrackingEntities": [
@@ -1167,7 +1167,7 @@ After adding a new entry to `ApiLinksArray`, the Worker App will perform a migra
 ### Replacing Queries with Document DB
 
 #### Architecture Overview
-![Architecture Overview](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/mongo-query.png)   
+![Architecture Overview](https://raw.githubusercontent.com/formcms/formcms/doc/doc/diagrams/mongo-query.png)   
 
 To enable MongoDB queries in your WebApp, use the Aspire MongoDB integration. Details are available in [Microsoft Docs](https://learn.microsoft.com/en-us/dotnet/aspire/database/mongodb-integration?tabs=dotnet-cli).
 
@@ -1195,14 +1195,14 @@ The WebApp will now query MongoDB directly for the specified collections.
 ---
 ## Integrating it into Your Project
 
-Follow these steps to integrate Fluent CMS into your project using a NuGet package.
+Follow these steps to integrate  FormCMS into your project using a NuGet package.
 
 1. **Create a New ASP.NET Core Web Application**.
 
-2. **Add the FluentCMS NuGet Package**:
-   To add Fluent CMS, run the following command:  
+2. **Add the NuGet Package**:
+   To add FormCMS, run the following command:  
    ```
-   dotnet add package FluentCMS
+   dotnet add package FormCMS
    ```
 
 3. **Modify `Program.cs`**:
@@ -1212,14 +1212,14 @@ Follow these steps to integrate Fluent CMS into your project using a NuGet packa
    var app = builder.Build();
    ```
 
-   Currently, Fluent CMS supports `AddSqliteCms`, `AddSqlServerCms`, and `AddPostgresCms`.
+   Currently,  FormCMS supports `AddSqliteCms`, `AddSqlServerCms`, and `AddPostgresCms`.
 
-4. **Initialize Fluent CMS**:
+4. **Initialize FormCMS**:
    Add this line after `builder.Build()` to initialize the CMS:  
    ```
    await app.UseCmsAsync();
    ```  
-   This will bootstrap the router and initialize the Fluent CMS schema table.
+   This will bootstrap the router and initialize the  FormCMS schema table.
 
 5. **Optional: Set Up User Authorization**:
    If you wish to manage user authorization, you can add the following code. If you're handling authorization yourself or don’t need it, you can skip this step.  
@@ -1235,7 +1235,7 @@ Follow these steps to integrate Fluent CMS into your project using a NuGet packa
 
 Once your web server is running, you can access the **Admin Panel** at `/admin` and the **Schema Builder** at `/schema`.
 
-You can find an example project [here](https://github.com/fluent-cms/fluent-cms/tree/main/examples/WebApiExamples).
+You can find an example project [here](https://github.com/formcms/formcms/tree/main/examples/WebApiExamples).
 
 
 
@@ -1316,17 +1316,17 @@ The backend is written in ASP.NET Core, the Admin Panel uses React, and the Sche
 
 
 ### System Overviews
-![System Overview](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/overview.png)   
-- [**Backend Server**](https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS)  
-- [**Admin Panel UI**](https://github.com/fluent-cms/fluent-cms/tree/main/admin-panel)  
-- [**Schema Builder**](https://github.com/fluent-cms/fluent-cms/tree/main/server/FluentCMS/wwwroot/schema-ui)  
+![System Overview](https://raw.githubusercontent.com/formcms/formcms/doc/doc/diagrams/overview.png)   
+- [**Backend Server**](https://github.com/formcms/formcms/tree/main/server/FormCMS)  
+- [**Admin Panel UI**](https://github.com/formcms/formcms/tree/main/admin-panel)  
+- [**Schema Builder**](https://github.com/formcms/formcms/tree/main/server/FormCMS/wwwroot/schema-ui)  
 
 ### Backend Server
 - **Tools**:  
     - **ASP.NET Core**  
     - **SqlKata**: [SqlKata](https://sqlkata.com/)  
 
-![API Controller Service](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/api-controller-service.png)
+![API Controller Service](https://raw.githubusercontent.com/formcms/formcms/doc/doc/diagrams/api-controller-service.png)
 
 ### Admin Panel UI
 - **Tools**:
@@ -1334,38 +1334,31 @@ The backend is written in ASP.NET Core, the Admin Panel uses React, and the Sche
     - **PrimeReact**: [PrimeReact UI Library](https://primereact.org/)
     - **SWR**: [Data Fetching/State Management](https://swr.vercel.app/)
 
-![Admin Panel Sequence](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/admin-panel-sequence.png)
+![Admin Panel Sequence](https://raw.githubusercontent.com/formcms/formcms/doc/doc/diagrams/admin-panel-sequence.png)
 
 ### Schema Builder UI
 - **Tools**:
     - **jsoneditor**: [JSON Editor](https://github.com/json-editor/json-editor)
 
-![Schema Builder Sequence](https://raw.githubusercontent.com/fluent-cms/fluent-cms/doc/doc/diagrams/schema-builder-sequence.png)
+![Schema Builder Sequence](https://raw.githubusercontent.com/formcms/formcms/doc/doc/diagrams/schema-builder-sequence.png)
 
 
 
 ---
 ## Testing Strategy
-This chapter describes Fluent CMS's automated testing strategy
+This chapter describes  FormCMS's automated testing strategy
 
-Fluent CMS favors integration testing over unit testing because integration tests can catch more real-world issues. For example, when inserting a record into the database, multiple modules are involved:
+ FormCMS favors integration testing over unit testing because integration tests can catch more real-world issues. For example, when inserting a record into the database, multiple modules are involved:
 - `EntitiesController`
 - `EntitiesService`
 - `Entity` (in the query builder)
 - Query executors (e.g., `SqlLite`, `Postgres`, `SqlServer`)
 
-Writing unit tests for each individual function and mocking its upstream and downstream services can be tedious. Instead, Fluent CMS focuses on checking the input and output of RESTful API endpoints in its integration tests.
+Writing unit tests for each individual function and mocking its upstream and downstream services can be tedious. Instead, FormCMS focuses on checking the input and output of RESTful API endpoints in its integration tests.
 
-However, certain cases, such as the Hook Registry or application bootstrap, are simpler to cover with unit tests.
+### Integration Testing for FormCMS.Blog `/formcms/server/FormCMS.Course.Tests`
+This project focuses on verifying the functionalities of the FormCMS.Blog example project.
 
-### Unit Testing `/fluent-cms/server/FluentCMS.Test`
-This project focuses on testing specific modules, such as:
-- Hook Registry
-- Application Bootstrap
-
-### Integration Testing for FluentCMS.Blog `/fluent-cms/server/FluentCMS.Blog.Tests`
-This project focuses on verifying the functionalities of the FluentCMS.Blog example project.
-
-### New Feature Testing `/fluent-cms/server/FluentCMS.App.Tests`
+### New Feature Testing `/formcms/server/FormCMS.App.Tests`
 This project is dedicated to testing experimental functionalities, like MongoDB and Kafka plugins.
 
