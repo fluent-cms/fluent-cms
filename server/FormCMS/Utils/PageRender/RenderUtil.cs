@@ -37,8 +37,8 @@ public static class RenderUtil
             }
 
             field = string.IsNullOrWhiteSpace(field) ? n.Id : field;
-            var pagination = n.GetAttributeValue(Constants.AttrPagination, PageMode.None.ToString());
-            Enum.TryParse(pagination, out PageMode paginationType);
+            var pagination = n.GetAttributeValue(Constants.AttrPagination, PaginationMode.None.ToString());
+            Enum.TryParse(pagination,true, out PaginationMode paginationType);
             ret.Add(new DataNode(n, new DataSource(paginationType, field, query, qs, offset, limit)));
         }
 
@@ -46,15 +46,15 @@ public static class RenderUtil
         bool GetInt(HtmlNode node, string attribute, out int value) => int.TryParse(node.GetAttributeValue(attribute, "0"), out value);
     }
 
-    public static void SetPaginationTemplate(this HtmlNode node, string field, PageMode pageMode)
+    public static void SetPaginationTemplate(this HtmlNode node, string field, PaginationMode paginationMode)
     {
         node.InnerHtml = "{{#each " + field + "}}" + node.InnerHtml + "{{/each}}";
-        switch (pageMode)
+        switch (paginationMode)
         {
-            case PageMode.InfiniteScroll:
+            case PaginationMode.InfiniteScroll:
                 node.InnerHtml += $"<div class=\"load-more-trigger\" style=\"visibility:hidden;\" last=\"{{{{{field}_last}}}}\"></div>";
                 break;
-            case PageMode.Button:
+            case PaginationMode.Button:
                 node.Attributes.Add("first", $"{{{{{FirstAttrTag(field)}}}}}");
                 node.Attributes.Add("last", $"{{{{{LastAttrTag(field)}}}}}");
                 break;

@@ -64,7 +64,7 @@ public static class HttpClientExt
         if (!msg.IsSuccessStatusCode)
         {
             return Result.Fail(
-                $"fail to request {msg.RequestMessage?.RequestUri}, message= {str}");
+                $"Fail to {msg.RequestMessage?.Method} {msg.RequestMessage?.RequestUri}, message= {str}");
         }
         return Result.Ok(str);
     }

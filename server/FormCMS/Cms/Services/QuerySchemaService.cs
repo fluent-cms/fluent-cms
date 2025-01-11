@@ -47,17 +47,17 @@ public sealed class QuerySchemaService(
 
     public async Task<LoadedQuery> ByNameAndCache(string name, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(name)) throw new ResultException("query name should not be empty");
+        if (string.IsNullOrWhiteSpace(name)) throw new ResultException("Query name should not be empty");
         var query = await queryCache.GetOrSet(name, async (token) =>
         {
             var schema = await schemaSvc.GetByNameDefault(name, SchemaType.Query, token) ??
-                         throw new ResultException($"can not find query by name {name}");
+                         throw new ResultException($"Cannot find query by name [{name}]");
             var query = schema.Settings.Query ??
-                        throw new ResultException("invalid query format");
+                        throw new ResultException($"Query [{name}] has invalid query format");
             var fields = Converter.GetRootGraphQlFields(query.Source).Ok();
             return await ToLoadedQuery(query, fields, token);
         }, ct);
-        return query ?? throw new ResultException($"can not find query [{name}]");
+        return query ?? throw new ResultException($"Cannot find query [{name}]");
     }
 
 

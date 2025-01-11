@@ -74,8 +74,8 @@ public sealed class PageService(ILogger<PageService> logger,ISchemaService schem
         };
         TagPagination(data, items, part);
         
-        ctx.Node.SetPaginationTemplate(flatField, part.DataSource.PageMode);
-        var html = part.DataSource.PageMode == PageMode.Button
+        ctx.Node.SetPaginationTemplate(flatField, part.DataSource.PaginationMode);
+        var html = part.DataSource.PaginationMode == PaginationMode.Button
             ? ctx.Node.OuterHtml // for button pagination, replace the div 
             : ctx.Node.InnerHtml; // for infinite screen, append to original div
         var render = Handlebars.Compile(html);
@@ -89,7 +89,7 @@ public sealed class PageService(ILogger<PageService> logger,ISchemaService schem
 
         foreach (var repeatNode in ctx.Nodes)
         {
-            repeatNode.HtmlNode.SetPaginationTemplate(repeatNode.DataSource.Field, repeatNode.DataSource.PageMode);
+            repeatNode.HtmlNode.SetPaginationTemplate(repeatNode.DataSource.Field, repeatNode.DataSource.PaginationMode);
         }
 
         var title = Handlebars.Compile(ctx.Page.Title)(data);
