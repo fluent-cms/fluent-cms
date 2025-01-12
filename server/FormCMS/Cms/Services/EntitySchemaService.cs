@@ -367,27 +367,27 @@ public sealed class EntitySchemaService(
 
     private void VerifyEntity(Entity entity)
     {
-        var msg = $"Verify entity [{entity.Name}] fail,";
+        var msg = $"Verification of the entity [{entity.Name}] failed,";
         foreach (var attr in entity.Attributes)
         {
             if (!DataTypeHelper.ValidTypeMap.Contains((attr.DataType, attr.DisplayType)))
             {
                 throw new ResultException(
-                    $"{msg}:[{attr.Field}] Data type [{attr.DataType}] with Display Type [{attr.DisplayType}] is not supported .");
+                    $"{msg} The data type=[{attr.DataType}] with display type =[{attr.DisplayType}] for [{attr.Field}] is not supported.");
             }
         }
 
-        if (string.IsNullOrEmpty(entity.TableName)) throw new ResultException($"{msg}: Table name should not be empty");
-        if (string.IsNullOrEmpty(entity.TitleAttribute)) throw new ResultException($"{msg}: Title attribute should not be empty");
-        if (string.IsNullOrEmpty(entity.PrimaryKey)) throw new ResultException($"{msg}: Primary key should not be empty");
+        if (string.IsNullOrEmpty(entity.TableName)) throw new ResultException($"{msg} Table name should not be empty");
+        if (string.IsNullOrEmpty(entity.TitleAttribute)) throw new ResultException($"{msg} Title attribute should not be empty");
+        if (string.IsNullOrEmpty(entity.PrimaryKey)) throw new ResultException($"{msg} Primary key should not be empty");
 
         if (entity.DefaultPageSize < 1) throw new ResultException($"{msg}default page size should be greater than 0");
 
         _ = entity.Attributes.FirstOrDefault(x=>x.Field ==entity.PrimaryKey) ??
-            throw new ResultException($"{msg}: [{entity.PrimaryKey}] was not in attributes list");
+            throw new ResultException($"{msg} [{entity.PrimaryKey}] was not in attributes list");
 
         _ = entity.Attributes.FirstOrDefault(x=>x.Field==entity.TitleAttribute) ??
-            throw new ResultException($"{msg}: [{entity.TitleAttribute}] was not in attributes list");
+            throw new ResultException($"{msg} [{entity.TitleAttribute}] was not in attributes list");
     }
 
 

@@ -37,13 +37,6 @@
       "title": "Data Type",
       "description": "Data type",
       "enum":[
-        "String",
-        "Text",
-        "Int",
-        "Datetime",
-        "Lookup",
-        "Junction",
-        "Collection",
         "string",
         "text",
         "int",
@@ -72,11 +65,15 @@
         "file",
 
         "dropdown",
-        "lookup",
         "multiselect",
 
+        "lookup",
+        "treeSelect",
+        
         "picklist",
-        "edittable"
+        "tree",
+        
+        "editTable"
       ]
     },
     "validation": {

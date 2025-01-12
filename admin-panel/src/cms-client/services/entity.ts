@@ -11,6 +11,10 @@ export function useListData(schemaName: string | undefined, lazyState: any) {
     return {...res, error:decodeError(res.error)}
 }
 
+export function useTreeData(schemaName: string | undefined ) {
+    let res = useSWR<any[]>(fullAPIURI(`/entities/tree/${schemaName}`), fetcher,swrConfig);
+    return {...res, error:decodeError(res.error)}
+}
 export function useItemData(schemaName: string, id: any) {
     let res =  useSWR(fullAPIURI(`/entities/${schemaName}/${id}`), fetcher, swrConfig)
     return {...res, error:decodeError(res.error)}
@@ -28,6 +32,11 @@ export async function deleteItem(schemaName:string, item:any){
     return catchResponse(()=>axios.post(fullAPIURI(`/entities/${schemaName}/delete`), item))
 }
 
+export function useJunctionIds(schemaName: string, id: any, field:string) {
+    const url= fullAPIURI(`/entities/junction/target_ids/${schemaName}/${id}/${field}`);
+    let res = useSWR<any[]>(schemaName &&id &&field ?  url:null, fetcher,swrConfig)
+    return {...res, error:decodeError(res.error)}
+}
 export function useJunctionData(schemaName: string, id:any, field:string, exclude:boolean, lazyState:any ) {
     const lazy = encodeLazyState(lazyState)
     const url= fullAPIURI(`/entities/junction/${schemaName}/${id}/${field}?exclude=${exclude}&${lazy}`);

@@ -21,10 +21,10 @@ public enum DisplayType
     Multiselect, 
 
     Lookup, 
-    SelectTree,
+    TreeSelect,
     
     Picklist, 
-    MultiSelectTree,
+    Tree,
     
     EditTable,
 }

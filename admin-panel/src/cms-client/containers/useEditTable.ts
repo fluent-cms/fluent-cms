@@ -3,20 +3,20 @@ import {XAttr, XEntity } from "../types/schemaExt";
 
 export function useEditTable(data :any, schema:XEntity, column: XAttr )
 {
-    const id = (data ?? {})[schema?.primaryKey ?? '']
+    const id = (data ?? {})[schema.primaryKey ?? '']
     const targetSchema = column.collection;
     
     const listColumns = targetSchema?.attributes?.filter(
-        (x: any) =>{
+        (x) =>{
             return x.inList
-                && x.dataType != "Junction" && x.dataType != "Collection"
+                && x.dataType != "junction" && x.dataType != "collection"
         }
     ) ?? [];
     
     const inputColumns = targetSchema?.attributes?.filter(
-        (x: any) =>{
+        x =>{
             return x.inDetail && !x.isDefault
-                && x.dataType != "Junction" && x.dataType != "Collection" 
+                && x.dataType != "junction" && x.dataType != "collection" 
         }
     ) ??[];
 

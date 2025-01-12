@@ -69,9 +69,9 @@ export enum DisplayType {
     Dropdown = "dropdown",
     Multiselect = "multiselect",
     Lookup = "lookup",
-    SelectTree = "selectTree",
+    TreeSelect = "treeSelect",
     Picklist = "picklist",
-    MultiSelectTree = "multiSelectTree",
+    Tree = "tree",
     EditTable = "editTable",
 }
 

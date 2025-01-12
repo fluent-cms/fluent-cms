@@ -15,7 +15,7 @@ export function PageLayout({baseRouter,schemaName, page:Page}: PageLayoutProps){
     }
     return <>
         <Helmet>
-            <title>🚀{schema?.name} - Fluent CMS Admin Panel</title>
+            <title>🚀{schema?.name} - FormCMS Admin Panel</title>
         </Helmet>
         <Page baseRouter={baseRouter} schema={schema}/>
     </>

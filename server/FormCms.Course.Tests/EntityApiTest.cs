@@ -162,6 +162,10 @@ public class EntityApiTest
         (await _entityApiClient.JunctionAdd(_postEntityName, _tagEntityName, 1, 1)).Ok();
         var res = (await _entityApiClient.JunctionList(_postEntityName, _tagEntityName, 1, true)).Ok();
         Assert.Empty(res.Items);
+        
+        var ids = (await _entityApiClient.JunctionTargetIds(_postEntityName, _tagEntityName, 1)).Ok();
+        Assert.Single(ids);
+        
         res = (await _entityApiClient.JunctionList(_postEntityName, _tagEntityName, 1, false)).Ok();
         Assert.Single(res.Items);
 

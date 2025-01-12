@@ -106,6 +106,11 @@ public static class JunctionHelper
         return new SqlKata.Query(c.JunctionEntity.TableName).AsInsert(cols, vals);
     }
 
+    public static SqlKata.Query GetTargetIds(this Junction junction,IEnumerable<ValidValue> sourceIds)
+        => junction.JunctionEntity
+            .Basic().Select(junction.SourceAttribute.Field, junction.TargetAttribute.Field)
+            .WhereIn(junction.SourceAttribute.Field, sourceIds.GetValues());
+
     public static SqlKata.Query GetNotRelatedItems(
         this Junction c,
         IEnumerable<LoadedAttribute> selectAttributes,

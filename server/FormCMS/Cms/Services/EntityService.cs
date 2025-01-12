@@ -156,6 +156,14 @@ public sealed class EntityService(
         return ret;
     }
 
+    public async Task<object[]> JunctionTargetIds(string name, string sid, string attr, CancellationToken ct)
+    {
+        var (_, junction, id) = await GetJunctionCtx(name, sid, attr, ct);
+        var query = junction.GetTargetIds([id]);
+        var records = await queryExecutor.Many(query, ct);
+        return records.Select(x => x[junction.TargetAttribute.Field]).ToArray();
+    }
+    
     public async Task<ListResponse> JunctionList(string name, string sid, string attr, bool exclude,
         Pagination pagination,
         StrArgs args, CancellationToken ct)

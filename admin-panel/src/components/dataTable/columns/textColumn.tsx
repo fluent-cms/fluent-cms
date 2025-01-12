@@ -24,7 +24,7 @@ export function textColumn({column, baseRouter, schema}:{
 
     const bodyTemplate = (item:any) => {
         let val = item[column.field]
-        if (column.displayType === "lookup" && val){
+        if (column.dataType === "lookup" && val){
             val = val[column.lookup!.titleAttribute]
         }
 

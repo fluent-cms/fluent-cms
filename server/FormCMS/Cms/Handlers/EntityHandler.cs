@@ -75,6 +75,14 @@ public static class EntityHandler
             JsonElement[] elements,
             CancellationToken ct
         ) =>  entityService.JunctionSave(name, id, attr, elements, ct));
+            
+        app.MapGet("/junction/target_ids/{name}/{id}/{attr}",  (
+            IEntityService entityService,
+            string name,
+            string id,
+            string attr,
+            CancellationToken ct
+        ) =>  entityService.JunctionTargetIds( name, id, attr, ct));
 
         app.MapGet("/junction/{name}/{id}/{attr}",  (
             IEntityService entityService,

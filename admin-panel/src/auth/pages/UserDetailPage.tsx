@@ -2,10 +2,10 @@ import {deleteUser, saveUser, useResource, useSingleUser, useRoles} from "../ser
 import {useForm} from "react-hook-form";
 import {useParams} from "react-router-dom";
 import {Button} from "primereact/button";
-import {useCheckError} from "../../components/useCheckError";
 import {useConfirm} from "../../components/useConfirm";
 import {FetchingStatus} from "../../components/FetchingStatus";
-import {arrayToCvs, cvsToArray, MultiSelectInput} from "../../components/inputs/MultiSelectInput";
+import {MultiSelectInput} from "../../components/inputs/MultiSelectInput";
+import {arrayToCvs, cvsToArray} from "./util";
 import {getEntityPermissionColumns} from "../types/utils";
 import {Toast} from "primereact/toast";
 import {useRef, useState} from "react";

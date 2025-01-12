@@ -1,4 +1,6 @@
 import {LookupContainer} from "./LookupContainer";
+import {TreeSelectContainer} from "./TreeSelectContainer";
+
 import {TextInput} from "../../components/inputs/TextInput";
 import {TextAreaInput} from "../../components/inputs/TextAreaInput";
 import {EditorInput} from "../../components/inputs/EditorInput";
@@ -40,13 +42,14 @@ export function createInput(props :{
             return <GalleryInput className={'field col-12  md:col-4'} key={field} {...props}/>
         case 'file':
             return <FileInput download className={'field col-12  md:col-4'} key={field} {...props}/>
-
         case 'dropdown':
             return <DropDownInput className={'field col-12 md:col-4'} key={field}{...props}/>
         case 'lookup':
             return <LookupContainer className={'field col-12 md:col-4'} key={field}{...props}/>
         case 'multiselect':
             return <MultiSelectInput className={'field col-12  md:col-4'} key={field} {...props}/>
+        case 'treeSelect':
+            return <TreeSelectContainer className={'field col-12  md:col-4'} key={field} {...props}/>
         default:
             return <TextInput className={'field col-12 md:col-4'} key={field} {...props}/>
     }
