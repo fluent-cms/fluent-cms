@@ -73,6 +73,11 @@
               </ul>
             </li>
             
+            <li class="nav-item" data-bs-level="2"><a href="#-edittable-manage-items-of-a-one-to-many-sub-entity-requires-collection-data-type" class="nav-link">- "edittable": Manage items of a one-to-many sub-entity (requires Collection data type).</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
             <li class="nav-item" data-bs-level="2"><a href="#graphql-query" class="nav-link">GraphQL Query</a>
               <ul class="nav flex-column">
               </ul>
@@ -134,7 +139,7 @@
 Enjoying FormCMS? Don’t forget to give us a ⭐ and help us grow!     </p>
 <hr />
 <h2 id="what-is-formcms">What is  FormCMS?</h2>
-<p>** FormCMS** is an open-source Content Management System designed to simplify and accelerate web development workflows. While it's particularly suited for CMS projects, it is also highly beneficial for general web applications, reducing the need for repetitive REST/GraphQL API development.</p>
+<p><strong>FormCMS</strong> is an open-source Content Management System designed to simplify and accelerate web development workflows. While it's particularly suited for CMS projects, it is also highly beneficial for general web applications, reducing the need for repetitive REST/GraphQL API development.</p>
 <ul>
 <li>
 <p><strong>Effortless CRUD Operations:</strong>  FormCMS includes built-in RESTful APIs for Create, Read, Update, and Delete (CRUD) operations, complemented by a React-based admin panel for efficient data management.</p>
@@ -541,16 +546,22 @@ Enjoying FormCMS? Don’t forget to give us a ⭐ and help us grow!     </p>
 <li>
 <p><code>"dropdown"</code>: Select an item from a predefined list.</p>
 </li>
-<li><code>"multiselect"</code>: Select multiple items from a predefined list.</li>
+<li>
+<p><code>"multiselect"</code>: Select multiple items from a predefined list.</p>
+</li>
 <li>
 <p><code>"lookup"</code>: Select an item from another entity with a many-to-one relationship (requires <code>Lookup</code> data type).</p>
 </li>
 <li>
+<p><code>"treeSelect"</code>: Select an item from another entity with a many-to-one relationship (requires <code>Lookup</code> data type), items are organized as tree.</p>
+</li>
+<li>
 <p><code>"picklist"</code>: Select multiple items from another entity with a many-to-many relationship (requires <code>Junction</code> data type).</p>
 </li>
-<li><code>"edittable"</code>: Manage items of a one-to-many sub-entity (requires <code>Collection</code> data type).</li>
+<li><code>"tree"</code>: Select multiple items from another entity with a many-to-many relationship (requires <code>Junction</code> data type), items are organized as tree.</li>
 </ul>
-<hr />
+<h2 id="-edittable-manage-items-of-a-one-to-many-sub-entity-requires-collection-data-type">- <code>"edittable"</code>: Manage items of a one-to-many sub-entity (requires <code>Collection</code> data type).</h2>
+<p>[See this example how to configure entity <code>category</code>, so it's item can be organized as tree.] (https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/edit.html?schema=entity&amp;id=103)</p>
 <h3 id="datatype-to-displaytype-mapping-table"><strong>DataType to DisplayType Mapping Table</strong></h3>
 <p>Below is a mapping of valid <code>DataType</code> and <code>DisplayType</code> combinations:</p>
 <table>
@@ -653,8 +664,18 @@ Enjoying FormCMS? Don’t forget to give us a ⭐ and help us grow!     </p>
 <td>Select an item from another entity.</td>
 </tr>
 <tr>
+<td>Lookup</td>
+<td>TreeSelect</td>
+<td>Select an item from another entity.</td>
+</tr>
+<tr>
 <td>Junction</td>
 <td>Picklist</td>
+<td>Select multiple items from another entity.</td>
+</tr>
+<tr>
+<td>Lookup</td>
+<td>Tree</td>
 <td>Select multiple items from another entity.</td>
 </tr>
 <tr>
@@ -666,25 +687,25 @@ Enjoying FormCMS? Don’t forget to give us a ⭐ and help us grow!     </p>
 </table>
 <hr />
 <h3 id="list-page"><strong>List Page</strong></h3>
-<p><a href="https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&amp;limit=20">Example Course List Page</a></p>
+<p><a href="https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&amp;limit=20">Example Course List Page</a></p>
 <p>The <strong>List Page</strong> displays entities in a tabular format, supporting sorting, searching, and pagination for efficient browsing or locating of specific records.</p>
 <h4 id="sorting"><strong>Sorting</strong></h4>
 <p>Sort records by clicking the <code>↑</code> or <code>↓</code> icon in the table header.
-- <a href="https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&amp;limit=20&amp;sort[created_at]=-1">Order by Created At Example</a>
-- <a href="https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&amp;limit=20&amp;sort[name]=1">Order by Name Example</a></p>
+- <a href="https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&amp;limit=20&amp;sort[created_at]=-1">Order by Created At Example</a>
+- <a href="https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&amp;limit=20&amp;sort[name]=1">Order by Name Example</a></p>
 <h4 id="filtering"><strong>Filtering</strong></h4>
 <p>Apply filters by clicking the Funnel icon in the table header.</p>
 <ul>
-<li><a href="https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&amp;limit=20&amp;created_at[dateIs]=2024-09-07&amp;sort[created_at]=1">Filter by Created At (2024-09-07)</a></li>
-<li><a href="https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&amp;limit=20&amp;name[operator]=or&amp;name[startsWith]=A&amp;name[startsWith]=C&amp;sort[created_at]=1">Filter by Course Name (Starts with A or C)</a></li>
+<li><a href="https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&amp;limit=20&amp;created_at[dateIs]=2024-09-07&amp;sort[created_at]=1">Filter by Created At (2024-09-07)</a></li>
+<li><a href="https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&amp;limit=20&amp;name[operator]=or&amp;name[startsWith]=A&amp;name[startsWith]=C&amp;sort[created_at]=1">Filter by Course Name (Starts with A or C)</a></li>
 </ul>
 <hr />
 <h3 id="detail-page"><strong>Detail Page</strong></h3>
 <p>Detail page provides an interface to manage single record.  </p>
 <h4 id="example-of-display-types-dateimage-gallery-muliselect-dropdown">Example of display types <code>date</code>,<code>image</code>, <code>gallery</code>, <code>muliselect</code>, <code>dropdown</code>,</h4>
-<p><a href="https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/lesson/6?ref=https%3A%2F%2Ffluent-cms-admin.azurewebsites.net%2F_content%2FFluentCMS%2Fadmin%2Fentities%2Fcourse%2F27%3Fref%3Dhttps%253A%252F%252Ffluent-cms-admin.azurewebsites.net%252F_content%252FFluentCMS%252Fadmin%252Fentities%252Fcourse%253Foffset%253D0%2526limit%253D20">Lesson Detail Page</a>.</p>
+<p><a href="https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/lesson/6?ref=https%3A%2F%2Ffluent-cms-admin.azurewebsites.net%2F_content%FormCMS%2Fadmin%2Fentities%2Fcourse%2F27%3Fref%3Dhttps%253A%252F%252Ffluent-cms-admin.azurewebsites.net%252F_content%FormCMS%252Fadmin%252Fentities%252Fcourse%253Foffset%253D0%2526limit%253D20">Lesson Detail Page</a>.</p>
 <h4 id="example-of-lookuppicklistedittable">Example of <code>lookup</code>,<code>picklist</code>,<code>edittable</code></h4>
-<p><a href="https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course/22">Course Detail Page</a></p>
+<p><a href="https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course/22">Course Detail Page</a></p>
 <hr />
 <h2 id="graphql-query"><strong>GraphQL Query</strong></h2>
 <p>FormCMS simplifies frontend development by offering robust GraphQL support.</p>
@@ -1713,5 +1734,5 @@ app.RegisterMessageProducerHook();
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-01-10 21:01:56.727887+00:00
+Build Date UTC : 2025-01-12 23:03:29.651147+00:00
 -->

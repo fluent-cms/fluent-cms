@@ -43,9 +43,9 @@ public static class SortHelper
         //[{field:"course.teacher.name", sortOrder:Asc}]
         foreach (var node in nodes)
         {
-            if (node.GetString(SortConstant.FieldKey, out var field ) )
+            if (node.GetString(SortConstant.FieldKey, out var field ) && field is not null)
             {
-                var order = node.GetString(SortConstant.OrderKey, out var val) ? val : SortOrder.Asc;
+                var order = node.GetString(SortConstant.OrderKey, out var val) && val is not null ? val : SortOrder.Asc;
                 sorts.Add(new Sort(field,order));
             }
             else
@@ -59,13 +59,13 @@ public static class SortHelper
     
     public static Result<Sort[]> ParseSorts( IArgument argument)
     {
-        return argument.GetStringArray(out var array)
-            ? array.Select(ToSort).ToArray()
+        return argument.GetStringArray(out var array) && !array.Contains(null)
+            ? array.Select(x=>x!).Select(ToSort).ToArray()
             : Result.Fail("Fail to parse sort");
 
-        Sort ToSort(string? s)
+        Sort ToSort(string s)
         {
-            if (s != null && s.StartsWith(QueryConstants.VariablePrefix))
+            if (s.StartsWith(QueryConstants.VariablePrefix))
             {
                 //sort : [$field], not know order yet, keep it empty
                 return new Sort(s,"");

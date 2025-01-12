@@ -38,6 +38,5 @@
     
     <ItemGroup>
       <ProjectReference Include="..\FormCMS.Course\FormCMS.Course.csproj" />
-      <ProjectReference Include="..\FromCms.Course\FromCms.Course.csproj" />
     </ItemGroup>
 </Project>

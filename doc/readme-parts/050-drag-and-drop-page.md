@@ -79,7 +79,7 @@ FormCMS leverages [Handlebars expressions](https://github.com/Handlebars-Net/Han
 
 Singleton fields are enclosed within `{{ }}` to dynamically bind individual values.
 
-- **Example Page Settings:** [Page Schema Settings](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/schema-ui/page.html?schema=page&id=33)
+- **Example Page Settings:** [Page Schema Settings](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/page.html?schema=page&id=33)
 - **Example Query:** [Retrieve Course Data](https://fluent-cms-admin.azurewebsites.net/api/queries/course/?course_id=22)
 - **Example Rendered Page:** [Rendered Course Page](https://fluent-cms-admin.azurewebsites.net/pages/course/22)
 
@@ -97,7 +97,7 @@ Singleton fields are enclosed within `{{ }}` to dynamically bind individual valu
 
 In FormCMS, you won’t explicitly see the `{{#each}}` statement in the Page Designer. If a block's data source is set to `data-list`, the system automatically generates the loop.
 
-- **Example Page Settings:** [Page Schema Settings](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/schema-ui/page.html?schema=page&id=32)
+- **Example Page Settings:** [Page Schema Settings](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/page.html?schema=page&id=32)
 - **Example Rendered Page:** [Rendered List Page](https://fluent-cms-admin.azurewebsites.net/)
 - **Example Queries:**
    - [Featured Courses](https://fluent-cms-admin.azurewebsites.net/api/queries/course/?status=featured)

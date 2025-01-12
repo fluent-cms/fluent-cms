@@ -5,7 +5,7 @@ namespace FormCMS.Core.Descriptors;
 public interface IObject
 {
     //e.g. get field from {field:'', clauses:[{},{}]}
-    bool GetString(string fieldName, out string value); 
+    bool GetString(string fieldName, out string? value); 
     
     //e.g. get clauses from {field:'', clauses:[{},{}]}
     bool GetPairArray(string fieldName, out KeyValuePair<string,StringValues>[] args);

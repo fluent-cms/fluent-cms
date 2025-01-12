@@ -92,13 +92,13 @@ The `Materials` table inventories resources linked to courses.
 After launching the web application, locate the **Schema Builder** menu on the homepage to start defining your schema.
 
 #### Adding Entities
-[Example Configuration](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/schema-ui/list.html?schema=entity)  
+[Example Configuration](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/list.html?schema=entity)  
 1. Navigate to the **Entities** section of the Schema Builder.
 2. Create entities such as "Teacher" and "Course."
 3. For the `Course` entity, add attributes such as `name`, `status`, `level`, and `description`.
 ---
 ### Defining Relationships
-[Example Configuration](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/schema-ui/edit.html?schema=entity&id=27)  
+[Example Configuration](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/edit.html?schema=entity&id=27)  
 
 #### 1. **Course and Teacher (Many-to-One Relationship)**
 To establish a many-to-one relationship between the `Course` and `Teacher` entities, you can include a `Lookup` attribute in the `Course` entity. This allows selecting a single `Teacher` record when adding or updating a `Course`.

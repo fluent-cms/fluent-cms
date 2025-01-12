@@ -17,7 +17,7 @@ public record GraphArgument(GraphQLArgument Argument) : IArgument
         array = Argument.Value switch
         {
             GraphQLListValue listValue => Converter.ToPrimitiveStrings(listValue,QueryConstants.VariablePrefix),
-            _ => Converter.ToPrimitiveString(Argument.Value,QueryConstants.VariablePrefix,out var s) ? [s] : []
+            _ => Converter.ToPrimitiveString(Argument.Value,QueryConstants.VariablePrefix,out var s) ? [s] : Array.Empty<string?>()
         };
         return array.Length > 0;
     }
@@ -59,7 +59,7 @@ public record GraphArgument(GraphQLArgument Argument) : IArgument
 
 public record GraphObject(GraphQLObjectValue ObjectValue) : IObject
 {
-    public bool GetString(string fieldName, out string value)
+    public bool GetString(string fieldName, out string? value)
     {
         value = "";
         var field = ObjectValue.Field(fieldName);

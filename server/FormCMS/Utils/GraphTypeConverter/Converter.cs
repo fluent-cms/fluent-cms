@@ -1,4 +1,3 @@
-using FormCMS.Utils.DictionaryExt;
 using GraphQLParser.AST;
 using FluentResults;
 using GraphQL.Validation;
@@ -65,9 +64,9 @@ public static class Converter
             : sub;
     }
 
-    public static string[] ToPrimitiveStrings(GraphQLListValue vals, string variablePrefix)
+    public static string?[] ToPrimitiveStrings(GraphQLListValue vals, string variablePrefix)
     {
-        var ret = new List<string>();
+        var ret = new List<string?>();
         foreach (var graphQlValue in vals.Values??[])
         {
             if (!ToPrimitiveString(graphQlValue,variablePrefix,out var s))

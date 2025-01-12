@@ -36,7 +36,7 @@ public static class GraphFilterResolver
          var ret = new List<Filter>();
          foreach (var node in objects)
          {
-             if (!node.GetString(FilterConstants.FieldKey, out var fieldName))
+             if (!node.GetString(FilterConstants.FieldKey, out var fieldName) || fieldName is null)
              {
                  return Result.Fail($"{errMsg}: query attribute is not set");
              }

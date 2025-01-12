@@ -27,56 +27,61 @@ The Admin Panel supports various UI controls to display attributes:
 
 - `"dropdown"`: Select an item from a predefined list.
 - `"multiselect"`: Select multiple items from a predefined list.
+
 - `"lookup"`: Select an item from another entity with a many-to-one relationship (requires `Lookup` data type).
+- `"treeSelect"`: Select an item from another entity with a many-to-one relationship (requires `Lookup` data type), items are organized as tree.
 
 - `"picklist"`: Select multiple items from another entity with a many-to-many relationship (requires `Junction` data type).
+- `"tree"`: Select multiple items from another entity with a many-to-many relationship (requires `Junction` data type), items are organized as tree.
+
 - `"edittable"`: Manage items of a one-to-many sub-entity (requires `Collection` data type).
-
 ---
-
+[See this example how to configure entity `category`, so it's item can be organized as tree.] (https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/edit.html?schema=entity&id=103)
 ### **DataType to DisplayType Mapping Table**
 Below is a mapping of valid `DataType` and `DisplayType` combinations:
 
-| **DataType**  | **DisplayType** | **Description**                             |
-|---------------|-----------------|---------------------------------------------|
-| Int           | Number          | Input for integers.                         |
-| Datetime      | Datetime        | Datetime picker for date and time inputs.   |
-| Datetime      | Date            | Date picker for date-only inputs.           |
-| String        | Number          | Input for numeric values.                   |
-| String        | Datetime        | Datetime picker for date and time inputs.   |
-| String        | Date            | Date picker for date-only inputs.           |
-| String        | Text            | Single-line text input.                     |
-| String        | Textarea        | Multi-line text input.                      |
-| String        | Image           | Single image upload.                        |
-| String        | Gallery         | Multiple image uploads.                     |
-| String        | File            | File upload.                                |
-| String        | Dropdown        | Select an item from a predefined list.      |
-| String        | Multiselect     | Select multiple items from a predefined list.|
-| Text          | Multiselect     | Select multiple items from a predefined list.|
-| Text          | Gallery         | Multiple image uploads.                     |
-| Text          | Textarea        | Multi-line text input.                      |
-| Text          | Editor          | Rich text editor.                           |
-| Lookup        | Lookup          | Select an item from another entity.         |
-| Junction      | Picklist        | Select multiple items from another entity.  |
-| Collection    | EditTable       | Manage items of a sub-entity.               |  
+| **DataType**  | **DisplayType** | **Description**                               |
+|---------------|-----------------|-----------------------------------------------|
+| Int           | Number          | Input for integers.                           |
+| Datetime      | Datetime        | Datetime picker for date and time inputs.     |
+| Datetime      | Date            | Date picker for date-only inputs.             |
+| String        | Number          | Input for numeric values.                     |
+| String        | Datetime        | Datetime picker for date and time inputs.     |
+| String        | Date            | Date picker for date-only inputs.             |
+| String        | Text            | Single-line text input.                       |
+| String        | Textarea        | Multi-line text input.                        |
+| String        | Image           | Single image upload.                          |
+| String        | Gallery         | Multiple image uploads.                       |
+| String        | File            | File upload.                                  |
+| String        | Dropdown        | Select an item from a predefined list.        |
+| String        | Multiselect     | Select multiple items from a predefined list. |
+| Text          | Multiselect     | Select multiple items from a predefined list. |
+| Text          | Gallery         | Multiple image uploads.                       |
+| Text          | Textarea        | Multi-line text input.                        |
+| Text          | Editor          | Rich text editor.                             |
+| Lookup        | Lookup          | Select an item from another entity.           |
+| Lookup        | TreeSelect      | Select an item from another entity.           |
+| Junction      | Picklist        | Select multiple items from another entity.    |
+| Lookup        | Tree            | Select multiple items from another entity.    |
+| Collection    | EditTable       | Manage items of a sub-entity.                 |  
 
 ---
 
 ### **List Page**
-[Example Course List Page](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&limit=20)
+[Example Course List Page](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&limit=20)
 
 The **List Page** displays entities in a tabular format, supporting sorting, searching, and pagination for efficient browsing or locating of specific records.
 
 #### **Sorting**
 Sort records by clicking the `↑` or `↓` icon in the table header.
-- [Order by Created At Example](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&limit=20&sort[created_at]=-1)
-- [Order by Name Example](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&limit=20&sort[name]=1)
+- [Order by Created At Example](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&limit=20&sort[created_at]=-1)
+- [Order by Name Example](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&limit=20&sort[name]=1)
 
 #### **Filtering**
 Apply filters by clicking the Funnel icon in the table header.
 
-- [Filter by Created At (2024-09-07)](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&limit=20&created_at[dateIs]=2024-09-07&sort[created_at]=1)
-- [Filter by Course Name (Starts with A or C)](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course?offset=0&limit=20&name[operator]=or&name[startsWith]=A&name[startsWith]=C&sort[created_at]=1)
+- [Filter by Created At (2024-09-07)](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&limit=20&created_at[dateIs]=2024-09-07&sort[created_at]=1)
+- [Filter by Course Name (Starts with A or C)](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&limit=20&name[operator]=or&name[startsWith]=A&name[startsWith]=C&sort[created_at]=1)
 
 ---
 
@@ -84,10 +89,10 @@ Apply filters by clicking the Funnel icon in the table header.
 Detail page provides an interface to manage single record.  
 
 #### Example of display types `date`,`image`, `gallery`, `muliselect`, `dropdown`,
-[Lesson Detail Page](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/lesson/6?ref=https%3A%2F%2Ffluent-cms-admin.azurewebsites.net%2F_content%2FFluentCMS%2Fadmin%2Fentities%2Fcourse%2F27%3Fref%3Dhttps%253A%252F%252Ffluent-cms-admin.azurewebsites.net%252F_content%252FFluentCMS%252Fadmin%252Fentities%252Fcourse%253Foffset%253D0%2526limit%253D20).
+[Lesson Detail Page](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/lesson/6?ref=https%3A%2F%2Ffluent-cms-admin.azurewebsites.net%2F_content%FormCMS%2Fadmin%2Fentities%2Fcourse%2F27%3Fref%3Dhttps%253A%252F%252Ffluent-cms-admin.azurewebsites.net%252F_content%FormCMS%252Fadmin%252Fentities%252Fcourse%253Foffset%253D0%2526limit%253D20).
 
 #### Example of `lookup`,`picklist`,`edittable`
-[Course Detail Page](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/admin/entities/course/22)
+[Course Detail Page](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course/22)
 
 </details>  
 
