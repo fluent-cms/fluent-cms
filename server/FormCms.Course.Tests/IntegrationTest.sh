@@ -16,21 +16,21 @@ remove_container(){
 }
 
 test_postgres_container() {
-  local container_name="fluent-cms-db-postgres"
+  local container_name="FormCMS-db-postgres"
   
   remove_container $container_name
-  local docker_run_command="docker run -d --name $container_name -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=mysecretpassword -e POSTGRES_DB=fluent-cms -p 5432:5432"
+  local docker_run_command="docker run -d --name $container_name -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=mysecretpassword -e POSTGRES_DB=FormCMS -p 5432:5432"
 
   docker_run_command+=" postgres:latest"
   eval "$docker_run_command"
   
   export DatabaseProvider=Postgres
-  export Postgres="Host=localhost;Database=fluent-cms;Username=postgres;Password=mysecretpassword"
+  export Postgres="Host=localhost;Database=FormCMS;Username=postgres;Password=mysecretpassword"
   dotnet test
 }
 
 test_sqlserver_container(){
-  local container_name="fluent-cms-db-sql-edge"
+  local container_name="FormCMS-db-sql-edge"
   local password=Admin12345678!
   remove_container $container_name
 
@@ -49,7 +49,7 @@ export Logging__LogLevel__Default=Warning
 export Logging__LogLevel__Microsoft_AspNetCore=Warning
 
 # Sqlite With Default Data 
-db_path=$(pwd)/default.db && rm -f $db_path && cp ../FormCMS.Blog/cms.db "$db_path" && test_sqlite "$db_path"
+db_path=$(pwd)/default.db && rm -f "$db_path" && cp ../FormCMS.Blog/cms.db "$db_path" && test_sqlite "$db_path"
 
 # Sqlite With Empty Data 
 db_path=$(pwd)/temp.db && rm -f "$db_path" && test_sqlite "$db_path"
