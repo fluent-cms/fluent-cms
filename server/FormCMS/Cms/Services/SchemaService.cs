@@ -109,7 +109,8 @@ public sealed class SchemaService(
 
     public async Task EnsureTopMenuBar(CancellationToken ct)
     {
-        var query = SchemaHelper.BaseQuery().Where(SchemaFields.Name, SchemaName.TopMenuBar).Where(SchemaFields.Type, SchemaType.Menu.ToCamelCase());
+        var query = SchemaHelper.BaseQuery().Where(SchemaFields.Name, SchemaName.TopMenuBar)
+            .Where(SchemaFields.Type, SchemaType.Menu.ToCamelCase());
         var item = await queryExecutor.One(query, ct);
         if (item is not null)
         {
@@ -181,7 +182,7 @@ public sealed class SchemaService(
         if (menuBar is not null)
         {
             var link = "/entities/" + entity.Name;
-            var menuItem = menuBar.MenuItems.FirstOrDefault(me => me.Url == link);
+            var menuItem = menuBar.MenuItems.FirstOrDefault(me => me.Url.StartsWith(link));
             if (menuItem is null)
             {
                 menuBar = menuBar with

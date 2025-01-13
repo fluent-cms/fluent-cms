@@ -9,6 +9,8 @@ import {contentB} from "./blocks/content-b.js";
 import {ecommerceA} from "./blocks/ecommerce-a.js";
 import {headerB} from "./blocks/header-b.js";
 import {heroB} from "./blocks/hero-b.js";
+import {threeLayerMenu} from "./blocks/three-layer-menu.js";
+import {breadcrumbs} from "./blocks/breadcrumbs.js";
 
 export const customBlocks = [
     cardA,
@@ -17,4 +19,6 @@ export const customBlocks = [
     headerB,
     heroB,
     listA,
+    threeLayerMenu,
+    breadcrumbs
 ]

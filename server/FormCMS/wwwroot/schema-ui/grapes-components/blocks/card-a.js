@@ -1,6 +1,6 @@
 export const cardA =
     {
-        category:'Card',
+        category:'Data Display',
         name: 'card-a',
         label: 'Card A',
         media: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">

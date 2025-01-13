@@ -15,7 +15,7 @@ $(document).ready(function() {
     $('#visitPage').on('click', function () {
         const name = $(`#name`).val();
         if (name){
-            window.open(`/pages/${name}`, '_blank'); // Opens in a new tab
+            window.open(`/${name}`, '_blank'); // Opens in a new tab
         }
     });
     

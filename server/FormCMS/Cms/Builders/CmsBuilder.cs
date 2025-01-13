@@ -203,17 +203,18 @@ public sealed class CmsBuilder(
     {
         PrintVersion();
         await InitSchema();
-
-        UseApiRouters();
-        UseGraphql();
-        UseExceptionHandler();
-
         if (options.EnableClient)
         {
             UseAdminPanel();
             UserRedirects();
             app.MapStaticAssets();
         }
+
+        UseApiRouters();
+        UseGraphql();
+        UseExceptionHandler();
+
+       
         return;
 
         void UserRedirects()

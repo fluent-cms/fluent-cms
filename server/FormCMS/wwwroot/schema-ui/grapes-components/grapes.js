@@ -61,13 +61,16 @@ export function loadEditor(container, loadData) {
             },
         },
         canvas: {
-            scripts: [],
+            scripts: [
+                'https://cdn.tailwindcss.com'
+            ],
             styles: [
                 'https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.0.2/tailwind.min.css',
+                'https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.min.css'
             ],
         },
         assetManager: {
-            assets:['/files/{{image}}'],
+            assets: ['/files/{{image}}'],
             uploadName: 'files'
 
             // options

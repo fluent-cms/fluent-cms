@@ -1,6 +1,6 @@
 export const heroB =
     {
-        category: 'Card',
+        category: 'Data Display',
         name: 'hero-b',
         label: 'Hero B',
         media: `<svg fill="#000000"  id="Layer_1" xmlns="http://www.w3.org/2000/svg"  viewBox="0 0 256 190"  xml:space="preserve">
