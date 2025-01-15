@@ -15,10 +15,9 @@ export function TreeSelectInput(
     }) {
     const {column,options,targetEntity} = props
     return <InputPanel  {...props} component={(field: any) => {
-        console.log({field})
         return <TreeSelect
             display="chip"
-            value={field.value[targetEntity.primaryKey]}
+            value={(field.value??{})[targetEntity.primaryKey]}
             onChange={(e) => {
                 field.onChange(e.value)
             }}

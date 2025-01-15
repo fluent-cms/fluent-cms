@@ -254,53 +254,23 @@ public static class EntityHelper
         }
     }
 
-    public static Result<Record> Parse (this LoadedEntity e, JsonElement jsonElement, IAttributeValueResolver resolver)
+    public static Result<Record> Parse (this LoadedEntity entity, JsonElement element, IAttributeValueResolver resolver)
     {
         Dictionary<string, object> ret = new();
-        foreach (var property in jsonElement.EnumerateObject())
+        foreach (var attribute in entity.Attributes.Where(x=>x.IsLocal()))
         {
-            var (name, value) = (property.Name, property.Value);
             
-            var attribute = e.Attributes.FirstOrDefault(x=>x.Field ==name);
-            if (attribute == null) continue;
-
-            var res = attribute.DataType switch
-            {
-                DataType.Lookup when value.ValueKind == JsonValueKind.Object
-                    => Convert(
-                        value.GetProperty(attribute.Lookup!.TargetEntity.PrimaryKey),
-                        attribute.Lookup.TargetEntity.PrimaryKeyAttribute
-                    ),
-                _ => Convert(value, attribute)
-            };
+            if (!element.TryGetProperty(attribute.Field, out var value)) continue;
+            var res = attribute.ParseJsonElement(value, resolver);
             if (res.IsFailed)
             {
                 return Result.Fail(res.Errors);
             }
-
-            ret[property.Name] = res.Value;
+            ret[attribute.Field] = res.Value; 
+           
         }
         return ret;
         
-        Result<object> Convert(JsonElement? element, LoadedAttribute attribute)
-        {
-            if (element is null)
-            {
-                return Result.Ok<object>(null!);
-            }
-            return element.Value.ValueKind switch
-            {
-                JsonValueKind.String when resolver.ResolveVal(attribute, element.Value.GetString()!,out var caseVal) => caseVal!.Value.ObjectValue!, 
-                JsonValueKind.Number when element.Value.TryGetInt32(out var intValue) => intValue,
-                JsonValueKind.Number when element.Value.TryGetInt64(out var longValue) => longValue,
-                JsonValueKind.Number when element.Value.TryGetDouble(out var doubleValue) => doubleValue,
-                JsonValueKind.Number => element.Value.GetDecimal(),
-                JsonValueKind.True => Result.Ok<object>(true),
-                JsonValueKind.False => Result.Ok<object>(false),
-                JsonValueKind.Null => Result.Ok<object>(null!),
-                JsonValueKind.Undefined => Result.Ok<object>(null!),
-                _ => Result.Fail<object>($"Fail to convert [{attribute.Field}], input valueKind is [{element.Value.ValueKind}]")
-            };
-        }
+       
     }
 }

@@ -11,21 +11,25 @@ export function textColumn({column, baseRouter, schema}:{
     if (column.displayType == "lookup"){
         field = column.field + "." + column.lookup!.titleAttribute;
     }
-    var dataType = 'text';
+    var colType = 'text';
     switch (column.displayType){
         case 'number':
-            dataType = 'numeric';
+            colType = 'numeric';
             break;
         case 'datetime':
         case 'date':
-            dataType = 'date';
+            colType = 'date';
             break;
     }
 
     const bodyTemplate = (item:any) => {
         let val = item[column.field]
-        if (column.dataType === "lookup" && val){
-            val = val[column.lookup!.titleAttribute]
+        if (val) {
+            if (column.dataType === "lookup") {
+                val = val[column.lookup!.titleAttribute]
+            }else if (column.displayType === 'multiselect'){
+                val = val.join(", ")
+            }
         }
 
         if (column.field == schema.titleAttribute){
@@ -34,5 +38,11 @@ export function textColumn({column, baseRouter, schema}:{
             return <>{val}</>
         }
     };
-    return <Column dataType={dataType} key={column.field} field={field} header={column.header} sortable filter body={bodyTemplate}></Column>
+    return <Column 
+        dataType={colType} 
+        key={column.field} 
+        field={field} 
+        header={column.header} 
+        sortable filter body={bodyTemplate}>
+    </Column>
 }

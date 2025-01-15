@@ -4,8 +4,6 @@ using FormCMS.Core.Descriptors;
 using FormCMS.Core.HookFactory;
 using FormCMS.Utils.RelationDbDao;
 using FormCMS.Utils.ResultExt;
-using FluentResults;
-using MongoDB.Driver.Linq;
 
 namespace FormCMS.Cms.Services;
 
@@ -53,9 +51,10 @@ public sealed class QueryService(
         var records = await executor.Many(kateQuery, token);
 
         records = span.ToPage(records, pagination.Limit);
+        
         if (records.Length <= 0) return records;
 
-        await AttachRelated(attribute.Selection, args, records, token);
+        await LoadItems(attribute.Selection, args, records, token);
         var sourceId = desc.TargetAttribute.GetValueOrLookup(records[0]);
         SpanHelper.SetSpan(attribute.Selection, records, attribute.Sorts, sourceId);
         return records;
@@ -83,7 +82,7 @@ public sealed class QueryService(
             items = span.ToPage(items, pagination.Limit);
             if (items.Length > 0)
             {
-                await AttachRelated(query.Selection, args, items, ct);
+                await LoadItems(query.Selection, args, items, ct);
             }
         }
 
@@ -106,7 +105,10 @@ public sealed class QueryService(
         {
             var kateQuery = query.Entity.OneQuery(filters, sorts, query.Selection.Where(x=>x.IsLocal())).Ok();
             item = await executor.One(kateQuery, ct);
-            if (item is not null) await AttachRelated(query.Selection, args, [item], ct);
+            if (item is not null)
+            {
+                await LoadItems(query.Selection, args, [item], ct);
+            }
         }
 
         if (item is not null) SpanHelper.SetSpan(query.Selection, [item], [], null);
@@ -114,11 +116,19 @@ public sealed class QueryService(
         return item;
     }
 
-    private async Task AttachRelated(IEnumerable<GraphAttribute>? attrs, StrArgs args, Record[] items, CancellationToken ct)
+    private async Task LoadItems(IEnumerable<GraphAttribute>? attrs, StrArgs args, Record[] items, CancellationToken ct)
     {
-        foreach (var attr in (attrs??[]).Where(x=>x.IsCompound()))
+        if (attrs is null) return;
+        
+        foreach (var attr in attrs)
         {
-            await AttachRelated(attr, args, items, ct);
+            if (attr.IsCompound())
+            {
+                await AttachRelated(attr, args, items, ct);
+            }else if (attr.IsCsv())
+            {
+                attr.SpreadCsv(items);
+            }
         }
     }
     
@@ -141,12 +151,12 @@ public sealed class QueryService(
             collectionArgs = new CollectiveQueryArgs(filters,sorts,validPagination,null);
         }
 
-        if (collectionArgs is null || collectionArgs.Pagination is null)
+        if (collectionArgs?.Pagination is null)
         {
             //get all items and no pagination
             var query = desc.GetQuery(attr.Selection.Where(x=>x.IsLocal()) ,ids, collectionArgs);
             var targetRecords = await executor.Many(query, ct);
-
+            
             if (targetRecords.Length > 0)
             {
                 var groups = targetRecords.GroupBy(x => desc.TargetAttribute.GetValueOrLookup(x), x => x);
@@ -160,7 +170,7 @@ public sealed class QueryService(
                         item[attr.Field] = targetValues;
                     }
                 }
-                await AttachRelated(attr.Selection, args, targetRecords, ct);
+                await LoadItems(attr.Selection, args, targetRecords, ct);
             }
         }
         else
@@ -179,20 +189,19 @@ public sealed class QueryService(
                     {
                         item[attr.Field] = targetRecords;
                     }
-                    await AttachRelated(attr.Selection, args, targetRecords, ct);
+                    await LoadItems(attr.Selection, args, targetRecords, ct);
                 }
             }
         }
     }
 
-    
     private record QueryContext(LoadedQuery Query, ValidFilter[] Filters, ValidSort[] Sorts, ValidPagination Pagination);
 
     private async Task<QueryContext> FromSavedQuery(
         string name, Pagination? pagination,  bool haveCursor, StrArgs args, CancellationToken token =default)
     {
         var query = await schemaSvc.ByNameAndCache(name, token);
-        query.VerifyVariable(args).Ok();
+        ResultExt.Ensure(query.VerifyVariable(args));
         return await GetQueryContext(query, pagination,haveCursor,args);
     }
 

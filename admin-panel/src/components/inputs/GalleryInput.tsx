@@ -33,7 +33,7 @@ export function GalleryInput(props: {
 
 }) {
     return <InputPanel  {...props} component={(field: any) => {
-        const urls = field.value?.split(',')??[]
+        const urls = field.value??[];
         const items = urls.map((x:any) =>({
             itemImageSrc:props.getFullAssetsURL(x), thumbnailImageSrc:props.getFullAssetsURL(x)
         }));
@@ -47,7 +47,7 @@ export function GalleryInput(props: {
                       value={items}/>
             <FileUpload withCredentials multiple mode={"basic"} auto url={props.uploadUrl}
                         onUpload={(e) => {
-                field.onChange(e.xhr.responseText)
+                field.onChange(e.xhr.responseText.split(','))
             }} name={'files'}/>
         </>
     }}/>

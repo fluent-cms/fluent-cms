@@ -20,7 +20,7 @@ export function createInput(props :{
     uploadUrl:string,
     getFullAssetsURL : (arg:string) =>string
 }) {
-    const {field, displayType} = props.column
+    const {field, displayType,options} = props.column
     switch (displayType) {
         case 'text':
             return <TextInput className={'field col-12 md:col-4'} key={field} {...props}/>
@@ -28,10 +28,8 @@ export function createInput(props :{
             return <TextAreaInput className={'field col-12  md:col-4'} key={field} {...props}/>
         case 'editor':
             return <EditorInput className={'field col-12'} key={field} {...props}/>
-
         case 'number':
             return <NumberInput className={'field col-12 md:col-4'} key={field} {...props}/>
-
         case 'datetime':
             return <DatetimeInput className={'field col-12  md:col-4'} key={field} {...props}/>
         case 'date':
@@ -47,7 +45,7 @@ export function createInput(props :{
         case 'lookup':
             return <LookupContainer className={'field col-12 md:col-4'} key={field}{...props}/>
         case 'multiselect':
-            return <MultiSelectInput className={'field col-12  md:col-4'} key={field} {...props}/>
+            return <MultiSelectInput options={(options??'').split(',')} className={'field col-12  md:col-4'} key={field} {...props}/>
         case 'treeSelect':
             return <TreeSelectContainer className={'field col-12  md:col-4'} key={field} {...props}/>
         default:

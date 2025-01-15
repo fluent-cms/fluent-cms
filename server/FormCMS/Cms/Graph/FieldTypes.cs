@@ -56,7 +56,7 @@ public static class FieldTypes
         {
             DataType.Int => new IntGraphType(),
             DataType.Datetime => new DateTimeGraphType(),
-            _ => new StringGraphType()
+            _ => attribute.IsCsv()? new ListGraphType(new StringGraphType()): new StringGraphType()
         };
     }
 }

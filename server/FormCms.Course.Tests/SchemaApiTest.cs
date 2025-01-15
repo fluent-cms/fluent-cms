@@ -35,7 +35,7 @@ public class SchemaApiTest
     [Fact]
     public async Task GetAll_NUllType()
     {
-        (await _account.EnsureLogin()).Ok();
+        await _account.EnsureLogin().Ok();
         var items = await _schema.All(null).Ok();
         var len = items.Length;
         var schema = TestSchema();
@@ -47,7 +47,7 @@ public class SchemaApiTest
     [Fact]
     public async Task GetAll_EntityType()
     {
-        (await _account.EnsureLogin()).Ok();
+        await _account.EnsureLogin().Ok();
         var items = (await _schema.All(SchemaType.Menu)).Ok();
         Assert.Single(items);
     }
@@ -59,7 +59,7 @@ public class SchemaApiTest
     public async Task SaveSchemaAndOneAndGetLoaded()
     {
         var schema = TestSchema();
-        (await _account.EnsureLogin()).Ok();
+        await _account.EnsureLogin().Ok();
         schema = (await _schema.SaveEntityDefine(schema)).Ok();
         (await _schema.GetLoadedEntity(schema.Name)).Ok();
         (await _schema.One(schema.Id)).Ok();
@@ -69,7 +69,7 @@ public class SchemaApiTest
     public async Task SaveSchemaTwice()
     {
         var schema = TestSchema();
-        (await _account.EnsureLogin()).Ok();
+        await _account.EnsureLogin().Ok();
         var res = (await _schema.SaveEntityDefine(schema)).Ok();
         (await _schema.SaveEntityDefine(res)).Ok();
     }
@@ -78,10 +78,10 @@ public class SchemaApiTest
     public async Task SaveSchema_Update()
     {
         var schema = TestSchema();
-        (await _account.EnsureLogin()).Ok();
+        await _account.EnsureLogin().Ok();
         schema = (await _schema.SaveEntityDefine(schema)).Ok();
         schema = schema with { Settings = new Settings(Entity: schema.Settings.Entity! with { DefaultPageSize = 10 }) };
-        (await _schema.SaveEntityDefine(schema)).Ok();
+        await _schema.SaveEntityDefine(schema).Ok();
         var entity = (await _schema.GetLoadedEntity(schema.Name)).Ok();
         Assert.Equal(10, entity.DefaultPageSize);
     }
@@ -90,9 +90,9 @@ public class SchemaApiTest
     public async Task Delete_Success()
     {
         var schema = TestSchema();
-        (await _account.EnsureLogin()).Ok();
+        await _account.EnsureLogin().Ok();
         schema = (await _schema.SaveEntityDefine(schema)).Ok();
-        (await _schema.Delete(schema.Id)).Ok();
+        await _schema.Delete(schema.Id).Ok();
         Assert.True((await _schema.GetLoadedEntity(schema.Name)).IsFailed);
     }
 
@@ -106,7 +106,7 @@ public class SchemaApiTest
     [Fact]
     public async Task GetGraphQlClientUrlOk()
     {
-        (await _schema.GraphQlClientUrl()).Ok();
+        await _schema.GraphQlClientUrl().Ok();
     }
 
     private static Schema TestSchema()

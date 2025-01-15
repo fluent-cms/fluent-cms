@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Globalization;
+using System.Text.Json;
 using FluentResults;
 
 namespace FormCMS.Core.Descriptors;
@@ -230,6 +231,11 @@ public static class AttributeHelper
         return a.DataType is DataType.Lookup or DataType.Junction or DataType.Collection;
     }
 
+    public static bool IsCsv(this Attribute a)
+    {
+        return a.DisplayType is DisplayType.Gallery or DisplayType.Multiselect;
+    }
+
     public static bool IsLocal(this Attribute a)
     {
         return a.DataType != DataType.Junction && a.DataType != DataType.Collection;
@@ -293,6 +299,53 @@ public static class AttributeHelper
         }
 
         return attrs.FirstOrDefault(x => x.Field == parts.Last());
+    }
+
+    public static void SpreadCsv(this Attribute attribute, Record[] records)
+    {
+        foreach (var record in records)
+        {
+            if (record.TryGetValue(attribute.Field, out var value) && value is string stringValue)
+            {
+                record[attribute.Field] = stringValue.Split(",");
+            }
+        }
+        
+        
+    }
+
+    public static Result<object> ParseJsonElement(this LoadedAttribute attribute, JsonElement value, IAttributeValueResolver resolver)
+    {
+        return attribute switch
+        {
+            _ when attribute.IsCsv() && value.ValueKind is JsonValueKind.Array => string.Join(",", value.EnumerateArray().Select(x=>x.ToString())),
+            _ when attribute.DataType is DataType.Lookup && value.ValueKind is JsonValueKind.Object=> 
+                ResolveValue(value.GetProperty(attribute.Lookup!.TargetEntity.PrimaryKey), attribute.Lookup!.TargetEntity.PrimaryKeyAttribute),
+            _ =>ResolveValue(value, attribute)
+        };
+       
+        
+        Result<object> ResolveValue(JsonElement? ele ,LoadedAttribute attr)
+        {
+            if (ele is null)
+            {
+                return Result.Ok<object>(null!);
+            }
+            return ele.Value.ValueKind switch
+            {
+                JsonValueKind.String when resolver.ResolveVal(attr, ele.Value.GetString()!,out var caseVal) => caseVal!.Value.ObjectValue!, 
+                JsonValueKind.Number when ele.Value.TryGetInt32(out var intValue) => intValue,
+                JsonValueKind.Number when ele.Value.TryGetInt64(out var longValue) => longValue,
+                JsonValueKind.Number when ele.Value.TryGetDouble(out var doubleValue) => doubleValue,
+                JsonValueKind.Number => ele.Value.GetDecimal(),
+                JsonValueKind.True => Result.Ok<object>(true),
+                JsonValueKind.False => Result.Ok<object>(false),
+                JsonValueKind.Null => Result.Ok<object>(null!),
+                JsonValueKind.Undefined => Result.Ok<object>(null!),
+                _ => Result.Fail<object>($"Fail to convert [{attr.Field}], input valueKind is [{ele.Value.ValueKind}]")
+            };
+        }
+        
     }
 
     public static object GetValueOrLookup(this LoadedAttribute attribute, Record rec)

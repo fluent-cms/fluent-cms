@@ -8,9 +8,14 @@ export function imageColumn({column, getFullAssetsURL}:{
     getFullAssetsURL : (arg:string) =>string
 }){
     const bodyTemplate = (item:any) => {
-        const fullURL =  getFullAssetsURL( item[column.field]);
+        var value = item[column.field];
+        const urls:string[] = Array.isArray(value) ? value : [value];
+        const fullURLs =  urls.map(x=>getFullAssetsURL(x ));
+        
         return <AvatarGroup>
-                <Avatar image={fullURL} size="large" shape="circle" />
+            {
+                fullURLs.map(x=> <Avatar key={x} image={x} size="large" shape="circle" />)
+            }
         </AvatarGroup>
     };
     return <Column key={column.field} field={column.field} header={column.header} body={bodyTemplate}></Column>

@@ -82,7 +82,7 @@ public sealed class SchemaService(
 
     public async Task<Schema> SaveWithAction(Schema schema, CancellationToken ct)
     {
-        Result.Ok();
+        await NameNotTakenByOther(schema, ct).Ok();
         schema = (await hook.SchemaPreSave.Trigger(provider, new SchemaPreSaveArgs(schema))).RefSchema;
         schema = await Save(schema, ct);
         await hook.SchemaPostSave.Trigger(provider, new SchemaPostSaveArgs(schema));

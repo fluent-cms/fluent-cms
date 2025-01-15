@@ -110,7 +110,7 @@ public static class ResultExt
     /// Use this method to terminate the current execution flow and return an error message to the client.
     /// Recommended for use in test projects or outer layers of the application.
     /// </summary>
-    public static void Ok(this Result? result)
+    public static void Ensure(Result result)
     {
         if (result is not null && result.IsFailed)
         {

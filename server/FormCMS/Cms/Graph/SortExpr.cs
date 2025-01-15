@@ -3,7 +3,6 @@ using GraphQL.Types;
 
 namespace FormCMS.Cms.Graph;
 
-
 public sealed class SortOrderEnum : EnumerationGraphType
 {
     public SortOrderEnum()

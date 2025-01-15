@@ -25,7 +25,7 @@ public class AccountService<TUser, TRole,TCtx>(
 {
     public async Task<string[]> GetResources(CancellationToken ct)
     {
-        var query = SchemaHelper.BaseQuery([SchemaFields.Name]).Where(SchemaFields.Type , SchemaType.Entity);
+        var query = SchemaHelper.BaseQuery([SchemaFields.Name]).Where(SchemaFields.Type , SchemaType.Entity.ToCamelCase());
         var records= await queryExecutor.Many(query,ct);
         return records.Select(x => (string)x[SchemaFields.Name]).ToArray();
     }
@@ -169,11 +169,11 @@ public class AccountService<TUser, TRole,TCtx>(
         if (!accessor.HttpContext.HasRole(RoleConstants.Sa)) throw new ResultException("Only supper admin have permission");
         var user = await MustFindUser(dto.Id);
         var claims = await userManager.GetClaimsAsync(user);
-        Result.Ok();
-        Result.Ok();
-        Result.Ok();
-        Result.Ok();
-        Result.Ok();
+        await AssignRole(user, dto.Roles).Ok();
+        await AssignClaim(user, claims, AccessScope.FullAccess, dto.ReadWriteEntities).Ok();
+        await AssignClaim(user, claims, AccessScope.RestrictedAccess, dto.RestrictedReadWriteEntities).Ok();
+        await AssignClaim(user, claims, AccessScope.FullRead, dto.ReadonlyEntities).Ok();
+        await AssignClaim(user, claims, AccessScope.RestrictedRead, dto.RestrictedReadonlyEntities).Ok();
     }
 
     private async Task<TUser> MustFindUser(string id)
@@ -273,13 +273,13 @@ public class AccountService<TUser, TRole,TCtx>(
         {
             throw new ResultException("Role name can not be null");
         }
-        Result.Ok();
+        await EnsureRoles([roleDto.Name]).Ok();
         var role = await roleManager.FindByNameAsync(roleDto.Name);
         var claims =await roleManager.GetClaimsAsync(role!);
-        Result.Ok();
-        Result.Ok();
-        Result.Ok();
-        Result.Ok();
+        await AddClaimsToRole(role!, claims, AccessScope.FullAccess, roleDto.ReadWriteEntities).Ok();
+        await AddClaimsToRole(role!, claims, AccessScope.RestrictedAccess, roleDto.RestrictedReadWriteEntities).Ok();
+        await AddClaimsToRole(role!, claims, AccessScope.FullRead, roleDto.ReadonlyEntities).Ok();
+        await AddClaimsToRole(role!, claims, AccessScope.RestrictedRead, roleDto.RestrictedReadonlyEntities).Ok();
     }
 
     private async Task<Result> AddClaimsToRole(TRole role,  IList<Claim> claims, string type, string[] values )

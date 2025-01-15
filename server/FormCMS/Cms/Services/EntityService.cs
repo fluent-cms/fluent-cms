@@ -59,15 +59,14 @@ public sealed class EntityService(
             return res.OutRecord;
         }
 
-        var query = ctx.Entity.ByIdsQuery(ctx.Entity.Attributes.Where(x=> x.Field == ctx.Entity.PrimaryKey || x.InDetail && x.IsLocal()), [ctx.Id]);
+        var attr = ctx.Entity.Attributes
+            .Where(x => x.Field == ctx.Entity.PrimaryKey || x.InDetail && x.IsLocal())
+            .ToArray();
+        var query = ctx.Entity.ByIdsQuery(attr, [ctx.Id]);
         var record = await queryExecutor.One(query, ct) ??
                      throw new ResultException($"not find record by [{id}]");
 
-        foreach (var attribute in ctx.Entity.Attributes.Where(x=>x is { DataType: DataType.Lookup, InList: true }))
-        {
-            await LoadLookupData(attribute, [record], ct);
-        }
-
+        await LoadItems(attr, [record], ct);
         await hookRegistry.EntityPostGetSingle.Trigger(provider, new EntityPostGetSingleArgs(entityName, id, record));
         return record;
     }
@@ -171,20 +170,23 @@ public sealed class EntityService(
         var (_, junction, id) = await GetJunctionCtx(name, sid, attr, ct);
         var target = junction.TargetEntity;
 
-        var selectAttributes = target.Attributes.Where(x=>x.Field == target.PrimaryKey || x.IsLocal() && x.InList);
+        var attrs = target.Attributes
+            .Where(x=>x.Field == target.PrimaryKey || x.IsLocal() && x.InList)
+            .ToArray();
 
         var (filters, sorts, validPagination) = await GetListArgs(target, args, pagination);
 
         var listQuery = exclude
-            ? junction.GetNotRelatedItems(selectAttributes, filters, sorts, validPagination, [id])
-            : junction.GetRelatedItems(filters, [..sorts], validPagination, null, selectAttributes, [id]);
+            ? junction.GetNotRelatedItems(attrs, filters, sorts, validPagination, [id])
+            : junction.GetRelatedItems(filters, [..sorts], validPagination, null, attrs, [id]);
 
         var countQuery = exclude
             ? junction.GetNotRelatedItemsCount(filters, [id])
             : junction.GetRelatedItemsCount(filters, [id]);
 
-        return new ListResponse(await GetItemsAndInListLookups(junction.TargetEntity, listQuery, ct),
-            await queryExecutor.Count(countQuery, ct));
+        var items = await queryExecutor.Many(listQuery, ct);
+        await LoadItems( attrs, items, ct);
+        return new ListResponse(items, await queryExecutor.Count(countQuery, ct));
     }
 
     public async Task<Record> CollectionInsert(string name, string sid, string attr, JsonElement element, CancellationToken ct = default)
@@ -200,14 +202,16 @@ public sealed class EntityService(
         var (collection,id) = await GetCollectionCtx(name, sid, attr, ct);
         var (filters, sorts,validPagination) = await GetListArgs(collection.TargetEntity, args,pagination);
 
-        var attributes =
-            collection.TargetEntity.Attributes.Where(x=> x.Field == collection.TargetEntity.PrimaryKey || x.IsLocal() && x.InList);    
+        var attributes = collection.TargetEntity.Attributes
+            . Where(x=> x.Field == collection.TargetEntity.PrimaryKey || x.IsLocal() && x.InList)
+            .ToArray();    
+        
         var listQuery = collection.List(filters,sorts,validPagination,null,attributes,[id]);
+        var items = await queryExecutor.Many(listQuery, ct);
+        await LoadItems( attributes, items, ct);
       
         var countQuery = collection.Count(filters,[id]);
-        return new ListResponse(
-            await GetItemsAndInListLookups(collection.TargetEntity, listQuery, ct),
-            await queryExecutor.Count(countQuery, ct));
+        return new ListResponse( items, await queryExecutor.Count(countQuery, ct));
     }
 
     
@@ -229,32 +233,44 @@ public sealed class EntityService(
         );
 
         var res = await hookRegistry.EntityPreGetList.Trigger(provider, args);
-        var attributes = entity.Attributes.Where(x=>x.Field ==entity.PrimaryKey || x.InList && x.IsLocal());
+        var attributes = entity.Attributes
+            .Where(x=>x.Field ==entity.PrimaryKey || x.InList && x.IsLocal())
+            .ToArray();
 
-        var listQuery = entity.ListQuery([..res.RefFilters], [..res.RefSorts], res.RefPagination, null, attributes);
         var countQuery = entity.CountQuery([..res.RefFilters]);
         var ret = mode switch
         {
             ListResponseMode.Count => new ListResponse([], await queryExecutor.Count(countQuery, ct)),
-            ListResponseMode.Items => new ListResponse(await GetItemsAndInListLookups(entity, listQuery, ct), 0),
-            _ => new ListResponse(await GetItemsAndInListLookups(entity,listQuery,ct), await queryExecutor.Count(countQuery, ct))
+            ListResponseMode.Items => new ListResponse(await RetrieveItems(), 0),
+            _ => new ListResponse(await RetrieveItems(), await queryExecutor.Count(countQuery, ct))
         };
 
         var postArgs = new EntityPostGetListArgs(Entity: entity, RefListResponse: ret);
         var postRes = await hookRegistry.EntityPostGetList.Trigger(provider, postArgs);
         return postRes.RefListResponse;
+
+        async Task<Record[]> RetrieveItems()
+        {
+            var listQuery = entity.ListQuery([..res.RefFilters], [..res.RefSorts], res.RefPagination, null, attributes);
+            var items =  await queryExecutor.Many(listQuery, ct);
+            await LoadItems(attributes, items, ct);
+            return items;
+        }
     }
 
-    async Task<Record[]> GetItemsAndInListLookups(LoadedEntity entity, SqlKata.Query query, CancellationToken ct)
+    private async Task LoadItems(IEnumerable<LoadedAttribute> attr, Record[] items, CancellationToken ct)
     {
-        var items = await queryExecutor.Many(query, ct);
-        if (items.Length == 0) return items;
-        foreach (var attribute in entity.Attributes.Where(x=>x is { DataType: DataType.Lookup, InList: true }))
+        if (items.Length == 0) return ;
+        foreach (var attribute in attr)
         {
-            await LoadLookupData(attribute, items, ct);
+            if (attribute.DataType == DataType.Lookup)
+            {
+                await LoadLookupData(attribute, items, ct);
+            }else if (attribute.IsCsv())
+            {
+                attribute.SpreadCsv(items);
+            }
         }
-
-        return items;
     } 
 
     private async Task LoadLookupData(LoadedAttribute attr, Record[] items, CancellationToken token)
@@ -287,8 +303,8 @@ public sealed class EntityService(
             throw new ResultException("Can not find id ");
         }
 
-        Result.Ok();
-        Result.Ok();
+        ResultExt.Ensure(entity.ValidateLocalAttributes(record));
+        ResultExt.Ensure(entity.ValidateTitleAttributes(record));
 
         var res = await hookRegistry.EntityPreUpdate.Trigger(provider,
             new EntityPreUpdateArgs(entity.Name, id.ToString()!, record));
@@ -303,8 +319,8 @@ public sealed class EntityService(
     private async Task<Record> InsertWithAction(RecordContext ctx, CancellationToken token)
     {
         var (entity, record) = ctx;
-        Result.Ok();
-        Result.Ok();
+        ResultExt.Ensure(entity.ValidateLocalAttributes(record));
+        ResultExt.Ensure(entity.ValidateTitleAttributes(record));
 
         var res = await hookRegistry.EntityPreAdd.Trigger(provider,
             new EntityPreAddArgs(entity.Name, record));

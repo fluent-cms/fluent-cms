@@ -10,9 +10,8 @@ import {Button} from "primereact/button";
 import {useConfirm} from "../../components/useConfirm";
 import {NewUser} from "./RoleListPage";
 import {MultiSelectInput} from "../../components/inputs/MultiSelectInput";
-import {arrayToCvs, cvsToArray} from "./util";
 import {FetchingStatus} from "../../components/FetchingStatus";
-import { getEntityPermissionColumns } from "../types/utils";
+import { entityPermissionColumns } from "../types/utils";
 import {useRef, useState} from "react";
 import {Message} from "primereact/message";
 import {Toast} from "primereact/toast";
@@ -36,17 +35,11 @@ export function RoleDetailPage({baseRouter}:{baseRouter:string}) {
         return <FetchingStatus isLoading={loadingRole || loadingEntity} error={errorRole || errorEntities}/>
     }
 
-    const entitiesOption = entities?.join(',')??"";
-    const columns = getEntityPermissionColumns(entitiesOption);
-    const role = arrayToCvs(roleData, columns.map(x=>x.field));
-
     const onSubmit = async (formData: any) => {
         if (name != NewUser){
             formData.name = name;
         }
-
-        const payload = cvsToArray(formData,columns.map(x=>x.field));
-        const {error} = await saveRole(payload);
+        const {error} = await saveRole(formData);
         
         mutateRole();
         setErr(error);
@@ -74,7 +67,7 @@ export function RoleDetailPage({baseRouter}:{baseRouter:string}) {
     }
 
     return <>
-        {name !== NewUser && <h2>Editing Role `{role?.name}`</h2>}
+        {name !== NewUser && <h2>Editing Role `{roleData?.name}`</h2>}
         <Confirm/>
         <form onSubmit={handleSubmit(onSubmit)} id="form">
             {err&& err.split('\n').map(e =>(<><Message severity={'error'} text={e}/>&nbsp;&nbsp;</>))}
@@ -87,7 +80,17 @@ export function RoleDetailPage({baseRouter}:{baseRouter:string}) {
                     />
                 </div>}
                 {
-                    columns.map(x =>  <MultiSelectInput data={role ?? {}} column={x} register={register} className={'field col-12  md:col-4'} control={control} id={name}/>)
+                    entityPermissionColumns.map(x =>  (
+                        <MultiSelectInput 
+                            data={roleData??{}} 
+                            column={x} 
+                            register={register} 
+                            className={'field col-12  md:col-4'} 
+                            control={control} 
+                            id={name}
+                            options={entities??[]}
+                        />)
+                    )
                 }
             </div>
             <Button type={'submit'} label={"Save Role"} icon="pi pi-check"/>

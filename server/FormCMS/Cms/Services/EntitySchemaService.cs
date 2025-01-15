@@ -6,7 +6,6 @@ using FormCMS.Core.Descriptors;
 using FormCMS.Core.HookFactory;
 using FormCMS.Utils.RelationDbDao;
 using FormCMS.Utils.ResultExt;
-using Attribute = FormCMS.Core.Descriptors.Attribute;
 using Descriptors_Attribute = FormCMS.Core.Descriptors.Attribute;
 
 namespace FormCMS.Cms.Services;
@@ -113,9 +112,9 @@ public sealed class EntitySchemaService(
         schema = WithDefaultAttr(schema);
         VerifyEntity(schema.Settings.Entity!);
         
-        Result.Ok();
+        await schemaSvc.NameNotTakenByOther(schema, ct).Ok();
         var cols = await dao.GetColumnDefinitions(schema.Settings.Entity!.TableName, ct);
-        Result.Ok();
+        ResultExt.Ensure(EnsureTableNotExist(schema, cols));
 
         using var tx = await dao.BeginTransaction();
         

@@ -11,6 +11,7 @@ import {headerB} from "./blocks/header-b.js";
 import {heroB} from "./blocks/hero-b.js";
 import {threeLayerMenu} from "./blocks/three-layer-menu.js";
 import {breadcrumbs} from "./blocks/breadcrumbs.js";
+import {carousel} from "./blocks/carousel.js";
 
 export const customBlocks = [
     cardA,
@@ -20,5 +21,6 @@ export const customBlocks = [
     heroB,
     listA,
     threeLayerMenu,
-    breadcrumbs
+    breadcrumbs,
+    carousel,
 ]

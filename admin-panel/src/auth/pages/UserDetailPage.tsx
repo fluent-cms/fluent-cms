@@ -5,8 +5,7 @@ import {Button} from "primereact/button";
 import {useConfirm} from "../../components/useConfirm";
 import {FetchingStatus} from "../../components/FetchingStatus";
 import {MultiSelectInput} from "../../components/inputs/MultiSelectInput";
-import {arrayToCvs, cvsToArray} from "./util";
-import {getEntityPermissionColumns} from "../types/utils";
+import {entityPermissionColumns} from "../types/utils";
 import {Toast} from "primereact/toast";
 import {useRef, useState} from "react";
 import {Message} from "primereact/message";
@@ -17,7 +16,7 @@ export function UserDetailPage({baseRouter}: { baseRouter: string }) {
     const {data: roles, isLoading: loadingRoles, error: errorRoles} = useRoles();
     const {data: entities, isLoading: loadingEntity, error: errorEntities} = useResource();
     const {confirm, Confirm} = useConfirm('userDetailPage');
-    const [err,setErr] = useState('');
+    const [err, setErr] = useState('');
     const {
         register,
         handleSubmit,
@@ -25,22 +24,12 @@ export function UserDetailPage({baseRouter}: { baseRouter: string }) {
     } = useForm()
     const toast = useRef<any>(null);
 
-    const rolesOption = roles?.join(',');
-    const entitiesOption = entities?.join(',');
-
-    const columns = [
-        {field: 'roles', header: 'Roles', options: rolesOption},
-        ...getEntityPermissionColumns(entitiesOption ?? '')
-    ];
-
-    const user = arrayToCvs(userData, columns.map(x => x.field));
     const onSubmit = async (formData: any) => {
         formData.id = id;
-        var payload = cvsToArray(formData, columns.map(x => x.field));
-        const {error} = await saveUser(payload);
+        const {error} = await saveUser(formData);
         setErr(error);
         if (!error) {
-            toast.current.show({severity: 'success', summary: 'Successfully Updated User' });
+            toast.current.show({severity: 'success', summary: 'Successfully Updated User'});
         }
         mutateUser();
     }
@@ -57,12 +46,13 @@ export function UserDetailPage({baseRouter}: { baseRouter: string }) {
     }
 
     return <>
-        <FetchingStatus isLoading={loadingUser || loadingRoles || loadingEntity} error={errorUser || errorRoles || errorEntities}/>
-        {user && columns && <>
+        <FetchingStatus isLoading={loadingUser || loadingRoles || loadingEntity}
+                        error={errorUser || errorRoles || errorEntities}/>
+        {userData && roles && <>
             <Confirm/>
-            <h2>Editing {user.email}</h2>
+            <h2>Editing {userData.email}</h2>
             <form onSubmit={handleSubmit(onSubmit)} id="form">
-                {err&& err.split('\n').map(e =>(<><Message severity={'error'} text={e}/>&nbsp;&nbsp;</>))}
+                {err && err.split('\n').map(e => (<><Message severity={'error'} text={e}/>&nbsp;&nbsp;</>))}
 
                 <Toast ref={toast} position="top-right"/>
                 <Button type={'submit'} label={"Save User"} icon="pi pi-check"/>
@@ -70,10 +60,26 @@ export function UserDetailPage({baseRouter}: { baseRouter: string }) {
                 <Button type={'button'} label={"Delete User"} severity="danger" onClick={onDelete}/>
                 <br/>
                 <div className="formgrid grid">
-                    {
-                        columns.map(x => (<MultiSelectInput data={user} column={x} register={register}
-                                                            className={'field col-12  md:col-4'} control={control}
-                                                            id={id}/>))
+                    <MultiSelectInput
+                        column={{
+                            field: 'roles',
+                            header: "Roles"
+                        }} options={roles}
+                        register={register} 
+                        className={'field col-12  md:col-4'} 
+                        control={control} 
+                        id={id}
+                        data={userData}/>
+
+                    {entityPermissionColumns.map(x => (
+                        <MultiSelectInput
+                            data={userData}
+                            options={entities ?? []}
+                            column={x}
+                            register={register}
+                            className={'field col-12  md:col-4'} 
+                            control={control}
+                            id={id}/>))
                     }
                 </div>
             </form>

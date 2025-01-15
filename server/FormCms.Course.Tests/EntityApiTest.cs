@@ -93,13 +93,13 @@ public class EntityApiTest
     [Fact]
     public async Task InsertAndUpdateAndOneOk()
     {
-        (await _accountApiClient.EnsureLogin()).Ok();
-        (await _schemaApiClient.EnsureSimpleEntity(_postEntityName, Name)).Ok();
+        await _accountApiClient.EnsureLogin().Ok();
+        await _schemaApiClient.EnsureSimpleEntity(_postEntityName, Name).Ok();
         var item = (await _entityApiClient.Insert(_postEntityName, Name, "post1")).Ok();
         Assert.True(item.ToDictionary().TryGetValue("id", out var element));
         Assert.Equal(1, element);
 
-        (await _entityApiClient.Update(_postEntityName, 1, Name, "post2")).Ok();
+        await _entityApiClient.Update(_postEntityName, 1, Name, "post2").Ok();
 
         item = (await _entityApiClient.One(_postEntityName, 1)).Ok();
         Assert.True(item.ToDictionary().TryGetValue(Name, out element));
@@ -109,7 +109,7 @@ public class EntityApiTest
     [Fact]
     public async Task ListWithPaginationOk()
     {
-        (await _accountApiClient.EnsureLogin()).Ok();
+        await _accountApiClient.EnsureLogin().Ok();
         (await _schemaApiClient.EnsureSimpleEntity(_postEntityName, Name)).Ok();
         for (var i = 0; i < 5; i++)
         {
@@ -129,7 +129,7 @@ public class EntityApiTest
     [Fact]
     public async Task InsertWithLookupWithWrongData()
     {
-        (await _accountApiClient.EnsureLogin()).Ok();
+        await _accountApiClient.EnsureLogin().Ok();
         (await _schemaApiClient.EnsureSimpleEntity(_authorEntityName, Name)).Ok();
         (await _schemaApiClient.EnsureSimpleEntity(_postEntityName, Name,lookup: _authorEntityName)).Ok();
         var res = await _entityApiClient.InsertWithLookup(_postEntityName, Name, "post1",
@@ -140,7 +140,7 @@ public class EntityApiTest
     [Fact]
     public async Task InsertWithLookup()
     {
-        (await _accountApiClient.EnsureLogin()).Ok();
+        await _accountApiClient.EnsureLogin().Ok();
         (await _schemaApiClient.EnsureSimpleEntity(_authorEntityName, Name)).Ok();
         (await _schemaApiClient.EnsureSimpleEntity(_postEntityName, Name, lookup:_authorEntityName)).Ok();
         var author = (await _entityApiClient.Insert(_authorEntityName, Name, "author1")).Ok();
@@ -151,7 +151,7 @@ public class EntityApiTest
     [Fact]
     public async Task InsertDeleteListJunction()
     {
-        (await _accountApiClient.EnsureLogin()).Ok();
+        await _accountApiClient.EnsureLogin().Ok();
         (await _schemaApiClient.EnsureSimpleEntity(_tagEntityName, Name)).Ok();
         (await _entityApiClient.Insert(_tagEntityName, Name, "tag1")).Ok();
 
@@ -159,7 +159,7 @@ public class EntityApiTest
         (await _entityApiClient.Insert(_postEntityName, Name, "post1")).Ok();
         
 
-        (await _entityApiClient.JunctionAdd(_postEntityName, _tagEntityName, 1, 1)).Ok();
+        await _entityApiClient.JunctionAdd(_postEntityName, _tagEntityName, 1, 1).Ok();
         var res = (await _entityApiClient.JunctionList(_postEntityName, _tagEntityName, 1, true)).Ok();
         Assert.Empty(res.Items);
         
@@ -169,7 +169,7 @@ public class EntityApiTest
         res = (await _entityApiClient.JunctionList(_postEntityName, _tagEntityName, 1, false)).Ok();
         Assert.Single(res.Items);
 
-        (await _entityApiClient.JunctionDelete(_postEntityName, _tagEntityName, 1, 1)).Ok();
+        await _entityApiClient.JunctionDelete(_postEntityName, _tagEntityName, 1, 1).Ok();
         res = (await _entityApiClient.JunctionList(_postEntityName, _tagEntityName, 1, true)).Ok();
         Assert.Single(res.Items);
         res = (await _entityApiClient.JunctionList(_postEntityName, _tagEntityName, 1, false)).Ok();
@@ -179,7 +179,7 @@ public class EntityApiTest
     [Fact]
     public async Task LookupApiWorks()
     {
-        (await _accountApiClient.EnsureLogin()).Ok();
+        await _accountApiClient.EnsureLogin().Ok();
         (await _schemaApiClient.EnsureSimpleEntity(_tagEntityName, Name)).Ok();
         for (var i = 0; i < EntityConstants.DefaultPageSize - 1; i++)
         {
@@ -194,10 +194,10 @@ public class EntityApiTest
             await _entityApiClient.Insert(_tagEntityName,Name,$"tag{i}");
         }
         
-        res = (await _entityApiClient.LookupList(_tagEntityName,"")).Ok();
+        res = await _entityApiClient.LookupList(_tagEntityName,"").Ok();
         Assert.True(res.GetProperty("hasMore").GetBoolean());
 
-        res = (await _entityApiClient.LookupList(_tagEntityName,"tag11")).Ok();
+        res = await _entityApiClient.LookupList(_tagEntityName,"tag11").Ok();
         Assert.True(res.GetProperty("hasMore").GetBoolean());
         Assert.Equal(1,res.GetProperty("items").GetArrayLength());
     }
@@ -205,10 +205,10 @@ public class EntityApiTest
     [Fact]
     public async Task CollectionApiWorks()
     {
-        (await _accountApiClient.EnsureLogin()).Ok();
-        (await _schemaApiClient.EnsureSimpleEntity(_postEntityName, Name)).Ok();
-        (await _schemaApiClient.EnsureSimpleEntity(_attachmentEntityName, Name, _postEntityName)).Ok();
-        (await _schemaApiClient.EnsureSimpleEntity(_postEntityName, Name,collection:_attachmentEntityName,linkAttribute:_postEntityName)).Ok();
+        await _accountApiClient.EnsureLogin().Ok();
+        await _schemaApiClient.EnsureSimpleEntity(_postEntityName, Name).Ok();
+        await _schemaApiClient.EnsureSimpleEntity(_attachmentEntityName, Name, _postEntityName).Ok();
+        await _schemaApiClient.EnsureSimpleEntity(_postEntityName, Name,collection:_attachmentEntityName,linkAttribute:_postEntityName).Ok();
 
         await _entityApiClient.Insert(_postEntityName, Name, "post1").Ok();
 
