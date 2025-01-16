@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using FormCMS.Auth.ApiClient;
 using FormCMS.Core.Descriptors;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.CoreKit.Test;
@@ -12,7 +13,6 @@ public class PageApiTest
 {
     private readonly string _post = "post" + new IdGenerator(0).CreateId();
     private readonly SchemaApiClient _schemaApiClient;
-    private readonly AccountApiClient _accountApiClient;
     private readonly EntityApiClient _entityApiClient;
     private readonly QueryApiClient _queryApiClient;
     private readonly PageApiClient _pageApiClient;
@@ -22,10 +22,10 @@ public class PageApiTest
         Util.SetTestConnectionString();
         WebAppClient<Program> webAppClient = new();
         _schemaApiClient = new SchemaApiClient(webAppClient.GetHttpClient());
-        _accountApiClient = new AccountApiClient(webAppClient.GetHttpClient());
         _entityApiClient = new EntityApiClient(webAppClient.GetHttpClient());
         _queryApiClient = new QueryApiClient(webAppClient.GetHttpClient());
         _pageApiClient = new PageApiClient(webAppClient.GetHttpClient());
+        new AuthApiClient(webAppClient.GetHttpClient()).EnsureSaLogin().Ok().GetAwaiter().GetResult();
         PrepareData().Wait();
     }
 
@@ -70,7 +70,6 @@ public class PageApiTest
 
     private async Task PrepareData()
     {
-        await _accountApiClient.EnsureLogin();
         if (!_schemaApiClient.ExistsEntity("post").GetAwaiter().GetResult())
         {
             await BlogsTestData.EnsureBlogEntities(_schemaApiClient);

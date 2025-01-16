@@ -9,7 +9,7 @@ public static class AccountHandlers
     {
         app.MapGet("/users", (IAccountService svc, CancellationToken ct) => svc.GetUsers(ct));
 
-        app.MapGet("/users/{id}", (IAccountService svc, string id, CancellationToken ct) => svc.GetSingle(id, ct));
+        app.MapGet("/users/{id}", (IAccountService svc, string id, CancellationToken ct) => svc.GetSingleUser(id, ct));
 
         app.MapDelete("/users/{id}", (IAccountService svc, string id) => svc.DeleteUser(id));
 
@@ -23,6 +23,6 @@ public static class AccountHandlers
 
         app.MapDelete("/roles/{name}", (IAccountService svc, string name) => svc.DeleteRole(name));
         
-        app.MapGet("/resources",(IAccountService svc, CancellationToken ct) => svc.GetResources(ct));
+        app.MapGet("/entities",(IAccountService svc, CancellationToken ct) => svc.GetEntities(ct));
     }
 }

@@ -1,4 +1,4 @@
-import {deleteUser, saveUser, useResource, useSingleUser, useRoles} from "../services/accounts";
+import {deleteUser, saveUser, useEntities, useSingleUser, useRoles} from "../services/accounts";
 import {useForm} from "react-hook-form";
 import {useParams} from "react-router-dom";
 import {Button} from "primereact/button";
@@ -14,7 +14,7 @@ export function UserDetailPage({baseRouter}: { baseRouter: string }) {
     const {id} = useParams()
     const {data: userData, isLoading: loadingUser, error: errorUser, mutate: mutateUser} = useSingleUser(id!);
     const {data: roles, isLoading: loadingRoles, error: errorRoles} = useRoles();
-    const {data: entities, isLoading: loadingEntity, error: errorEntities} = useResource();
+    const {data: entities, isLoading: loadingEntity, error: errorEntities} = useEntities();
     const {confirm, Confirm} = useConfirm('userDetailPage');
     const [err, setErr] = useState('');
     const {

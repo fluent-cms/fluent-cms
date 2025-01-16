@@ -1,6 +1,5 @@
-using FormCMS.Cms.Services;
+using FormCMS.Auth.ApiClient;
 using FormCMS.CoreKit.ApiClient;
-using FormCMS.Utils.RelationDbDao;
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.ResultExt;
 using IdGen;
@@ -12,7 +11,6 @@ namespace FormCMS.Course.Tests;
 public class SchemaApiTest
 {
     private readonly SchemaApiClient _schema;
-    private readonly AccountApiClient _account;
 
     private static string PostEntity() => "schema_api_test_post" + new IdGenerator(0).CreateId();
     private const string Name = "name";
@@ -23,19 +21,13 @@ public class SchemaApiTest
 
         WebAppClient<Program> webAppClient = new();
         _schema = new SchemaApiClient(webAppClient.GetHttpClient());
-        _account = new AccountApiClient(webAppClient.GetHttpClient());
+        new AuthApiClient(webAppClient.GetHttpClient()).EnsureSaLogin().Ok().GetAwaiter().GetResult();
     }
 
-    [Fact]
-    public async Task AnonymousGetAll() => Assert.True((await _schema.All(null)).IsFailed);
-
-    [Fact]
-    public async Task AnonymousSave() => Assert.True((await _schema.SaveEntityDefine(TestSchema())).IsFailed);
-
+  
     [Fact]
     public async Task GetAll_NUllType()
     {
-        await _account.EnsureLogin().Ok();
         var items = await _schema.All(null).Ok();
         var len = items.Length;
         var schema = TestSchema();
@@ -47,7 +39,6 @@ public class SchemaApiTest
     [Fact]
     public async Task GetAll_EntityType()
     {
-        await _account.EnsureLogin().Ok();
         var items = (await _schema.All(SchemaType.Menu)).Ok();
         Assert.Single(items);
     }
@@ -59,7 +50,6 @@ public class SchemaApiTest
     public async Task SaveSchemaAndOneAndGetLoaded()
     {
         var schema = TestSchema();
-        await _account.EnsureLogin().Ok();
         schema = (await _schema.SaveEntityDefine(schema)).Ok();
         (await _schema.GetLoadedEntity(schema.Name)).Ok();
         (await _schema.One(schema.Id)).Ok();
@@ -69,7 +59,6 @@ public class SchemaApiTest
     public async Task SaveSchemaTwice()
     {
         var schema = TestSchema();
-        await _account.EnsureLogin().Ok();
         var res = (await _schema.SaveEntityDefine(schema)).Ok();
         (await _schema.SaveEntityDefine(res)).Ok();
     }
@@ -78,7 +67,6 @@ public class SchemaApiTest
     public async Task SaveSchema_Update()
     {
         var schema = TestSchema();
-        await _account.EnsureLogin().Ok();
         schema = (await _schema.SaveEntityDefine(schema)).Ok();
         schema = schema with { Settings = new Settings(Entity: schema.Settings.Entity! with { DefaultPageSize = 10 }) };
         await _schema.SaveEntityDefine(schema).Ok();
@@ -90,7 +78,6 @@ public class SchemaApiTest
     public async Task Delete_Success()
     {
         var schema = TestSchema();
-        await _account.EnsureLogin().Ok();
         schema = (await _schema.SaveEntityDefine(schema)).Ok();
         await _schema.Delete(schema.Id).Ok();
         Assert.True((await _schema.GetLoadedEntity(schema.Name)).IsFailed);

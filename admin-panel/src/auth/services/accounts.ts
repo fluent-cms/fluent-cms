@@ -15,8 +15,8 @@ export  function useRoles(){
     return {...res, error:decodeError(res.error)}
 }
 
-export  function useResource(){
-    let res = useSWR<string[]>(fullAuthAPIURI(`/accounts/resources`), fetcher,swrConfig);
+export  function useEntities(){
+    let res = useSWR<string[]>(fullAuthAPIURI(`/accounts/entities`), fetcher,swrConfig);
     return {...res, error:decodeError(res.error)}
 }
 

@@ -3,10 +3,11 @@ using FluentResults;
 
 namespace FormCMS.Auth.Services;
 
+//manage user, role
 public interface IAccountService
 {
-    Task<string[]> GetResources(CancellationToken ct);
-    Task<UserDto> GetSingle(string id,CancellationToken ct);
+    Task<string[]> GetEntities(CancellationToken ct);
+    Task<UserDto> GetSingleUser(string id,CancellationToken ct);
     Task<UserDto[]> GetUsers(CancellationToken ct);
     Task<string[]> GetRoles(CancellationToken ct);
     Task<Result> EnsureUser(string email, string password, string[] roles);

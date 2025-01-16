@@ -216,8 +216,13 @@ public static class AttributeHelper
 
     public static bool GetDropdownOptions(this Attribute a, out string[] arr)
     {
+        if (string.IsNullOrWhiteSpace(a.Options))
+        {
+            arr = [];
+            return false;
+        }
         arr = a.Options.Split(',');
-        return arr.Length > 0;
+        return true;
     }
 
     public static bool GetJunctionTarget(this Attribute a, out string val)

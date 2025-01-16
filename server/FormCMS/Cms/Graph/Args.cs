@@ -83,7 +83,12 @@ public static class Args
         {
             Name = attribute.Field + "Enum"
         };
-        foreach (var selectItem in attribute.GetDropdownOptions(out var selectItems) ? selectItems : [])
+
+        if (!attribute.GetDropdownOptions(out var selectItems))
+        {
+            type.Add(new EnumValueDefinition("NA", "NA"));
+        }
+        foreach (var selectItem in selectItems )
         {
             type.Add(new EnumValueDefinition(selectItem, selectItem));
         }

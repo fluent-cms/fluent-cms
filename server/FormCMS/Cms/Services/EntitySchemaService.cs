@@ -374,6 +374,12 @@ public sealed class EntitySchemaService(
                 throw new ResultException(
                     $"{msg} The data type=[{attr.DataType}] with display type =[{attr.DisplayType}] for [{attr.Field}] is not supported.");
             }
+
+            if (attr.DisplayType is DisplayType.Dropdown or DisplayType.Multiselect && string.IsNullOrWhiteSpace(attr.Options))
+            {
+                throw new ResultException(
+                    $"{msg} Please input options for  [{attr.Field}] because it's display type is [{attr.DisplayType}] ");
+            }
         }
 
         if (string.IsNullOrEmpty(entity.TableName)) throw new ResultException($"{msg} Table name should not be empty");

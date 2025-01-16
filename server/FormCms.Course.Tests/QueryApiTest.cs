@@ -1,3 +1,4 @@
+using FormCMS.Auth.ApiClient;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.Utils.JsonUtil;
 using FormCMS.Core.Descriptors;
@@ -20,21 +21,19 @@ public class QueryApiTest
         Util.SetTestConnectionString();
 
         WebAppClient<Program> webAppClient = new();
+        new AuthApiClient(webAppClient.GetHttpClient()).EnsureSaLogin().Ok().GetAwaiter().GetResult();
+        
         var entityClient = new EntityApiClient(webAppClient.GetHttpClient());
         var schemaClient = new SchemaApiClient(webAppClient.GetHttpClient());
-        var accountApiClient = new AccountApiClient(webAppClient.GetHttpClient());
 
         _query = new QueryApiClient(webAppClient.GetHttpClient());
         _commonTestCases = new BlogsTestCases(_query, _post);
 
 
-        accountApiClient.EnsureLogin().Wait();
         if (schemaClient.ExistsEntity("post").GetAwaiter().GetResult()) return;
-        BlogsTestData.EnsureBlogEntities(schemaClient).Wait();
+        BlogsTestData.EnsureBlogEntities(schemaClient).GetAwaiter().GetResult();
         BlogsTestData.PopulateData(entityClient).Wait();
     }
-
-
 
     [Fact]
     public Task VerifyValueSetMatch() => _commonTestCases.Filter.ValueSetMatch();

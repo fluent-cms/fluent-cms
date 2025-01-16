@@ -1,7 +1,7 @@
 import {
     deleteRole,
     saveRole,
-    useResource,
+    useEntities,
     useSingleRole,
 } from "../services/accounts";
 import {useForm} from "react-hook-form";
@@ -20,7 +20,7 @@ import {Toast} from "primereact/toast";
 export function RoleDetailPage({baseRouter}:{baseRouter:string}) {
     const {name} = useParams()
     const {data: roleData, isLoading: loadingRole, error: errorRole, mutate: mutateRole} = useSingleRole(name==NewUser?'':name!);
-    const {data: entities, isLoading: loadingEntity, error: errorEntities} = useResource();
+    const {data: entities, isLoading: loadingEntity, error: errorEntities} = useEntities();
     const {confirm,Confirm} = useConfirm('roleDetailPage');
     const [err,setErr] = useState('');
 
