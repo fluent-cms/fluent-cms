@@ -7,7 +7,7 @@ public static class LookupHelper
     public static SqlKata.Query LookupTitleQuery(this Lookup lookup, IEnumerable<ValidValue> ids)
     {
         var e = lookup.TargetEntity;
-        return lookup.TargetEntity.Basic().Select(e.PrimaryKey, e.TitleAttribute)
+        return lookup.TargetEntity.Basic().Select(e.PrimaryKey, e.LabelAttributeName)
             .WhereIn(e.PrimaryKey, ids.GetValues());
     }
 }

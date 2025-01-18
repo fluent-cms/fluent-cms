@@ -55,6 +55,7 @@ public sealed class CmsBuilder(
         services.ConfigureHttpJsonOptions(JsonOptions.AddCamelEnumConverter<DisplayType>);
         services.ConfigureHttpJsonOptions(JsonOptions.AddCamelEnumConverter<ListResponseMode>);
         services.ConfigureHttpJsonOptions(JsonOptions.AddCamelEnumConverter<SchemaType>);
+        services.ConfigureHttpJsonOptions(JsonOptions.AddCamelEnumConverter<PublicationStatus>);
         
         services.AddSingleton(cmsOptions);
         services.AddSingleton(new DbOption(databaseProvider, connectionString));

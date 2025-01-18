@@ -10,5 +10,5 @@ public static class AccessScope
 
 public static class Constants
 {
-    public const string CreatedBy = "created_by";
+    public const string CreatedBy = "createdBy";
 }

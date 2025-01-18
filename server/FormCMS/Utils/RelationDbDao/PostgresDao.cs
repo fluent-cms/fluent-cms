@@ -1,4 +1,5 @@
 using System.Data;
+using FormCMS.Utils.EnumExt;
 using Npgsql;
 using SqlKata.Compilers;
 using SqlKata.Execution;
@@ -40,29 +41,29 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
 
     public async Task CreateTable(string table, IEnumerable<Column> cols,CancellationToken ct)
     {
-        var parts = cols.Select(column => column.Name.ToLower() switch
+        var parts = cols.Select(column => column switch
         {
-            "id" => "id SERIAL PRIMARY KEY",
-            "deleted" => "deleted BOOLEAN DEFAULT FALSE",
-            "created_at" => "created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
-            "updated_at" => "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+            _ when column.Name == DefaultColumnNames.Id.ToCamelCase() => $"{DefaultColumnNames.Id.ToCamelCase()} SERIAL PRIMARY KEY",
+            _ when column.Name == DefaultColumnNames.Deleted.ToCamelCase() => $"{DefaultColumnNames.Deleted.ToCamelCase()} BOOLEAN DEFAULT FALSE",
+            _ when column.Name == DefaultColumnNames.CreatedAt.ToCamelCase()=> $"{DefaultColumnNames.CreatedAt.ToCamelCase()}  TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+            _ when column.Name == DefaultColumnNames.UpdatedAt.ToCamelCase()=> $"{DefaultColumnNames.UpdatedAt.ToCamelCase()} TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
             _ => $"\"{column.Name}\" {ColTypeToString(column.Type)}"
         });
         
         var sql= $"CREATE TABLE {table} ({string.Join(", ", parts)});";
-        sql += $"""
-                CREATE OR REPLACE FUNCTION __update_updated_at_column()
+        sql += $$"""
+                CREATE OR REPLACE FUNCTION __update_updatedAt_column()
                     RETURNS TRIGGER AS $$
                 BEGIN
-                    NEW.updated_at = NOW();
+                    NEW.{{DefaultColumnNames.UpdatedAt.ToCamelCase()}} = NOW();
                     RETURN NEW;
                 END;
                 $$ LANGUAGE plpgsql;
                 
-                CREATE TRIGGER update_{table}_updated_at 
-                                BEFORE UPDATE ON {table} 
+                CREATE TRIGGER update_{{table}}_updatedAt} 
+                                BEFORE UPDATE ON {{table}} 
                                 FOR EACH ROW
-                EXECUTE FUNCTION __update_updated_at_column();
+                EXECUTE FUNCTION __update_updatedAt_column();
                 """;
         await ExecuteQuery(sql, cmd => cmd.ExecuteNonQueryAsync(ct));
     }

@@ -72,7 +72,7 @@ public class AccountApiTest
 
         //login as admin, add an entity post and give the user post permission
         await _authApiClient.EnsureSaLogin();
-        await _schemaApiClient.EnsureSimpleEntity(_post, "name").Ok();
+        await _schemaApiClient.EnsureSimpleEntity(_post, "name",false).Ok();
 
         var users = await _accountApiClient.GetUsers().Ok();
         var user = users.FirstOrDefault(x => x.Email == _email);
@@ -131,7 +131,7 @@ public class AccountApiTest
 
         //login as admin, add an entity post and give the user post permission
         await _authApiClient.EnsureSaLogin();
-        await _schemaApiClient.EnsureSimpleEntity(_post, "name").Ok();
+        await _schemaApiClient.EnsureSimpleEntity(_post, "name", false).Ok();
         
         //create a role with permission for `_post`
         var role = new RoleDto(_role, [_post], [], [], []);

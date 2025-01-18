@@ -1,6 +1,7 @@
 using System.Text.Json;
 using FormCMS.Utils.DictionaryExt;
 using FluentResults;
+using FormCMS.Utils.EnumExt;
 
 namespace FormCMS.Core.Descriptors;
 
@@ -11,18 +12,6 @@ public enum SchemaType
     Query,
     Page
 }
-
-public static class SchemaTypeHelper
-{
-    public static string ToCamelCase(this SchemaType schemaType)
-    {
-        var stringValue = schemaType.ToString();
-        if (string.IsNullOrEmpty(stringValue)) return stringValue;
-
-        return char.ToLowerInvariant(stringValue[0]) + stringValue.Substring(1);
-    }
-}
-
 
 public sealed record Settings(Entity? Entity = null, Query? Query =null, Menu? Menu =null, Page? Page = null);
 

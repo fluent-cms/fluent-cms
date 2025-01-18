@@ -41,7 +41,7 @@ export function createInput(props :{
         case 'file':
             return <FileInput download className={'field col-12  md:col-4'} key={field} {...props}/>
         case 'dropdown':
-            return <DropDownInput className={'field col-12 md:col-4'} key={field}{...props}/>
+            return <DropDownInput options={props.column.options.split(',')} className={'field col-12 md:col-4'} key={field}{...props}/>
         case 'lookup':
             return <LookupContainer className={'field col-12 md:col-4'} key={field}{...props}/>
         case 'multiselect':

@@ -96,6 +96,7 @@
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AStaticFileExtensions_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F6e5872b2f4f8d886e31c3d6925776568e930137ac0a89a1c87bc11258e600_003FStaticFileExtensions_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AStringValues_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E2_003Fresharper_002Dhost_003FSourcesCache_003F1d21281fabf0552a66c4b88b24f2e77979e9af5292abf97f39977a4979b2bee9_003FStringValues_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AString_002EManipulation_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003Fa984a133191d26625f45e85cc27e20cad64f4a6ecb6263b4c17bc55965a5_003FString_002EManipulation_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
+	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003ATestInvoker_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F5e14a4e27990972fa4ae94975603bd298aaf328ee083c03b10569ee4724d57_003FTestInvoker_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AThrowHelper_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F4743f513c7ddc8411223a46f0ca426ed929391acebcff993721dff2f0c6b34_003FThrowHelper_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AThrowHelper_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F8bb5e9b7c0175f0e7484c843d9a2bbcfb1f176b842f476b2c6a8fcbceea5cf_003FThrowHelper_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AThrowHelper_002ESerialization_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003Fd4add5c92cbab0a855876709b0a3af1a731faf96e8e134ee7787a2c262028_003FThrowHelper_002ESerialization_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
@@ -112,37 +113,17 @@
   &lt;Assembly Path="/Users/jingshun/repos/fluent-cms/server/FluentCMS.App/bin/Debug/net8.0/FluentCMS.dll" /&gt;
   &lt;Assembly Path="/Users/jingshunchen/.nuget/packages/fluentcms/0.3.4/lib/net9.0/FluentCms.dll" /&gt;
 &lt;/AssemblyExplorer&gt;</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=4d4a5080_002Da26f_002D422d_002D8602_002Dc071836926df/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="InsertCollection" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
-  &lt;Project Location="/Users/jingshunchen/repos/formcms/server/FormCms.Course.Tests" Presentation="&amp;lt;FormCms.Course.Tests&amp;gt;" /&gt;
-&lt;/SessionState&gt;</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=6c0059f5_002D7975_002D4336_002Da419_002D042bb9d4197f/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="AssignRoleToUser" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
-  &lt;Project Location="/Users/jingshunchen/repos/formcms/server/FormCms.Course.Tests" Presentation="&amp;lt;FormCms.Course.Tests&amp;gt;" /&gt;
-&lt;/SessionState&gt;</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=91cd50d2_002D684a_002D4e2b_002D8dee_002D66f4cf655833/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="AddGetSingleDelete" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=31c8cbdf_002D2291_002D497e_002Dba41_002D70b82e4e200f/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="PublishEntity" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
   &lt;TestAncestor&gt;
-    &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.AccountApiTest.AddGetSingleDelete&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.AccountApiTest.AssignRoleToUser&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.EntityApiTest.PublishUnpublishEntity&lt;/TestId&gt;
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=f838c244_002Ddaac_002D44e1_002D9a36_002D39f69870fe77/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="SaveSchema_Update" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
-  &lt;Or&gt;
-    &lt;TestAncestor&gt;
-      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FluentCMS.Blog.Tests.SchemaApiTest.AnonymousSaveSchemaFail&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FluentCMS.Blog.Tests.SchemaApiTest.SaveSchema&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FluentCMS.Blog.Tests.QueryApiTest.List&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FluentCMS.Blog.Tests.QueryApiTest.Many&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FluentCMS.Blog.Tests.EntityApiTest&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FluentCMS.Blog.Tests.BasicFlowTest.BasicFlow&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::40C9B759-4740-4C44-84D1-C3971519DF7E::net9.0::FluentCMS.Blog.DistributeTest.DistributeTest.CanSeeEntityChange&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FluentCMS.Blog.Tests.QueryApiTest&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FluentCMS.Blog.Tests.SchemaApiTest.AnonymousGetAllSchema&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FluentCMS.Blog.Tests.SchemaApiTest&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::40C9B759-4740-4C44-84D1-C3971519DF7E::net9.0::FluentCMS.Blog.DistributeTest.DistributeTest.EntityChange&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::40C9B759-4740-4C44-84D1-C3971519DF7E::net9.0::FluentCMS.Blog.DistributeTest.DistributeTest.QueryChange&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::439C205E-2841-4D86-A27A-94BF762CE8DD::net9.0::FluentCMS.App.Test.Tests.IntegrationTest1.GetWebResourceRootReturnsOkStatusCode&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::9BD38EDA-5C4E-4C6D-96CA-C8955DB35C57::net9.0::FluentCMS.App.Tests.QueryTest.Cursor&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::9BD38EDA-5C4E-4C6D-96CA-C8955DB35C57::net9.0::FluentCMS.App.Tests.QueryTest&lt;/TestId&gt;
-    &lt;/TestAncestor&gt;
-    &lt;Project Location="/Users/jingshunchen/repos/formcms/server/FormCms.Course.Tests" Presentation="&amp;lt;FormCms.Course.Tests&amp;gt;" /&gt;
-  &lt;/Or&gt;
-&lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=5936145c_002Dac6c_002D42d7_002D9696_002Dbc3b141648a6/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="PublishEntity #2" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+  &lt;TestAncestor&gt;
+    &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.EntityApiTest.PublishUnpublishEntity&lt;/TestId&gt;
+  &lt;/TestAncestor&gt;
+&lt;/SessionState&gt;</s:String>
+	
+	
+	
+	</wpf:ResourceDictionary>

@@ -4,6 +4,8 @@ using FormCMS.Core.HookFactory;
 using FormCMS.Utils.RelationDbDao;
 using FormCMS.Core.Descriptors;
 using FluentResults;
+using FormCMS.Utils.EnumExt;
+using FormCMS.Utils.JsonUtil;
 using FormCMS.Utils.ResultExt;
 
 namespace FormCMS.Cms.Services;
@@ -44,7 +46,10 @@ public sealed class EntityService(
         CancellationToken ct)
     {
         var ctx = await GetIdCtx(entityName, id, ct);
-        var query = ctx.Entity.ByIdsQuery( ctx.Entity.Attributes.Where(x=>x.IsLocal() && attributes.Contains(x.Field)),[ctx.Id]);
+        var fields = ctx.Entity.Attributes
+            .Where(x => x.IsLocal() && attributes.Contains(x.Field))
+            .Select(x=>x.AddTableModifier());
+        var query = ctx.Entity.ByIdsQuery( fields,[ctx.Id]);
         return await queryExecutor.One(query, ct) ??
                throw new ResultException($"not find record by [{id}]");
     }
@@ -60,9 +65,13 @@ public sealed class EntityService(
         }
 
         var attr = ctx.Entity.Attributes
-            .Where(x => x.Field == ctx.Entity.PrimaryKey || x.InDetail && x.IsLocal())
+            .Where(x => 
+                x.Field == ctx.Entity.PrimaryKey 
+                || x.Field == DefaultAttributeNames.PublicationStatus.ToCamelCase()
+                || x.Field == DefaultAttributeNames.PublishedAt.ToCamelCase()
+                || x.InDetail && x.IsLocal())
             .ToArray();
-        var query = ctx.Entity.ByIdsQuery(attr, [ctx.Id]);
+        var query = ctx.Entity.ByIdsQuery(attr.Select(x=>x.AddTableModifier()), [ctx.Id]);
         var record = await queryExecutor.One(query, ct) ??
                      throw new ResultException($"not find record by [{id}]");
 
@@ -76,6 +85,8 @@ public sealed class EntityService(
         return await InsertWithAction(await GetRecordCtx(name, ele, ct), ct);
     }
 
+  
+
     public async Task BatchInsert(string tableName, Record[] items)
     {
         var cols = items[0].Select(x => x.Key);
@@ -86,15 +97,37 @@ public sealed class EntityService(
 
     public async Task<Record> UpdateWithAction(string name, JsonElement ele, CancellationToken ct)
     {
-        return await UpdateWithAction(await GetRecordCtx(name, ele, ct), ct);
+        return await UpdateWithAction(await GetRecordIdCtx(name, ele, ct), ct);
     }
 
     public async Task<Record> DeleteWithAction(string name, JsonElement ele, CancellationToken ct)
     {
-        return await Delete(await GetRecordCtx(name, ele, ct), ct);
+        return await Delete(await GetRecordIdCtx(name, ele, ct), ct);
     }
 
+    //here pass whole entity body instead of only id, to check if the data is staled.
+    public async Task Publish(string name, JsonElement ele, CancellationToken ct)
+    {
+        var (entity,_,id) = await GetRecordIdCtx(name, ele, ct);
+        var query = entity.ByIdsQuery( [entity.PrimaryKey,DefaultAttributeNames.PublicationStatus.ToCamelCase()],[id.ToValidValue()]);
+        var record = await queryExecutor.One(query, ct) ?? throw new ResultException($"not find record by [{id}]");
+        query = entity.Publish(id, record);
+        await queryExecutor.Exec(query, ct);
+    }
 
+    public async Task Unpublish(string name, JsonElement ele, CancellationToken ct)
+    {
+        var (entity,_,id) = await GetRecordIdCtx(name, ele, ct);
+        var query = entity.Unpublish(id);
+        await queryExecutor.Exec(query, ct);
+    }
+
+    public async Task SavePublicationSettings(string name, JsonElement ele, CancellationToken ct)
+    {
+        var (entity, _, id) = await GetRecordIdCtx(name, ele, ct);
+        var query = entity.SavePublicationStatus(id, ele.ToDictionary() ).Ok();
+        await queryExecutor.Exec(query, ct);
+    }
 
     public async Task<LookupListResponse> LookupList(string name, string startsVal, CancellationToken ct = default)
     {
@@ -112,7 +145,7 @@ public sealed class EntityService(
         if (!string.IsNullOrEmpty(startsVal))
         {
             var constraint = new Constraint(Matches.StartsWith, [startsVal]);
-            var filter = new Filter(entity.TitleAttribute, MatchTypes.MatchAll, [constraint]);
+            var filter = new Filter(entity.LabelAttributeName, MatchTypes.MatchAll, [constraint]);
             filters = (await FilterHelper.ToValidFilters([filter], entity, entitySchemaSvc, entitySchemaSvc)).Ok();
         }
 
@@ -295,13 +328,9 @@ public sealed class EntityService(
         }
     }
 
-    private async Task<Record> UpdateWithAction(RecordContext ctx, CancellationToken token)
+    private async Task<Record> UpdateWithAction(RecordIdContext ctx, CancellationToken token)
     {
-        var (entity, record) = ctx;
-        if (!record.TryGetValue(entity.PrimaryKey, out var id))
-        {
-            throw new ResultException("Can not find id ");
-        }
+        var (entity, record,id) = ctx;
 
         ResultExt.Ensure(entity.ValidateLocalAttributes(record));
         ResultExt.Ensure(entity.ValidateTitleAttributes(record));
@@ -325,6 +354,7 @@ public sealed class EntityService(
         var res = await hookRegistry.EntityPreAdd.Trigger(provider,
             new EntityPreAddArgs(entity.Name, record));
         record = res.RefRecord;
+        record[DefaultAttributeNames.PublicationStatus.ToCamelCase()] = entity.DefaultPublicationStatus.ToCamelCase();
 
         var query = entity.Insert(record);
         var id = await queryExecutor.Exec(query, token);
@@ -335,13 +365,9 @@ public sealed class EntityService(
         return record;
     }
 
-    private async Task<Record> Delete(RecordContext ctx, CancellationToken token)
+    private async Task<Record> Delete(RecordIdContext ctx, CancellationToken token)
     {
-        var (entity, record) = ctx;
-        if (!record.TryGetValue(entity.PrimaryKey, out var id))
-        {
-            throw new ResultException("Can not find id ");
-        }
+        var (entity, record,id) = ctx;
 
         var res = await hookRegistry.EntityPreDel.Trigger(provider,
             new EntityPreDelArgs(entity.Name, id.ToString()!, record));
@@ -403,6 +429,21 @@ public sealed class EntityService(
         return new JunctionContext(attribute, junction, id!.Value);
     }
 
+    private record RecordIdContext(LoadedEntity Entity, Record Record, object Id);
+
+    private async Task<RecordIdContext> GetRecordIdCtx(string name, JsonElement ele, CancellationToken token)
+    {
+        var entity = (await entitySchemaSvc.LoadEntity(name, token)).Ok();
+        var record = entity.Parse(ele, entitySchemaSvc).Ok();
+        if (!record.TryGetValue(entity.PrimaryKey, out  var id) && id is null)
+        {
+            throw new ResultException($"Failed to get Record Id, cannot find [{name}]");
+        }
+        return new RecordIdContext(entity, record,id);
+    }
+
+
+
     private record RecordContext(LoadedEntity Entity, Record Record);
     private async Task<RecordContext> GetRecordCtx(string name, JsonElement ele, CancellationToken token)
     {
@@ -416,10 +457,10 @@ public sealed class EntityService(
     private async Task<LookupContext> GetLookupContext(string name, CancellationToken ct = default)
     {
         var entity = (await entitySchemaSvc.LoadEntity(name, ct)).Ok();
-        var sort = new Sort(entity.TitleAttribute, SortOrder.Asc);
+        var sort = new Sort(entity.LabelAttributeName, SortOrder.Asc);
         var validSort = (await SortHelper.ToValidSorts([sort], entity, entitySchemaSvc)).Ok();
         var pagination = PaginationHelper.ToValid(new Pagination(), entity.DefaultPageSize);
-        return new LookupContext(entity, validSort, pagination,[entity.PrimaryKeyAttribute,entity.LoadedTitleAttribute]);
+        return new LookupContext(entity, validSort, pagination,[entity.PrimaryKeyAttribute,entity.LabelAttribute]);
     }
 
     private record ListArgs(ValidFilter[] Filters, ValidSort[] Sorts, ValidPagination Pagination);

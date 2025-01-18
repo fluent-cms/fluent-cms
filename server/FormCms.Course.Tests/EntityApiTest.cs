@@ -3,6 +3,8 @@ using FormCMS.Auth.ApiClient;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.Utils.JsonUtil;
 using FormCMS.Core.Descriptors;
+using FormCMS.Utils.EnumExt;
+using FormCMS.Utils.RelationDbDao;
 using FormCMS.Utils.ResultExt;
 using IdGen;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
@@ -18,9 +20,9 @@ public class EntityApiTest
     private readonly string _attachment = "entity_api_test_attachment" + new IdGenerator(0).CreateId();
     private readonly string _category = "entity_api_test_category" + new IdGenerator(0).CreateId();
 
-    private readonly AccountApiClient _accountApiClient;
     private readonly EntityApiClient _entityApiClient;
     private readonly SchemaApiClient _schemaApiClient;
+    private static readonly string[] Payload = ["a","b","c"];
 
     public EntityApiTest()
     {
@@ -29,51 +31,111 @@ public class EntityApiTest
         WebAppClient<Program> webAppClient = new();
         _entityApiClient = new EntityApiClient(webAppClient.GetHttpClient());
         _schemaApiClient = new SchemaApiClient(webAppClient.GetHttpClient());
-        _accountApiClient = new AccountApiClient(webAppClient.GetHttpClient());
         new AuthApiClient(webAppClient.GetHttpClient()).EnsureSaLogin().Ok().GetAwaiter().GetResult();
+    }
+
+    [Fact]
+    public async Task PublishUnpublishEntity()
+    {
+        await _schemaApiClient.EnsureSimpleEntity(_post, Name, true).Ok();
+        await _entityApiClient.Insert(_post, Name, "name1").Ok();
+        var ele = await _entityApiClient.Single(_post, 1).Ok();
+        Assert.Equal(PublicationStatus.Draft.ToCamelCase(), ele.GetProperty(DefaultColumnNames.PublicationStatus.ToCamelCase()).GetString());
+        
+        await _entityApiClient.Publish(_post,new {id=1}).Ok();
+        ele = await _entityApiClient.Single(_post, 1).Ok();
+        Assert.Equal(PublicationStatus.Published.ToCamelCase(), ele.GetProperty(DefaultColumnNames.PublicationStatus.ToCamelCase()).GetString());
+        
+        await _entityApiClient.Unpublish(_post,new {id=1}).Ok();
+        ele = await _entityApiClient.Single(_post, 1).Ok();
+        Assert.Equal(PublicationStatus.Unpublished.ToCamelCase(), ele.GetProperty(DefaultColumnNames.PublicationStatus.ToCamelCase()).GetString());
+
+        var payload = new Dictionary<string,object>
+        {
+            { DefaultAttributeNames.Id.ToCamelCase(), 1 },
+            { DefaultAttributeNames.PublicationStatus.ToCamelCase(), PublicationStatus.Scheduled.ToCamelCase()},
+            { DefaultAttributeNames.PublishedAt.ToCamelCase(), new DateTime(2025,1,1)}
+        };
+        
+        await _entityApiClient.SavePublicationSettings(_post,payload).Ok();
+        ele = await _entityApiClient.Single(_post, 1).Ok();
+        
+        Assert.Equal(PublicationStatus.Scheduled.ToCamelCase(), ele.GetProperty(DefaultColumnNames.PublicationStatus.ToCamelCase()).GetString());
+        Assert.True(
+            ele.TryGetProperty(DefaultAttributeNames.PublishedAt.ToCamelCase(), out var publishEle) 
+            && DateTime.TryParse(publishEle.GetString(), out var publishedAt)
+            && publishedAt.Equals(new DateTime(2025,1,1))
+        );
+    }
+    
+    
+    
+    [Fact]
+    public async Task DropdownAttributeMustHaveOptions()
+    {
+        var res = await _schemaApiClient.EnsureEntity(
+            _post,
+            "name",
+            false,
+            new Attribute("name", "Name", DisplayType: DisplayType.Dropdown)
+        );
+        Assert.True(res.IsFailed);
+    }
+    
+    [Fact]
+    public async Task CannotInsertNullTitleEntity()
+    {
+        await _schemaApiClient.EnsureSimpleEntity(_post, Name, false).Ok();
+        var res = await _entityApiClient.Insert(_post, Name, null!);
+        Assert.True(res.IsFailed);
+    }
+    [Fact]
+    public async Task ValidationRule()
+    {
+        var attr = new Attribute(Name, Name, Validation:$"""
+                                                            {Name}==null?"name-null-fail":""
+                                                            """);
+        await _schemaApiClient.EnsureEntity(_post, Name,false,attr).Ok();
+        var res = await _entityApiClient.Insert(_post, Name, null!);
+        Assert.True(res.IsFailed && res.Errors[0].Message.Contains("validate-fail"));
+    }
+
+    [Fact]
+    public async Task VerifyRegexValidator()
+    {
+        var attr = new Attribute(Name, Name, Validation:$"""
+                                                            Regex.IsMatch({Name}, "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$")?"":"regex-match-fail"
+                                                            """);
+        await _schemaApiClient.EnsureEntity(_post, Name,false,attr).Ok();
+        var res = await _entityApiClient.Insert(_post, Name, "aa");
+        Assert.True(res.IsFailed && res.Errors[0].Message.Contains("regex-match-fail"));
     }
 
     [Fact]
     public async Task TestMultiSelect()
     {
-        await _schemaApiClient.EnsureEntity(new Entity(
-            Attributes:[
-                new Attribute("name", "Name",DisplayType:DisplayType.Multiselect,Options:"a,b,c,d,e,f"),
-            ],
-            Name:_post,
-            TableName:_post,
-            Title:"Post",
-            TitleAttribute:"name",
-            DefaultPageSize:EntityConstants.DefaultPageSize
-        )).Ok();
+        var attr = new Attribute(Name, Name, DisplayType: DisplayType.Multiselect, Options: "a,b,c,d,e,f");
+        await _schemaApiClient.EnsureEntity(_post,Name,false,attr).Ok();
 
-        await _entityApiClient.Insert(_post, new { name = new string[]{"a","b","c"}}).Ok();
-        var ele = await _entityApiClient.One(_post, 1).Ok();
-        Assert.True(ele.TryGetProperty("name",out var val ) && val.ValueKind == JsonValueKind.Array && val.GetArrayLength() == 3);
+        await _entityApiClient.Insert(_post, new { name = Payload }).Ok();
+        var ele = await _entityApiClient.Single(_post, 1).Ok();
+        Assert.True(ele.TryGetProperty(Name,out var val ) && val.ValueKind == JsonValueKind.Array && val.GetArrayLength() == 3);
     }
      [Fact]
      public async Task TestGallery()
      {
-         await _schemaApiClient.EnsureEntity(new Entity(
-             Attributes:[
-                 new Attribute("name", "Name",DisplayType:DisplayType.Gallery),
-             ],
-             Name:_post,
-             TableName:_post,
-             Title:"Post",
-             TitleAttribute:"name",
-             DefaultPageSize:EntityConstants.DefaultPageSize
-         )).Ok();
+         var attr = new Attribute(Name, Name, DisplayType: DisplayType.Gallery);
+         await _schemaApiClient.EnsureEntity(_post,Name,false,attr).Ok();
  
-         await _entityApiClient.Insert(_post, new { name = new string[]{"a","b","c"}}).Ok();
-         var ele = await _entityApiClient.One(_post, 1).Ok();
-         Assert.True(ele.TryGetProperty("name",out var val ) && val.ValueKind == JsonValueKind.Array && val.GetArrayLength() == 3);
+         await _entityApiClient.Insert(_post, new { name = new []{"a","b","c"}}).Ok();
+         var ele = await _entityApiClient.Single(_post, 1).Ok();
+         Assert.True(ele.TryGetProperty(Name,out var val ) && val.ValueKind == JsonValueKind.Array && val.GetArrayLength() == 3);
      }
      
     [Fact]
     public async Task TestResponseMode()
     {
-        await _schemaApiClient.EnsureSimpleEntity(_post, Name).Ok();
+        await _schemaApiClient.EnsureSimpleEntity(_post, Name,false).Ok();
         await _entityApiClient.Insert(_post, Name, "post1").Ok();
         var response = await _entityApiClient.List(_post, 0, 1, "count").Ok();
         Assert.True(response.Items.Length == 0);
@@ -85,21 +147,14 @@ public class EntityApiTest
     [Fact]
     public async Task GetResultAsTree()
     {
-        await _schemaApiClient.EnsureEntity(new Entity(
-            Attributes:[
-                new Attribute("name", "Name"),
-                new Attribute("parent", "Parent",DataType: DataType.Int, DisplayType: DisplayType.Number),
-                new Attribute("children", "Children",
-                    DataType: DataType.Collection, 
-                    DisplayType: DisplayType.EditTable,
-                    Options: $"{_category}.parent"),
-            ],
-            Name:_category,
-            TableName:_category,
-            Title:"name",
-            TitleAttribute:"name",
-            DefaultPageSize:EntityConstants.DefaultPageSize
-        )).Ok();
+        Attribute[] attrs =
+        [
+            new (Name, Name),
+            new ("parent", "Parent", DataType: DataType.Int, DisplayType: DisplayType.Number),
+            new ("children", "Children", DataType: DataType.Collection, DisplayType: DisplayType.EditTable, Options: $"{_category}.parent"),
+        ];
+
+        await _schemaApiClient.EnsureEntity(_category,Name,false,attrs).Ok();
         await _entityApiClient.Insert(_category, new { name = "cat1", }).Ok();
         await _entityApiClient.Insert(_category, new { name = "cat2", }).Ok();
         await _entityApiClient.Insert(_category, new { name = "cat3", }).Ok();
@@ -107,7 +162,7 @@ public class EntityApiTest
         await _entityApiClient.CollectionInsert(_category, "children", 1, new { name= "cat1-2" }).Ok();
         var items = await _entityApiClient.ListAsTree(_category).Ok();
         var children = items[0].GetProperty("children");
-        Assert.True(children.ValueKind == JsonValueKind.Array);
+        Assert.Equal(JsonValueKind.Array,children.ValueKind);
         Assert.Equal(2, children.GetArrayLength());
     }
 
@@ -115,7 +170,7 @@ public class EntityApiTest
     [Fact]
     public async Task InsertListDeleteOk()
     {
-        await _schemaApiClient.EnsureSimpleEntity(_post, Name).Ok();
+        await _schemaApiClient.EnsureSimpleEntity(_post, Name,false).Ok();
         var item = await _entityApiClient.Insert(_post, Name, "post1").Ok();
 
         var res = await _entityApiClient.List(_post, 0, 10).Ok();
@@ -129,14 +184,14 @@ public class EntityApiTest
     [Fact]
     public async Task InsertAndUpdateAndOneOk()
     {
-        await _schemaApiClient.EnsureSimpleEntity(_post, Name).Ok();
+        await _schemaApiClient.EnsureSimpleEntity(_post, Name,false).Ok();
         var item = (await _entityApiClient.Insert(_post, Name, "post1")).Ok();
         Assert.True(item.ToDictionary().TryGetValue("id", out var element));
         Assert.Equal(1, element);
 
         await _entityApiClient.Update(_post, 1, Name, "post2").Ok();
 
-        item = (await _entityApiClient.One(_post, 1)).Ok();
+        item = (await _entityApiClient.Single(_post, 1)).Ok();
         Assert.True(item.ToDictionary().TryGetValue(Name, out element));
         Assert.Equal("post2", element);
     }
@@ -144,7 +199,7 @@ public class EntityApiTest
     [Fact]
     public async Task ListWithPaginationOk()
     {
-        await _schemaApiClient.EnsureSimpleEntity(_post, Name).Ok();
+        await _schemaApiClient.EnsureSimpleEntity(_post, Name,false).Ok();
         for (var i = 0; i < 5; i++)
         {
             (await _entityApiClient.Insert(_post, Name, $"student{i}")).Ok();
@@ -163,8 +218,8 @@ public class EntityApiTest
     [Fact]
     public async Task InsertWithLookupWithWrongData()
     {
-        await _schemaApiClient.EnsureSimpleEntity(_author, Name).Ok();
-        await _schemaApiClient.EnsureSimpleEntity(_post, Name,lookup: _author).Ok();
+        await _schemaApiClient.EnsureSimpleEntity(_author, Name,false).Ok();
+        await _schemaApiClient.EnsureSimpleEntity(_post, Name,false,lookup: _author).Ok();
         var res = await _entityApiClient.InsertWithLookup(_post, Name, "post1",
             _author, "author1");
         Assert.True(res.IsFailed);
@@ -173,8 +228,8 @@ public class EntityApiTest
     [Fact]
     public async Task InsertWithLookup()
     {
-        await _schemaApiClient.EnsureSimpleEntity(_author, Name).Ok();
-        await _schemaApiClient.EnsureSimpleEntity(_post, Name, lookup:_author).Ok();
+        await _schemaApiClient.EnsureSimpleEntity(_author, Name,false).Ok();
+        await _schemaApiClient.EnsureSimpleEntity(_post, Name,false, lookup:_author).Ok();
         var author = (await _entityApiClient.Insert(_author, Name, "author1")).Ok();
         await _entityApiClient.InsertWithLookup(_post, Name, "post1",
             _author, author.ToDictionary()["id"]).Ok();
@@ -183,10 +238,10 @@ public class EntityApiTest
     [Fact]
     public async Task InsertDeleteListJunction()
     {
-        await _schemaApiClient.EnsureSimpleEntity(_tag, Name).Ok();
+        await _schemaApiClient.EnsureSimpleEntity(_tag, Name,false).Ok();
         await _entityApiClient.Insert(_tag, Name, "tag1").Ok();
 
-        await _schemaApiClient.EnsureSimpleEntity(_post, Name, junction: _tag).Ok();
+        await _schemaApiClient.EnsureSimpleEntity(_post, Name,false, junction: _tag).Ok();
         await _entityApiClient.Insert(_post, Name, "post1").Ok();
         
 
@@ -210,7 +265,7 @@ public class EntityApiTest
     [Fact]
     public async Task LookupApiWorks()
     {
-        await _schemaApiClient.EnsureSimpleEntity(_tag, Name).Ok();
+        await _schemaApiClient.EnsureSimpleEntity(_tag, Name,false).Ok();
         for (var i = 0; i < EntityConstants.DefaultPageSize - 1; i++)
         {
             await _entityApiClient.Insert(_tag,Name,$"tag{i}");
@@ -235,9 +290,9 @@ public class EntityApiTest
     [Fact]
     public async Task CollectionApiWorks()
     {
-        await _schemaApiClient.EnsureSimpleEntity(_post, Name).Ok();
-        await _schemaApiClient.EnsureSimpleEntity(_attachment, Name, _post).Ok();
-        await _schemaApiClient.EnsureSimpleEntity(_post, Name,collection:_attachment,linkAttribute:_post).Ok();
+        await _schemaApiClient.EnsureSimpleEntity(_post, Name,false).Ok();
+        await _schemaApiClient.EnsureSimpleEntity(_attachment, Name,false,lookup: _post).Ok();
+        await _schemaApiClient.EnsureSimpleEntity(_post, Name,false,collection:_attachment,linkAttribute:_post).Ok();
 
         await _entityApiClient.Insert(_post, Name, "post1").Ok();
 
@@ -252,5 +307,4 @@ public class EntityApiTest
         Assert.Empty(listResponse.Items);
 
     }
-
 }

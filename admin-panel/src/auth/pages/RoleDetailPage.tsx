@@ -12,9 +12,7 @@ import {NewUser} from "./RoleListPage";
 import {MultiSelectInput} from "../../components/inputs/MultiSelectInput";
 import {FetchingStatus} from "../../components/FetchingStatus";
 import { entityPermissionColumns } from "../types/utils";
-import {useRef, useState} from "react";
-import {Message} from "primereact/message";
-import {Toast} from "primereact/toast";
+import { useCheckError } from "../../components/useCheckError";
 
 
 export function RoleDetailPage({baseRouter}:{baseRouter:string}) {
@@ -22,14 +20,8 @@ export function RoleDetailPage({baseRouter}:{baseRouter:string}) {
     const {data: roleData, isLoading: loadingRole, error: errorRole, mutate: mutateRole} = useSingleRole(name==NewUser?'':name!);
     const {data: entities, isLoading: loadingEntity, error: errorEntities} = useEntities();
     const {confirm,Confirm} = useConfirm('roleDetailPage');
-    const [err,setErr] = useState('');
-
-    const {
-        register,
-        handleSubmit,
-        control
-    } = useForm()
-    const toast = useRef<any>(null);
+    const {handleErrorOrSuccess, CheckErrorStatus} = useCheckError();
+    const { register, handleSubmit, control } = useForm()
 
     if (loadingRole || loadingEntity || errorRole || errorEntities) {
         return <FetchingStatus isLoading={loadingRole || loadingEntity} error={errorRole || errorEntities}/>
@@ -40,29 +32,21 @@ export function RoleDetailPage({baseRouter}:{baseRouter:string}) {
             formData.name = name;
         }
         const {error} = await saveRole(formData);
-        
-        mutateRole();
-        setErr(error);
-        
-        if (!error ){
-            toast.current.show({severity: 'success', summary: 'Successfully Saved Role' });
+        await handleErrorOrSuccess(error, 'Successfully Saved Role', ()=> {
             if ( name == NewUser) {
-                await new Promise(r => setTimeout(r, 500));
                 window.location.href = baseRouter + '/roles/' + formData.name;
+            }else{
+                mutateRole();
             }
-        }
+        });
     }
 
     const onDelete = async () => {
         confirm('Do you want to delete this role?', async () => {
             const {error} = await deleteRole(name!);
-            setErr(error);
-            
-            if (!error) {
-                toast.current.show({severity: 'success', summary: 'Successfully Deleted Role' });
-                await new Promise(r => setTimeout(r, 500));
+            await handleErrorOrSuccess(error, 'Delete Succeed', ()=> {
                 window.location.href = baseRouter + '/roles/' ;
-            }
+            })
         });
     }
 
@@ -70,8 +54,7 @@ export function RoleDetailPage({baseRouter}:{baseRouter:string}) {
         {name !== NewUser && <h2>Editing Role `{roleData?.name}`</h2>}
         <Confirm/>
         <form onSubmit={handleSubmit(onSubmit)} id="form">
-            {err&& err.split('\n').map(e =>(<><Message severity={'error'} text={e}/>&nbsp;&nbsp;</>))}
-            <Toast ref={toast} position="top-right"/>
+            <CheckErrorStatus/>
             <div className="formgrid grid">
                 {name === NewUser && <div className={'field col-12  md:col-4'}>
                     <label>Name</label>

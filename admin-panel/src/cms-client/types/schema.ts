@@ -27,11 +27,12 @@ export interface Settings {
 export interface Entity {
     attributes: Attribute[];
     name: string;
+    displayName: string;
     tableName: string;
     primaryKey: string;
-    title: string;
-    titleAttribute: string;
+    labelAttributeName: string;
     defaultPageSize: number;
+    defaultPublicationStatus: PublicationStatus;
 }
 
 export interface Attribute {
@@ -73,6 +74,13 @@ export enum DisplayType {
     Picklist = "picklist",
     Tree = "tree",
     EditTable = "editTable",
+}
+
+export enum PublicationStatus {
+    Draft = "draft",
+    Published = "published",
+    Unpublished = "unpublished",
+    Scheduled = "scheduled",
 }
 
 export interface Query {

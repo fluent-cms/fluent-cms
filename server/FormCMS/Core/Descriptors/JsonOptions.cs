@@ -5,6 +5,12 @@ namespace FormCMS.Core.Descriptors;
 
 public static class JsonOptions
 {
+    public static readonly JsonSerializerOptions SnakeNaming = new JsonSerializerOptions
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower) }
+    };
+    
     public static readonly JsonSerializerOptions CamelNaming = new JsonSerializerOptions
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,

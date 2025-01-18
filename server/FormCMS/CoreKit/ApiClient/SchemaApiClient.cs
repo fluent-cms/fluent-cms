@@ -2,7 +2,8 @@ using System.Text.Json;
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.HttpClientExt;
 using FluentResults;
-using QueryBuilder_Attribute = FormCMS.Core.Descriptors.Attribute;
+using FormCMS.Utils.EnumExt;
+using Attribute = FormCMS.Core.Descriptors.Attribute;
 
 namespace FormCMS.CoreKit.ApiClient;
 
@@ -33,13 +34,13 @@ public class SchemaApiClient (HttpClient client)
         return res.IsSuccessStatusCode;
     }
     
-    public Task<Result<Schema>> EnsureSimpleEntity(string entityName, string field,
+    public Task<Result<Schema>> EnsureSimpleEntity(string entityName, string field, bool needPublish,
         string lookup = "",
         string junction = "",
         string collection = "", string linkAttribute = "")
     {
-        var attr = new List<QueryBuilder_Attribute>([
-            new QueryBuilder_Attribute
+        var attr = new List<Attribute>([
+            new Attribute
             (
                 Field: field,
                 Header: field
@@ -48,7 +49,7 @@ public class SchemaApiClient (HttpClient client)
         ]);
         if (!string.IsNullOrWhiteSpace(lookup))
         {
-            attr.Add(new QueryBuilder_Attribute
+            attr.Add(new Attribute
             (
                 Field: lookup,
                 Options: lookup,
@@ -62,7 +63,7 @@ public class SchemaApiClient (HttpClient client)
 
         if (!string.IsNullOrWhiteSpace(junction))
         {
-            attr.Add(new QueryBuilder_Attribute
+            attr.Add(new Attribute
             (
                 Field: junction,
                 Options: junction,
@@ -75,7 +76,7 @@ public class SchemaApiClient (HttpClient client)
 
         if (!string.IsNullOrWhiteSpace(collection))
         {
-            attr.Add(new QueryBuilder_Attribute
+            attr.Add(new Attribute
             (
                 Field: collection,
                 Options: $"{collection}.{linkAttribute}",
@@ -90,15 +91,30 @@ public class SchemaApiClient (HttpClient client)
         (
             Name: entityName,
             TableName: entityName,
-            Title: entityName,
+            DisplayName: entityName,
             DefaultPageSize: EntityConstants.DefaultPageSize,
             PrimaryKey: "id",
-            TitleAttribute: field,
+            LabelAttributeName: field,
+            DefaultPublicationStatus: needPublish ?PublicationStatus.Draft:PublicationStatus.Published,
             Attributes: [..attr]
         );
         return EnsureEntity(entity);
     }
 
+    public Task<Result<Schema>> EnsureEntity(string entityName, string labelAttribute, bool needPublish,params Attribute[] attributes)
+    {
+        var entity = new Entity(
+            Attributes:[..attributes],
+            Name: entityName,
+            TableName: entityName,
+            DisplayName: entityName,
+            LabelAttributeName: labelAttribute,
+            DefaultPageSize: EntityConstants.DefaultPageSize,
+            DefaultPublicationStatus: needPublish ?PublicationStatus.Draft:PublicationStatus.Published
+        );
+        return EnsureEntity(entity);
+    }
+    
     public Task<Result<Schema>> EnsureEntity(Entity entity)
     {
         var url = $"/entity/add_or_update".ToSchemaApi();

@@ -1,42 +1,51 @@
 using System.Collections.Immutable;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using DynamicExpresso;
 
 using FormCMS.CoreKit.RelationDbQuery;
 using FormCMS.Utils.ResultExt;
 using FluentResults;
+using FormCMS.Utils.EnumExt;
+using Npgsql.Internal.Postgres;
 
 namespace FormCMS.Core.Descriptors;
-public enum InListOrDetail
+
+public enum PublicationStatus
 {
-    InList,
-    InDetail,
+    Draft,
+    Published,
+    Unpublished,
+    Scheduled
 }
+
 public record Entity(
     ImmutableArray<Attribute> Attributes,
     string Name = "",
+    string DisplayName ="",
     string TableName = "",
-    string PrimaryKey = DefaultFields.Id,
-    string Title ="",
-    string TitleAttribute ="",
-    int DefaultPageSize = EntityConstants.DefaultPageSize
+    
+    string PrimaryKey = "",
+    string LabelAttributeName ="",
+    
+    int DefaultPageSize = EntityConstants.DefaultPageSize,
+    PublicationStatus DefaultPublicationStatus = PublicationStatus.Published
 );
-
-
 
 public record LoadedEntity(
     ImmutableArray<LoadedAttribute> Attributes,
     LoadedAttribute PrimaryKeyAttribute,
-    LoadedAttribute LoadedTitleAttribute,
+    LoadedAttribute LabelAttribute,
     LoadedAttribute DeletedAttribute,
     string Name,
+    string DisplayName , //needed by admin panel
     string TableName,
-    string PrimaryKey = DefaultFields.Id,
-    string Title = "", //needed by admin panel
-    string TitleAttribute = "",
-    int DefaultPageSize = EntityConstants.DefaultPageSize
+    
+    string PrimaryKey,
+    string LabelAttributeName, 
+    int DefaultPageSize,
+    PublicationStatus DefaultPublicationStatus 
     );
 
 public static class EntityConstants
@@ -49,20 +58,21 @@ public static class EntityHelper
     public static LoadedEntity ToLoadedEntity(this Entity entity)
     {
         var primaryKey = entity.Attributes.FirstOrDefault(x=>x.Field ==entity.PrimaryKey)!.ToLoaded(entity.TableName);
-        var titleAttribute = entity.Attributes.FirstOrDefault(x=>x.Field == entity.TitleAttribute)?.ToLoaded(entity.TableName) ?? primaryKey;
+        var labelAttribute = entity.Attributes.FirstOrDefault(x=>x.Field == entity.LabelAttributeName)?.ToLoaded(entity.TableName) ?? primaryKey;
         var attributes = entity.Attributes.Select(x => x.ToLoaded(entity.TableName));
-        var deletedAttribute = new LoadedAttribute(entity.TableName, DefaultFields.Deleted);
+        var deletedAttribute = new LoadedAttribute(entity.TableName, DefaultAttributeNames.Deleted.ToCamelCase());
         return new LoadedEntity(
             [..attributes],
             PrimaryKeyAttribute:primaryKey,
-            LoadedTitleAttribute: titleAttribute,
+            LabelAttribute: labelAttribute,
             DeletedAttribute:deletedAttribute,
-            entity.Name,
-            entity.TableName,
-            entity.PrimaryKey,
-            entity.Title,
-            entity.TitleAttribute,
-            entity.DefaultPageSize
+            Name:entity.Name,
+            TableName: entity.TableName,
+            PrimaryKey:entity.PrimaryKey,
+            DisplayName:entity.DisplayName,
+            LabelAttributeName:entity.LabelAttributeName,
+            DefaultPageSize:entity.DefaultPageSize,
+            DefaultPublicationStatus:entity.DefaultPublicationStatus
         );
     }
     
@@ -79,10 +89,10 @@ public static class EntityHelper
         return query;
     }
 
-    public static SqlKata.Query ByIdsQuery(this LoadedEntity e,IEnumerable<LoadedAttribute> attributes,IEnumerable<ValidValue> ids)
+    public static SqlKata.Query ByIdsQuery(this LoadedEntity e,IEnumerable<string> fields,IEnumerable<ValidValue> ids)
     {
         var query = e.Basic().WhereIn(e.PrimaryKey, ids.GetValues())
-            .Select(attributes.Select(x => x.AddTableModifier()));
+            .Select(fields);
         return query;
     }
 
@@ -140,6 +150,55 @@ public static class EntityHelper
         return new SqlKata.Query(e.TableName).AsInsert(item, true);
     }
 
+    public static Result<SqlKata.Query> SavePublicationStatus(this LoadedEntity e, object id, Record record)
+    {
+        if (record.TryGetValue(DefaultAttributeNames.PublicationStatus.ToCamelCase(), out var statusObject) 
+            && statusObject is string statusString 
+            && Enum.TryParse(statusString,true, out PublicationStatus status)
+            
+            && record.TryGetValue(DefaultAttributeNames.PublishedAt.ToCamelCase() , out var publishedAtObject)
+            && publishedAtObject is string publishedAtString
+            && DateTime.TryParse(publishedAtString, out var publishedAt))
+        {
+            
+            return new SqlKata.Query(e.TableName)
+             .Where(e.PrimaryKey, id)
+             .AsUpdate(
+                 [
+                     DefaultAttributeNames.PublicationStatus.ToCamelCase(),
+                     DefaultAttributeNames.PublishedAt.ToCamelCase()
+                 ],
+                 [status.ToCamelCase(), publishedAt]);
+        }
+        return Result.Fail("Can not save publication status, invalid input");
+   }
+
+    public static SqlKata.Query Unpublish(this LoadedEntity e, object id)
+       => new SqlKata.Query(e.TableName)
+            .Where(e.PrimaryKey, id)
+            .AsUpdate([DefaultAttributeNames.PublicationStatus.ToCamelCase()], [PublicationStatus.Unpublished.ToCamelCase()]);
+
+    public static SqlKata.Query Publish(this LoadedEntity e, object id, Record item)
+    {
+        var updateItem = new Dictionary<string, object>
+        {
+            [DefaultAttributeNames.PublicationStatus.ToCamelCase()] = PublicationStatus.Published.ToCamelCase()
+        };
+
+        if (item.TryGetValue(DefaultAttributeNames.PublicationStatus.ToCamelCase(), out var val) 
+            && val is string s 
+            && s == PublicationStatus.Unpublished.ToCamelCase())
+        {
+            //for unpublished item, no need to set published at
+        }
+        else
+        {
+            updateItem[DefaultAttributeNames.PublishedAt.ToCamelCase()] = DateTime.Now;
+        }
+
+        return new SqlKata.Query(e.TableName).Where(e.PrimaryKey, id).AsUpdate(updateItem.Keys, updateItem.Values);
+    }
+
     public static Result<SqlKata.Query> UpdateQuery(this LoadedEntity e, Record item)
     {
         //to prevent SqlServer 'Cannot update identity column' error 
@@ -155,59 +214,22 @@ public static class EntityHelper
 
     public static Result<SqlKata.Query> DeleteQuery(this LoadedEntity e,Record item)
          => item.TryGetValue(e.PrimaryKey, out var key)
-            ? Result.Ok(new SqlKata.Query(e.TableName).Where(e.PrimaryKey, key).AsUpdate([DefaultFields.Deleted], [true]))
+            ? Result.Ok(new SqlKata.Query(e.TableName).Where(e.PrimaryKey, key)
+                .AsUpdate([DefaultAttributeNames.Deleted.ToCamelCase()], [true]))
             : Result.Fail($"Failed to get value with primary key [${e.PrimaryKey}]");
 
     public static SqlKata.Query Basic(this LoadedEntity e) =>
         new SqlKata.Query(e.TableName)
             .Where(e.DeletedAttribute.AddTableModifier(), false);
 
-    public static Entity WithDefaultAttr(this Entity e)
-    {
-        var list = new List<Attribute>();
-        if (e.Attributes.FirstOrDefault(x=>x.Field ==DefaultFields.Id) is null)
-        {
-            list.Add(new Attribute
-            ( 
-                Field : DefaultFields.Id, Header : "id",
-                IsDefault : true, InDetail:true, InList:true,
-                DataType : DataType.Int, 
-                DisplayType : DisplayType.Number
-            ));
-        }
-
-        list.AddRange(e.Attributes);
-
-        if (e.Attributes.FirstOrDefault(x=>x.Field == DefaultFields.CreatedAt) is null)
-        {
-            list.Add(new Attribute
-            (
-                Field : DefaultFields.CreatedAt, Header : "Created At", 
-                InList : true, InDetail : false, IsDefault : true,
-                DataType : DataType.Datetime, DisplayType:DisplayType.Datetime
-            ));
-        }
-
-        if (e.Attributes.FirstOrDefault(x=>x.Field ==DefaultFields.UpdatedAt) is null)
-        {
-            list.Add(new Attribute
-            (
-                Field : DefaultFields.UpdatedAt, Header : "Updated At", 
-                InList : true, InDetail : false, IsDefault : true,
-                DataType : DataType.Datetime, DisplayType:DisplayType.Datetime
-            ));
-        }
-
-        return e with { Attributes = [..list] };
-    }
-
+    
     public static Result ValidateTitleAttributes(this LoadedEntity e, Record record)
     {
-        if (record.TryGetValue(e.TitleAttribute, out var value) && value is not null)
+        if (record.TryGetValue(e.LabelAttributeName, out var value) && value is not null)
         {
             return Result.Ok();
         }
-        return Result.Fail($"Validation fail for {e.TitleAttribute}");
+        return Result.Fail($"Validation fail for {e.LabelAttributeName}");
     }
     
     public static Result ValidateLocalAttributes(this LoadedEntity e,Record record)
@@ -270,7 +292,5 @@ public static class EntityHelper
            
         }
         return ret;
-        
-       
     }
 }

@@ -1,5 +1,3 @@
-using System.Collections.Immutable;
-using FormCMS.Cms;
 using FormCMS.Core.Cache;
 using FormCMS.Cms.Graph;
 using FluentResults;
@@ -8,8 +6,6 @@ using FormCMS.Core.Descriptors;
 using FormCMS.Utils.GraphTypeConverter;
 using FormCMS.Utils.ResultExt;
 using GraphQLParser.AST;
-using Descriptors_Query = FormCMS.Core.Descriptors.Query;
-using Descriptors_Schema = FormCMS.Core.Descriptors.Schema;
 using Query = FormCMS.Core.Descriptors.Query;
 using Schema = FormCMS.Core.Descriptors.Schema;
 
@@ -22,7 +18,7 @@ public sealed class QuerySchemaService(
     Options options
 ) : IQuerySchemaService
 {
-    public async Task<LoadedQuery> ByGraphQlRequest(Descriptors_Query query, GraphQLField[] fields)
+    public async Task<LoadedQuery> ByGraphQlRequest(Query query, GraphQLField[] fields)
     {
         if (string.IsNullOrWhiteSpace(query.Name))
         {
@@ -61,7 +57,7 @@ public sealed class QuerySchemaService(
     }
 
 
-    public async Task SaveQuery(Descriptors_Query query, CancellationToken ct = default)
+    public async Task SaveQuery(Query query, CancellationToken ct = default)
     {
         query = query with
         {
@@ -69,12 +65,12 @@ public sealed class QuerySchemaService(
             $"{options.GraphQlPath}?query={Uri.EscapeDataString(query.Source)}&operationName={query.Name}"
         };
         await VerifyQuery(query, ct);
-        var schema = new Descriptors_Schema(query.Name, SchemaType.Query, new Settings(Query: query));
+        var schema = new Schema(query.Name, SchemaType.Query, new Settings(Query: query));
         await schemaSvc.AddOrUpdateByNameWithAction(schema, ct);
 
     }
 
-    public async Task Delete(Descriptors_Schema schema, CancellationToken ct)
+    public async Task Delete(Schema schema, CancellationToken ct)
     {
         await schemaSvc.Delete(schema.Id, ct);
         if (schema.Settings.Query is not null)
@@ -88,7 +84,7 @@ public sealed class QuerySchemaService(
         return options.GraphQlPath;
     }
 
-    private async Task<LoadedQuery> ToLoadedQuery(Descriptors_Query query, IEnumerable<GraphQLField> fields,
+    private async Task<LoadedQuery> ToLoadedQuery(Query query, IEnumerable<GraphQLField> fields,
         CancellationToken ct = default)
     {
         var entity = (await entitySchemaSvc.LoadEntity(query.EntityName, ct)).Ok();
@@ -98,7 +94,7 @@ public sealed class QuerySchemaService(
         return query.ToLoadedQuery(entity, selection, sorts, validFilter);
     }
 
-    private async Task VerifyQuery(Descriptors_Query? query, CancellationToken ct = default)
+    private async Task VerifyQuery(Query? query, CancellationToken ct = default)
     {
         if (query is null)
         {
@@ -135,7 +131,7 @@ public sealed class QuerySchemaService(
                     : attr))
             .Bind(x =>
             {
-                if (x.FirstOrDefault(x => x.Field == entity.PrimaryKey) is null)
+                if (x.FirstOrDefault(f => f.Field == entity.PrimaryKey) is null)
                     return Result.Fail(
                         $"Primary key [{entity.PrimaryKey}] not in selection list for entity [{entity.Name}]");
                 if (parent?.DataType == DataType.Collection &&

@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using System.Globalization;
 using System.Text.Json;
 using FluentResults;
+using FormCMS.Utils.EnumExt;
 
 namespace FormCMS.Core.Descriptors;
 
@@ -108,7 +109,8 @@ public static class AttributeHelper
                 TargetEntity: lookup.TargetEntity,
                 TargetAttribute: lookup.TargetEntity.PrimaryKeyAttribute,
                 IsCollective: false,
-                GetQuery: (fields, ids, _) => lookup.TargetEntity.ByIdsQuery(fields, ids)
+                GetQuery: (fields, ids, _) => 
+                    lookup.TargetEntity.ByIdsQuery(fields.Select(x=>x.AddTableModifier()), ids)
             ),
         DataType.Junction when attribute.Junction is { } junction =>
             new EntityLinkDesc(
@@ -181,6 +183,60 @@ public static class AttributeHelper
             Options: a.Options,
             Validation: a.Validation
         );
+    }
+
+    public static Attribute[] WithDefaultAttr(this Attribute[] attributes)
+    {
+        var ret = new List<Attribute>();
+        if (attributes.FirstOrDefault(x=>x.Field ==DefaultAttributeNames.Id.ToCamelCase()) is null)
+        {
+            ret.Add(new Attribute
+            ( 
+                Field : DefaultAttributeNames.Id.ToCamelCase(), Header : "id",
+                IsDefault : true, InDetail:true, InList:true,
+                DataType : DataType.Int, 
+                DisplayType : DisplayType.Number
+            ));
+        }
+
+        ret.AddRange(attributes);
+        
+        if (attributes.FirstOrDefault(x => x.Field == DefaultAttributeNames.PublicationStatus.ToCamelCase()) is null)
+        {
+            ret.Add(new Attribute
+            (
+                Field: DefaultAttributeNames.PublicationStatus.ToCamelCase(), Header: "Publication Status",
+                IsDefault: true, InDetail: true, InList: true,
+                DataType: DataType.String,
+                DisplayType: DisplayType.Dropdown,
+                Options: string.Join(",", new []
+                {
+                    PublicationStatus.Draft.ToCamelCase(), 
+                    PublicationStatus.Published.ToCamelCase(),
+                    PublicationStatus.Scheduled.ToCamelCase()
+                })
+            ));
+        }
+
+        string[] timeAttrs =
+        [
+            DefaultAttributeNames.CreatedAt.ToCamelCase(), DefaultAttributeNames.UpdatedAt.ToCamelCase(),
+            DefaultAttributeNames.PublishedAt.ToCamelCase()
+        ];
+
+        ret.AddRange(from attr in timeAttrs
+            where attributes.FirstOrDefault(x => x.Field == attr) is null
+            select new Attribute(
+                Field: attr, 
+                Header: attr, 
+                InList: true, 
+                InDetail: false, 
+                IsDefault: true,
+                DataType: DataType.Datetime, 
+                DisplayType: DisplayType.Datetime)
+            );
+        
+        return ret.ToArray();
     }
 
 

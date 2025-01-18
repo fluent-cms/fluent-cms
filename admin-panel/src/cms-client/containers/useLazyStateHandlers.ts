@@ -38,7 +38,7 @@ function createDefaultFilter(cols:XAttr[]) {
 
     cols.forEach(col =>{
         if (col.displayType == "lookup"){
-            filters[col.field + "." + col.lookup!.titleAttribute] = {operator: 'and', constraints: [{ value: null, matchMode: getMathMode(col) }]}
+            filters[col.field + "." + col.lookup!.labelAttributeName] = {operator: 'and', constraints: [{ value: null, matchMode: getMathMode(col) }]}
         }else {
             filters[col.field] = {operator: 'and', constraints: [{ value: null, matchMode: getMathMode(col) }]}
         }

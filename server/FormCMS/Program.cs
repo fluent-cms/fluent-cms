@@ -4,7 +4,7 @@ using FormCMS.Cms.DTO;
 using NJsonSchema;
 using NJsonSchema.CodeGeneration.TypeScript;
 using FormCMS.Core.Descriptors;
-using FormCMS.Utils.JsonUtil;
+
 using NJsonSchema.Generation;
 
 TsGenerator.GenerateCode<Schema>("../../admin-panel/src/cms-client/types/schema.ts");
@@ -12,6 +12,7 @@ TsGenerator.GenerateCode<XEntity>("../../admin-panel/src/cms-client/types/schema
 TsGenerator.GenerateCode<ListResponse>("../../admin-panel/src/cms-client/types/listResponse.ts");
 TsGenerator.GenerateCode<ListResponseMode>("../../admin-panel/src/cms-client/types/listResponseMode.ts");
 TsGenerator.GenerateCode<LookupListResponse>("../../admin-panel/src/cms-client/types/lookupListResponse.ts");
+TsGenerator.GenerateCode<DefaultAttributeNames>("../../admin-panel/src/cms-client/types/defaultAttributeNames.ts");
 
 TsGenerator.GenerateCode<Schema>("../../admin-panel/src/auth/types/schema.ts");
 TsGenerator.GenerateCode<RoleDto>("../../admin-panel/src/auth/types/roleDto.ts");
@@ -20,18 +21,19 @@ TsGenerator.GenerateCode<ProfileDto>("../../admin-panel/src/auth/types/profileDt
 
 internal static class TsGenerator
 {
-
-    
-    internal static void GenerateCode<T>(string fileName)
+    internal static void GenerateCode<T>(string fileName, SystemTextJsonSchemaGeneratorSettings? jsonSettings = null)
     {
-        var jsonSettings = new SystemTextJsonSchemaGeneratorSettings
+        jsonSettings ??= new SystemTextJsonSchemaGeneratorSettings
         {
-            SerializerOptions = JsonOptions.CamelNaming 
+            SerializerOptions =JsonOptions.CamelNaming
         };
         
         var schema = JsonSchema.FromType<T>(jsonSettings);
-        var typeScriptGeneratorSettings = new TypeScriptGeneratorSettings ()
-        { TypeStyle = TypeScriptTypeStyle.Interface, TypeScriptVersion = 2.0m};
+        var typeScriptGeneratorSettings = new TypeScriptGeneratorSettings
+        {
+            TypeStyle = TypeScriptTypeStyle.Interface, 
+
+        };
         var generator = new TypeScriptGenerator(schema,typeScriptGeneratorSettings);
         var src = generator.GenerateFile();
         File.WriteAllText(fileName, src);

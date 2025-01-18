@@ -1,4 +1,5 @@
 using System.Data;
+using FormCMS.Utils.EnumExt;
 using Microsoft.Data.SqlClient;
 using SqlKata.Compilers;
 using SqlKata.Execution;
@@ -38,27 +39,29 @@ public class SqlServerIDao(SqlConnection connection, ILogger<SqlServerIDao> logg
 
     public async Task CreateTable(string table, IEnumerable<Column> cols,  CancellationToken ct)
     {
-        var columnDefinitionStrs = cols.Select(column => column.Name.ToLower() switch
+        var strs = cols.Select(column => column switch
         {
-            "id" => "[id] INT IDENTITY(1,1) PRIMARY KEY",
-            "deleted" => "[deleted] BIT DEFAULT 0",
-            "created_at" => "[created_at] DATETIME DEFAULT GETDATE()",
-            "updated_at" => "[updated_at] DATETIME DEFAULT GETDATE()",
+            _ when column.Name == DefaultColumnNames.Id.ToCamelCase() => $"[{DefaultColumnNames.Id.ToCamelCase()}] INT IDENTITY(1,1) PRIMARY KEY",
+            _ when column.Name == DefaultColumnNames.Deleted.ToCamelCase() => $"[{DefaultColumnNames.Deleted.ToCamelCase()}] BIT DEFAULT 0",
+            
+            _ when column.Name == DefaultColumnNames.CreatedAt.ToCamelCase() => $"[{DefaultColumnNames.CreatedAt.ToCamelCase()}] DATETIME DEFAULT GETDATE()",
+            _ when column.Name == DefaultColumnNames.UpdatedAt.ToCamelCase() => $"[{DefaultColumnNames.UpdatedAt.ToCamelCase()}] DATETIME DEFAULT GETDATE()",
+            
             _ => $"[{column.Name}] {DataTypeToString(column.Type)}"
         });
 
-        var sql = $"CREATE TABLE [{table}] ({string.Join(", ", columnDefinitionStrs)});";
+        var sql = $"CREATE TABLE [{table}] ({string.Join(", ", strs)});";
         
         await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(ct));
         sql = $"""
-               CREATE TRIGGER trg_{table}_updated_at 
+               CREATE TRIGGER trg_{table}_updatedAt 
                ON [{table}] 
                AFTER UPDATE
                AS 
                BEGIN
                    SET NOCOUNT ON;
                    UPDATE [{table}]
-                   SET [updated_at] = GETDATE()
+                   SET [{DefaultColumnNames.UpdatedAt.ToCamelCase()}] = GETDATE()
                    FROM inserted i
                    WHERE [{table}].[id] = i.[id];
                END;
@@ -112,9 +115,8 @@ public class SqlServerIDao(SqlConnection connection, ILogger<SqlServerIDao> logg
         }, ("tableName", table));
     }
 
-    private string DataTypeToString(ColumnType dataType)
-    {
-        return dataType switch
+    private static string DataTypeToString(ColumnType dataType)
+        => dataType switch
         {
             ColumnType.Int => "INT",
             ColumnType.Text => "TEXT",
@@ -122,7 +124,6 @@ public class SqlServerIDao(SqlConnection connection, ILogger<SqlServerIDao> logg
             ColumnType.String => "NVARCHAR(255)",
             _ => throw new NotSupportedException($"Type {dataType} is not supported")
         };
-    }
 
     private ColumnType StringToDataType(string s)
     {

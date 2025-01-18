@@ -6,9 +6,7 @@ import {useConfirm} from "../../components/useConfirm";
 import {FetchingStatus} from "../../components/FetchingStatus";
 import {MultiSelectInput} from "../../components/inputs/MultiSelectInput";
 import {entityPermissionColumns} from "../types/utils";
-import {Toast} from "primereact/toast";
-import {useRef, useState} from "react";
-import {Message} from "primereact/message";
+import { useCheckError } from "../../components/useCheckError";
 
 export function UserDetailPage({baseRouter}: { baseRouter: string }) {
     const {id} = useParams()
@@ -16,32 +14,21 @@ export function UserDetailPage({baseRouter}: { baseRouter: string }) {
     const {data: roles, isLoading: loadingRoles, error: errorRoles} = useRoles();
     const {data: entities, isLoading: loadingEntity, error: errorEntities} = useEntities();
     const {confirm, Confirm} = useConfirm('userDetailPage');
-    const [err, setErr] = useState('');
-    const {
-        register,
-        handleSubmit,
-        control
-    } = useForm()
-    const toast = useRef<any>(null);
-
+    const {handleErrorOrSuccess, CheckErrorStatus} = useCheckError();
+    const { register, handleSubmit, control } = useForm()
+    
     const onSubmit = async (formData: any) => {
         formData.id = id;
         const {error} = await saveUser(formData);
-        setErr(error);
-        if (!error) {
-            toast.current.show({severity: 'success', summary: 'Successfully Updated User'});
-        }
-        mutateUser();
+        await handleErrorOrSuccess(error, 'Successfully Updated User',mutateUser);
     }
 
     const onDelete = async () => {
         confirm('Do you want to delete this user?', async () => {
             const {error} = await deleteUser(id!);
-            setErr(error);
-            if (!error) {
-                await new Promise(r => setTimeout(r, 500));
+            await handleErrorOrSuccess(error, 'Delete User',()=>{
                 window.location.href = baseRouter + "/users";
-            }
+            });
         });
     }
 
@@ -52,9 +39,7 @@ export function UserDetailPage({baseRouter}: { baseRouter: string }) {
             <Confirm/>
             <h2>Editing {userData.email}</h2>
             <form onSubmit={handleSubmit(onSubmit)} id="form">
-                {err && err.split('\n').map(e => (<><Message severity={'error'} text={e}/>&nbsp;&nbsp;</>))}
-
-                <Toast ref={toast} position="top-right"/>
+                <CheckErrorStatus/>
                 <Button type={'submit'} label={"Save User"} icon="pi pi-check"/>
                 {' '}
                 <Button type={'button'} label={"Delete User"} severity="danger" onClick={onDelete}/>

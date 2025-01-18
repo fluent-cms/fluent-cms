@@ -28,7 +28,7 @@ export function Picklist({baseRouter,column, data, schema, getFullAssetsURL}: {
 
     const {lazyState :excludedLazyState,eventHandlers:excludedEventHandlers}= useLazyStateHandlers(10, listColumns,"");
     const {data: excludedSubgridData, mutate: execMutate} = useJunctionData(schema.name, id, column.field, true,excludedLazyState)
-    const {checkError, CheckErrorStatus} = useCheckError();
+    const {handleErrorOrSuccess, CheckErrorStatus} = useCheckError();
     const {confirm,Confirm} = useConfirm("picklist" +column.field);
     const mutateDate = () => {
         setExistingItems(null);
@@ -39,18 +39,19 @@ export function Picklist({baseRouter,column, data, schema, getFullAssetsURL}: {
     }
 
     const handleSave = async () => {
-        await saveJunctionItems(schema.name, id, column.field, toAddItems)
-        mutateDate()
-        hideDialog()
+        const {error} = await saveJunctionItems(schema.name, id, column.field, toAddItems)
+        handleErrorOrSuccess(error, 'Save success', ()=> {
+            mutateDate()
+            hideDialog()
+        })
     }
 
     const onDelete = async () => {
         confirm('Do you want to delete these item?', async () => {
             const {error} = await deleteJunctionItems(schema.name, id, column.field, existingItems)
-            checkError(error, 'Delete Succeed')
-            if (!error) {
+            handleErrorOrSuccess(error, 'Delete Succeed', ()=> {
                 mutateDate()
-            }
+            })
         })
     }
 

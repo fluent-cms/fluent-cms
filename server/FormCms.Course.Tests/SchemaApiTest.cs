@@ -109,7 +109,7 @@ public class SchemaApiTest
                 Entity = new Entity(Name: name,
                     PrimaryKey: "id",
                     TableName: name,
-                    TitleAttribute: Name,
+                    LabelAttributeName: Name,
                     Attributes:
                     [
                         new Attribute

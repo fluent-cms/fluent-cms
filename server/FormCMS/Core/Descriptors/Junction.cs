@@ -1,4 +1,5 @@
 using FormCMS.CoreKit.RelationDbQuery;
+using FormCMS.Utils.EnumExt;
 
 namespace FormCMS.Core.Descriptors;
 
@@ -17,8 +18,8 @@ public static class JunctionHelper
         LoadedAttribute crossAttribute)
     {
         var tableName = GetJunctionTableName(sourceEntity.Name, targetEntity.Name);
-        var id = new LoadedAttribute(tableName, DefaultFields.Id);
-        var deleted = new LoadedAttribute(tableName, DefaultFields.Deleted);
+        var id = new LoadedAttribute(tableName, DefaultAttributeNames.Id.ToCamelCase());
+        var deleted = new LoadedAttribute(tableName, DefaultAttributeNames.Deleted.ToCamelCase());
         sourceEntity = sourceEntity with
         {
             Attributes =
@@ -27,7 +28,7 @@ public static class JunctionHelper
 
         var sourceAttribute = new LoadedAttribute
         (
-            Field: $"{sourceEntity.Name}_id",
+            Field: $"{sourceEntity.Name}Id",
             TableName: tableName,
             DataType: DataType.Int,
             DisplayType:DisplayType.Number
@@ -35,7 +36,7 @@ public static class JunctionHelper
 
         var targetAttribute = new LoadedAttribute
         (
-            Field: $"{targetEntity.Name}_id",
+            Field: $"{targetEntity.Name}Id",
             TableName: tableName,
             DataType: DataType.Int,
             DisplayType:DisplayType.Number
@@ -43,7 +44,7 @@ public static class JunctionHelper
         
         var idAttr = new LoadedAttribute
         (
-            Field: DefaultFields.Id,
+            Field: DefaultAttributeNames.Id.ToCamelCase(),
             TableName: tableName,
             DataType: DataType.Int,
             DisplayType:DisplayType.Number
@@ -51,7 +52,7 @@ public static class JunctionHelper
 
         var created = new LoadedAttribute
         (
-            Field: DefaultFields.CreatedAt,
+            Field: DefaultAttributeNames.CreatedAt.ToCamelCase(),
             TableName: tableName,
             DataType: DataType.Datetime,
             DisplayType:DisplayType.Datetime
@@ -59,7 +60,7 @@ public static class JunctionHelper
 
         var updated = new LoadedAttribute
         (
-            Field: DefaultFields.UpdatedAt,
+            Field: DefaultAttributeNames.UpdatedAt.ToCamelCase(),
             TableName: tableName,
             DataType: DataType.Datetime,
             DisplayType:DisplayType.Datetime
@@ -69,11 +70,17 @@ public static class JunctionHelper
         (
             Attributes: [idAttr,sourceAttribute, targetAttribute,created,updated],
             PrimaryKeyAttribute: id,
-            LoadedTitleAttribute: id,
+            LabelAttribute: id,
             DeletedAttribute: deleted,
             Name: tableName,
-            TableName: tableName
+            TableName: tableName,
+            PrimaryKey:idAttr.Field,
+            DisplayName:"",
+            LabelAttributeName:"",
+            DefaultPageSize:EntityConstants.DefaultPageSize,
+            DefaultPublicationStatus:PublicationStatus.Published
         );
+        
         return new Junction(
             JunctionEntity: junctionEntity,
             TargetEntity: targetEntity,

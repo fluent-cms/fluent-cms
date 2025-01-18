@@ -28,12 +28,12 @@ export function LookupInput(props: {
                 className={'w-full'}
                 dropdown
                 id={field.name}
-                field={column.lookup!.titleAttribute}
+                field={column.lookup!.labelAttributeName}
                 value={field.value}
                 suggestions={filteredItems}
                 completeMethod={searchItems}
                 onChange={(e) => {
-                    var selectedItem = typeof (e.value) === "object" ? e.value : {[column.lookup!.titleAttribute]: e.value};
+                    var selectedItem = typeof (e.value) === "object" ? e.value : {[column.lookup!.labelAttributeName]: e.value};
                     field.onChange(selectedItem);
                 }}
             />
@@ -48,7 +48,7 @@ export function LookupInput(props: {
                 }}
                 className={'w-full'}
                 optionValue={column.lookup!.primaryKey}
-                optionLabel={column.lookup!.titleAttribute}
+                optionLabel={column.lookup!.labelAttributeName}
                 filter
             />
     }

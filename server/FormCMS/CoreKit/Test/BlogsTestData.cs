@@ -102,9 +102,9 @@ public static class BlogsTestData
                 new Attribute(Field: "image", Header: "Image", DisplayType: DisplayType.Image),
             ],
             DefaultPageSize: 50,
-            TitleAttribute: "name",
+            LabelAttributeName: "name",
             TableName: "tags",
-            Title: "Tag",
+            DisplayName: "Tag",
             Name: "tag"
         ),
         new(
@@ -116,9 +116,9 @@ public static class BlogsTestData
                 new Attribute(Field: "post", Header: "Post", DataType:DataType.Int, DisplayType: DisplayType.Number),
             ],
             DefaultPageSize: 50,
-            TitleAttribute: "name",
+            LabelAttributeName: "name",
             TableName: "attachments",
-            Title: "Attachment",
+            DisplayName: "Attachment",
             Name: "attachment"
         ),
         new(
@@ -128,10 +128,10 @@ public static class BlogsTestData
                 new Attribute(Field: "description", Header: "Description"),
                 new Attribute(Field: "image", Header: "Image", DisplayType: DisplayType.Image),
             ],
-            TitleAttribute: "name",
+            LabelAttributeName: "name",
             TableName: "authors",
             DefaultPageSize: 50,
-            Title: "Author",
+            DisplayName: "Author",
             Name: "author"
         ),
         new (
@@ -141,9 +141,9 @@ public static class BlogsTestData
                 new Attribute(Field: "description", Header: "Description"),
                 new Attribute(Field: "image", Header: "Image", DisplayType: DisplayType.Image),
             ],
-            TitleAttribute: "name",
+            LabelAttributeName: "name",
             TableName: "categories",
-            Title: "Category",
+            DisplayName: "Category",
             DefaultPageSize: 50,
             Name: "category"
         ),
@@ -168,9 +168,9 @@ public static class BlogsTestData
                 new Attribute(Field: "category", Header: "Category", DataType: DataType.Lookup,
                     DisplayType: DisplayType.Lookup, Options: "category"),
             ],
-            TitleAttribute: "title",
+            LabelAttributeName: "title",
             TableName: "posts",
-            Title: "Post",
+            DisplayName: "Post",
             DefaultPageSize: 50,
             Name: "post"
         )

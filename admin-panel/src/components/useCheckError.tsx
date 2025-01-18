@@ -6,11 +6,15 @@ export function useCheckError(){
     const toast = useRef<any>(null);
     const [error, setError] = useState('')
     return {
-        checkError :(error :string, succeedMessage:string) =>{
+        handleErrorOrSuccess : async (error :string, succeedMessage:string, cb:any) =>{
             if (error){
                 setError(error)
             }else {
                 toast.current.show({severity: 'success', summary:succeedMessage})
+                if (cb) {
+                    await new Promise(r => setTimeout(r, 500));
+                    cb();
+                }
             }
         },
         CheckErrorStatus: ()=>{

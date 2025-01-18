@@ -149,7 +149,7 @@ public sealed class EntitySchemaService(
             return s with
             {
                 Settings = new Settings(
-                    Entity: e.WithDefaultAttr()
+                    Entity: e with{Attributes = [..e.Attributes.ToArray().WithDefaultAttr()]}
                 )
             };
         }
@@ -228,7 +228,7 @@ public sealed class EntitySchemaService(
     {
         if (columns.Length > 0) //if table exists, alter table add columns
         {
-            var set = columns.Select(x => x.Name.ToLower()).ToHashSet();
+            var set = columns.Select(x => x.Name).ToHashSet();
             var missing = entity.Attributes.Where(c => c.IsLocal()&& !set.Contains(c.Field)).ToArray();
             if (missing.Length > 0)
             {
@@ -383,7 +383,7 @@ public sealed class EntitySchemaService(
         }
 
         if (string.IsNullOrEmpty(entity.TableName)) throw new ResultException($"{msg} Table name should not be empty");
-        if (string.IsNullOrEmpty(entity.TitleAttribute)) throw new ResultException($"{msg} Title attribute should not be empty");
+        if (string.IsNullOrEmpty(entity.LabelAttributeName)) throw new ResultException($"{msg} Title attribute should not be empty");
         if (string.IsNullOrEmpty(entity.PrimaryKey)) throw new ResultException($"{msg} Primary key should not be empty");
 
         if (entity.DefaultPageSize < 1) throw new ResultException($"{msg}default page size should be greater than 0");
@@ -391,8 +391,8 @@ public sealed class EntitySchemaService(
         _ = entity.Attributes.FirstOrDefault(x=>x.Field ==entity.PrimaryKey) ??
             throw new ResultException($"{msg} [{entity.PrimaryKey}] was not in attributes list");
 
-        _ = entity.Attributes.FirstOrDefault(x=>x.Field==entity.TitleAttribute) ??
-            throw new ResultException($"{msg} [{entity.TitleAttribute}] was not in attributes list");
+        _ = entity.Attributes.FirstOrDefault(x=>x.Field==entity.LabelAttributeName) ??
+            throw new ResultException($"{msg} [{entity.LabelAttributeName}] was not in attributes list");
     }
 
 

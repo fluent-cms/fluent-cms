@@ -5,9 +5,10 @@ namespace FormCMS.Cms.DTO;
 public record XEntity(
     XAttr[] Attributes,
     string Name ,
+    string DisplayName ,
+    
     string PrimaryKey ,
-    string Title ,
-    string TitleAttribute ,
+    string LabelAttributeName,
     int DefaultPageSize 
 );
 
@@ -18,8 +19,8 @@ public static class EntityDtoExtensions
             Attributes: entity.Attributes.Select(x => x.ToXAttr()).ToArray(),
             Name: entity.Name,
             PrimaryKey: entity.PrimaryKey,
-            Title: entity.Title,
-            TitleAttribute: entity.TitleAttribute,
+            DisplayName: entity.DisplayName,
+            LabelAttributeName: entity.LabelAttributeName,
             DefaultPageSize: entity.DefaultPageSize
         );
 }

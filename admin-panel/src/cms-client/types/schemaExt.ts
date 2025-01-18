@@ -56,8 +56,8 @@ export enum DisplayType {
 export interface XEntity {
     attributes: XAttr[];
     name: string;
+    displayName: string;
     primaryKey: string;
-    title: string;
-    titleAttribute: string;
+    labelAttributeName: string;
     defaultPageSize: number;
 }

@@ -1,3 +1,5 @@
+using FormCMS.Utils.EnumExt;
+
 namespace FormCMS.Utils.RelationDbDao;
 
 public enum ColumnType
@@ -9,9 +11,13 @@ public enum ColumnType
     String //has length limit 255 
 }
 
-
-public static class DefaultFields{
-    public const string Deleted = "deleted";
+public enum DefaultColumnNames
+{
+    Id,
+    Deleted,
+    CreatedAt,
+    UpdatedAt,
+    PublicationStatus 
 }
 
 public record Column(string Name, ColumnType Type);
@@ -19,11 +25,7 @@ public record Column(string Name, ColumnType Type);
 public static class ColumnHelper
 {
     public static Column[] EnsureDeleted(this Column[] columnDefinitions)
-    {
-        if (columnDefinitions.FirstOrDefault(x => x.Name == DefaultFields.Deleted) is not null)
-        {
-            return columnDefinitions;
-        }
-        return [..columnDefinitions, new Column("deleted", ColumnType.Int)];
-    }
+        => columnDefinitions.FirstOrDefault(x => x.Name == DefaultColumnNames.Deleted.ToCamelCase()) is not null
+            ? columnDefinitions
+            : [..columnDefinitions, new Column(DefaultColumnNames.Deleted.ToCamelCase(), ColumnType.Int)];
 }

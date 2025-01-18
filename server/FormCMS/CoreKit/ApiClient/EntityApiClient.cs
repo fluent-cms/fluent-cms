@@ -22,7 +22,7 @@ public class EntityApiClient(HttpClient client)
         JsonOptions.IgnoreCase
     );
 
-    public Task<Result<JsonElement>> One(
+    public Task<Result<JsonElement>> Single(
         string entity, int id
     ) => client.GetResult<JsonElement>(
         $"/{entity}/{id}".ToEntityApi(),
@@ -69,6 +69,30 @@ public class EntityApiClient(HttpClient client)
         string entity, object payload
     ) => client.PostResult(
         $"/{entity}/delete".ToEntityApi(),
+        payload,
+        JsonOptions.IgnoreCase
+    );
+
+    public Task<Result> Publish(
+        string entity, object payload
+    ) => client.PostResult(
+        $"/{entity}/publish".ToEntityApi(),
+        payload,
+        JsonOptions.IgnoreCase
+    );
+
+    public Task<Result> Unpublish(
+        string entity, object payload
+    ) => client.PostResult(
+        $"/{entity}/unpublish".ToEntityApi(),
+        payload,
+        JsonOptions.IgnoreCase
+    );
+
+    public Task<Result> SavePublicationSettings(
+        string entity, object payload
+    ) => client.PostResult(
+        $"/{entity}/publication/settings".ToEntityApi(),
         payload,
         JsonOptions.IgnoreCase
     );

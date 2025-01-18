@@ -1,4 +1,5 @@
 using System.Data;
+using FormCMS.Utils.EnumExt;
 using Microsoft.Data.Sqlite;
 using SqlKata.Compilers;
 using SqlKata.Execution;
@@ -38,22 +39,23 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
 
    public async Task CreateTable(string tableName, IEnumerable<Column> cols, CancellationToken ct)
    {
-       var columnDefinitionStrs = cols.Select(column => column.Name.ToLower() switch
+       var strs = cols.Select(column => column switch
        {
-           "id" => "id INTEGER  primary key autoincrement",
-           "deleted" => "deleted INTEGER   default 0",
-           "created_at" => "created_at integer default (datetime('now','localtime'))",
-           "updated_at" => "updated_at integer default (datetime('now','localtime'))",
+           _ when column.Name == DefaultColumnNames.Id.ToCamelCase() =>
+               $"{DefaultColumnNames.Id.ToCamelCase()} INTEGER  primary key autoincrement",
+           _ when column.Name == DefaultColumnNames.Deleted.ToCamelCase() => $"{DefaultColumnNames.Deleted.ToCamelCase()} INTEGER   default 0",
+           _ when column.Name == DefaultColumnNames.CreatedAt.ToCamelCase() => $"{DefaultColumnNames.CreatedAt.ToCamelCase()} integer default (datetime('now','localtime'))",
+           _ when column.Name == DefaultColumnNames.UpdatedAt.ToCamelCase() => $"{DefaultColumnNames.UpdatedAt.ToCamelCase()} integer default (datetime('now','localtime'))",
            _ => $"{column.Name} {DataTypeToString(column.Type)}"
        });
         
-       var sql= $"CREATE TABLE {tableName} ({string.Join(", ", columnDefinitionStrs)});";
+       var sql= $"CREATE TABLE {tableName} ({string.Join(", ", strs)});";
        sql += $@"
-            CREATE TRIGGER update_{tableName}_updated_at 
+            CREATE TRIGGER update_{tableName}_updatedAt 
                 BEFORE UPDATE ON {tableName} 
                 FOR EACH ROW
             BEGIN 
-                UPDATE {tableName} SET updated_at = (datetime('now','localtime')) WHERE id = OLD.id; 
+                UPDATE {tableName} SET {DefaultColumnNames.UpdatedAt.ToCamelCase()} = (datetime('now','localtime')) WHERE id = OLD.id; 
             END;";
       await ExecuteQuery(sql,async cmd => await cmd.ExecuteNonQueryAsync(ct));
    }
@@ -91,18 +93,16 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
          return columnDefinitions.ToArray();
       });
    }
-   
-    private string DataTypeToString(ColumnType dataType)
-    {
-        return dataType switch
-        {
-            ColumnType.Int => "INTEGER",
-            ColumnType.Text => "TEXT",
-            ColumnType.Datetime => "INTEGER",
-            ColumnType.String => "TEXT",
-            _ => throw new NotSupportedException($"Type {dataType} is not supported")
-        };
-    }
+
+   private static string DataTypeToString(ColumnType dataType)
+       => dataType switch
+       {
+           ColumnType.Int => "INTEGER",
+           ColumnType.Text => "TEXT",
+           ColumnType.Datetime => "INTEGER",
+           ColumnType.String => "TEXT",
+           _ => throw new NotSupportedException($"Type {dataType} is not supported")
+       };
 
     private ColumnType StringToColType(string s)
     {

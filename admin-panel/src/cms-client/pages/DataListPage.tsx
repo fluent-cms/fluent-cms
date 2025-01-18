@@ -27,8 +27,8 @@ export function DataListPageComponent({schema,baseRouter}:{schema:XEntity,baseRo
 
     return <>
         <FetchingStatus isLoading={isLoading} error={error}/>
-        <h2>{schema.title} list</h2>
-        <Link to={"new"}><Button>Create New {schema.title}</Button></Link>
+        <h2>{schema.displayName} list</h2>
+        <Link to={"new"}><Button>Create New {schema.displayName}</Button></Link>
         <div className="card">
             <LazyDataTable {...{columns,schema,baseRouter,data, eventHandlers, lazyState,  getFullAssetsURL}}/>
         </div>

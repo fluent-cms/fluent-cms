@@ -10,7 +10,7 @@ export function LookupContainer(
     }) {
     let val
     if (item[column.field]) {
-        val = item[column.field][column.lookup!.titleAttribute];
+        val = item[column.field][column.lookup!.labelAttributeName];
     }
 
     const {data} = useLookupData(column.lookup!.name, val);

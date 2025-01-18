@@ -1,5 +1,6 @@
 using System.Text.Json;
 using FormCMS.Core.Descriptors;
+using FormCMS.Utils.RelationDbDao;
 
 namespace FormCMS.Cms.Services;
 
@@ -16,7 +17,10 @@ public interface IEntityService
     Task BatchInsert(string tableName,Record[] items);
     Task<Record> UpdateWithAction(string name, JsonElement item, CancellationToken ct= default);
     Task<Record> DeleteWithAction(string name, JsonElement item, CancellationToken ct= default);
-
+    Task Publish(string name, JsonElement ele, CancellationToken ct = default);
+    Task Unpublish(string name, JsonElement ele, CancellationToken ct = default);
+    Task SavePublicationSettings(string name, JsonElement ele, CancellationToken ct = default);
+    
     Task<ListResponse> CollectionList(string name, string id, string attr, Pagination pagination,  StrArgs args, CancellationToken ct = default);
     Task<Record> CollectionInsert(string name, string id, string attr, JsonElement element, CancellationToken ct = default);
     

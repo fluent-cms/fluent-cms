@@ -2,8 +2,8 @@ using FluentResults;
 using FormCMS.Core.HookFactory;
 using FormCMS.Utils.RelationDbDao;
 using FormCMS.Core.Descriptors;
+using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.ResultExt;
-using DefaultFields = FormCMS.Core.Descriptors.DefaultFields;
 
 namespace FormCMS.Cms.Services;
 
@@ -150,8 +150,10 @@ public sealed class SchemaService(
             new Column(SchemaFields.Settings, ColumnType.Text),
             new Column(SchemaFields.Deleted, ColumnType.Int),
             new Column(SchemaFields.CreatedBy, ColumnType.String),
-            new Column(DefaultFields.CreatedAt, ColumnType.Datetime),
-            new Column(DefaultFields.UpdatedAt, ColumnType.Datetime),
+            new Column(DefaultAttributeNames.CreatedAt.ToCamelCase(), ColumnType.Datetime),
+            new Column(DefaultAttributeNames.UpdatedAt.ToCamelCase(), ColumnType.Datetime),
+            new Column(DefaultAttributeNames.PublishedAt.ToCamelCase(), ColumnType.Datetime),
+            new Column(DefaultAttributeNames.PublicationStatus.ToCamelCase(), ColumnType.Int),
         ];
         await dao.CreateTable(SchemaHelper.TableName, cols, ct);
     }
@@ -189,7 +191,7 @@ public sealed class SchemaService(
                 {
                     MenuItems =
                     [
-                        ..menuBar.MenuItems, new MenuItem(Icon: "pi-bolt", Url: link, Label: entity.Title)
+                        ..menuBar.MenuItems, new MenuItem(Icon: "pi-bolt", Url: link, Label: entity.DisplayName)
                     ]
                 };
             }

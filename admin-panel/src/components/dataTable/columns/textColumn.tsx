@@ -9,7 +9,7 @@ export function textColumn({column, baseRouter, schema}:{
 }){
     let field = column.field;
     if (column.displayType == "lookup"){
-        field = column.field + "." + column.lookup!.titleAttribute;
+        field = column.field + "." + column.lookup!.labelAttributeName;
     }
     var colType = 'text';
     switch (column.displayType){
@@ -26,13 +26,13 @@ export function textColumn({column, baseRouter, schema}:{
         let val = item[column.field]
         if (val) {
             if (column.dataType === "lookup") {
-                val = val[column.lookup!.titleAttribute]
+                val = val[column.lookup!.labelAttributeName]
             }else if (column.displayType === 'multiselect'){
                 val = val.join(", ")
             }
         }
 
-        if (column.field == schema.titleAttribute){
+        if (column.field == schema.labelAttributeName){
             return <Link to={`${baseRouter}/${schema.name}/${item[schema.primaryKey]}?ref=${encodeURIComponent(window.location.href)}`}>{val}</Link>
         }else {
             return <>{val}</>
