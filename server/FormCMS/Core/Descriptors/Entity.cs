@@ -38,6 +38,7 @@ public record LoadedEntity(
     LoadedAttribute PrimaryKeyAttribute,
     LoadedAttribute LabelAttribute,
     LoadedAttribute DeletedAttribute,
+    LoadedAttribute PublicationStatusAttribute,
     string Name,
     string DisplayName , //needed by admin panel
     string TableName,
@@ -61,6 +62,7 @@ public static class EntityHelper
         var labelAttribute = entity.Attributes.FirstOrDefault(x=>x.Field == entity.LabelAttributeName)?.ToLoaded(entity.TableName) ?? primaryKey;
         var attributes = entity.Attributes.Select(x => x.ToLoaded(entity.TableName));
         var deletedAttribute = new LoadedAttribute(entity.TableName, DefaultAttributeNames.Deleted.ToCamelCase());
+        var publicationStatusAttribute = new LoadedAttribute(entity.TableName, DefaultAttributeNames.PublicationStatus.ToCamelCase());
         return new LoadedEntity(
             [..attributes],
             PrimaryKeyAttribute:primaryKey,
@@ -72,14 +74,19 @@ public static class EntityHelper
             DisplayName:entity.DisplayName,
             LabelAttributeName:entity.LabelAttributeName,
             DefaultPageSize:entity.DefaultPageSize,
-            DefaultPublicationStatus:entity.DefaultPublicationStatus
+            DefaultPublicationStatus:entity.DefaultPublicationStatus,
+            PublicationStatusAttribute:publicationStatusAttribute
         );
     }
     
-    public static Result<SqlKata.Query> OneQuery(this LoadedEntity e,ValidFilter[] filters, ValidSort[] sorts,IEnumerable<LoadedAttribute> attributes)
+    public static Result<SqlKata.Query> OneQuery(this LoadedEntity e,ValidFilter[] filters, ValidSort[] sorts,IEnumerable<LoadedAttribute> attributes,bool onlyPublished)
     {
         var query = e.Basic().Select(attributes.Select(x => x.AddTableModifier()));
-        query.ApplyJoin([..filters.Select(x=>x.Vector),..sorts.Select(x=>x.Vector)]);
+        if (onlyPublished)
+        {
+            query.Where(e.PublicationStatusAttribute.AddTableModifier(), PublicationStatus.Published.ToCamelCase());   
+        }
+        query.ApplyJoin([..filters.Select(x=>x.Vector),..sorts.Select(x=>x.Vector)],onlyPublished);
         var result = query.ApplyFilters(filters); 
         if (result.IsFailed)
         {
@@ -89,20 +96,24 @@ public static class EntityHelper
         return query;
     }
 
-    public static SqlKata.Query ByIdsQuery(this LoadedEntity e,IEnumerable<string> fields,IEnumerable<ValidValue> ids)
+    public static SqlKata.Query ByIdsQuery(this LoadedEntity e,IEnumerable<string> fields,IEnumerable<ValidValue> ids,bool onlyPublished)
     {
         var query = e.Basic().WhereIn(e.PrimaryKey, ids.GetValues())
             .Select(fields);
+        if (onlyPublished)
+        {
+            query.Where(e.PublicationStatusAttribute.AddTableModifier(), PublicationStatus.Published.ToCamelCase());
+        }
         return query;
     }
 
     public static SqlKata.Query AllQuery(this LoadedEntity e, IEnumerable<LoadedAttribute> attributes)
         => e.Basic().Select(attributes.Select(x => x.Field));
     public static SqlKata.Query ListQuery(this LoadedEntity e,ValidFilter[] filters, ValidSort[] sorts, 
-        ValidPagination? pagination, ValidSpan? cursor, IEnumerable<LoadedAttribute> attributes)
+        ValidPagination? pagination, ValidSpan? cursor, IEnumerable<LoadedAttribute> attributes,bool onlyPublished)
     {
-        var query = e.GetCommonListQuery(filters,sorts,pagination,cursor,attributes);
-        query.ApplyJoin([..filters.Select(x=>x.Vector),..sorts.Select(x=>x.Vector)]);
+        var query = e.GetCommonListQuery(filters,sorts,pagination,cursor,attributes,onlyPublished);
+        query.ApplyJoin([..filters.Select(x=>x.Vector),..sorts.Select(x=>x.Vector)],onlyPublished);
         return query;
     }
     
@@ -111,9 +122,15 @@ public static class EntityHelper
         ValidSort[] sorts, 
         ValidPagination? pagination, 
         ValidSpan? span, 
-        IEnumerable<LoadedAttribute> attributes)
+        IEnumerable<LoadedAttribute> attributes,
+        bool onlyPublished)
     {
         var q = e.Basic().Select(attributes.Select(x => x.AddTableModifier()));
+        if (onlyPublished)
+        {
+            q.Where(e.PublicationStatusAttribute.AddTableModifier(), PublicationStatus.Published.ToCamelCase());
+        }
+        
         q.ApplyFilters(filters);
         q.ApplySorts(SpanHelper.IsForward(span?.Span)?sorts: sorts.ReverseOrder());
         q.ApplyCursor(span,sorts);
@@ -125,10 +142,11 @@ public static class EntityHelper
     }
     
 
-    public static SqlKata.Query CountQuery(this LoadedEntity e,ValidFilter[] filters)
+    public static SqlKata.Query CountQuery(this LoadedEntity e,ValidFilter[] filters,bool onlyPublished)
     {
         var query = e.GetCommonCountQuery(filters);
-        query.ApplyJoin(filters.Select(x => x.Vector));
+        //filter might contain lookup's target's attribute, 
+        query.ApplyJoin(filters.Select(x => x.Vector),onlyPublished);
         return query;
     }
 
@@ -172,6 +190,13 @@ public static class EntityHelper
         }
         return Result.Fail("Can not save publication status, invalid input");
    }
+    
+    public static SqlKata.Query PublishAll(this Entity e)
+    => new SqlKata.Query(e.TableName)
+        .Where(DefaultAttributeNames.PublicationStatus.ToCamelCase(),PublicationStatus.Scheduled.ToCamelCase())
+        .WhereDate(DefaultAttributeNames.PublishedAt.ToCamelCase(), "<", DateTime.Now)
+        .AsUpdate([DefaultAttributeNames.PublicationStatus.ToCamelCase()], [PublicationStatus.Published.ToCamelCase()]) ;
+    
 
     public static SqlKata.Query Unpublish(this LoadedEntity e, object id)
        => new SqlKata.Query(e.TableName)
@@ -218,11 +243,14 @@ public static class EntityHelper
                 .AsUpdate([DefaultAttributeNames.Deleted.ToCamelCase()], [true]))
             : Result.Fail($"Failed to get value with primary key [${e.PrimaryKey}]");
 
-    public static SqlKata.Query Basic(this LoadedEntity e) =>
-        new SqlKata.Query(e.TableName)
+    public static SqlKata.Query Basic(this LoadedEntity e)
+    {
+        var query = new SqlKata.Query(e.TableName)
             .Where(e.DeletedAttribute.AddTableModifier(), false);
+        return query;
+    }
 
-    
+
     public static Result ValidateTitleAttributes(this LoadedEntity e, Record record)
     {
         if (record.TryGetValue(e.LabelAttributeName, out var value) && value is not null)

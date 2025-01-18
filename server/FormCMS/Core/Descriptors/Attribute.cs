@@ -110,7 +110,7 @@ public static class AttributeHelper
                 TargetAttribute: lookup.TargetEntity.PrimaryKeyAttribute,
                 IsCollective: false,
                 GetQuery: (fields, ids, _) => 
-                    lookup.TargetEntity.ByIdsQuery(fields.Select(x=>x.AddTableModifier()), ids)
+                    lookup.TargetEntity.ByIdsQuery(fields.Select(x=>x.AddTableModifier()), ids,true)
             ),
         DataType.Junction when attribute.Junction is { } junction =>
             new EntityLinkDesc(
@@ -119,7 +119,7 @@ public static class AttributeHelper
                 TargetAttribute: junction.SourceAttribute,
                 IsCollective: true,
                 GetQuery: (fields, ids, args) =>
-                    junction.GetRelatedItems(args!.Filters, args.Sorts, args.Pagination, args.Span, fields, ids)),
+                    junction.GetRelatedItems(args!.Filters, args.Sorts, args.Pagination, args.Span, fields, ids,true)),
         DataType.Collection when attribute.Collection is { } collection =>
             new EntityLinkDesc(
                 SourceAttribute: collection.SourceEntity.PrimaryKeyAttribute,
@@ -127,7 +127,7 @@ public static class AttributeHelper
                 TargetAttribute: collection.LinkAttribute,
                 IsCollective: true,
                 GetQuery: (fields, ids, args) =>
-                    collection.List(args!.Filters, args.Sorts, args.Pagination, args.Span, fields, ids)
+                    collection.List(args!.Filters, args.Sorts, args.Pagination, args.Span, fields, ids,true)
             ),
         _ => Result.Fail($"Cannot get entity link desc for attribute [{attribute.Field}]")
     };

@@ -15,7 +15,7 @@ public sealed class QuerySchemaService(
     ISchemaService schemaSvc,
     IEntitySchemaService entitySchemaSvc,
     KeyValueCache<LoadedQuery> queryCache,
-    Options options
+    SystemSettings systemSettings
 ) : IQuerySchemaService
 {
     public async Task<LoadedQuery> ByGraphQlRequest(Query query, GraphQLField[] fields)
@@ -62,7 +62,7 @@ public sealed class QuerySchemaService(
         query = query with
         {
             IdeUrl =
-            $"{options.GraphQlPath}?query={Uri.EscapeDataString(query.Source)}&operationName={query.Name}"
+            $"{systemSettings.GraphQlPath}?query={Uri.EscapeDataString(query.Source)}&operationName={query.Name}"
         };
         await VerifyQuery(query, ct);
         var schema = new Schema(query.Name, SchemaType.Query, new Settings(Query: query));
@@ -81,7 +81,7 @@ public sealed class QuerySchemaService(
 
     public string GraphQlClientUrl()
     {
-        return options.GraphQlPath;
+        return systemSettings.GraphQlPath;
     }
 
     private async Task<LoadedQuery> ToLoadedQuery(Query query, IEnumerable<GraphQLField> fields,

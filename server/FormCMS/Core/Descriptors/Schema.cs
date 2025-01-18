@@ -45,17 +45,39 @@ public static class SchemaHelper
 {
     public const string TableName = "__schemas";
 
-    public static SqlKata.Query BaseQuery(string[] fields)
-    {
-        return new SqlKata.Query(TableName)
-            .Select(fields)
-            .Where(SchemaFields.Deleted, false);
-    }
+    public static SqlKata.Query ById(int id)
+        => BaseQuery().Where(SchemaFields.Id, id);
 
-    public static SqlKata.Query BaseQuery()
+    public static SqlKata.Query ByStartsNameAndType(string name, SchemaType type)
+        => SchemaHelper.BaseQuery()
+            .WhereStarts(SchemaFields.Name, name)
+            .Where(SchemaFields.Type, type.ToCamelCase());
+
+    public static SqlKata.Query ByNameAndTypeAndNotId(string name, SchemaType type, int id)
+        => SchemaHelper.BaseQuery()
+            .Where(SchemaFields.Name, name)
+            .Where(SchemaFields.Type, type)
+            .WhereNot(SchemaFields.Id, id);
+    
+    public static SqlKata.Query ByNameAndType(SchemaType? type, IEnumerable<string>? names)
     {
-        return BaseQuery(SchemaFields.Fields);
+        var query = BaseQuery();
+        if (type is not null)
+        {
+            query = query.Where(SchemaFields.Type, type.Value.ToCamelCase());
+        }
+
+        if (names is not null)
+        {
+            query = query.WhereIn(SchemaFields.Name, names);
+        } 
+        return query;
     }
+    
+    private static SqlKata.Query BaseQuery()
+        =>new SqlKata.Query(TableName)
+            .Select(SchemaFields.Fields)
+            .Where(SchemaFields.Deleted, false);
 
     public static SqlKata.Query SoftDelete(int id)
     {

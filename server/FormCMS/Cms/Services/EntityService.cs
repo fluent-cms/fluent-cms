@@ -49,7 +49,7 @@ public sealed class EntityService(
         var fields = ctx.Entity.Attributes
             .Where(x => x.IsLocal() && attributes.Contains(x.Field))
             .Select(x=>x.AddTableModifier());
-        var query = ctx.Entity.ByIdsQuery( fields,[ctx.Id]);
+        var query = ctx.Entity.ByIdsQuery( fields,[ctx.Id],false);
         return await queryExecutor.One(query, ct) ??
                throw new ResultException($"not find record by [{id}]");
     }
@@ -71,7 +71,7 @@ public sealed class EntityService(
                 || x.Field == DefaultAttributeNames.PublishedAt.ToCamelCase()
                 || x.InDetail && x.IsLocal())
             .ToArray();
-        var query = ctx.Entity.ByIdsQuery(attr.Select(x=>x.AddTableModifier()), [ctx.Id]);
+        var query = ctx.Entity.ByIdsQuery(attr.Select(x=>x.AddTableModifier()), [ctx.Id],false);
         var record = await queryExecutor.One(query, ct) ??
                      throw new ResultException($"not find record by [{id}]");
 
@@ -109,7 +109,7 @@ public sealed class EntityService(
     public async Task Publish(string name, JsonElement ele, CancellationToken ct)
     {
         var (entity,_,id) = await GetRecordIdCtx(name, ele, ct);
-        var query = entity.ByIdsQuery( [entity.PrimaryKey,DefaultAttributeNames.PublicationStatus.ToCamelCase()],[id.ToValidValue()]);
+        var query = entity.ByIdsQuery( [entity.PrimaryKey,DefaultAttributeNames.PublicationStatus.ToCamelCase()],[id.ToValidValue()],false);
         var record = await queryExecutor.One(query, ct) ?? throw new ResultException($"not find record by [{id}]");
         query = entity.Publish(id, record);
         await queryExecutor.Exec(query, ct);
@@ -132,11 +132,11 @@ public sealed class EntityService(
     public async Task<LookupListResponse> LookupList(string name, string startsVal, CancellationToken ct = default)
     {
         var (entity, sorts, pagination, attributes) = await GetLookupContext(name, ct);
-        var count = await queryExecutor.Count(entity.CountQuery([]), ct);
+        var count = await queryExecutor.Count(entity.Basic(), ct);
         if (count < entity.DefaultPageSize)
         {
             //not enough for one page, search in client
-            var query = entity.ListQuery([], sorts, pagination, null, attributes);
+            var query = entity.ListQuery([], sorts, pagination, null, attributes,false);
             var items = await queryExecutor.Many(query, ct);
             return new LookupListResponse(false, items);
         }
@@ -149,7 +149,7 @@ public sealed class EntityService(
             filters = (await FilterHelper.ToValidFilters([filter], entity, entitySchemaSvc, entitySchemaSvc)).Ok();
         }
 
-        var queryWithFilters = entity.ListQuery(filters, sorts, pagination, null, attributes);
+        var queryWithFilters = entity.ListQuery(filters, sorts, pagination, null, attributes,false);
         var filteredItems = await queryExecutor.Many(queryWithFilters, ct);
         return new LookupListResponse(true, filteredItems);
     }
@@ -211,7 +211,7 @@ public sealed class EntityService(
 
         var listQuery = exclude
             ? junction.GetNotRelatedItems(attrs, filters, sorts, validPagination, [id])
-            : junction.GetRelatedItems(filters, [..sorts], validPagination, null, attrs, [id]);
+            : junction.GetRelatedItems(filters, [..sorts], validPagination, null, attrs, [id],false);
 
         var countQuery = exclude
             ? junction.GetNotRelatedItemsCount(filters, [id])
@@ -239,7 +239,7 @@ public sealed class EntityService(
             . Where(x=> x.Field == collection.TargetEntity.PrimaryKey || x.IsLocal() && x.InList)
             .ToArray();    
         
-        var listQuery = collection.List(filters,sorts,validPagination,null,attributes,[id]);
+        var listQuery = collection.List(filters,sorts,validPagination,null,attributes,[id],false);
         var items = await queryExecutor.Many(listQuery, ct);
         await LoadItems( attributes, items, ct);
       
@@ -270,7 +270,7 @@ public sealed class EntityService(
             .Where(x=>x.Field ==entity.PrimaryKey || x.InList && x.IsLocal())
             .ToArray();
 
-        var countQuery = entity.CountQuery([..res.RefFilters]);
+        var countQuery = entity.CountQuery([..res.RefFilters],false);
         var ret = mode switch
         {
             ListResponseMode.Count => new ListResponse([], await queryExecutor.Count(countQuery, ct)),
@@ -284,7 +284,7 @@ public sealed class EntityService(
 
         async Task<Record[]> RetrieveItems()
         {
-            var listQuery = entity.ListQuery([..res.RefFilters], [..res.RefSorts], res.RefPagination, null, attributes);
+            var listQuery = entity.ListQuery([..res.RefFilters], [..res.RefSorts], res.RefPagination, null, attributes,false);
             var items =  await queryExecutor.Many(listQuery, ct);
             await LoadItems(attributes, items, ct);
             return items;

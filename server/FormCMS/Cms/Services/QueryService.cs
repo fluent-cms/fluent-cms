@@ -76,7 +76,7 @@ public sealed class QueryService(
         else
         {
             var kateQuery = query.Entity.ListQuery(
-                filters, sorts, pagination.PlusLimitOne(), validSpan, query.Selection.Where(x=>x.IsLocal()));
+                filters, sorts, pagination.PlusLimitOne(), validSpan, query.Selection.Where(x=>x.IsLocal()),true);
             items = await executor.Many(kateQuery, ct);
             items = span.ToPage(items, pagination.Limit);
             if (items.Length > 0)
@@ -102,7 +102,7 @@ public sealed class QueryService(
         }
         else
         {
-            var kateQuery = query.Entity.OneQuery(filters, sorts, query.Selection.Where(x=>x.IsLocal())).Ok();
+            var kateQuery = query.Entity.OneQuery(filters, sorts, query.Selection.Where(x=>x.IsLocal()),true).Ok();
             item = await executor.One(kateQuery, ct);
             if (item is not null)
             {

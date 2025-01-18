@@ -12,9 +12,6 @@ export function LazyDataTable({baseRouter, schema, columns, data, lazyState, eve
     eventHandlers: any
     getFullAssetsURL: (arg: string) => string
 }) {
-
-
-
     return columns && data && schema && <DataTable
         sortMode="multiple"
         dataKey={schema.primaryKey}
@@ -30,6 +27,12 @@ export function LazyDataTable({baseRouter, schema, columns, data, lazyState, eve
         sortOrder={lazyState.sortOrder}
         {...eventHandlers}
     >
-        {columns.map((column: any) => createColumn({column, schema, getFullAssetsURL, baseRouter,}))}
+        {
+            columns.map(
+                (column) => createColumn(
+                    {column, schema, getFullAssetsURL, baseRouter}
+                )
+            )
+        }
     </DataTable>
 }

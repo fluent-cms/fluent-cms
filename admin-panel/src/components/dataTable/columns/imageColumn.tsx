@@ -4,7 +4,7 @@ import {Avatar} from "primereact/avatar";
 import { XAttr } from "../../../cms-client/types/schemaExt";
 
 export function imageColumn({column, getFullAssetsURL}:{
-    column: XAttr
+    column: {field:string,header:string}
     getFullAssetsURL : (arg:string) =>string
 }){
     const bodyTemplate = (item:any) => {

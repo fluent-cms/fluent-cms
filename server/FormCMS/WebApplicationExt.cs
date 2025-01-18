@@ -30,15 +30,15 @@ public static class WebApplicationExt
         )=>MongoQueryBuilder.AddMongoDbQuery(services, queryCollectionLinks);
     
     public static IServiceCollection AddPostgresCms(
-        this IServiceCollection services, string connectionString, Action<Options>? action = null
+        this IServiceCollection services, string connectionString, Action<SystemSettings>? action = null
         ) => CmsBuilder.AddCms(services, DatabaseProvider.Postgres, connectionString,action);
 
     public static IServiceCollection AddSqliteCms(
-        this IServiceCollection services, string connectionString, Action<Options>? action = null
+        this IServiceCollection services, string connectionString, Action<SystemSettings>? action = null
     ) => CmsBuilder.AddCms(services, DatabaseProvider.Sqlite, connectionString, action);
 
     public static IServiceCollection AddSqlServerCms(
-        this IServiceCollection services, string connectionString, Action<Options>? action = null
+        this IServiceCollection services, string connectionString, Action<SystemSettings>? action = null
     ) => CmsBuilder.AddCms(services, DatabaseProvider.SqlServer, connectionString, action);
 
     public static IServiceCollection AddCmsAuth<TUser, TRole, TContext>(this IServiceCollection services)

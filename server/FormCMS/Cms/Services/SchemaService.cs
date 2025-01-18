@@ -1,4 +1,5 @@
 using FluentResults;
+using FormCMS.Cms.Handlers;
 using FormCMS.Core.HookFactory;
 using FormCMS.Utils.RelationDbDao;
 using FormCMS.Core.Descriptors;
@@ -24,18 +25,7 @@ public sealed class SchemaService(
     public async Task<Schema[]> All(SchemaType? type, IEnumerable<string>? names,
         CancellationToken ct = default)
     {
-        var query = SchemaHelper.BaseQuery();
-        if (type is not null)
-        {
-            query = query.Where(SchemaFields.Type, type.Value.ToCamelCase());
-        }
-
-        if (names is not null)
-        {
-            query.WhereIn(SchemaFields.Name, names);
-        }
-
-        var items = await queryExecutor.Many(query, ct);
+        var items = await queryExecutor.Many(SchemaHelper.ByNameAndType(type,names), ct);
         return items.Select(x => SchemaHelper.RecordToSchema(x).Ok()).ToArray();
     }
 
@@ -53,16 +43,14 @@ public sealed class SchemaService(
 
     public async Task<Schema?> ById(int id, CancellationToken ct = default)
     {
-        var query = SchemaHelper.BaseQuery().Where(SchemaFields.Id, id);
-        var item = await queryExecutor.One(query, ct);
+        var item = await queryExecutor.One(SchemaHelper.ById(id), ct);
         var res = SchemaHelper.RecordToSchema(item);
         return res.IsSuccess ? res.Value : null;
     }
 
     public async Task<Schema?> GetByNameDefault(string name, SchemaType type, CancellationToken ct = default)
     {
-        var query = SchemaHelper.BaseQuery().Where(SchemaFields.Name, name).Where(SchemaFields.Type, type.ToCamelCase());
-        var item = await queryExecutor.One(query, ct);
+        var item = await queryExecutor.One(SchemaHelper.ByNameAndType(type,[name]), ct);
         var res = SchemaHelper.RecordToSchema(item);
         return res.IsSuccess ? res.Value : null;
     }
@@ -70,10 +58,7 @@ public sealed class SchemaService(
     public async Task<Schema?> GetByNamePrefixDefault(string name, SchemaType type,
         CancellationToken ct = default)
     {
-        var query = SchemaHelper.BaseQuery()
-            .WhereStarts(SchemaFields.Name, name)
-            .Where(SchemaFields.Type, type.ToCamelCase());
-        var item = await queryExecutor.One(query, ct);
+        var item = await queryExecutor.One(SchemaHelper.ByStartsNameAndType(name,type), ct);
 
         var res = SchemaHelper.RecordToSchema(item);
 
@@ -109,9 +94,7 @@ public sealed class SchemaService(
 
     public async Task EnsureTopMenuBar(CancellationToken ct)
     {
-        var query = SchemaHelper.BaseQuery().Where(SchemaFields.Name, SchemaName.TopMenuBar)
-            .Where(SchemaFields.Type, SchemaType.Menu.ToCamelCase());
-        var item = await queryExecutor.One(query, ct);
+        var item = await queryExecutor.One(SchemaHelper.ByNameAndType(SchemaType.Menu, [SchemaName.TopMenuBar]), ct);
         if (item is not null)
         {
             return;
@@ -201,8 +184,6 @@ public sealed class SchemaService(
         }
     }
 
-
-
     public async Task<Schema> Save(Schema dto, CancellationToken ct)
     {
         dto = dto with { Id = await queryExecutor.Exec(dto.Save(), ct) };
@@ -211,11 +192,7 @@ public sealed class SchemaService(
 
     public async Task<Result> NameNotTakenByOther(Schema schema, CancellationToken ct)
     {
-        var query = SchemaHelper.BaseQuery()
-            .Where(SchemaFields.Name, schema.Name)
-            .Where(SchemaFields.Type, schema.Type)
-            .WhereNot(SchemaFields.Id, schema.Id);
-        var count = await queryExecutor.Count(query, ct);
+        var count = await queryExecutor.Count(SchemaHelper.ByNameAndTypeAndNotId(schema.Name,schema.Type,schema.Id), ct);
         return count == 0 ? Result.Ok() : Result.Fail($"the schema name {schema.Name} was taken by other schema");
     }
 }

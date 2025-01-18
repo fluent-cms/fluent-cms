@@ -2,6 +2,7 @@ using FormCMS.Auth.Handlers;
 using FormCMS.Cms.Builders;
 using FluentResults;
 using FormCMS.Auth.Services;
+using FormCMS.Cms;
 using FormCMS.Core.HookFactory;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -41,8 +42,8 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
         
         void MapEndpoints()
         {
-            var cmsOptions = app.Services.GetRequiredService<CmsBuilder>().Options;
-            var apiGroup = app.MapGroup(cmsOptions.RouteOptions.ApiBaseUrl);
+            var options = app.Services.GetRequiredService<SystemSettings>();
+            var apiGroup = app.MapGroup(options.RouteOptions.ApiBaseUrl);
             apiGroup.MapIdentityApi<TCmsUser>();
             apiGroup.MapGroup("/accounts").MapAccountHandlers();
             apiGroup.MapGet("/logout", async (

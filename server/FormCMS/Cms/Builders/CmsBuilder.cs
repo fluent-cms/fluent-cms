@@ -7,17 +7,14 @@ using FormCMS.Cms.Services;
 using FormCMS.Core.Cache;
 using FormCMS.Cms.Graph;
 using FormCMS.Core.HookFactory;
-using FormCMS.Utils.RelationDbDao;
 using FormCMS.Utils.LocalFileStore;
 using FormCMS.Utils.PageRender;
 using FormCMS.Core.Descriptors;
+using FormCMS.Utils.RelationDbDao;
 using FormCMS.Utils.ResultExt;
 using GraphQL;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Rewrite;
-using Microsoft.Data.SqlClient;
-using Microsoft.Data.Sqlite;
-using Npgsql;
 using Schema = FormCMS.Cms.Graph.Schema;
 
 namespace FormCMS.Cms.Builders;
@@ -32,23 +29,18 @@ public enum DatabaseProvider
 public sealed record Problem(string Title, string? Detail =null);
 
 public sealed record DbOption(DatabaseProvider Provider, string ConnectionString);
-public sealed class CmsBuilder(
-    Options options,
-    DbOption dbOptions,
-    ILogger<CmsBuilder> logger
-)
+public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
 {
     private const string FormCmsContentRoot = "/_content/FormCMS";
-    public Options Options => options;
 
     public static IServiceCollection AddCms(
         IServiceCollection services,
         DatabaseProvider databaseProvider,
         string connectionString,
-        Action<Options>? optionsAction = null)
+        Action<SystemSettings>? optionsAction = null)
     {
-        var cmsOptions = new Options();
-        optionsAction?.Invoke(cmsOptions);
+        var systemSettings = new SystemSettings();
+        optionsAction?.Invoke(systemSettings);
 
         //only set options to FormCMS enum types.
         services.ConfigureHttpJsonOptions(JsonOptions.AddCamelEnumConverter<DataType>);
@@ -57,13 +49,16 @@ public sealed class CmsBuilder(
         services.ConfigureHttpJsonOptions(JsonOptions.AddCamelEnumConverter<SchemaType>);
         services.ConfigureHttpJsonOptions(JsonOptions.AddCamelEnumConverter<PublicationStatus>);
         
-        services.AddSingleton(cmsOptions);
+        services.AddSingleton(systemSettings);
         services.AddSingleton(new DbOption(databaseProvider, connectionString));
         services.AddSingleton<CmsBuilder>();
         services.AddSingleton<HookRegistry>();
         services.AddScoped<IProfileService, DummyProfileService>();
         
-        AddDbServices();
+        services.AddDao(databaseProvider,connectionString);
+        services.AddSingleton(new KateQueryExecutorOption(systemSettings.DatabaseQueryTimeout));
+        services.AddScoped<KateQueryExecutor>();
+        
         AddCacheServices();
         AddStorageServices();
         AddGraphqlServices();
@@ -129,79 +124,29 @@ public sealed class CmsBuilder(
             services.AddSingleton<KeyValueCache<ImmutableArray<Entity>>>(p =>
                 new KeyValueCache<ImmutableArray<Entity>>(p,
                     p.GetRequiredService<ILogger<KeyValueCache<ImmutableArray<Entity>>>>(),
-                    "entities", cmsOptions.EntitySchemaExpiration));
+                    "entities", systemSettings.EntitySchemaExpiration));
 
             services.AddSingleton<KeyValueCache<LoadedQuery>>(p =>
                 new KeyValueCache<LoadedQuery>(p,
                     p.GetRequiredService<ILogger<KeyValueCache<LoadedQuery>>>(),
-                    "query", cmsOptions.QuerySchemaExpiration));
+                    "query", systemSettings.QuerySchemaExpiration));
         }
 
         void AddStorageServices()
         {
             services.AddSingleton(new LocalFileStoreOptions(
                 Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/files"),
-                cmsOptions.ImageCompression.MaxWidth,
-                cmsOptions.ImageCompression.Quality));
+                systemSettings.ImageCompression.MaxWidth,
+                systemSettings.ImageCompression.Quality));
             services.AddSingleton<LocalFileStore>();
-        }
-
-       
-
-        void AddDbServices()
-        {
-            _ = databaseProvider switch
-            {
-                DatabaseProvider.Sqlite => AddSqliteDbServices(),
-                DatabaseProvider.Postgres => AddPostgresDbServices(),
-                DatabaseProvider.SqlServer => AddSqlServerDbServices(),
-                _ => throw new Exception("unsupported database provider")
-            };
-            
-            services.AddSingleton(new KateQueryExecutorOption(cmsOptions.DatabaseQueryTimeout));
-            services.AddScoped<KateQueryExecutor>();
-        }
-
-        IServiceCollection AddSqliteDbServices()
-        {
-            services.AddScoped(_ =>
-            {
-                var connection = new SqliteConnection(connectionString);
-                connection.Open();
-                return connection;
-            });
-            services.AddScoped<IDao, SqliteDao>();
-            return services;
-        }
-
-        IServiceCollection AddSqlServerDbServices()
-        {
-            services.AddScoped(_ =>
-            {
-                var connection = new SqlConnection(connectionString);
-                connection.Open();
-                return connection;
-            });
-            services.AddScoped<IDao,SqlServerIDao>();
-            return services;
-        }
-
-        IServiceCollection AddPostgresDbServices()
-        {
-            services.AddScoped(_ =>
-            {
-                var connection = new NpgsqlConnection(connectionString);
-                connection.Open(); 
-                return connection;
-            });
-            
-            services.AddScoped<IDao,PostgresDao>();
-            return services;
         }
     }
 
     public async Task UseCmsAsync(WebApplication app)
     {
+        var options = app.Services.GetRequiredService<SystemSettings>();
+        var dbOptions = app.Services.GetRequiredService<DbOption>();
+
         PrintVersion();
         await InitSchema();
         if (options.EnableClient)
@@ -215,7 +160,7 @@ public sealed class CmsBuilder(
         UseGraphql();
         UseExceptionHandler();
 
-       
+
         return;
 
         void UserRedirects()
@@ -239,10 +184,10 @@ public sealed class CmsBuilder(
             apiGroup.MapGroup("/schemas").MapSchemaHandlers();
             apiGroup.MapGroup("/files").MapFileHandlers();
             apiGroup.MapGroup("/queries").MapQueryHandlers().CacheOutput(options.QueryCachePolicy);
-            
+
             // if auth component is not use, the handler will use dummy profile service
             apiGroup.MapGroup("/profile").MapProfileHandlers();
-            
+
             app.MapGroup(options.RouteOptions.PageBaseUrl).MapPages().CacheOutput(options.PageCachePolicy);
             if (options.MapCmsHomePage) app.MapHomePage().CacheOutput(options.PageCachePolicy);
         }
@@ -292,29 +237,29 @@ public sealed class CmsBuilder(
                 });
             });
         }
-    }
 
-    private void PrintVersion()
-    {
-        var assembly = Assembly.GetExecutingAssembly();
-        var title = assembly.GetCustomAttribute<AssemblyTitleAttribute>()?.Title;
-        var informationalVersion =
-            assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-        var parts = dbOptions.ConnectionString.Split(";").Where(x => !x.StartsWith("Password"));
+        void PrintVersion()
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            var title = assembly.GetCustomAttribute<AssemblyTitleAttribute>()?.Title;
+            var informationalVersion =
+                assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+            var parts = dbOptions.ConnectionString.Split(";").Where(x => !x.StartsWith("Password"));
 
-        logger.LogInformation(
-            $"""
-            *********************************************************
-            Using {title}, Version {informationalVersion?.Split("+").First()}
-            Database : {dbOptions.Provider} - {string.Join(";", parts)}
-            Client App is Enabled :{options.EnableClient}
-            Use CMS' home page: {options.MapCmsHomePage}
-            GraphQL Client Path: {options.GraphQlPath}
-            RouterOption: API Base URL={options.RouteOptions.ApiBaseUrl} Page Base URL={options.RouteOptions.PageBaseUrl}
-            Image Compression: MaxWidth={options.ImageCompression.MaxWidth}, Quality={options.ImageCompression.Quality}
-            Schema Cache Settings: Entity Schema Expiration={options.EntitySchemaExpiration}, Query Schema Expiration = {options.QuerySchemaExpiration}
-            Output Cache Settings: Page CachePolicy={options.PageCachePolicy}, Query Cache Policy={options.QueryCachePolicy}
-            *********************************************************
-            """);
+            logger.LogInformation(
+                $"""
+                 *********************************************************
+                 Using {title}, Version {informationalVersion?.Split("+").First()}
+                 Database : {dbOptions.Provider} - {string.Join(";", parts)}
+                 Client App is Enabled :{options.EnableClient}
+                 Use CMS' home page: {options.MapCmsHomePage}
+                 GraphQL Client Path: {options.GraphQlPath}
+                 RouterOption: API Base URL={options.RouteOptions.ApiBaseUrl} Page Base URL={options.RouteOptions.PageBaseUrl}
+                 Image Compression: MaxWidth={options.ImageCompression.MaxWidth}, Quality={options.ImageCompression.Quality}
+                 Schema Cache Settings: Entity Schema Expiration={options.EntitySchemaExpiration}, Query Schema Expiration = {options.QuerySchemaExpiration}
+                 Output Cache Settings: Page CachePolicy={options.PageCachePolicy}, Query Cache Policy={options.QueryCachePolicy}
+                 *********************************************************
+                 """);
+        }
     }
 }

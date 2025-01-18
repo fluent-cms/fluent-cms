@@ -20,6 +20,7 @@ public static class JunctionHelper
         var tableName = GetJunctionTableName(sourceEntity.Name, targetEntity.Name);
         var id = new LoadedAttribute(tableName, DefaultAttributeNames.Id.ToCamelCase());
         var deleted = new LoadedAttribute(tableName, DefaultAttributeNames.Deleted.ToCamelCase());
+        var publicationStatusAttr = new LoadedAttribute(tableName, DefaultAttributeNames.PublicationStatus.ToCamelCase());
         sourceEntity = sourceEntity with
         {
             Attributes =
@@ -78,7 +79,8 @@ public static class JunctionHelper
             DisplayName:"",
             LabelAttributeName:"",
             DefaultPageSize:EntityConstants.DefaultPageSize,
-            DefaultPublicationStatus:PublicationStatus.Published
+            DefaultPublicationStatus:PublicationStatus.Published,
+            PublicationStatusAttribute: publicationStatusAttr
         );
         
         return new Junction(
@@ -141,10 +143,11 @@ public static class JunctionHelper
         ValidPagination? pagination,
         ValidSpan? span,
         IEnumerable<LoadedAttribute> selectAttributes,
-        IEnumerable<ValidValue> sourceIds)
+        IEnumerable<ValidValue> sourceIds,
+        bool onlyPublished)
     {
         selectAttributes = [..selectAttributes, c.SourceAttribute];
-        var query = c.TargetEntity.GetCommonListQuery(filters,sorts,pagination,span,selectAttributes);
+        var query = c.TargetEntity.GetCommonListQuery(filters,sorts,pagination,span,selectAttributes,onlyPublished);
         c.ApplyJunctionFilter(query, sourceIds);
         return query;
     }

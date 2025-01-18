@@ -26,8 +26,7 @@ public class AccountService<TUser, TRole,TCtx>(
 {
     public async Task<string[]> GetEntities(CancellationToken ct)
     {
-        var query = SchemaHelper.BaseQuery([SchemaFields.Name]).Where(SchemaFields.Type , SchemaType.Entity.ToCamelCase());
-        var records= await queryExecutor.Many(query,ct);
+        var records= await queryExecutor.Many(SchemaHelper.ByNameAndType(SchemaType.Entity,null),ct);
         return records.Select(x => (string)x[SchemaFields.Name]).ToArray();
     }
     

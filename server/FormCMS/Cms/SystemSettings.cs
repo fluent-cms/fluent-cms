@@ -12,7 +12,7 @@ public sealed class RouteOptions
     public string PageBaseUrl { get; set; } = "";
 }
 
-public sealed class Options
+public sealed class SystemSettings
 {
     public const string DefaultPageCachePolicyName = "CmsPageCachePolicy";
     public const string DefaultQueryCachePolicyName = "CmsQueryCachePolicy";
