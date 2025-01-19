@@ -104,6 +104,7 @@ public class SchemaApiClient (HttpClient client)
     public Task<Result<Schema>> EnsureEntity(string entityName, string labelAttribute, bool needPublish,params Attribute[] attributes)
     {
         var entity = new Entity(
+            PrimaryKey: DefaultAttributeNames.Id.ToCamelCase(),
             Attributes:[..attributes],
             Name: entityName,
             TableName: entityName,

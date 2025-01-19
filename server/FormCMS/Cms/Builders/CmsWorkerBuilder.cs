@@ -9,20 +9,24 @@ public static class CmsWorkerBuilder
         IServiceCollection services,
         DatabaseProvider databaseProvider,
         string connectionString,
-        int delaySeconds
+        int delaySeconds,
+        int queryTimeoutSeconds
         )
     {
         Console.WriteLine(
             $"""
              *********************************************************
              Adding CMS Publishing Worker
+             Delay Seconds: {delaySeconds}
+             Query Timeout: {queryTimeoutSeconds}
              *********************************************************
              """);
 
         services.AddDao(databaseProvider, connectionString );
         
-        services.AddSingleton(new KateQueryExecutorOption(300));
+        services.AddSingleton(new KateQueryExecutorOption(queryTimeoutSeconds));
         services.AddScoped<KateQueryExecutor>();
+        
         services.AddSingleton(new DataPublishingWorkerOptions(delaySeconds));
         services.AddHostedService<DataPublishingWorker>();
         return services;

@@ -132,6 +132,12 @@ public static class QueryStringFilterResolver
                 return Result.Fail(e);
             }
 
+            if (validValues.Contains(ValidValue.NullValue) && match != Matches.EqualsTo)
+            {
+                return Result.Fail("Fail to resolve filter, only equalsTo null value is supported");
+            }
+
+
             if (match == Matches.Between || match == Matches.In || match == Matches.NotIn)
             {
                 constraints.Add(new ValidConstraint(match, [..validValues]));

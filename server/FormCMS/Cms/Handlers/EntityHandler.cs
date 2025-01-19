@@ -59,21 +59,8 @@ public static class EntityHandler
             CancellationToken ct
         ) =>  entityService.DeleteWithAction(name, ele, ct));
         
-        app.MapPost("/{name}/publish", (
-            IEntityService entityService,
-            string name,
-            JsonElement ele,
-            CancellationToken ct
-        ) => entityService.Publish(name, ele, ct));
-
-        app.MapPost("/{name}/unpublish", (
-            IEntityService entityService,
-            string name,
-            JsonElement ele,
-            CancellationToken ct
-        ) => entityService.Unpublish(name, ele, ct));
          
-        app.MapPost("/{name}/publication/settings", (
+        app.MapPost("/{name}/publication", (
             IEntityService entityService,
             string name,
             JsonElement ele,

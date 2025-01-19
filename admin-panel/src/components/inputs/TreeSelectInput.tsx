@@ -1,4 +1,4 @@
-import { XAttr, XEntity } from "../../cms-client/types/schemaExt";
+import { XAttr } from "../../cms-client/types/schemaExt";
 import { InputPanel } from "./InputPanel"
 import { TreeSelect } from 'primereact/treeselect';
 
@@ -7,18 +7,18 @@ export function TreeSelectInput(
         data: any,
         options: any[],
         column: XAttr,
-        targetEntity: XEntity,
         register: any
         className: any
         control: any
         id: any
     }) {
-    const {column,options,targetEntity} = props
+    const {column,options} = props
     return <InputPanel  {...props} component={(field: any) => {
         return <TreeSelect
             display="chip"
-            value={(field.value??{})[targetEntity.primaryKey]}
+            value={field.value}
             onChange={(e) => {
+                console.log("e.value",e.value)
                 field.onChange(e.value)
             }}
             options={options}

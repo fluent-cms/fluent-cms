@@ -32,7 +32,7 @@ public sealed class DataPublishingWorker(
                     {
                         try
                         {
-                            count += await queryExecutor.ExecAndGetAffected(entity.Settings.Entity!.PublishAll(), ct);
+                            count += await queryExecutor.ExecAndGetAffected(entity.Settings.Entity!.PublishAllScheduled(), ct);
                         }
                         catch (Exception e)
                         {

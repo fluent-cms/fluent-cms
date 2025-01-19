@@ -92,6 +92,7 @@ public sealed class EntitySchemaService(
         var cols = await dao.GetColumnDefinitions(table, token);
         return new Entity
         (
+            PrimaryKey:"",Name:"",DisplayName:"",TableName:"",LabelAttributeName:"",
             Attributes:
             [
                 ..cols.Select(x => AttributeHelper.ToAttribute( x.Name, ColumnTypeToDataType(x.Type) ))

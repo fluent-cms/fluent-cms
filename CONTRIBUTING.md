@@ -1,8 +1,8 @@
-# Contributing to FluentCMS
+# Contributing to FormCMS
 
 ## Getting Started
 
-- **Fork the Repository**: Start by forking the [FluentCMS repository](https://github.com/fluent-cms/fluent-cms) to your own GitHub account.
+- **Fork the Repository**: Start by forking the [FormCMS repository](https://github.com/FormCMS/FluentCMS) to your own GitHub account.
 
 - **Clone the Forked Repository**: 
   ```bash

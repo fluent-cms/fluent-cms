@@ -1,6 +1,6 @@
 import {useParams} from "react-router-dom";
 import {ItemForm} from "../containers/ItemForm";
-import {deleteItem, updateItem, useItemData,publish,unpublish, savePublicationSettings} from "../services/entity";
+import {deleteItem, updateItem, useItemData,savePublicationSettings} from "../services/entity";
 import {Divider} from "primereact/divider";
 import {Button} from "primereact/button";
 import {Picklist} from "../containers/Picklist";
@@ -26,16 +26,22 @@ export function DataItemPage({baseRouter}: { baseRouter: string }) {
 export function DataItemPageComponent({schema, baseRouter}: { schema: XEntity, baseRouter: string }) {
     const {id} = useParams()
     const {data, error: useItemError, isLoading,mutate} = useItemData(schema.name, id)
-    const {handleErrorOrSuccess, CheckErrorStatus} = useCheckError();
-    const {handleErrorOrSuccess: checkDialogErorr, CheckErrorStatus: CheckDialogErrorStatus} = useCheckError();
+    
+    const {handleErrorOrSuccess: handlePageErrorOrSucess, CheckErrorStatus:PageErrorStatus} = useCheckError();
+    
+    const {handleErrorOrSuccess: handleSchedule, CheckErrorStatus: CheckScheduleErrorStatus} = useCheckError();
+    const {visible: scheduleVisible, showDialog:showSchedule, hideDialog:hideSchedule} = useDialogState()
+    
+    const {handleErrorOrSuccess: handlePublish, CheckErrorStatus: CheckPublishErrorStatus} = useCheckError();
+    const {visible:publishVisible, showDialog:showPublish, hideDialog:hidePublish} = useDialogState()
     
     const {confirm, Confirm} = useConfirm("dataItemPage" + schema.name);
-    const {visible, showDialog, hideDialog} = useDialogState()
     
     const referingUrl = new URLSearchParams(location.search).get("ref");
    
     const itemEditFormId = "editForm" + schema.name
-    const itemPublicationFormId = "publication" + schema.name
+    const scheduleFormId = "schedule" + schema.name
+    const publishFormId = "publish" + schema.name
 
     const inputColumns = schema?.attributes?.filter(
         (x) => {
@@ -53,38 +59,46 @@ export function DataItemPageComponent({schema, baseRouter}: { schema: XEntity, b
     const onSubmit = async (formData: any) => {
         formData[schema.primaryKey] = id
         const {error} = await updateItem(schema.name, formData)
-        await handleErrorOrSuccess(error, 'Save Succeed', null)
+        await handlePageErrorOrSucess(error, 'Save Succeed', null)
     }
 
     const onDelete = async () => {
         confirm('Do you want to delete this item?', async () => {
             data[schema.primaryKey] = id
             const {error} = await deleteItem(schema.name, data)
-            await handleErrorOrSuccess(error, 'Delete Succeed', ()=> {
+            await handlePageErrorOrSucess(error, 'Delete Succeed', ()=> {
                 window.location.href = referingUrl ?? `${baseRouter}/${schema.name}`
             });
         })
     }
-    const changePublicationStatus =  () => {
-        showDialog();
-    }
 
-    const onPublish = async () => {
-        const {error} = await publish(schema.name, data)
-        await handleErrorOrSuccess(error, 'Publish Succeed', mutate)
+    const onPublish = async (formData:any) => {
+        formData[schema.primaryKey] = data[schema.primaryKey];
+        formData[DefaultAttributeNames.PublicationStatus] = PublicationStatus.Published;
+        
+        const {error} = await savePublicationSettings(schema.name, formData)
+        await handlePublish(error, 'Publish Succeed', ()=>{
+            mutate();
+            hidePublish();
+        })
     }
     
     const onUnpublish = async () => {
-        const {error} = await unpublish(schema.name, data)
-        await handleErrorOrSuccess(error, 'Publish Succeed',mutate)
+        var formData:any = {}
+        formData[schema.primaryKey] = data[schema.primaryKey];
+        formData[DefaultAttributeNames.PublicationStatus] = PublicationStatus.Unpublished;
+        
+        const {error} = await savePublicationSettings(schema.name, formData)
+        await handlePageErrorOrSucess(error, 'Publish Succeed',mutate)
     }
     
-    const onSubmitPublicationSettings = async (formData:any) =>{
+    const onSchedule = async (formData:any) =>{
         formData[schema.primaryKey] = data[schema.primaryKey];
+        formData[DefaultAttributeNames.PublicationStatus] = PublicationStatus.Scheduled;
         const {error} = await savePublicationSettings(schema.name, formData)
-        await checkDialogErorr(error, 'Publish Succeed', ()=>{
+        await handleSchedule(error, 'Schedule Succeed', ()=>{
             mutate();
-            hideDialog();
+            hideSchedule();
         })
     }
     
@@ -95,15 +109,17 @@ export function DataItemPageComponent({schema, baseRouter}: { schema: XEntity, b
         <Button type={'submit'} label={"Save " + schema.displayName} icon="pi pi-check" form={itemEditFormId}/>
         {' '}
         {
-            data && data[DefaultAttributeNames.PublicationStatus] === PublicationStatus.Published
-            ?<Button type={'button'} label={"Unpublish"}  onClick={onUnpublish}/>
-                : <Button type={'button'} label={"Publish"}  onClick={onPublish}/>
+            data 
+            && (data[DefaultAttributeNames.PublicationStatus] === PublicationStatus.Published 
+                || data[DefaultAttributeNames.PublicationStatus] === PublicationStatus.Scheduled )
+            && <><Button type={'button'} label={"Unpublish"}  onClick={onUnpublish}/>{' '}</>
         }
+        <Button type={'button'} label={"Publish/Change Publish Time"}  onClick={showPublish}/>
         {' '}
-        <Button type={'button'} label={"Publish Settings"}  onClick={changePublicationStatus}/>
+        <Button type={'button'} label={"Schdule/Reschdule"}  onClick={showSchedule}/>
         {' '}
         <Button type={'button'} label={"Delete " + schema.displayName} severity="danger" onClick={onDelete}/>
-        <CheckErrorStatus/>
+        <PageErrorStatus/>
         <Confirm/>
         <div className="grid">
             <div className={`col-12 md:col-12 lg:${trees.length > 0? "col-9":"col-12"}`}>
@@ -139,12 +155,23 @@ export function DataItemPageComponent({schema, baseRouter}: { schema: XEntity, b
             }
         </div>
         <SaveDialog
-            formId={itemPublicationFormId}
-            visible={visible}
-            handleHide={hideDialog}
+            width={'50%'}
+            formId={publishFormId}
+            visible={publishVisible}
+            handleHide={hidePublish}
             header={'Save '}>
-            <CheckDialogErrorStatus/>
-            <PublicationSettings onSubmit={onSubmitPublicationSettings} data={data} formId={itemPublicationFormId}/>
+            <CheckPublishErrorStatus/>
+            <PublicationSettings onSubmit={onPublish} data={data} formId={publishFormId}/>
+        </SaveDialog>
+        
+        <SaveDialog
+            width={'50%'}
+            formId={scheduleFormId}
+            visible={scheduleVisible}
+            handleHide={hideSchedule}
+            header={'Save '}>
+            <CheckScheduleErrorStatus/>
+            <PublicationSettings onSubmit={onSchedule} data={data} formId={scheduleFormId}/>
         </SaveDialog>
     </>
 }

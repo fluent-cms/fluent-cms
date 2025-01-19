@@ -1,6 +1,7 @@
 using FormCMS.Utils.ResultExt;
 using FormCMS.Core.Descriptors;
 using FormCMS.CoreKit.ApiClient;
+using FormCMS.Utils.EnumExt;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
 using QueryBuilder_Attribute = FormCMS.Core.Descriptors.Attribute;
 
@@ -105,9 +106,12 @@ public static class BlogsTestData
             LabelAttributeName: "name",
             TableName: "tags",
             DisplayName: "Tag",
-            Name: "tag"
+            Name: "tag",
+            PrimaryKey:DefaultAttributeNames.Id.ToCamelCase(),
+            DefaultPublicationStatus:PublicationStatus.Published
         ),
         new(
+            PrimaryKey:DefaultAttributeNames.Id.ToCamelCase(),
             Attributes:
             [
                 new Attribute(Field: "name", Header: "Name"),
@@ -119,9 +123,11 @@ public static class BlogsTestData
             LabelAttributeName: "name",
             TableName: "attachments",
             DisplayName: "Attachment",
-            Name: "attachment"
+            Name: "attachment",
+            DefaultPublicationStatus:PublicationStatus.Published
         ),
         new(
+            PrimaryKey:DefaultAttributeNames.Id.ToCamelCase(),
             Attributes:
             [
                 new Attribute(Field: "name", Header: "Name"),
@@ -132,9 +138,11 @@ public static class BlogsTestData
             TableName: "authors",
             DefaultPageSize: 50,
             DisplayName: "Author",
-            Name: "author"
+            Name: "author",
+            DefaultPublicationStatus:PublicationStatus.Published
         ),
         new (
+            PrimaryKey:DefaultAttributeNames.Id.ToCamelCase(),
             Attributes:
             [
                 new Attribute(Field: "name", Header: "Name"),
@@ -145,9 +153,11 @@ public static class BlogsTestData
             TableName: "categories",
             DisplayName: "Category",
             DefaultPageSize: 50,
-            Name: "category"
+            Name: "category",
+            DefaultPublicationStatus:PublicationStatus.Published
         ),
         new (
+            PrimaryKey:DefaultAttributeNames.Id.ToCamelCase(),
             Attributes:
             [
                 new Attribute(Field: "title", Header: "Title"),
@@ -172,7 +182,8 @@ public static class BlogsTestData
             TableName: "posts",
             DisplayName: "Post",
             DefaultPageSize: 50,
-            Name: "post"
+            Name: "post",
+            DefaultPublicationStatus:PublicationStatus.Published
         )
     ];
 

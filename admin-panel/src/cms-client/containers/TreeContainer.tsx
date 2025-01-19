@@ -4,12 +4,6 @@ import {useTree} from "./useTree";
 import {deleteJunctionItems, saveJunctionItems, useJunctionIds} from "../services/entity";
 import {useEffect, useState } from "react";
 
-enum CheckStatus {
-    NotChecked = 0,
-    PartialChecked = 1,
-    Checked = 2,
-}
-
 function getSelectionKeys(nodes:any[], selectedKeys:any[]) {
     var ret:any = {}
     var root = {key:undefined,children:nodes};

@@ -22,18 +22,18 @@ public static class PageHandler
             CancellationToken ct
         ) => await context.Html(await pageService.GetPart(token, ct), ct));
 
-        app.MapGet("/{page}", async (
+        app.MapGet("/{page:regex(^(?!files).*)}", async (
             IPageService pageService,
             HttpContext context,
             string page,
             CancellationToken ct
         ) => await context.Html(await pageService.Get(page, context.Args(), ct), ct));
 
-        app.MapGet("/{page}/{slug}", async (
-            IPageService pageService, 
-            HttpContext context, 
-            string page, 
-            string slug, 
+        app.MapGet("/{page:regex(^(?!files).*)}/{slug}", async (
+            IPageService pageService,
+            HttpContext context,
+            string page,
+            string slug,
             CancellationToken ct
         ) => await context.Html(await pageService.GetDetail(page, slug, context.Args(), ct), ct));
         return app;

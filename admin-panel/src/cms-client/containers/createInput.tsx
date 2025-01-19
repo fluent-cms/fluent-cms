@@ -31,7 +31,7 @@ export function createInput(props :{
         case 'number':
             return <NumberInput className={'field col-12 md:col-4'} key={field} {...props}/>
         case 'datetime':
-            return <DatetimeInput className={'field col-12  md:col-4'} key={field} {...props}/>
+            return <DatetimeInput className={'field col-12  md:col-4'} inline={false} key={field} {...props}/>
         case 'date':
             return <DateInput className={'field col-12  md:col-4'} key={field} {...props}/>
         case 'image':

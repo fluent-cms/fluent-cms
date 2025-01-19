@@ -73,26 +73,11 @@ public class EntityApiClient(HttpClient client)
         JsonOptions.IgnoreCase
     );
 
-    public Task<Result> Publish(
-        string entity, object payload
-    ) => client.PostResult(
-        $"/{entity}/publish".ToEntityApi(),
-        payload,
-        JsonOptions.IgnoreCase
-    );
-
-    public Task<Result> Unpublish(
-        string entity, object payload
-    ) => client.PostResult(
-        $"/{entity}/unpublish".ToEntityApi(),
-        payload,
-        JsonOptions.IgnoreCase
-    );
 
     public Task<Result> SavePublicationSettings(
         string entity, object payload
     ) => client.PostResult(
-        $"/{entity}/publication/settings".ToEntityApi(),
+        $"/{entity}/publication".ToEntityApi(),
         payload,
         JsonOptions.IgnoreCase
     );

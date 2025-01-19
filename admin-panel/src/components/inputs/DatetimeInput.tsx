@@ -10,6 +10,7 @@ export function DatetimeInput(
         className: any
         control: any
         id: any
+        inline:boolean
     }) {
     return <InputPanel  {...props} component={(field: any) => {
         let d = null
@@ -19,6 +20,7 @@ export function DatetimeInput(
         }
         
         return <Calendar
+            inline={props.inline}
             id={field.name}
             showTime
             hourFormat="24"

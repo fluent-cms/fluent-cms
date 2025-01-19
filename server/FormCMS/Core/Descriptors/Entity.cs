@@ -22,12 +22,12 @@ public enum PublicationStatus
 
 public record Entity(
     ImmutableArray<Attribute> Attributes,
-    string Name = "",
-    string DisplayName ="",
-    string TableName = "",
+    string Name ,
+    string DisplayName ,
+    string TableName ,
     
-    string PrimaryKey = "",
-    string LabelAttributeName ="",
+    string LabelAttributeName ,
+    string PrimaryKey ,
     
     int DefaultPageSize = EntityConstants.DefaultPageSize,
     PublicationStatus DefaultPublicationStatus = PublicationStatus.Published
@@ -170,60 +170,37 @@ public static class EntityHelper
 
     public static Result<SqlKata.Query> SavePublicationStatus(this LoadedEntity e, object id, Record record)
     {
-        if (record.TryGetValue(DefaultAttributeNames.PublicationStatus.ToCamelCase(), out var statusObject) 
-            && statusObject is string statusString 
-            && Enum.TryParse(statusString,true, out PublicationStatus status)
-            
-            && record.TryGetValue(DefaultAttributeNames.PublishedAt.ToCamelCase() , out var publishedAtObject)
-            && publishedAtObject is string publishedAtString
-            && DateTime.TryParse(publishedAtString, out var publishedAt))
-        {
-            
-            return new SqlKata.Query(e.TableName)
-             .Where(e.PrimaryKey, id)
-             .AsUpdate(
-                 [
-                     DefaultAttributeNames.PublicationStatus.ToCamelCase(),
-                     DefaultAttributeNames.PublishedAt.ToCamelCase()
-                 ],
-                 [status.ToCamelCase(), publishedAt]);
-        }
-        return Result.Fail("Can not save publication status, invalid input");
-   }
-    
-    public static SqlKata.Query PublishAll(this Entity e)
+        if (!record.TryGetValue(DefaultAttributeNames.PublicationStatus.ToCamelCase(), out var statusObject)
+            || statusObject is not string statusString
+            || !Enum.TryParse(statusString, true, out PublicationStatus status))
+            return Result.Fail("Cannot save publication status, unknown status");
+        
+        List<string> columns = [DefaultAttributeNames.PublicationStatus.ToCamelCase()];
+        List<object> values = [status.ToCamelCase()];
+
+        if (status is not (PublicationStatus.Published or PublicationStatus.Scheduled))
+            return BuildQuery();
+
+        if (!record.TryGetValue(DefaultAttributeNames.PublishedAt.ToCamelCase(), out var publishedAtObject)
+            || publishedAtObject is not string publishedAtString
+            || !DateTime.TryParse(publishedAtString, out var publishedAt))
+            return Result.Fail("Cannot save publication status, invalidate publish time");
+        
+        columns.Add(DefaultAttributeNames.PublishedAt.ToCamelCase());
+        values.Add(publishedAt);
+        return BuildQuery();
+
+        SqlKata.Query BuildQuery() =>new SqlKata.Query(e.TableName)
+            .Where(e.PrimaryKey,id)
+            .AsUpdate(columns, values);
+    }
+
+    public static SqlKata.Query PublishAllScheduled(this Entity e)
     => new SqlKata.Query(e.TableName)
         .Where(DefaultAttributeNames.PublicationStatus.ToCamelCase(),PublicationStatus.Scheduled.ToCamelCase())
         .WhereDate(DefaultAttributeNames.PublishedAt.ToCamelCase(), "<", DateTime.Now)
         .AsUpdate([DefaultAttributeNames.PublicationStatus.ToCamelCase()], [PublicationStatus.Published.ToCamelCase()]) ;
     
-
-    public static SqlKata.Query Unpublish(this LoadedEntity e, object id)
-       => new SqlKata.Query(e.TableName)
-            .Where(e.PrimaryKey, id)
-            .AsUpdate([DefaultAttributeNames.PublicationStatus.ToCamelCase()], [PublicationStatus.Unpublished.ToCamelCase()]);
-
-    public static SqlKata.Query Publish(this LoadedEntity e, object id, Record item)
-    {
-        var updateItem = new Dictionary<string, object>
-        {
-            [DefaultAttributeNames.PublicationStatus.ToCamelCase()] = PublicationStatus.Published.ToCamelCase()
-        };
-
-        if (item.TryGetValue(DefaultAttributeNames.PublicationStatus.ToCamelCase(), out var val) 
-            && val is string s 
-            && s == PublicationStatus.Unpublished.ToCamelCase())
-        {
-            //for unpublished item, no need to set published at
-        }
-        else
-        {
-            updateItem[DefaultAttributeNames.PublishedAt.ToCamelCase()] = DateTime.Now;
-        }
-
-        return new SqlKata.Query(e.TableName).Where(e.PrimaryKey, id).AsUpdate(updateItem.Keys, updateItem.Values);
-    }
-
     public static Result<SqlKata.Query> UpdateQuery(this LoadedEntity e, Record item)
     {
         //to prevent SqlServer 'Cannot update identity column' error 

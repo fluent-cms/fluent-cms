@@ -41,16 +41,32 @@ public class EntityApiTest
         await _entityApiClient.Insert(_post, Name, "name1").Ok();
         var ele = await _entityApiClient.Single(_post, 1).Ok();
         Assert.Equal(PublicationStatus.Draft.ToCamelCase(), ele.GetProperty(DefaultColumnNames.PublicationStatus.ToCamelCase()).GetString());
-        
-        await _entityApiClient.Publish(_post,new {id=1}).Ok();
+
+        //publish
+        var payload = new Dictionary<string, object>
+        {
+            { DefaultAttributeNames.Id.ToCamelCase(), 1 },
+            { DefaultAttributeNames.PublicationStatus.ToCamelCase(), PublicationStatus.Published.ToCamelCase() },
+            { DefaultAttributeNames.PublishedAt.ToCamelCase(), new DateTime(2025, 1, 1) }
+        };
+        await _entityApiClient.SavePublicationSettings(_post,payload).Ok();
         ele = await _entityApiClient.Single(_post, 1).Ok();
         Assert.Equal(PublicationStatus.Published.ToCamelCase(), ele.GetProperty(DefaultColumnNames.PublicationStatus.ToCamelCase()).GetString());
-        
-        await _entityApiClient.Unpublish(_post,new {id=1}).Ok();
-        ele = await _entityApiClient.Single(_post, 1).Ok();
-        Assert.Equal(PublicationStatus.Unpublished.ToCamelCase(), ele.GetProperty(DefaultColumnNames.PublicationStatus.ToCamelCase()).GetString());
 
-        var payload = new Dictionary<string,object>
+        //unpublish
+        payload = new Dictionary<string, object>
+        {
+            { DefaultAttributeNames.Id.ToCamelCase(), 1 },
+            { DefaultAttributeNames.PublicationStatus.ToCamelCase(), PublicationStatus.Unpublished.ToCamelCase() },
+        };
+        await _entityApiClient.SavePublicationSettings(_post,payload).Ok();
+        ele = await _entityApiClient.Single(_post, 1).Ok();
+        Assert.Equal(
+            PublicationStatus.Unpublished.ToCamelCase(), 
+            ele.GetProperty(DefaultColumnNames.PublicationStatus.ToCamelCase()).GetString());
+
+        //scheduled
+        payload = new Dictionary<string,object>
         {
             { DefaultAttributeNames.Id.ToCamelCase(), 1 },
             { DefaultAttributeNames.PublicationStatus.ToCamelCase(), PublicationStatus.Scheduled.ToCamelCase()},
@@ -97,7 +113,7 @@ public class EntityApiTest
                                                             """);
         await _schemaApiClient.EnsureEntity(_post, Name,false,attr).Ok();
         var res = await _entityApiClient.Insert(_post, Name, null!);
-        Assert.True(res.IsFailed && res.Errors[0].Message.Contains("validate-fail"));
+        Assert.True(res.IsFailed && res.Errors[0].Message.Contains("name-null-fail"));
     }
 
     [Fact]

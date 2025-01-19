@@ -1,5 +1,5 @@
 using FormCMS.Course;
 
-var webApp = await WebApp.Build(args);
-var worker = HostApp.Build(args);
-await Task.WhenAll( webApp.RunAsync(), worker.RunAsync());
+var webApp = await Web.Build(args);
+var worker = Worker.Build(args);
+await Task.WhenAll( webApp.RunAsync(), worker?.RunAsync()??Task.CompletedTask);

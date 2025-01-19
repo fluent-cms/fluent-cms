@@ -31,16 +31,9 @@ export async function addItem(schemaName:string, item:any){
 export async function deleteItem(schemaName:string, item:any){
     return catchResponse(()=>axios.post(fullAPIURI(`/entities/${schemaName}/delete`), item))
 }
-export async function publish(schemaName:string, item:any){
-    return catchResponse(()=>axios.post(fullAPIURI(`/entities/${schemaName}/publish`), item))
-}
-
-export async function unpublish(schemaName:string, item:any){
-    return catchResponse(()=>axios.post(fullAPIURI(`/entities/${schemaName}/unpublish`), item))
-}
 
 export async function savePublicationSettings(schemaName:string, item:any){
-    return catchResponse(()=>axios.post(fullAPIURI(`/entities/${schemaName}/publication/settings`), item))
+    return catchResponse(()=>axios.post(fullAPIURI(`/entities/${schemaName}/publication`), item))
 }
 
 export function useJunctionIds(schemaName: string, id: any, field:string) {

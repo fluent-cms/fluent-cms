@@ -7,7 +7,7 @@ using Scalar.AspNetCore;
 
 namespace FormCMS.Course;
 
-public static class WebApp
+public static class Web
 {
     private const string Cors = "cors";
 

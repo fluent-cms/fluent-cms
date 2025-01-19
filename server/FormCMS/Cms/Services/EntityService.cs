@@ -3,7 +3,6 @@ using FormCMS.Utils.DictionaryExt;
 using FormCMS.Core.HookFactory;
 using FormCMS.Utils.RelationDbDao;
 using FormCMS.Core.Descriptors;
-using FluentResults;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.JsonUtil;
 using FormCMS.Utils.ResultExt;
@@ -103,23 +102,6 @@ public sealed class EntityService(
     public async Task<Record> DeleteWithAction(string name, JsonElement ele, CancellationToken ct)
     {
         return await Delete(await GetRecordIdCtx(name, ele, ct), ct);
-    }
-
-    //here pass whole entity body instead of only id, to check if the data is staled.
-    public async Task Publish(string name, JsonElement ele, CancellationToken ct)
-    {
-        var (entity,_,id) = await GetRecordIdCtx(name, ele, ct);
-        var query = entity.ByIdsQuery( [entity.PrimaryKey,DefaultAttributeNames.PublicationStatus.ToCamelCase()],[id.ToValidValue()],false);
-        var record = await queryExecutor.One(query, ct) ?? throw new ResultException($"not find record by [{id}]");
-        query = entity.Publish(id, record);
-        await queryExecutor.Exec(query, ct);
-    }
-
-    public async Task Unpublish(string name, JsonElement ele, CancellationToken ct)
-    {
-        var (entity,_,id) = await GetRecordIdCtx(name, ele, ct);
-        var query = entity.Unpublish(id);
-        await queryExecutor.Exec(query, ct);
     }
 
     public async Task SavePublicationSettings(string name, JsonElement ele, CancellationToken ct)
@@ -354,7 +336,12 @@ public sealed class EntityService(
         var res = await hookRegistry.EntityPreAdd.Trigger(provider,
             new EntityPreAddArgs(entity.Name, record));
         record = res.RefRecord;
+        
         record[DefaultAttributeNames.PublicationStatus.ToCamelCase()] = entity.DefaultPublicationStatus.ToCamelCase();
+        if (entity.DefaultPublicationStatus == PublicationStatus.Published)
+        {
+            record[DefaultAttributeNames.PublishedAt.ToCamelCase()] = DateTime.Now;
+        }
 
         var query = entity.Insert(record);
         var id = await queryExecutor.Exec(query, token);
