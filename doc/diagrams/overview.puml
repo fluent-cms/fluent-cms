@@ -8,25 +8,27 @@ Person(developer, "Developer", "Define Schema")
 
 System(schema_builder, "Schema Builder", "jQuery")
 System(admin_panel, "Admin Panel", "react")
-System(public_site, "Public Site", "next.js")
-System(backend_server, "Backend Server", "aps.net core")
+
+System_Boundary(webApp,"Asp.net Core Backend"){
+    System(schemaService, "Schema Service", "")
+    System(entityService, "Entity Service", "")
+    System(queryService, "Query Service", "")
+    System(pageService, "Page Service", "")
+}
 
 ContainerDb(db, "Database", "RDBMS", "schema and content")
-ContainerDb(nosql, "NoSQl", "Nosql", "")
-ContainerDb(elasticSearch, "Elastic Search", "Elastic Search", "")
-Container(kafka, "Kafka", "Kafka", "")
 
 
-Rel(end_user, public_site, "browse", "Http")
+Rel(end_user, pageService, "browse", "Http")
 Rel(developer, schema_builder, "browse", "Http")
 Rel(editor, admin_panel, "browse", "Http")
 
-Rel(admin_panel, backend_server, "request", "rest")
-Rel(public_site, backend_server, "browse", "rest")
-Rel(schema_builder, backend_server, "browse", "rest")
+Rel(admin_panel, entityService, "request", "rest")
+Rel(schema_builder, schemaService, "browse", "rest")
 
-Rel(backend_server, db, "access", "ef/sqlkata")
-Rel(backend_server, nosql, "access", "")
-Rel(backend_server, elasticSearch, "access", "")
-Rel(backend_server, kafka, "access", "")
+Rel(pageService, queryService, "call", "")
+
+Rel(schemaService, db, "access", "sqlkata")
+Rel(entityService, db, "access", "sqlkata")
+Rel(queryService, db, "access", "sqlkata")
 @enduml

@@ -1,9 +1,0 @@
-@startuml C4_Elements
-!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Sequence.puml
-
-Person(editor, "Editor", "Define Schema")
-System(adminPanel, "Admin Panel", "")
-
-Rel(editor, adminPanel,"Add data for Main Entity","")
-Rel(editor, adminPanel,"Add data for Related Entity","")
-@enduml

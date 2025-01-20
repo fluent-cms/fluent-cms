@@ -106,8 +106,10 @@ public class SchemaApiTest
             Type: SchemaType.Entity,
             Settings: new Settings
             {
-                Entity = new Entity(Name: name,
+                Entity = new Entity(
+                    Name: name,
                     PrimaryKey: "id",
+                    DisplayName:name,
                     TableName: name,
                     LabelAttributeName: Name,
                     Attributes:

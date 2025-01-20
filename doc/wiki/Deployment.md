@@ -1,4 +1,4 @@
-# Deploy Asp.net Core Application(Fluent‐CMS) to Cloud (EKS ‐ AWS Elastic Kubernetes Service) using terraform and helm
+# Deploy Asp.net Core Application(FormCMS) to Cloud (EKS ‐ AWS Elastic Kubernetes Service) using terraform and helm
 With tools like Terraform and Helm available today, deploying applications to the cloud has become more accessible for 
 developers with a background in networking or computer science. 
 Developers have the advantage of treating infrastructure as code, which simplifies the deployment process.
@@ -10,7 +10,20 @@ Cloud is not free, and operations on cloud is slow, so test your code and config
 - terraform: Terraform is an infrastructure as code tool that lets you build, change, and version infrastructure safely and efficiently.
 - kubectl: Kubernetes provides a command line tool for communicating with a Kubernetes cluster's control plane, using the Kubernetes API.
 ### Overview
-![deploy-kind-overview.png](diagrams%2Fdeploy-kind-overview.png)
+```
++---------------+       Browse        +---------------+       Port Forwarding       +-----------------+
+|   End User    | ------------------> |   API Server  | -------------------------> | Fluent CMS App  |
++---------------+                     +---------------+                             +-----------------+
+                                                                                           |
+                                                                                           |
+                                                                                       Access
+                                                                                           |
+                                                                                           v
+                                                                                  +-----------------+
+                                                                                  | Fluent CMS DB  |
+                                                                                  +-----------------+
+
+```
 ### Install
 1. create a cluster
    ```shell
@@ -38,8 +51,25 @@ Real Cloud Environment is a little difference than local test environment,
 - We have to install ELB(Elastic Load Balancing) to expose our service to public. 
 
 For simplicity purpose, I will still use port forwarding to test our service.   
-![deploy-eks-overview.png](diagrams%2Fdeploy-eks-overview.png)
 
+```
+
++---------------+       Browse        +------------------------------+              +-----------------+
+|   End User    | ------------------> |   API Server/Load Balancing  | -----------> | Fluent CMS App  |
++---------------+                     +-------------------------------+             +-----------------+
+                                                                                           |
+                                                                                         Access
+                                                                                           v
+                                                                                  +-----------------+
+                                                                                  | Fluent CMS DB  |
+                                                                                  +-----------------+
+                                                                                           |
+                                                                                           | Access
+                                                                                 +---------------------+
+                                                                                 | Elastic Block Store |
+                                                                                  +---------------------+
+
+```
 ### Create Cluster
 cd `fluent-cms/k8_deploy/cluster`, run
 ```shell

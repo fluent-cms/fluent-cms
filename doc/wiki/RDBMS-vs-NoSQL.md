@@ -2,8 +2,7 @@
 
 ## NoSql saves the trouble of join
 This post if following up my last post [Query Performance](https://github.com/fluent-cms/fluent-cms/blob/main/doc/wiki/query-performance.md)
-The relationships between entities is as follow, author and posts has many to many relationships,  people can co-author posts.  
-![entity-relation.png](https://github.com/fluent-cms/fluent-cms/blob/main/doc/wiki/entity-relation.png)   
+The relationships between entities is as follows, author and posts has many to many relationships,  people can co-author posts.  
 If we are lucky, all filter fields, sort fields are  in one table, then the performance of our query is not bad.
 But in reality, we can not avoid the requirements of composing a filter from more than one entity. 
 After we join two big tables, the performance goes bad.  
