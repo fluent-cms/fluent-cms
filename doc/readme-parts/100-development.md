@@ -19,8 +19,6 @@ The backend is written in ASP.NET Core, the Admin Panel uses React, and the Sche
     - **ASP.NET Core**  
     - **SqlKata**: [SqlKata](https://sqlkata.com/)  
 
-![API Controller Service](https://raw.githubusercontent.com/formcms/formcms/doc/doc/diagrams/api-controller-service.png)
-
 ### Admin Panel UI
 - **Tools**:
     - **React**
@@ -32,7 +30,5 @@ The backend is written in ASP.NET Core, the Admin Panel uses React, and the Sche
 ### Schema Builder UI
 - **Tools**:
     - **jsoneditor**: [JSON Editor](https://github.com/json-editor/json-editor)
-
-![Schema Builder Sequence](https://raw.githubusercontent.com/formcms/formcms/doc/doc/diagrams/schema-builder-sequence.png)
 
 </details>
